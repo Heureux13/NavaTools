@@ -102,6 +102,6 @@ t.Commit()
 
 print("Done!")
 
-# testing testing testing read all about it
-# how long till this shows up?
-# is this enought now?
+# now i want to test it backwards, asflksasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasd
+#kfdkjsdfksdfk
+#fkjsdflkjsdflkjsdflkjd
