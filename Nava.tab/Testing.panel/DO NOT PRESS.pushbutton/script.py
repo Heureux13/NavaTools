@@ -101,7 +101,3 @@ for view in sel_views:
 t.Commit()
 
 print("Done!")
-
-# now i want to test it backwards, asflksasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasd
-#kfdkjsdfksdfk
-#fkjsdflkjsdflkjsdflkjd
