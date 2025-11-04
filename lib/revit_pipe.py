@@ -23,8 +23,6 @@ uidoc = __revit__.ActiveUIDocument #type: UIDocument
 doc   = revit.doc #type: Document
 view  = revit.active_view
 
-v     = math.pi*r*h
-
 from Autodesk.Revit.DB import *
 from pyrevit import revit
 
@@ -93,25 +91,27 @@ class RevitPipe:
 
     @property
     def free_size(self):
-        return self._get_param("NaviateDBS_FreeSize")
+        return self._get_param("NaviateDBS_FreeSize", unit=UnitTypeId.Inches, as_type="double")
 
     @property
-    def free_size(self):
+    def service(self):
         return self._get_param("NaviateDBS_ServiceAbbreviation")
 
     @property
     def dry_weight(self):
-        return self._get_param("NaviateDBS_Weight")
+        return self._get_param("NaviateDBS_Weight", as_type="double")
 
     @property
     def wet_weight(self):
         h = self.length
         r = self.free_size/2
+        dw = self.dry_weight
+        if None in (h, r, dw):
+            return None
         v = math.pi*r*h
         v_sf = v/1728
         v_w = v_sf*62.4
-        w = self.dry_weight + v_w
-        return w
+        return round(dw + v_w, 2)
 
 
     # --- Class methods ---
