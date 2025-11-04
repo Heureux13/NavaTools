@@ -175,7 +175,7 @@ class RevitDuct:
         if threshold is None or self.length is None:
             return JointSize.INVALID
 
-        if self.lenght < threshold:
+        if self.length < threshold:
             return JointSize.SHORT
         if self.length == threshold:
             return JointSize.FULL
