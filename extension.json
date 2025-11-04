@@ -2,7 +2,7 @@
     "builtin": "False",
     "default_enabled": "True",
     "type": "extension",
-    "rocket_mode_compatible": "False",
+    "rocket_mode_compatible": "True",
     "name": "NavaTools",
     "description": "Set of custom tools",
     "author": "Jose Nava",
