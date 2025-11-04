@@ -11,13 +11,10 @@ __doc__     = """
 ****************************************************************
 Description:
 
-This button is for testin code snippets and ideas before implementing them.
-Odds are it will be constantly changing and not useful, its entire purpose
-is for the author to have a quick button to test whatever code they are working on.
-If you press it could do nothing, throw an error, or change something in your model.
-Once working, it will most likely be moved to a more permanent location.
-
-Current goal fucntion of button is: Selct all short joints.
+Selects joints that are less than:
+TDF     = 56.25"
+S&D     = 59"
+Spiral  = 120"
 ****************************************************************
 """
 
