@@ -6,7 +6,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 
 
-__title__   = "DO NOT PRESS"
+__title__   = "Short Joints"
 __doc__     = """
 ****************************************************************
 Description:
@@ -58,5 +58,3 @@ shorts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
 
 RevitElement.select_many(uidoc, shorts)
 forms.alert("Selected {} short joints".format(len(shorts)))
-
-print("It's called a do not press button for a reason, why did you press it?")
