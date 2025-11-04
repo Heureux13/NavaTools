@@ -140,7 +140,7 @@ class RevitDuct:
     
     @property
     def weight(self):
-        return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass as_type="double")
+        return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
     
     @property
     def total_weight(self):
