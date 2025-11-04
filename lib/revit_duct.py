@@ -162,8 +162,7 @@ class RevitDuct:
         return None
 
     @property
-    """ returns a four option varience, one being an error. these sizes and connections can be
-        changed easealy across various fabs"""
+    # returns a four option varience, one being an error. these sizes and connections can bechanged easealy across various fabs
     def joint_size(self):
         conn0 = (self.connector_0 or "").strip()
         conn1 = (self.connector_1 or "").strip()
