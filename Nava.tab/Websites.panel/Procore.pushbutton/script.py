@@ -10,4 +10,4 @@ Takes you to the fieldwire site,
 
 import webbrowser
 
-webbrowser.open("https://www.Procore.com/")
+webbrowser.open("https://app.procore.com/account/select_company/")

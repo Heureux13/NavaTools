@@ -10,4 +10,4 @@ Takes you to the United Mechanical Portal.
 
 import webbrowser
 
-webbrowser.open("https://www.Google.com/")
+webbrowser.open("https://unitedmech0.sharepoint.com/sites/BIMDepartment/SitePages/Home.aspx")
