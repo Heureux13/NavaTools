@@ -17,7 +17,7 @@ is for the author to have a quick button to test whatever code they are working 
 If you press it could do nothing, throw an error, or change something in your model.
 Once working, it will most likely be moved to a more permanent location.
 
-Current goal fucntion of button is: Rename views but not sure how just yet.
+Current goal fucntion of button is: Selct all short joints.
 ****************************************************************
 """
 
