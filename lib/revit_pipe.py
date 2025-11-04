@@ -62,6 +62,10 @@ class RevitPipe:
         return self._get_param("Diameter", unit=UnitTypeId.Inches, as_type="double")
 
     @property
+    def system_type(self):
+        return self._get_param("Fabrication Service")
+
+    @property
     def length(self):
         return self._get_param("Length", unit=UnitTypeId.Inches, as_type="double")
 
