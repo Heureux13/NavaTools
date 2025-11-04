@@ -42,12 +42,10 @@ uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
 
-ducts = RevitDuct.all(doc, view)
-
 # Main Code
 # ==================================================
 
-ducts   = [RevitDuct(doc, view, el) for el in ducts]
+ducts = RevitDuct.all(doc, view)
 shorts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
 
 RevitElement.select_many(uidoc, shorts)
