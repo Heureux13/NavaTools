@@ -49,4 +49,4 @@ ducts = RevitDuct.all(doc, view)
 fil_ducts  = [d for d in ducts if d.joint_size == JointSize.LONG]
 
 RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} short joints".format(len(fil_ducts)))
+forms.alert("Selected {} long joints".format(len(fil_ducts)))
