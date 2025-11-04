@@ -4,7 +4,7 @@ __doc__     = """
 ****************************************************************
 Description:
 
-Takes you to the fieldwire site, 
+Takes you to the United Mechanical Portal.
 ****************************************************************
 """
 
