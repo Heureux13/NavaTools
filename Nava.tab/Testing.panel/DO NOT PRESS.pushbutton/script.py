@@ -45,18 +45,21 @@ uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
 
-ducts = (DB.FilteredElementCollector(doc, view.Id)
-         .OfCategory(DB.BuiltInCategory.OST_FabricationDuctwork)
-         .WhereElementIsNotElementType()
-         .ToElements())
-
 # Main Code
 # ==================================================
 
-ducts   = [RevitDuct(doc, view, el) for el in ducts]
-shorts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
+ducts = RevitDuct.all(doc, view)
 
-RevitElement.select_many(uidoc, shorts)
-forms.alert("Selected {} short joints".format(len(shorts)))
+conical         = [d for d in ducts if d.family == "ConicalTap - wDamper"]
+boot_tap        = [d for d in ducts if d.family == "boot Tap - wDamper"]
+long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
+
+RevitElement.select_many(uidoc, conical + boot_tap + long_coupler)
+
+forms.alert(
+    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler ".format(
+        len(conical), len(boot_tap), len(long_coupler)
+    )
+)
 
 print("It's called a do not press button for a reason, why did you press it?")

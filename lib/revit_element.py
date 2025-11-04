@@ -70,7 +70,19 @@ class RevitElement:
 
     @classmethod
     def select_many(cls, uidoc, elements):
-        ids = [el.element.Id for el in elements if el.element]
-        if ids:
-            id_list = List[ElementId](ids)
-            uidoc.Selection.SetElementIds(id_list)
+        ids = List[ElementId]()
+        for el in elements:
+            if el is None:
+                continue
+
+            if hasattr(el, "element"):
+                ids.Add(el.element.Id)
+
+            elif isinstance(el, DB.Element):
+                ids.Add(el.Id)
+
+            elif isinstance(el, DB.ElementId):
+                ids.Add(el)
+                
+        if ids.Count > 0:
+            uidoc.Selection.SetElementIds(ids)
