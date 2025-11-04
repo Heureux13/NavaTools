@@ -174,18 +174,20 @@ class RevitDuct:
 
         return JointSize.SHORT if self.length < threshold else JointSize.FULL
 
+    @classmethod
+    def all(cls, doc, view=None):
+        """Return all duct elements wrapped as RevitDuct objects."""
+        elements = (FilteredElementCollector(doc, view.Id if view else None)
+                    .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
+                    .WhereElementIsNotElementType()
+                    .ToElements())
+        return [cls(doc, view, el) for el in elements]
 
-    def get_selected_elements(doc, uidoc, filter_types=None, categories=None, from_selection=True):
-        if from_selection:
-            sel_ids = uidoc.Selection.GetElementIds()
-            elements = [doc.GetElement(eid) for eid in sel_ids]
-        else:
-            collector = DB.FilteredElementCollector(doc).WhereElementIsNotElementType()
-            if categories:
-                collector = collector.OfCategory(categories[0])
+    @classmethod
+    def count(cls, doc, view=None):
+        return len(cls.all(doc, view))
 
-                elements = list(collector)
-
-        if filter_types:
-            elements = [el for el in elements if isinstance(el, filter_types)]
-        return elements
+    @classmethod
+    def by_system_type(cls, doc, view, system_type_name):
+        return [d for d in cls.all(doc, view)
+                if d.element.LookupParameter("System Type").AsString() == system_type_name]

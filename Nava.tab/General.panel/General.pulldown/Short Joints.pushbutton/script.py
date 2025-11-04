@@ -42,10 +42,7 @@ uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
 
-ducts = (DB.FilteredElementCollector(doc, view.Id)
-         .OfCategory(DB.BuiltInCategory.OST_FabricationDuctwork)
-         .WhereElementIsNotElementType()
-         .ToElements())
+ducts = RevitDuct.all(doc, view)
 
 # Main Code
 # ==================================================
