@@ -10,7 +10,8 @@ the copyright holder.
 """
 
 
-from Autodesk.Revit.DB import *, UnitTypeId
+from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import UnitTypeId
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
