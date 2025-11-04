@@ -2,17 +2,13 @@
     "builtin": "False",
     "default_enabled": "True",
     "type": "extension",
-    "rocket_mode_compatible": "True",
+    "rocket_mode_compatible": "False",
     "name": "NavaTools",
     "description": "Set of custom tools",
-    "author": "Jose Nave",
+    "author": "Jose Nava",
     "author_profile": "https://github.com/Heureux13",
     "url": "https://github.com/Heureux13/NavaTools.git",
-    "website": "False",
-    "image": "False",
-    "templates":{
-        "author": "",
-        "docpath": ""
-    },
+    "website": "https://github.com/Heureux13",
+    "image": "",
     "dependencies": []
 }
