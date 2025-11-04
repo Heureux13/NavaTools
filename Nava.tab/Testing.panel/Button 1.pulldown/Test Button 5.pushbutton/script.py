@@ -1,6 +1,10 @@
 # script.py
-# Copyright (c) 2025 Jose Francisco Nava Perez
-# All rights reserved. No part of this code may be reproduced without permission.
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+
 
 # This is inteneded only for straight duct,
 

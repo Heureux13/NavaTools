@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 __title__   = "Taggapaluza"
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+
+
 __doc__     = """
 Version = 00.00.01
 Date    = 2025-10-27
