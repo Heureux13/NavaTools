@@ -6,7 +6,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 
 
-__title__   = "Short Joints"
+__title__   = "Joints Short"
 __doc__     = """
 ****************************************************************
 Description:
