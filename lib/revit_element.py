@@ -3,28 +3,24 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-import re
-
-# Variables
-app   = __revit__.Application #type: Application
-uidoc = __revit__.ActiveUIDocument #type: UIDocument
-doc   = revit.doc #type: Document
-view  = revit.active_view
+import clr
+clr.AddReference('System')
+from System.Collections.Generic import List
 
 class RevitElement:
-    def __init__ (self, doc, view, element):
+    def __init__(self, doc, view, element):
         self.doc = doc
         self.view = view
         self.element = element
 
     @property
     def id(self):
-        return self.element.Id
-    
+        return self.element.Id if self.element else None
+
     @property
     def category(self):
         return self.element.Category.Name if self.element and self.element.Category else None
-    
+
     def get_param(self, param_name):
         param = self.element.LookupParameter(param_name)
         if param:
@@ -37,7 +33,7 @@ class RevitElement:
             elif param.StorageType == DB.StorageType.ElementId:
                 return param.AsElementId()
         return None
-    
+
     def set_param(self, param_name, value):
         param = self.element.LookupParameter(param_name)
         if not param:
@@ -46,7 +42,7 @@ class RevitElement:
         if param.IsReadOnly:
             print("Parameter '{}' is read-only on element {}".format(param_name, self.id))
             return
-        
+
         if isinstance(value, str):
             param.Set(value)
         elif isinstance(value, int):
@@ -57,3 +53,24 @@ class RevitElement:
             param.Set(value)
         else:
             print("Unsupported value type for parameter '{}' on element {}".format(param_name, self.id))
+
+    def select(self, uidoc, append=False):
+        """Select this element in the Revit UI."""
+        if not self.element:
+            return
+
+        if append:
+            current = list(uidoc.Selection.GetElementIds())
+            current.append(self.element.Id)
+            id_list = List[ElementId](current)
+        else:
+            id_list = List[ElementId]([self.element.Id])
+
+        uidoc.Selection.SetElementIds(id_list)
+
+    @classmethod
+    def select_many(cls, uidoc, elements):
+        ids = [el.element.Id for el in elements if el.element]
+        if ids:
+            id_list = List[ElementId](ids)
+            uidoc.Selection.SetElementIds(id_list)

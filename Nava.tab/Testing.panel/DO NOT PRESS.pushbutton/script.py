@@ -29,6 +29,7 @@ from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 from revit_duct import RevitDuct, JointSize
 from tag_duct import TagDuct
+from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
@@ -55,15 +56,7 @@ ducts = (DB.FilteredElementCollector(doc, view.Id)
 ducts   = [RevitDuct(doc, view, el) for el in ducts]
 shorts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
 
-short_ids   = []
-for short in shorts:
-    short_ids.append(short.element.Id)
-
-if short_ids:
-    id_list = List[ElementId](short_ids)
-    uidoc.Selection.SetElementIds(id_list)
-    forms.alert("Selected {} short joints".format(len(short_ids)))
-else:
-    forms.alert("No short joints found")
+RevitElement.select_many(uidoc, shorts)
+forms.alert("Selected {} short joints".format(len(shorts)))
 
 print("It's called a do not press button for a reason, why did you press it?")
