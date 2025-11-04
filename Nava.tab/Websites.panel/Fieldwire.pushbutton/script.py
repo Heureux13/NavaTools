@@ -1,13 +1,13 @@
-using Autodesk.Revit.UI;
-using Autodesk.Revit.Attributes;
-using System.Diagnostics;
+# -*- coding: utf-8 -*-
+__title__   = "Fieldwire"
+__doc__     = """
+****************************************************************
+Description:
 
-[Transaction(TransactionMode.Manual)]
-public class OpenWebsiteCommand : IExternalCommand
-{
-    public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
-    {
-        Process.Start("https://www.fieldwire.com/");
-        return Result.Succeeded;
-    }
-}
+Takes you to the fieldwire site, 
+****************************************************************
+"""
+
+import webbrowser
+
+webbrowser.open("https://www.fieldwire.com/")
