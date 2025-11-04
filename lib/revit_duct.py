@@ -110,10 +110,6 @@ class RevitDuct:
         return self._get_param("NaviateDBS_HasInsulation")
     
     @property
-    def insulation(self):
-        return self._get_param("Insulation Specification")
-    
-    @property
     def service(self):
         return self._get_param("NaviateDBS_ServiceName")
     
@@ -143,7 +139,7 @@ class RevitDuct:
     
     @property
     def weight(self):
-        return self._get_param("NaviateDBS_Weight", as_type="double")
+        return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass as_type="double")
     
     @property
     def total_weight(self):
