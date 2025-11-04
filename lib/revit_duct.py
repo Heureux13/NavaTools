@@ -1,8 +1,16 @@
+# -*- coding: utf-8 -*-
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+
 from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 import re
+from enum import Enum
 
 # Variables
 app   = __revit__.Application #type: Application
@@ -18,6 +26,11 @@ CONNECTOR_THRESHOLDS = {
     ("Tube", "AccuFlange"): 120.0,
     ("Tube", "GRC_Swage-Female"): 120.0,
 }
+
+class JointSize(Enum):
+    FULL = "full"
+    SHORT = "short"
+    INVALID = "invalid"
 
 class RevitDuct:
     def __init__(self, doc, view, element):
@@ -152,20 +165,19 @@ class RevitDuct:
         conn1 = (self.connector_1 or "").strip()
         key = (self.family, conn0)
 
-        if conn0 == conn1 and key in CONNECTOR_THRESHOLDS:
-            threshold = CONNECTOR_THRESHOLDS[key]
-            if self.length is not None and self.length < threshold:
-                return "short"
-            else:
-                return "full"
-        else:
-            print("invalid or mixed connectors")
-            return None
+        if conn0 != conn1:
+            return JointSize.INVALID
+
+        threshold = CONNECTOR_THRESHOLDS.get(key)
+        if threshold is None or self.length is None:
+            return JointSize.INVALID
+
+        return JointSize.SHORT if self.length < threshold else JointSize.FULL
 
 
     def get_selected_elements(doc, uidoc, filter_types=None, categories=None, from_selection=True):
         if from_selection:
-            sel_ids = uidoc.Selection.GetlElementIds()
+            sel_ids = uidoc.Selection.GetElementIds()
             elements = [doc.GetElement(eid) for eid in sel_ids]
         else:
             collector = DB.FilteredElementCollector(doc).WhereElementIsNotElementType()

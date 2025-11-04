@@ -27,7 +27,7 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct
+from revit_duct import RevitDuct, JointSize
 from tag_duct import TagDuct
 
 #.NET Imports
@@ -39,9 +39,9 @@ from System.Collections.Generic import List
 
 # Variables
 # ==================================================
-app   = __revit__.Application #type: Application
-uidoc = __revit__.ActiveUIDocument #type: UIDocument
-doc   = revit.doc #type: Document
+app   = __revit__.Application           #type: Application
+uidoc = __revit__.ActiveUIDocument      #type: UIDocument
+doc   = revit.doc                       #type: Document
 view  = revit.active_view
 
 ducts = (DB.FilteredElementCollector(doc, view.Id)
@@ -52,62 +52,18 @@ ducts = (DB.FilteredElementCollector(doc, view.Id)
 # Main Code
 # ==================================================
 
-# Get Views - Selected in a ProjectBroswer
-sel_el_ids = uidoc.Selection.GetElementIds()
-sel_elem = [doc.GetElement(e_id) for e_id in sel_el_ids]
-sel_views = [el for el in sel_elem if issubclass(type(el), View)]
+ducts   = [RevitDuct(doc, view, el) for el in ducts]
+shorts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
 
-# if none selected - promp selectviews from pyrevit.form.selct_views()
-if not sel_views:
-    sel_views = forms.select_views()
+short_ids   = []
+for short in shorts:
+    short_ids.append(short.element.Id)
 
-# Ensure Views Selected
-if not sel_views:
-    forms.alert("No Views Selected. Please Try Again.", exitscript=True)
+if short_ids:
+    id_list = List[ElementId](short_ids)
+    uidoc.Selection.SetElementIds(id_list)
+    forms.alert("Selected {} short joints".format(len(short_ids)))
+else:
+    forms.alert("No short joints found")
 
-# User entered values
-# https://revitpythonwrapper.readthedocs.io/en/latest/
-from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
-components = [Label("Add refix:"),                      TextBox("prefix"),
-              Label("Word you want to replace:"),       TextBox("find"),
-              Label("Replacement for that word:"),      TextBox("replace"),
-              Label("Add suffix:"),                     TextBox("suffix"),
-              Separator(),                              Button("Rename Views")]
-
-form = FlexForm("Rename Views", components)
-form.show()
-
-user_inputs = form.values
-prefix      = user_inputs["prefix"]
-find        = user_inputs["find"]
-replace     = user_inputs["replace"]
-suffix      = user_inputs["suffix"]
-
-
-# start transaction to make changes in project
-t = Transaction(doc, "py-Rename Views")
-
-t.Start() 
-
-for view in sel_views:
-
-    # create new view name
-    old_name = view.Name
-    new_name = prefix + old_name.replace(find, replace) + suffix
-
-    # rename views - ensure unique view names
-    
-    for i in range(20):
-        try:
-            view.Name = new_name
-            print("{} -> {}".format(old_name, new_name))
-            break
-        except:
-            new_name += "*"
-
-t.Commit()
-
-print("Done!")
-
-
-# This is my final test commit message
+print("It's called a do not press button for a reason, why did you press it?")
