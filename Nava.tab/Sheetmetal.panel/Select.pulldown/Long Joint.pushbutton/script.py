@@ -6,7 +6,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 
 
-__title__   = "Short Joints"
+__title__   = "Long Joints"
 __doc__     = """
 ****************************************************************
 Description:
@@ -46,7 +46,7 @@ view  = revit.active_view
 # ==================================================
 
 ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.is_full_joint == JointSize.SHORT]
+fil_ducts  = [d for d in ducts if d.is_full_joint == JointSize.LONG]
 
 RevitElement.select_many(uidoc, fil_ducts)
 forms.alert("Selected {} short joints".format(len(fil_ducts)))

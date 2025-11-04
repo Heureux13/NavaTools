@@ -34,8 +34,9 @@ CONNECTOR_THRESHOLDS = {
 }
 
 class JointSize(Enum):
-    FULL = "full"
-    SHORT = "short"
+    SHORT   = "short"
+    FULL    = "full"
+    LONG    = "long"
     INVALID = "invalid"
 
 class RevitDuct:
@@ -161,8 +162,9 @@ class RevitDuct:
         return None
 
     @property
-    # Checks to see if a straight joint is full or short size.
-    def is_full_joint(self):
+    """ returns a four option varience, one being an error. these sizes and connections can be
+        changed easealy across various fabs"""
+    def joint_size(self):
         conn0 = (self.connector_0 or "").strip()
         conn1 = (self.connector_1 or "").strip()
         key = (self.family, conn0)
@@ -174,7 +176,12 @@ class RevitDuct:
         if threshold is None or self.length is None:
             return JointSize.INVALID
 
-        return JointSize.SHORT if self.length < threshold else JointSize.FULL
+        if self.lenght < threshold:
+            return JointSize.SHORT
+        if self.length == threshold:
+            return JointSize.FULL
+        if self.length > threshold:
+            return JointSize.LONG
 
     @classmethod
     def all(cls, doc, view=None):
