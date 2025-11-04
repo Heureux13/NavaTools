@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
+# ======================================================================
 """Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
 This code and associated documentation files may not be copied, modified,
 distributed, or used in any form without the prior written permission of
 the copyright holder."""
-
+# ======================================================================
 
 __title__   = "DO NOT PRESS"
 __doc__     = """
-****************************************************************
+************************************************************************
 Description:
 
+Current goal fucntion of button is: Select boots per Goolsby request.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 This button is for testin code snippets and ideas before implementing them.
 Odds are it will be constantly changing and not useful, its entire purpose
 is for the author to have a quick button to test whatever code they are working on.
 If you press it could do nothing, throw an error, or change something in your model.
 Once working, it will most likely be moved to a more permanent location.
-
-Current goal fucntion of button is: Selct all short joints.
-****************************************************************
+************************************************************************
 """
 
 # Imports
@@ -57,7 +59,7 @@ long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
 RevitElement.select_many(uidoc, conical + boot_tap + long_coupler)
 
 forms.alert(
-    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler ".format(
+    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler".format(
         len(conical), len(boot_tap), len(long_coupler)
     )
 )

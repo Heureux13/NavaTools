@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+"""
+=========================================================================
+Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder.
+=========================================================================
+"""
+
+
 from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument

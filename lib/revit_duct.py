@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+"""
+=========================================================================
+Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
 This code and associated documentation files may not be copied, modified,
 distributed, or used in any form without the prior written permission of
-the copyright holder."""
+the copyright holder.
+=========================================================================
+"""
+
 
 from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
@@ -89,7 +94,7 @@ class RevitDuct:
         return self._get_param("NaviateDBS_Connector2_EndCondition")
 
     @property
-    def system_abbreviation(self):
+    def duty(self):
         return self._get_param("System Abbreviation")
 
     @property
@@ -105,7 +110,7 @@ class RevitDuct:
         return self._get_param("NaviateDBS_HasInsulation")
     
     @property
-    def insulation_specification(self):
+    def insulation(self):
         return self._get_param("Insulation Specification")
     
     @property

@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-# tag_duct.py
-# Class-based duct tagging utilities
-# Copyright (c) 2025 Jose Francisco Nava Perez
+"""
+=========================================================================
+Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder.
+=========================================================================
+"""
 
 from pyrevit import revit, DB
 from Autodesk.Revit.DB import FabricationPart
