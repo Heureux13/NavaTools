@@ -244,5 +244,8 @@ class RevitDuct:
         sel_ids = uidoc.Selection.GetElementIds()
         if not sel_ids:
             return []
+
         elements = [doc.GetElement(elid) for elid in sel_ids]
+
+        duct = [el for el in element if isinstance(el, Mechanical.Duct)]
         return [cls(doc, view or uidoc.ActiveView, el) for el in elements]
