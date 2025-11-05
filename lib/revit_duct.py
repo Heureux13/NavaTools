@@ -248,4 +248,4 @@ class RevitDuct:
         elements = [doc.GetElement(elid) for elid in sel_ids]
 
         duct = [el for el in element if isinstance(el, Mechanical.Duct)]
-        return [cls(doc, view or uidoc.ActiveView, el) for el in elements]
+        return [cls(doc, view or uidoc.ActiveView, du) for du in duct]
