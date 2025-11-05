@@ -53,17 +53,6 @@ ducts = RevitDuct.from_selection(uidoc, doc)
 
 if not ducts:
     forms.alert("Please select one or more ducts first")
-
 else:
-    weights = [(d.id, d.total_weight) for d in ducts if d.total_weight]
-
-    if not weights:
-        forms.alert("No weight data found")
-    
-    else:
-        lines = ["Duct {}: {} lbs".format(duct_id, w) for duct_id, w in weights]
-        total = sum(w for _, w in weights)
-        lines.append("----")
-        lines.append("Total weight: {} lbs".format(total))
-
-        forms.alert("\n".join(lines))
+    values = [str(d.insulation) for d in ducts]
+    forms.alert("\n".join(values))

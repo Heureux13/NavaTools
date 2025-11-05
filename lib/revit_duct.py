@@ -104,12 +104,26 @@ class RevitDuct:
         return self._get_param("NaviateDBS_Family")
     
     @property
-    def double_wall(self):
+    def is_double_wall(self):
         return self._get_param("NaviateDBS_HasDoubleWall")
     
     @property
-    def insulation(self):
+    def has_insulation(self):
         return self._get_param("NaviateDBS_HasInsulation")
+    
+    @property
+    def insulation(self):
+        raw = self._get_param("Insulation Specification")
+        if not raw:
+            return None
+
+        match = re.match(r"[\d\.]+)", raw.strip())
+        if match:
+            try:
+                return float(match.group(1))
+            except ValueError:
+                return None
+        return None
     
     @property
     def service(self):
@@ -146,9 +160,8 @@ class RevitDuct:
     @property
     def total_weight(self):
         base = self.weight or 0.0
-        liner = getattr(self, "liner_weight", 0.0) or 0.0
         insulation = getattr(self, "insulation_weight", 0.0) or 0.0
-        return round(base + liner + insulation, 2)
+        return round(base + insulation, 2)
     
     @property
     def angle(self):
@@ -199,3 +212,11 @@ class RevitDuct:
     def by_system_type(cls, doc, view, system_type_name):
         return [d for d in cls.all(doc, view)
                 if d.element.LookupParameter("System Type").AsString() == system_type_name]
+    
+    @classmethod
+    def from_selection(cls, uidoc, doc, view=None):
+        sel_ids = uidoc.Selection.GetElementIds()
+        if not sel_ids:
+            return []
+        elements = [doc.GetElement(elid) for elid in sel_ids]
+        return [cls(doc, view or uidoc.ActiveView, el) for el in elements]
