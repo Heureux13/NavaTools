@@ -9,11 +9,11 @@ the copyright holder."""
 
 __title__   = "Elbows Mitered"
 __doc__     = """
-************************************************************************
+****************************************************
 Description:
 
 Selects all 90° mitered elbows
-************************************************************************
+****************************************************
 """
 
 # Imports
@@ -46,4 +46,4 @@ ducts = RevitDuct.all(doc, view)
 sel_ducts  = [d for d in ducts if d.family == "Square Bend"]
 
 RevitElement.select_many(uidoc, sel_ducts)
-forms.alert("Selected {} long joints".format(len(sel_ducts)))
+forms.alert("Selected {} Mitered Elbows".format(len(sel_ducts)))
