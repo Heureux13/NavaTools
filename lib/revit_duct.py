@@ -114,17 +114,19 @@ class RevitDuct:
     @property
     def insulation(self):
         raw = self._get_param("Insulation Specification")
-        print(raw)
+        # print(raw)
         if not raw:
             forms.alert("its not raw")
             return None
+        
+        cleaned = raw.replace("″", '"').replace("”", '"').replace("’", "'")
 
-        match = re.match(r"([\d\.]+)", raw.strip())
+        match = re.replace(r"([\d\.]+)", cleaned)
         if match:
             try:
                 return float(match.group(1))
             except ValueError:
-                forms.alert("ValueError")
+                # forms.alert("ValueError")
                 return None
         return None
     
