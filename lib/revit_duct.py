@@ -110,23 +110,21 @@ class RevitDuct:
     @property
     def has_insulation(self):
         return self._get_param("NaviateDBS_HasInsulation")
-    
+
     @property
     def insulation(self):
         raw = self._get_param("Insulation Specification")
-        # print(raw)
         if not raw:
             forms.alert("its not raw")
             return None
-        
+
         cleaned = raw.replace("″", '"').replace("”", '"').replace("’", "'")
 
-        match = re.replace(r"([\d\.]+)", cleaned)
+        match = re.search(r"([\d\.]+)", cleaned)
         if match:
             try:
                 return float(match.group(1))
             except ValueError:
-                # forms.alert("ValueError")
                 return None
         return None
     
