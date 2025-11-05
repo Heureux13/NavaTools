@@ -47,7 +47,7 @@ ducts = RevitDuct.from_selection(uidoc, doc, view)
 if not ducts:
     forms.alert("Please select one or more ducts first.")
 else:
-    weights = [(d.id, d.weigth_total) for d in ducts if d.weigth_total is not None]
+    weights = [(d.id, d.weight_total) for d in ducts if d.weight_total is not None]
 
     if not weights:
         forms.alert("No weight data found for the selected ducts.")
