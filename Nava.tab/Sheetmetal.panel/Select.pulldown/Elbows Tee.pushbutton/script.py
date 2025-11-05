@@ -7,7 +7,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "John's Button"
+__title__   = "Weight"
 __doc__     = """
 ************************************************************************
 Description:
@@ -49,18 +49,8 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
-
 ducts = RevitDuct.all(doc, view)
+sel_ducts  = [d for d in ducts if d.family == "Tee"]
 
-conical         = [d for d in ducts if d.family == "ConicalTap - wDamper"]
-boot_tap        = [d for d in ducts if d.family == "boot Tap - wDamper"]
-long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
-long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
-
-RevitElement.select_many(uidoc, conical + boot_tap + long_coupler)
-
-forms.alert(
-    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler".format(
-        len(conical), len(boot_tap), len(long_coupler)
-    )
-)
+RevitElement.select_many(uidoc, sel_ducts)
+forms.alert("Selected {} long joints".format(len(sel_ducts)))

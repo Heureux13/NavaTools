@@ -7,7 +7,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "John's Button"
+__title__   = "Weight"
 __doc__     = """
 ************************************************************************
 Description:
@@ -49,18 +49,26 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
+sel_ids = uidoc.Selection.GetElementIds()
 
-ducts = RevitDuct.all(doc, view)
+if not sel_ids:
+    forms.alert("Please select one or more ducts first.")
+else:
+    ducts = []
+    for elid in sel_ids:
+        el = doc.GetElement(elid)
+        ducts.append(RevitDuct(doc, view, el))
 
-conical         = [d for d in ducts if d.family == "ConicalTap - wDamper"]
-boot_tap        = [d for d in ducts if d.family == "boot Tap - wDamper"]
-long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
-long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
+    # Collect weights
+    weights = [(d.id, d.weight) for d in ducts if d.weight]
 
-RevitElement.select_many(uidoc, conical + boot_tap + long_coupler)
+    if not weights:
+        forms.alert("No weight data found for the selected ducts.")
+    else:
+        # Build a message with each duct’s weight
+        lines = ["Duct {}: {} lbs".format(duct_id, w) for duct_id, w in weights]
+        total = sum(w for _, w in weights)
+        lines.append("----")
+        lines.append("Total weight: {} lbs".format(total))
 
-forms.alert(
-    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler".format(
-        len(conical), len(boot_tap), len(long_coupler)
-    )
-)
+        forms.alert("\n".join(lines))
