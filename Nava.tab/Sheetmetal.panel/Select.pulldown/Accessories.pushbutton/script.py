@@ -48,12 +48,12 @@ ducts = RevitDuct.all(doc, view)
 conical         = [d for d in ducts if d.family == "ConicalTap - wDamper"]
 boot_tap        = [d for d in ducts if d.family == "boot Tap - wDamper"]
 long_coupler    = [d for d in ducts if d.family == "8inch Long Coupler wDamper"]
-long_coupler    = [d for d in ducts if d.family == "cap"]
+end_cap    = [d for d in ducts if d.family == "cap"]
 
-RevitElement.select_many(uidoc, conical + boot_tap + long_coupler)
+RevitElement.select_many(uidoc, conical + boot_tap + long_coupler + end_cap)
 
 forms.alert(
-    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler".format(
-        len(conical), len(boot_tap), len(long_coupler)
+    "Selected {} conical taps\nSelected {} boot tap\nSelected {} long coupler\nSelected {} end caps".format(
+        len(conical), len(boot_tap), len(long_coupler), len(end_cap)
     )
 )
