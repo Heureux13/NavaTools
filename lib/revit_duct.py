@@ -129,7 +129,7 @@ class RevitDuct:
         return None
     
     @property
-    def insulation_weight(self):
+    def weight_insulation(self):
         thic_in = self.insulation
         area_ft2 = self.metal_area
 
@@ -141,6 +141,21 @@ class RevitDuct:
         thic_ft = thic_in / 12.0
         weight_lb = density_pcf * thic_ft * area_ft2
         return weight_lb
+    
+    @property
+    def weight_total(self):
+        metal_lb = self.weight
+        insul_lb = self.insulation_weight
+
+        if metal_lb is None:
+            forms.alert("No metal weight")
+            return None
+        
+        return round(metal_lb + insul_lb, 2)
+    
+    @property
+    def weight_metal(self):
+        return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
     
     @property
     def service(self):
@@ -171,23 +186,8 @@ class RevitDuct:
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
     
     @property
-    def weight(self):
-        return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
-    
-    @property
     def metal_area(self):
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
-    
-    @property
-    def total_weight(self):
-        metal_lb = self.weight
-        insul_lb = self.insulation_weight
-
-        if metal_lb is None:
-            forms.alert("No metal weight")
-            return None
-        
-        return round(metal_lb + insul_lb, 2)
     
     @property
     def angle(self):

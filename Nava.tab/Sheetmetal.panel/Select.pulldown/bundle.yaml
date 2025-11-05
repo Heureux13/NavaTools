@@ -5,4 +5,6 @@ layout:
   - Elbows Mitered
   - Elbows Radius
   - Elbows Tee
-  - Weight
+  - Weight Metal
+  - Weight Insulation
+  - Weight Total

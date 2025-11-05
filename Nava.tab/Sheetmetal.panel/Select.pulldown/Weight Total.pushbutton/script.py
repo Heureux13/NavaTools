@@ -7,12 +7,12 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "Weight"
+__title__   = "Weight Total"
 __doc__     = """
 ************************************************************************
 Description:
 
-Gets the weight of whatever duct is selected, add them if more than one
+Returns metal duct weight + insulation duct weight
 ************************************************************************
 """
 
@@ -42,7 +42,7 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
-sel_ids = uidoc.Selection.GetElementIds()
+sel_ids = RevitDuct.from_selection(uidoc, doc)
 
 if not sel_ids:
     forms.alert("Please select one or more ducts first.")
@@ -53,7 +53,7 @@ else:
         ducts.append(RevitDuct(doc, view, el))
 
     # Collect weights
-    weights = [(d.id, d.weight) for d in ducts if d.total_weight]
+    weights = [(d.id, d.weight_total) for d in ducts if d.weight_total]
 
     if not weights:
         forms.alert("No weight data found for the selected ducts.")
