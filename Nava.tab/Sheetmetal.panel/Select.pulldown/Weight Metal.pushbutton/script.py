@@ -47,21 +47,17 @@ sel_ids = RevitDuct.from_selection(uidoc, doc)
 if not sel_ids:
     forms.alert("Please select one or more ducts first.")
 else:
-    ducts = []
-    for elid in sel_ids:
-        el = doc.GetElement(elid)
-        ducts.append(RevitDuct(doc, view, el))
+    ducts = [RevitDuct(doc, view, doc.GetElement(elid)) for elid in sel_ids]
 
-    # Collect weights
-    weights = [(d.id, d.weight_metal) for d in ducts if d.weight_metal]
+    # Collect metal weights
+    weights = [(d.id, d.weight_metal) for d in ducts if d.weight_metal is not None]
 
     if not weights:
         forms.alert("No weight data found for the selected ducts.")
     else:
-        # Build a message with each duct’s weight
-        lines = ["Duct {}: {} lbs".format(duct_id, w) for duct_id, w in weights]
+        lines = ["Duct {}: {:.2f} lbs".format(duct_id, w) for duct_id, w in weights]
         total = sum(w for _, w in weights)
         lines.append("----")
-        lines.append("Total weight: {} lbs".format(total))
+        lines.append("Total weight: {:.2f} lbs".format(total))
 
         forms.alert("\n".join(lines))
