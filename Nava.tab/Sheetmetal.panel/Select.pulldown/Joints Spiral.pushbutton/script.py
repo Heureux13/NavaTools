@@ -7,21 +7,12 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "DO NOT PRESS"
+__title__   = "Joint Spiral"
 __doc__     = """
 ************************************************************************
 Description:
 
-Current goal fucntion of button is: select only spiral duct.
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-This button is for testin code snippets and ideas before implementing them.
-Odds are it will be constantly changing and not useful, its entire purpose
-is for the author to have a quick button to test whatever code they are working on.
-If you press it could do nothing, throw an error, or change something in your model.
-Once working, it will most likely be moved to a more permanent location.
-
-spiral thing
+Selects all spiral joints.
 ************************************************************************
 """
 
@@ -55,4 +46,4 @@ ducts = RevitDuct.all(doc, view)
 fil_ducts  = [d for d in ducts if d.family == "Tube" and d.connector_0 == "GRC_Swage-Female"]
 
 RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} spiral joints".format(len(fil_ducts)))
+# forms.alert("Selected {} spiral joints".format(len(fil_ducts)))
