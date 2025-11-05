@@ -114,7 +114,9 @@ class RevitDuct:
     @property
     def insulation(self):
         raw = self._get_param("Insulation Specification")
+        print(raw)
         if not raw:
+            forms.alert("its not raw")
             return None
 
         match = re.match(r"([\d\.]+)", raw.strip())
@@ -122,6 +124,7 @@ class RevitDuct:
             try:
                 return float(match.group(1))
             except ValueError:
+                forms.alert("ValueError")
                 return None
         return None
     
