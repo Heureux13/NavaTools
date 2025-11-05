@@ -248,7 +248,7 @@ class RevitDuct:
         elements = [doc.GetElement(elid) for elid in sel_ids]
 
         duct = [
-            el for el in elements if isinstance(el, FabricatoinPart)
+            el for el in elements if isinstance(el, FabricationPart)
                 and el.Category
                 and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
                 ]
