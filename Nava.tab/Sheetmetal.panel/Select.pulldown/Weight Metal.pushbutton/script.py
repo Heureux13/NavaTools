@@ -43,6 +43,7 @@ view  = revit.active_view
 # Main Code
 # ==================================================
 sel_ids = RevitDuct.from_selection(uidoc, doc)
+print(type(sel_ids[0]))
 
 if not sel_ids:
     forms.alert("Please select one or more ducts first.")
