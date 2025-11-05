@@ -48,5 +48,5 @@ ducts = RevitDuct.from_selection(uidoc, doc)
 if not ducts:
     forms.alert("Please select one or more ducts first")
 else:
-    values = [str(d.insulation_weight) for d in ducts]
+    values = [str(d.metal_area) for d in ducts]
     forms.alert("\n".join(values))
