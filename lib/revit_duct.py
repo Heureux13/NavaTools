@@ -130,7 +130,7 @@ class RevitDuct:
     
     @property
     def weight_insulation(self):
-        thic_in = self.insulation
+        thic_in = self.insulation if self.insulation is not None else 0.00
         area_ft2 = self.metal_area
 
         if thic_in is None or area_ft2 is None:
