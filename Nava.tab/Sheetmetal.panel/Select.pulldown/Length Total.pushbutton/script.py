@@ -7,19 +7,12 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "DO NOT PRESS"
+__title__   = "Length Total"
 __doc__     = """
 ************************************************************************
 Description:
 
-Current goal fucntion of button is: return total weight including insulation.
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-This button is for testin code snippets and ideas before implementing them.
-Odds are it will be constantly changing and not useful, its entire purpose
-is for the author to have a quick button to test whatever code they are working on.
-If you press it could do nothing, throw an error, or change something in your model.
-Once working, it will most likely be moved to a more permanent location.
+Returns metal duct weight + insulation duct weight
 ************************************************************************
 """
 
