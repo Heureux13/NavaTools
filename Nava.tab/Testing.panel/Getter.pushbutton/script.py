@@ -49,4 +49,4 @@ if not ducts:
     forms.alert("Please select one or more ducts first")
 else:
     values = [str(d.insulation) for d in ducts]
-    forms.alert("\n".join(values))
+    #forms.alert("\n".join(values))
