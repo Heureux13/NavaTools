@@ -57,4 +57,4 @@ else:
         lines.append("----")
         lines.append("Total weight: {:.2f} lbs".format(total))
 
-        forms.alert("\n".join(lines))
+        forms.TaskDialog("\n".join(lines))
