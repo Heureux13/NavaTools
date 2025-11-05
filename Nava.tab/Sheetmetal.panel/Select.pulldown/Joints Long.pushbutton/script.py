@@ -11,7 +11,7 @@ __doc__     = """
 ****************************************************************
 Description:
 
-Selects joints that are less than:
+Selects joints that are MORE than:
 TDF     = 56.25"
 S&D     = 59"
 Spiral  = 120"
