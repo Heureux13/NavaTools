@@ -42,15 +42,11 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
-sel_ids = RevitDuct.from_selection(uidoc, doc)
-print(type(sel_ids[0]))
+ducts = RevitDuct.from_selection(uidoc, doc, view)
 
-if not sel_ids:
+if not ducts:
     forms.alert("Please select one or more ducts first.")
 else:
-    ducts = [RevitDuct(doc, view, doc.GetElement(elid)) for elid in sel_ids]
-
-    # Collect metal weights
     weights = [(d.id, d.weight_metal) for d in ducts if d.weight_metal is not None]
 
     if not weights:
