@@ -117,7 +117,7 @@ class RevitDuct:
         if not raw:
             return None
 
-        match = re.match(r"[\d\.]+)", raw.strip())
+        match = re.match(r"([\d\.]+)", raw.strip())
         if match:
             try:
                 return float(match.group(1))
