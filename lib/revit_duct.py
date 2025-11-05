@@ -56,7 +56,7 @@ class RevitDuct:
     def _get_param(self, name, unit=None, as_type="string"):
         p = self.element.LookupParameter(name)
         if not p:
-            print("[MISSING PARAM] '{0}' on element {1}".format(name, self.id))
+            forms.alert("[MISSING PARAM] '{0}' on element {1}".format(name, self.id))
             return None
         if as_type == "double":
             val = p.AsDouble()
@@ -130,9 +130,17 @@ class RevitDuct:
     
     @property
     def insulation_weight(self):
-        thic = self.insulation
-        size = self.metal_area
-        print(thic, size)
+        thic_in = self.insulation
+        area_ft2 = self.metal_area
+
+        if thic_in is None or area_ft2 is None:
+            return None
+        
+        density_pcf = 2.5
+
+        thic_ft = thic_in / 12.0
+        weight_lb = density_pcf * thic_ft * area_ft2
+        return weight_lb
     
     @property
     def service(self):
@@ -172,9 +180,14 @@ class RevitDuct:
     
     @property
     def total_weight(self):
-        base = self.weight or 0.0
-        insulation = getattr(self, "insulation_weight", 0.0) or 0.0
-        return round(base + insulation, 2)
+        metal_lb = self.weight
+        insul_lb = self.insulation_weight
+
+        if metal_lb is None:
+            forms.alert("No metal weight")
+            return None
+        
+        return round(metal_lb + insul_lb, 2)
     
     @property
     def angle(self):
