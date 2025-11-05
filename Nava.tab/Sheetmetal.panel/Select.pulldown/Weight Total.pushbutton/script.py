@@ -57,4 +57,4 @@ else:
         lines.append("----")
         lines.append("Total weight: {:.2f} lbs".format(total))
 
-        forms.alert("\n".join(lines))
+        print("\n".join(lines))
