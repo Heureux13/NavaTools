@@ -129,6 +129,12 @@ class RevitDuct:
         return None
     
     @property
+    def insulation_weight(self):
+        thic = self.insulation
+        size = self.metal_area
+        print(thic, size)
+    
+    @property
     def service(self):
         return self._get_param("NaviateDBS_ServiceName")
     
@@ -159,6 +165,9 @@ class RevitDuct:
     @property
     def weight(self):
         return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
+    @property
+    def metal_area(self):
+        return self._get_param("NaviateDBS_SheetMetalArea")
     
     @property
     def total_weight(self):
