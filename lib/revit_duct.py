@@ -144,8 +144,8 @@ class RevitDuct:
     
     @property
     def weight_total(self):
-        metal_lb = self.weight
-        insul_lb = self.insulation_weight
+        metal_lb = self.weight_metal
+        insul_lb = self.weight_insulation
 
         if metal_lb is None:
             forms.alert("No metal weight")
