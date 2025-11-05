@@ -60,7 +60,7 @@ else:
         forms.alert("No weight data found for the selected ducts.")
     else:
         lines = ["Duct {}: {:.2f} ft".format(duct_id, l) for duct_id, l in length]
-        total = sum(w for _, l in length)
+        total = sum(l for _, l in length)
         lines.append("----")
         lines.append("Total length: {:.2f} ft".format(total))
 
