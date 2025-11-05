@@ -12,14 +12,7 @@ __doc__     = """
 ************************************************************************
 Description:
 
-Current goal fucntion of button is: Select boots per Goolsby request.
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-This button is for testin code snippets and ideas before implementing them.
-Odds are it will be constantly changing and not useful, its entire purpose
-is for the author to have a quick button to test whatever code they are working on.
-If you press it could do nothing, throw an error, or change something in your model.
-Once working, it will most likely be moved to a more permanent location.
+Gets the weight of whatever duct is selected, add them if more than one
 ************************************************************************
 """
 
@@ -60,7 +53,7 @@ else:
         ducts.append(RevitDuct(doc, view, el))
 
     # Collect weights
-    weights = [(d.id, d.weight) for d in ducts if d.weight]
+    weights = [(d.id, d.weight) for d in ducts if d.total_weight]
 
     if not weights:
         forms.alert("No weight data found for the selected ducts.")
