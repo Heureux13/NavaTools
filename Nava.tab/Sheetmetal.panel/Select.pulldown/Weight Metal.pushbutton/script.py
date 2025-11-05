@@ -20,7 +20,7 @@ Gets the weight of whatever duct is selected, add them if more than one
 # ==================================================
 from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
-from Autodesk.Revit.UI import UIDocument
+from Autodesk.Revit.UI import UIDocument, TaskDialog
 from Autodesk.Revit.ApplicationServices import Application
 from revit_duct import RevitDuct, JointSize
 from tag_duct import TagDuct
