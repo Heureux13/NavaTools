@@ -289,6 +289,8 @@ class RevitDuct:
         duct = [
             el for el in elements if isinstance(el, FabricationPart)
                 and el.Category
-                and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
+                # Revit 2024 changed IntegerValue to Value
+                # Change depending on the revit year
+                and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
                 ]
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]
