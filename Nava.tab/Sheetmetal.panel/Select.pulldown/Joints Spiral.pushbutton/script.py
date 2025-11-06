@@ -53,4 +53,4 @@ fil_ducts = [
 ]
 
 RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} ducts from chosen families".format(len(fil_ducts)))
+forms.alert("Selected {} spiral ducts".format(len(fil_ducts)))
