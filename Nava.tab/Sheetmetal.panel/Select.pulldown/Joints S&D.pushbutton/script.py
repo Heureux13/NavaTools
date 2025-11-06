@@ -42,7 +42,7 @@ view  = revit.active_view
 # Main Code
 # ==================================================
 ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Straight" and d.connector_0 == "Standing S&D"]
+fil_ducts  = [d for d in ducts if d.family == "Straight" and d.connector_0 in ("Standing S&D", "Slip & Drive")]
 
 RevitElement.select_many(uidoc, fil_ducts)
 # forms.alert("Selected {} S&D joints".format(len(fil_ducts)))
