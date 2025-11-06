@@ -6,43 +6,21 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 
 
-__title__   = "Taggapaluza"
+__title__   = "Button 2"
 __doc__     = """
-Version = 00.00.01
-Date    = 2025-10-27
-________________________________________________________________
+__________________________________________________
 Description:
 
-This is the placeholder for a .pushbutton in a Stack/Pulldown
-You can use it to start your pyRevit Add-In
-
-________________________________________________________________
-How-To:
-
-1. [Hold ALT + CLICK] on the button to open its source folder.
-You will be able to override this placeholder.
-
-2. Automate Your Boring Work ;)
-
-________________________________________________________________
-TODO:
-[FEATURE] - Describe Your ToDo Tasks Here
-________________________________________________________________
-Last Updates:
-- [15.06.2024] v1.0 Change Description
-
-________________________________________________________________
+This is the placeholder for a .pushbutton
+___________________________________________________
 Author: Jose Nava
 """
 
 # Imports
 #==================================================
 from Autodesk.Revit.DB import *
-
-#.NET Imports
-import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
+import clr
 
 
 # Variables

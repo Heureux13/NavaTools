@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-# ================================================================
+# ======================================================================
 """Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
 This code and associated documentation files may not be copied, modified,
 distributed, or used in any form without the prior written permission of
 the copyright holder."""
-# ================================================================
+# ======================================================================
 
-__title__   = "Joints S&D"
+__title__   = "Button 3"
 __doc__     = """
-******************************************************************
+____________________________________________________
 Description:
 
-Selects all S&D joints
-******************************************************************
+Placeholder
+____________________________________________________
 """
 
 # Imports
@@ -28,8 +28,8 @@ from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
-from System.Collections.Generic import List
 import clr
+from System.Collections.Generic import List
 
 
 # Variables
@@ -41,8 +41,4 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
-ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Straight" and d.connector_0 == "Standing S&D"]
-
-RevitElement.select_many(uidoc, fil_ducts)
-# forms.alert("Selected {} S&D joints".format(len(fil_ducts)))
+print("Code placeholder.")

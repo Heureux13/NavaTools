@@ -9,12 +9,12 @@ the copyright holder."""
 
 __title__   = "Getter"
 __doc__     = """
-************************************************************************
+____________________________________________________
 Description:
 
 Returns the value of whatever is coded here, should be a parameter or
 something simple
-************************************************************************
+____________________________________________________
 """
 
 # Imports
@@ -29,10 +29,8 @@ from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
-import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
-
+import clr
 
 # Variables
 # ==================================================

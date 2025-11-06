@@ -28,9 +28,8 @@ from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
-import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
+import clr
 
 
 # Variables

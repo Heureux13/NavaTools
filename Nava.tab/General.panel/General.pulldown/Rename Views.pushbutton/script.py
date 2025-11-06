@@ -20,7 +20,6 @@ from Autodesk.Revit.ApplicationServices import Application
 #.NET Imports
 # ==================================================
 import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
 
 
