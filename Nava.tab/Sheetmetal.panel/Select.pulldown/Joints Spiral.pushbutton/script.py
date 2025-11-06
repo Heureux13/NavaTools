@@ -22,7 +22,7 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize
+from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from tag_duct import TagDuct
 from revit_element import RevitElement
 
