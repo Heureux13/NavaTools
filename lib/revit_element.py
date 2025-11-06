@@ -15,7 +15,6 @@ from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
 
 class RevitElement:

@@ -27,10 +27,13 @@ view  = revit.active_view
 # Define Constants
 CONNECTOR_THRESHOLDS = {
     ("Straight", "TDC"): 56.25,
-    ("Straight", "Standing S&D"): 59.0,
-    ("Straight", "S&D"): 59.0,
-    ("Tube", "AccuFlange"): 120.0,
-    ("Tube", "GRC_Swage-Female"): 120.0,
+    ("Straight", "TDF"): 56.25,
+    ("Straight", "Standing S&D"): 59.00,
+    ("Straight", "Slip & Drive"): 59.00,
+    ("Straight", "S&D"): 59.00,
+    ("Tube", "AccuFlange"): 120.00,
+    ("Tube", "GRC_Swage-Female"): 120.00,
+    ("Spiral Duct", "Raw"): 120.00,
 }
 
 # Weight per cubic foot
@@ -289,8 +292,7 @@ class RevitDuct:
         duct = [
             el for el in elements if isinstance(el, FabricationPart)
                 and el.Category
-                # Revit 2024 changed IntegerValue to Value
-                # Change depending on the revit year
-                and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
+                # .IntegerValue only works for 2023 and older, for newer need to use .Value
+                and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
                 ]
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]

@@ -6,7 +6,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 
 
-__title__   = "Taggapaluza"
+__title__   = "Button 1"
 __doc__     = """
 Version = 00.00.01
 Date    = 2025-10-27
@@ -41,7 +41,6 @@ from Autodesk.Revit.DB import *
 
 #.NET Imports
 import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
 
 

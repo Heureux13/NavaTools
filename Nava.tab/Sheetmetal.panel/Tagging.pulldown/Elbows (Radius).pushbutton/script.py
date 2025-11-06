@@ -40,9 +40,8 @@ Author: Jose Nava
 from Autodesk.Revit.DB import *
 
 #.NET Imports
-import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
+import clr
 
 
 # Variables

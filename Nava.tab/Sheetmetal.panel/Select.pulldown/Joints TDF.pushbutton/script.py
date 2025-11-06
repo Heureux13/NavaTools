@@ -22,15 +22,14 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize
+from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from tag_duct import TagDuct
 from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
-import clr
-clr.AddReference('System')
 from System.Collections.Generic import List
+import clr
 
 
 # Variables
@@ -42,8 +41,18 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
+allowed_joints = {
+                    ("Straight", "TDF"),
+                    ("Straight", "TDC"),
+                    }
+
 ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Straight" and d.connector_0 == "TDC"]
+
+valid_keys = set(CONNECTOR_THRESHOLDS.keys())
+
+fil_ducts = [
+    d for d in ducts if (d.family, d.connector_0) in allowed_joints
+]
 
 RevitElement.select_many(uidoc, fil_ducts)
-# forms.alert("Selected {} TDF joints".format(len(fil_ducts)))
+forms.alert("Selected {} S&D ducts.".format(len(fil_ducts)))

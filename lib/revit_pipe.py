@@ -14,20 +14,14 @@ from Autodesk.Revit.DB import UnitTypeId
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-import re
 from enum import Enum
+import re
 import math
 
 # Variables
 app   = __revit__.Application #type: Application
 uidoc = __revit__.ActiveUIDocument #type: UIDocument
 doc   = revit.doc #type: Document
-view  = revit.active_view
-
-from Autodesk.Revit.DB import *
-from pyrevit import revit
-
-doc   = revit.doc
 view  = revit.active_view
 
 class RevitPipe:

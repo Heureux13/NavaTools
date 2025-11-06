@@ -7,13 +7,13 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "Joint Spiral"
+__title__   = "Button 3"
 __doc__     = """
-************************************************************************
+____________________________________________________
 Description:
 
-Selects all spiral joints.
-************************************************************************
+Placeholder
+____________________________________________________
 """
 
 # Imports
@@ -22,14 +22,14 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
+from revit_duct import RevitDuct, JointSize
 from tag_duct import TagDuct
 from revit_element import RevitElement
 
 #.NET Imports
 # ==================================================
-from System.Collections.Generic import List
 import clr
+from System.Collections.Generic import List
 
 
 # Variables
@@ -41,16 +41,4 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
-allowed_families = {"Tube", "Spiral Duct"}
-
-ducts = RevitDuct.all(doc, view)
-
-valid_keys = set(CONNECTOR_THRESHOLDS.keys())
-
-fil_ducts = [
-    d for d in ducts
-    if d.family in allowed_families and (d.family, d.connector_0) in valid_keys
-]
-
-RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} spiral ducts".format(len(fil_ducts)))
+print("Code placeholder.")
