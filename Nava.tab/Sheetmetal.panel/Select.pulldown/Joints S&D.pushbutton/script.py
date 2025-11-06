@@ -41,8 +41,16 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
+allowed_families = {"S&D", "Slip & Drive"}
+
 ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Straight" and d.connector_0 in ("Standing S&D", "Slip & Drive")]
+
+valid_keys = set(CONNECTOR_THRESHOLDS.keys())
+
+fil_ducts = [
+    d for d in ducts
+    if d.family in allowed_families and (d.family, d.connector_0) in valid_keys
+]
 
 RevitElement.select_many(uidoc, fil_ducts)
-# forms.alert("Selected {} S&D joints".format(len(fil_ducts)))
+forms.alert("Selected {} ducts from chosen families".format(len(fil_ducts)))

@@ -41,8 +41,16 @@ view  = revit.active_view
 
 # Main Code
 # ==================================================
+allowed_families = {"Tube", "Spiral Duct"}
+
 ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Tube" and d.connector_0 == "GRC_Swage-Female"]
+
+valid_keys = set(CONNECTOR_THRESHOLDS.keys())
+
+fil_ducts = [
+    d for d in ducts
+    if d.family in allowed_families and (d.family, d.connector_0) in valid_keys
+]
 
 RevitElement.select_many(uidoc, fil_ducts)
-# forms.alert("Selected {} spiral joints".format(len(fil_ducts)))
+forms.alert("Selected {} ducts from chosen families".format(len(fil_ducts)))
