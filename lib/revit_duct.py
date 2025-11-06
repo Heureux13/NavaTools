@@ -15,8 +15,8 @@ from Autodesk.Revit.DB import UnitTypeId
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-import re
 from enum import Enum
+import re
 
 # Variables
 app   = __revit__.Application #type: Application
@@ -32,6 +32,24 @@ CONNECTOR_THRESHOLDS = {
     ("Tube", "AccuFlange"): 120.0,
     ("Tube", "GRC_Swage-Female"): 120.0,
 }
+
+# Weight per cubic foot
+class MaterialDensity(Enum):
+    LINER   = (2.5, "lb/ft³", "Acoustic Liner")
+    WRAP    = (3.0, "lb/ft³", "Insulation Wrap")
+
+    @property
+    def density(self):
+        return self.value[0]
+    
+    @property
+    def unit(self):
+        return self.value[1]
+    
+    @property
+    def descrs(self):
+        return self.value[2]
+
 
 class JointSize(Enum):
     SHORT   = "short"
@@ -112,7 +130,24 @@ class RevitDuct:
         return self._get_param("NaviateDBS_HasInsulation")
 
     @property
-    def insulation(self):
+    def insulation_type(self):
+        raw = self._get_param("Insulation Specification")
+        if not raw or not isinstance(raw, str):
+            return MaterialDensity.LINER
+
+        text = raw.lower()
+
+        if re.search(r"\bliner\b", text):
+            return MaterialDensity.LINER
+
+        elif re.search(r"\binsulation\b", text):
+            return MaterialDensity.WRAP
+
+        else:
+            return MaterialDensity.LINER
+
+    @property
+    def insulation_thickness(self):
         raw = self._get_param("Insulation Specification")
         if not raw:
             forms.alert("its not raw")
@@ -127,29 +162,33 @@ class RevitDuct:
             except ValueError:
                 return None
         return None
-    
+
     @property
     def weight_insulation(self):
-        thic_in = self.insulation if self.insulation is not None else 0.00
+        thic_in = self.insulation_thickness or 0.0
         area_ft2 = self.metal_area
 
-        if thic_in is None or area_ft2 is None:
+        if area_ft2 is None:
+            print("Sheet metal area was parameter not there")
             return None
-        
-        density_pcf = 2.5
 
-        thic_ft = thic_in / 12.0
-        weight_lb = density_pcf * thic_ft * area_ft2
-        return weight_lb
-    
+        material = self.insulation_type
+        density_pcf = material.density
+
+        weight_lb = density_pcf * (thic_in / 12) * area_ft2
+        return round(weight_lb, 2)
+
     @property
     def weight_total(self):
         metal_lb = self.weight_metal
         insul_lb = self.weight_insulation
 
         if metal_lb is None:
-            forms.alert("No metal weight")
+            print("weight parameter not there")
             return None
+        
+        if not isinstance(insul_lb, (int, float)):
+            insul_lb = 0.0
         
         return round(metal_lb + insul_lb, 2)
     
