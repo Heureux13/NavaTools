@@ -9,7 +9,7 @@ the copyright holder."""
 
 __title__   = "DO NOT PRESS"
 __doc__     = """
-************************************************************************
+******************************************************************
 Description:
 
 Current goal fucntion of button is: select only spiral duct.
@@ -20,7 +20,7 @@ Odds are it will be constantly changing and not useful, its entire purpose
 is for the author to have a quick button to test whatever code they are working on.
 If you press it could do nothing, throw an error, or change something in your model.
 Once working, it will most likely be moved to a more permanent location.
-************************************************************************
+******************************************************************
 """
 
 # Imports
