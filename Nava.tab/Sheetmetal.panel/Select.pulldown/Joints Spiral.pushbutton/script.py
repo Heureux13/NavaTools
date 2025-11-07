@@ -43,7 +43,7 @@ output = script.get_output()
 # Main Code
 # ==================================================
 allowed_joints = {
-                    ("Tube", "GRC_Swage-Female")
+                    ("Tube", "GRC_Swage-Female"),
                     ("Spiral Duct", "Raw")
                 }
 
