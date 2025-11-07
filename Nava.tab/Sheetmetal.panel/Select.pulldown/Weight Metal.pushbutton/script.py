@@ -19,7 +19,7 @@ Gets the weight of whatever duct is selected, add them if more than one
 # Imports
 # ==================================================
 from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
+from pyrevit import revit, forms, script, DB
 from Autodesk.Revit.UI import UIDocument, TaskDialog
 from Autodesk.Revit.ApplicationServices import Application
 from revit_duct import RevitDuct, JointSize
@@ -38,6 +38,7 @@ app   = __revit__.Application           #type: Application
 uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
+output = script.get_output()
 
 # Main Code
 # ==================================================
@@ -46,14 +47,23 @@ ducts = RevitDuct.from_selection(uidoc, doc, view)
 if not ducts:
     forms.alert("Please select one or more ducts first.")
 else:
-    weights = [(d.id, d.weight_metal) for d in ducts if d.weight_metal is not None]
+    # keep both the ElementId and the weight
+    weights = [(d.element.Id, d.id, d.weight_metal) 
+            for d in ducts if d.weight_metal is not None]
 
-    if not weights:
-        forms.alert("No weight data found for the selected ducts.")
-    else:
-        lines = ["Duct {}: {:.2f} lbs".format(duct_id, w) for duct_id, w in weights]
-        total = sum(w for _, w in weights)
-        lines.append("----")
-        lines.append("Total weight: {:.2f} lbs".format(total))
+    # Section title
+    output.print_md("### Metal Weights")
 
-        print("\n".join(lines))
+    # Individual links with weights
+    for eid, id_int, w in weights:
+        output.print_md("- {}: {:.2f} lbs".format(output.linkify(eid), w))
+
+    # Select All link
+    all_ids = List[ElementId]()
+    for eid, _, _ in weights:
+        all_ids.Add(eid)
+    output.print_md("**{}**".format(output.linkify(all_ids)))
+
+    # Footer total
+    total = sum(w for _, _, w in weights)
+    output.print_md("**➡️ Total Metal weight: {:.2f} lbs**".format(total))

@@ -36,7 +36,18 @@ CONNECTOR_THRESHOLDS = {
     ("Spiral Duct", "Raw"): 120.00,
 }
 
-# Weight per cubic foot
+# Helpers
+# ==================================================
+def get_revit_year(app):
+    name = app.VersionName
+    for n in name.split():
+        if n.isdigit():
+            return int(n)
+    return None
+        
+
+# Classes
+# ==================================================
 class MaterialDensity(Enum):
     LINER   = (2.5, "lb/ft³", "Acoustic Liner")
     WRAP    = (3.0, "lb/ft³", "Insulation Wrap")
@@ -288,11 +299,20 @@ class RevitDuct:
             return []
 
         elements = [doc.GetElement(elid) for elid in sel_ids]
+        revit_year = get_revit_year(app)
 
-        duct = [
-            el for el in elements if isinstance(el, FabricationPart)
-                and el.Category
-                # .IntegerValue only works for 2023 and older, for newer need to use .Value
-                and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
-                ]
+        if revit_year <= 2023:
+            duct = [
+                el for el in elements if isinstance(el, FabricationPart)
+                    and el.Category
+                    and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
+                    ]
+            
+        else:
+            duct = [
+                el for el in elements if isinstance(el, FabricationPart)
+                    and el.Category
+                    and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
+                    ]
+            
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]

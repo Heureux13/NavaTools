@@ -26,10 +26,10 @@ Once working, it will most likely be moved to a more permanent location.
 # Imports
 # ==================================================
 from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
+from pyrevit import revit, forms, script, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize
+from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from tag_duct import TagDuct
 from revit_element import RevitElement
 
@@ -45,11 +45,32 @@ app   = __revit__.Application           #type: Application
 uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
+output = script.get_output()
 
 # Main Code
 # ==================================================
-ducts = RevitDuct.all(doc, view)
-fil_ducts  = [d for d in ducts if d.family == "Tube" and d.connector_0 == "GRC_Swage-Female"]
+ducts = RevitDuct.from_selection(uidoc, doc, view)
 
-RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} spiral joints".format(len(fil_ducts)))
+if not ducts:
+    forms.alert("Please select one or more ducts first.")
+else:
+    # keep both the ElementId and the weight
+    weights = [(d.element.Id, d.id, d.length) 
+            for d in ducts if d.length is not None]
+
+    # Section title
+    output.print_md("### Total Lengths")
+
+    # Individual links with weights
+    for eid, id_int, w in weights:
+        output.print_md("- {}: {:.2f} ft".format(output.linkify(eid), w))
+
+    # Select All link
+    all_ids = List[ElementId]()
+    for eid, _, _ in weights:
+        all_ids.Add(eid)
+    output.print_md("**{}**".format(output.linkify(all_ids)))
+
+    # Footer total
+    total = sum(w for _, _, w in weights)
+    output.print_md("**➡️ Total Duct Length: {:.2f} ft**".format(total))

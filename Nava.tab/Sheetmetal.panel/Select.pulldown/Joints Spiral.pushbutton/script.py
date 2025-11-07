@@ -19,7 +19,7 @@ Selects all spiral joints.
 # Imports
 # ==================================================
 from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
+from pyrevit import revit, forms, script, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
@@ -38,19 +38,26 @@ app   = __revit__.Application           #type: Application
 uidoc = __revit__.ActiveUIDocument      #type: UIDocument
 doc   = revit.doc                       #type: Document
 view  = revit.active_view
+output = script.get_output()
 
 # Main Code
 # ==================================================
-allowed_families = {"Tube", "Spiral Duct"}
+allowed_joints = {
+                    ("Tube", "Spiral Duct")
+                }
 
 ducts = RevitDuct.all(doc, view)
 
 valid_keys = set(CONNECTOR_THRESHOLDS.keys())
 
 fil_ducts = [
-    d for d in ducts
-    if d.family in allowed_families and (d.family, d.connector_0) in valid_keys
+    d for d in ducts if (d.family, d.connector_0) in valid_keys
 ]
 
-RevitElement.select_many(uidoc, fil_ducts)
+ids = List[ElementId]()
+for d in fil_ducts:
+    ids.Add(d.element.Id)
+
+uidoc.Selection.SetElementIds(ids)
+
 forms.alert("Selected {} spiral ducts".format(len(fil_ducts)))

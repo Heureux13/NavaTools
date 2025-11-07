@@ -96,3 +96,28 @@ class RevitElement:
                 
         if ids.Count > 0:
             uidoc.Selection.SetElementIds(ids)
+
+    # Print clickable links for each element and a 'Select All' link at the end.
+    @staticmethod
+    def print_select(output, elements, title="Title"):
+        if not elements:
+            output.print_md("No {} found.".format(title))
+            return
+
+        # Section title
+        output.print_md("### {}".format(title))
+
+        # Individual links
+        for d in elements:
+            output.print_md("- {}".format(output.linkify(d.id)))
+
+        # Select All link
+        all_ids = List[ElementId]()
+        for d in elements:
+            if d.id:
+                all_ids.Add(d.id)
+
+        output.print_md("**{}**".format(output.linkify(all_ids)))
+
+        # Footer total
+        output.print_md("**➡️{} of {} selected**".format(len(elements), title))
