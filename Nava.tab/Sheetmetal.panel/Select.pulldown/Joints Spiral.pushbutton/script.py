@@ -43,7 +43,8 @@ output = script.get_output()
 # Main Code
 # ==================================================
 allowed_joints = {
-                    ("Tube", "Spiral Duct")
+                    ("Tube", "GRC_Swage-Female")
+                    ("Spiral Duct", "Raw")
                 }
 
 ducts = RevitDuct.all(doc, view)
@@ -51,7 +52,7 @@ ducts = RevitDuct.all(doc, view)
 valid_keys = set(CONNECTOR_THRESHOLDS.keys())
 
 fil_ducts = [
-    d for d in ducts if (d.family, d.connector_0) in valid_keys
+    d for d in ducts if (d.family, d.connector_0) in allowed_joints
 ]
 
 ids = List[ElementId]()
