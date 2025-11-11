@@ -42,28 +42,30 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
-ducts = RevitDuct.from_selection(uidoc, doc, view)
+# ducts = RevitDuct.from_selection(uidoc, doc, view)
 
-if not ducts:
-    forms.alert("Please select one or more ducts first.")
-else:
-    # keep both the ElementId and the weight
-    weights = [(d.element.Id, d.id, d.weight_total) 
-            for d in ducts if d.weight_total is not None]
+# if not ducts:
+#     forms.alert("Please select one or more ducts first.")
+# else:
+#     # keep both the ElementId and the weight
+#     weights = [(d.element.Id, d.id, d.weight_total) 
+#             for d in ducts if d.weight_total is not None]
 
-    # Section title
-    output.print_md("### Total Weights")
+#     # Section title
+#     output.print_md("### Total Weights")
 
-    # Individual links with weights
-    for eid, id_int, w in weights:
-        output.print_md("- {}: {:.2f} lbs".format(output.linkify(eid), w))
+#     # Individual links with weights
+#     for eid, id_int, w in weights:
+#         output.print_md("- {}: {:.2f} lbs".format(output.linkify(eid), w))
 
-    # Select All link
-    all_ids = List[ElementId]()
-    for eid, _, _ in weights:
-        all_ids.Add(eid)
-    output.print_md("**{}**".format(output.linkify(all_ids)))
+#     # Select All link
+#     all_ids = List[ElementId]()
+#     for eid, _, _ in weights:
+#         all_ids.Add(eid)
+#     output.print_md("**{}**".format(output.linkify(all_ids)))
 
-    # Footer total
-    total = sum(w for _, _, w in weights)
-    output.print_md("**➡️ Total metal, insulation, and wrap weight: {:.2f} lbs**".format(total))
+#     # Footer total
+#     total = sum(w for _, _, w in weights)
+#     output.print_md("**➡️ Total metal, insulation, and wrap weight: {:.2f} lbs**".format(total))
+
+print("out of service, will be removed soom™")

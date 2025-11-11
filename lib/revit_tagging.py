@@ -19,16 +19,16 @@ import re
 # =======================================================================
 app   = __revit__.Application           #type: Application
 uidoc = __revit__.ActiveUIDocument      #type: UIDocument
-doc   = revit.doc                       #type: Document
-view  = revit.active_viewd
 
 #Class
 # =======================================================================
 class RevitXYZ(object):
     def __init__(self, element):
-        self.element = element
-        self.loc = getattr(element, "Location", None)
-        self.curve = getattr(self.loc, "Curve", None) if self.loc else None
+        self.element        = element
+        self.loc            = getattr(element, "Location", None)
+        self.curve          = getattr(self.loc, "Curve", None) if self.loc else None
+        self.doc            = revit.doc
+        self.view           = revit.active_view
 
     def start_point(self):
         if self.curve:
@@ -46,7 +46,57 @@ class RevitXYZ(object):
         return None
 
     def point_at(self, param=0.25):
-        #Get a point along the curve at a normalized parameter (0-1).
         if self.curve:
             return self.curve.Evaluate(param, True)
         return None
+    
+class RevitTagging:
+    def __init__(self, element):
+        self.element    = element
+        self.doc        = revit.doc
+        self.view       = revit.active_view
+        self.tag_syms   = (DB.FilteredElementCollector(self.doc)
+                                .OfClass(DB.FamilySymbol)
+                                .OfCategory(DB.BuiltInCategory.OST_FabricationDuctworkTags)
+                                .ToElements())
+
+    def get_label(self, name_contains):
+        tag = name_contains.lower()
+        for ts in self.tag_syms:
+            fam = getattr(ts, "Family", None)
+            fam_name = fam.Name if fam else ""
+            ts_name = getattr(ts, "Name", "")
+            pool = (fam_name + " " + ts_name).lower()
+            if tag in pool:
+                return ts
+        raise LookupError("No label found with: " + name_contains)
+
+    def already_tagged(self, elem, tag_fam_name):
+        existing = (DB.FilteredElementCollector(self.doc, self.view.Id)
+                    .OfClass(DB.IndependentTag)
+                    .ToElements())
+        for itag in existing:
+            try:
+                ref = itag.GetTaggedLocalElement()
+            except:
+                ref = None
+            if ref and ref.Id == elem.Id:
+                famname = itag.GetType().FamilyName
+                if famname == tag_fam_name:
+                    return True
+        return False
+
+    def place(self, element, tag_symbol, point_xyz):
+        ref = DB.Reference(element)
+        tag = DB.IndependentTag.Create(
+            self.doc,
+            self.view.Id,
+            ref,
+            False,
+            DB.TagMode.TM_ADDBY_CATEGORY,
+            DB.TagOrientation.Horizontal,
+            point_xyz
+        )
+        if tag_symbol and tag_symbol.Id:
+            tag.ChangeTypeId(tag_symbol.Id)
+        return tag
