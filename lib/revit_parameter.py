@@ -9,9 +9,14 @@
 
 # Imports
 # ==========================================================================
-from Autodesk.Revit.DB import *
-from Autodesk.Revit.DB import StorageType
-from pyrevit import revit, forms, DB
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitServices')   # optional if you use RevitServices, adjust as needed
+
+from Autodesk.Revit.DB import StorageType, ExternalDefinitionCreationOptions, BuiltInCategory, ElementId
+from Autodesk.Revit.DB import CategorySet  # only if you need it explicitly
+
+from pyrevit import revit, forms
 
 # Variables
 # ==========================================================================
@@ -20,7 +25,7 @@ doc = revit.doc
 
 # Class
 # ==========================================================================
-class RevitParameters:
+class RevitParameter:
     def __init__(self, doc, app):
         self.doc = doc
         self.app = app
@@ -63,11 +68,11 @@ class RevitParameters:
 
     def create_parameter(self,
                          name,                                                      # Name of Paramter
-                         param_type         = ParameterType.Text,                   # Type: Text, Number, YesNo, Length, etc.
+                         param_type         = None,                   # Type: Text, Number, YesNo, Length, etc.
                          group_name         = "MyGroup",                            # Name of the group
                          categories_to_bind = None,                                 # OST_Walls, OST_Doors, etc. defaluts to OST_DuctCurves
                          is_instance        = True,                                 # True = Instance, False = Type; parameter wise
-                         param_group        = BuiltInParameterGroup.PG_GENERAL):    # Group in properties palette, DATA, GEOMETRY, etc.
+                         param_group        = None):    # Group in properties palette, DATA, GEOMETRY, etc.
         
         # 1) Open shared parameter file
         spfile = self.app.OpenSharedParameterFile()
@@ -106,7 +111,7 @@ class RevitParameters:
 
         # 6) Insert or update binding
         binding_map = self.doc.ParameterBindings
-        if not binding_map.Insert(definition, binding, param_group):
-            binding_map.ReInsert(definition, binding, param_group)
+        if not binding_map.Insert(definition, binding):
+            binding_map.ReInsert(definition, binding)
 
         return definition
