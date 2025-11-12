@@ -50,6 +50,16 @@ class RevitXYZ(object):
             return self.curve.Evaluate(param, True)
         return None
     
+    def point_start(self, loc=("start", "end") point=("x", "z", "y")):
+        if isinstance(loc, int):
+            idx = 0 if loc == 0 else 1
+        else:
+            s = str(loc).strip().lower()
+            if s in ("start", "s" "0"):
+                idx = 0
+            
+
+
 class RevitTagging:
     def __init__(self, element):
         self.element    = element

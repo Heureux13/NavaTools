@@ -26,8 +26,8 @@ view  = revit.active_view
 
 # Define Constants
 CONNECTOR_THRESHOLDS = {
-    ("Straight", "TDC"): 56.25,
-    ("Straight", "TDF"): 56.25,
+    ("Straight", "TDC"): 56,
+    ("Straight", "TDF"): 56,
     ("Straight", "Standing S&D"): 59.00,
     ("Straight", "Slip & Drive"): 59.00,
     ("Straight", "S&D"): 59.00,
