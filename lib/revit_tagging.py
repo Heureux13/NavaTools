@@ -9,8 +9,8 @@
 
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
-from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
 from enum import Enum
 import re
@@ -49,15 +49,38 @@ class RevitXYZ(object):
         if self.curve:
             return self.curve.Evaluate(param, True)
         return None
-    
-    def point_start(self, loc=("start", "end") point=("x", "z", "y")):
+
+    def loc_point(self, loc="start", point="x"):
+        # resolve index
         if isinstance(loc, int):
             idx = 0 if loc == 0 else 1
         else:
             s = str(loc).strip().lower()
-            if s in ("start", "s" "0"):
+            if s in ("start", "s", "0"):
                 idx = 0
-            
+            elif s in ("end", "e", "1"):
+                idx = 1
+            else:
+                raise ValueError("loc must be 'start'/'end' or 0/1")
+
+        # require a curve
+        if not self.curve:
+            raise ValueError("Element has no Location.Curve")
+
+        pt = self.curve.GetEndPoint(idx)
+
+        # normalize point input and validate single letter
+        if isinstance(point, (tuple, list)):
+            if len(point) != 1:
+                raise ValueError("point must be a single entry 'x', 'y', or 'z'")
+            key = str(point[0]).lower()
+        else:
+            key = str(point).strip().lower()
+
+        if key not in ("x", "y", "z"):
+            raise ValueError("point must be 'x', 'y', or 'z'")
+
+        return {"x": pt.X, "y": pt.Y, "z": pt.Z}[key]
 
 
 class RevitTagging:

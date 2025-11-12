@@ -33,6 +33,7 @@ from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from tag_duct import TagDuct
 from revit_element import RevitElement
 from revit_parameter import RevitParameter
+from revit_tagging import RevitTagging, RevitXYZ
 
 #.NET Imports
 # ==================================================
@@ -50,8 +51,33 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
-test = RevitParameter
+ducts = RevitDuct.all(doc, view)
+fil_ducts  = [d for d in ducts if d.joint_size == JointSize.SHORT]
 
-value = test.get_parameter_value("Length")
 
-print(value)
+for i, el in enumerate(fil_ducts):
+    loc = getattr(el, "Location", None)
+    has_curve = getattr(loc, "Curve", None) is not None
+    is_loc_point = loc is not None and loc.GetType().Name == "LocationPoint"
+    bb = el.get_BoundingBox(None)
+    print(i, "Id:", el.Id.IntegerValue, "Category:", getattr(el, "Category", None).Name if getattr(el, "Category", None) else None,
+          "HasLocation:", loc is not None,
+          "HasCurve:", has_curve,
+          "IsLocationPoint:", is_loc_point,
+          "HasBBox:", bb is not None)
+    
+# # collect X for each filtered duct (skip ducts without curve)
+# xs = []
+# for el in fil_ducts:
+#     loc_obj = getattr(el, "Location", None)
+#     curve = getattr(loc_obj, "Curve", None)
+#     if curve:
+#         xs.append(curve.GetEndPoint(0).X)
+#     else:
+#         xs.append(None)
+
+# # select all filtered ducts (pass the list, not a single element)
+# RevitElement.select_many(uidoc, fil_ducts)
+
+# # output results
+# print(xs)

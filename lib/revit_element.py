@@ -14,8 +14,8 @@ from Autodesk.Revit.DB import *
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
-import clr
 from System.Collections.Generic import List
+import clr
 
 class RevitElement:
     def __init__(self, doc, view, element):
@@ -78,6 +78,7 @@ class RevitElement:
 
         uidoc.Selection.SetElementIds(id_list)
 
+    # Selects many elements
     @classmethod
     def select_many(cls, uidoc, elements):
         ids = List[ElementId]()
