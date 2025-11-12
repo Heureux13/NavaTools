@@ -32,6 +32,7 @@ from Autodesk.Revit.ApplicationServices import Application
 from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from tag_duct import TagDuct
 from revit_element import RevitElement
+from revit_parameter import RevitParameter
 
 #.NET Imports
 # ==================================================
@@ -49,28 +50,8 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
-ducts = RevitDuct.from_selection(uidoc, doc, view)
+test = RevitParameter
 
-if not ducts:
-    forms.alert("Please select one or more ducts first.")
-else:
-    # keep both the ElementId and the weight
-    weights = [(d.element.Id, d.id, d.length) 
-            for d in ducts if d.length is not None]
+value = test.get_parameter_value("Length")
 
-    # Section title
-    output.print_md("### Total Lengths")
-
-    # Individual links with weights
-    for eid, id_int, w in weights:
-        output.print_md("- {}: {:.2f} ft".format(output.linkify(eid), w))
-
-    # Select All link
-    all_ids = List[ElementId]()
-    for eid, _, _ in weights:
-        all_ids.Add(eid)
-    output.print_md("**{}**".format(output.linkify(all_ids)))
-
-    # Footer total
-    total = sum(w for _, _, w in weights)
-    output.print_md("**➡️ Total Duct Length: {:.2f} ft**".format(total))
+print(value)
