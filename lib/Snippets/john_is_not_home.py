@@ -5,7 +5,8 @@
 import datetime
 import sys
 import os
-import time, traceback
+import time
+import traceback
 
 
 log = r"C:\Users\heure\nudge_run.log"
@@ -30,11 +31,14 @@ ACTIVE_END_HOUR = 16       # exclusive
 DELTA_X = -1               # move left by 1 pixel
 LOG_PATH = os.path.join(os.path.expanduser("~"), "john_is_not_home.log")
 
+
 def now():
     return datetime.datetime.now()
 
+
 def in_active_window(dt: datetime.datetime) -> bool:
     return ACTIVE_START_HOUR <= dt.hour < ACTIVE_END_HOUR
+
 
 def append_log(msg: str):
     ts = now().strftime("%Y-%m-%d %H:%M:%S")
@@ -44,6 +48,7 @@ def append_log(msg: str):
     except Exception:
         # if logging fails, don't crash the nudge
         pass
+
 
 def nudge_left(delta_x: int):
     try:
@@ -56,12 +61,14 @@ def nudge_left(delta_x: int):
     except Exception as e:
         append_log(f"error moving mouse: {e}")
 
+
 def main():
     t = now()
     if in_active_window(t):
         nudge_left(DELTA_X)
     else:
         append_log("outside active window; no action")
+
 
 if __name__ == "__main__":
     main()

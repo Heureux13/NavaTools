@@ -7,8 +7,17 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "Getter"
-__doc__     = """
+import clr
+from System.Collections.Generic import List
+from revit_element import RevitElement
+from tag_duct import TagDuct
+from revit_duct import RevitDuct, JointSize
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
+from Autodesk.Revit.DB import *
+__title__ = "Getter"
+__doc__ = """
 ____________________________________________________
 Description:
 
@@ -19,25 +28,16 @@ ____________________________________________________
 
 # Imports
 # ==================================================
-from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize
-from tag_duct import TagDuct
-from revit_element import RevitElement
 
-#.NET Imports
+# .NET Imports
 # ==================================================
-from System.Collections.Generic import List
-import clr
 
 # Variables
 # ==================================================
-app   = __revit__.Application           #type: Application
-uidoc = __revit__.ActiveUIDocument      #type: UIDocument
-doc   = revit.doc                       #type: Document
-view  = revit.active_view
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+doc = revit.doc  # type: Document
+view = revit.active_view
 
 # Main Code
 # ==================================================
@@ -46,5 +46,5 @@ ducts = RevitDuct.from_selection(uidoc, doc)
 if not ducts:
     forms.alert("Please select one or more ducts first")
 else:
-    values = [str(d.total_weight) for d in ducts]
+    values = [str(d.weight_total) for d in ducts]
     forms.alert("\n".join(values))

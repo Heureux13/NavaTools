@@ -7,9 +7,25 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "DO NOT PRESS"
-__doc__     = """
-******************************************************************
+# Imports
+# ==================================================
+
+from System.Collections.Generic import List
+from revit_parameter import RevitParameter
+from revit_element import RevitElement
+from tag_duct import TagDuct
+from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
+from revit_tagging import RevitXYZ
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, script, DB
+from Autodesk.Revit.DB import *
+import clr
+
+# Button display information
+# =================================================
+__title__ = "DO NOT PRESS"
+__doc__ = """******************************************************************
 Description:
 
 Current goal fucntion of button is: select only spiral duct.
@@ -20,38 +36,52 @@ Odds are it will be constantly changing and not useful, its entire purpose
 is for the author to have a quick button to test whatever code they are working on.
 If you press it could do nothing, throw an error, or change something in your model.
 Once working, it will most likely be moved to a more permanent location.
-******************************************************************
-"""
-
-# Imports
-# ==================================================
-from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, script, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
-from tag_duct import TagDuct
-from revit_element import RevitElement
-from revit_parameter import RevitParameter
-
-#.NET Imports
-# ==================================================
-import clr
-from System.Collections.Generic import List
-
+******************************************************************"""
 
 # Variables
 # ==================================================
-app   = __revit__.Application           #type: Application
-uidoc = __revit__.ActiveUIDocument      #type: UIDocument
-doc   = revit.doc                       #type: Document
-view  = revit.active_view
+app = __revit__.Application             # type: Application
+uidoc = __revit__.ActiveUIDocument        # type: UIDocument
+doc = revit.doc                         # type: Document
+view = revit.active_view
 output = script.get_output()
 
 # Main Code
 # ==================================================
-test = RevitParameter
 
-value = test.get_parameter_value("Length")
+# Get selected duct(s)
+ducts = RevitDuct.from_selection(uidoc, doc)
 
-print(value)
+if not ducts:
+    forms.alert("please select one or more duct elements", exitscript=True)
+
+# Header of pop up message
+output.print_md("# XYZ of selected ducts")
+output.print_md(
+    "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
+
+for duct in ducts:
+    xyz = RevitXYZ(duct.element)
+
+    start = xyz.start_point()
+    mid = xyz.mid_point()
+    end = xyz.end_point()
+
+    # Print duct info
+    output.print_md("## Duct ID: {}".format(duct.id))
+
+    if start:
+        output.print_md("- Start Point: X: {:.2f}, Y: {:.2f}, Z: {:.2f}".format(
+            start.X, start.Y, start.Z
+        ))
+    if mid:
+        output.print_md("- Mid Point: X: {:.2f}, Y: {:.2f}, Z: {:.2f}".format(
+            mid.X, mid.Y, mid.Z
+        ))
+    if end:
+        output.print_md("- End Point: X: {:.2f}, Y: {:.2f}, Z: {:.2f}".format(
+            end.X, end.Y, end.Z
+        ))
+    output.print_md("\n---\n")
+
+output.print_md("**Total duct elements processed:** {}".format(len(ducts)))
