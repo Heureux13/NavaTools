@@ -82,6 +82,8 @@ for duct in ducts:
         output.print_md("- End Point: X: {:.2f}, Y: {:.2f}, Z: {:.2f}".format(
             end.X, end.Y, end.Z
         ))
+    diff = start.X - end.X if start and end else None
+    output.print_md("Difference is {:.3f} feet".format(diff))
     output.print_md("\n---\n")
 
 output.print_md("**Total duct elements processed:** {}".format(len(ducts)))
