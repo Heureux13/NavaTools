@@ -16,11 +16,9 @@ from Autodesk.Revit.DB import (
     TagOrientation,
     ElementId,
 )
-from Autodesk.Revit.DB import UnitTypeId
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
-from pyrevit import revit, forms, DB
 from enum import Enum
 import re
 
@@ -33,10 +31,6 @@ uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 # Classes
 # =======================================================================
 class RevitTagging:
-    """
-    Helpers for finding tag family symbols and placing IndependentTag on elements.
-    """
-
     def __init__(self, doc=None, view=None):
         self.doc = doc or revit.doc
         self.view = view or revit.active_view
@@ -49,7 +43,6 @@ class RevitTagging:
         )
 
     def get_label(self, name_contains):
-        """Return the first FamilySymbol whose family or type name contains the substring."""
         if not name_contains:
             raise ValueError("name_contains must be a non-empty string")
         needle = name_contains.lower()
@@ -63,10 +56,6 @@ class RevitTagging:
         raise LookupError("No label found with: " + name_contains)
 
     def already_tagged(self, elem, tag_fam_name):
-        """
-        Check whether the element already has a tag of the specified family name
-        in the current view. Returns True/False.
-        """
         if elem is None:
             return False
 
@@ -97,13 +86,6 @@ class RevitTagging:
         return False
 
     def place(self, element, tag_symbol, point_xyz):
-        """
-        Place an independent tag on the element at the given XYZ point.
-        - element: the Revit element to tag
-        - tag_symbol: FamilySymbol for the tag type (can be None to use default)
-        - point_xyz: XYZ location for the tag head
-        Returns the created IndependentTag instance.
-        """
         if element is None:
             raise ValueError("element is required")
 
@@ -121,3 +103,93 @@ class RevitTagging:
         if tag_symbol is not None and getattr(tag_symbol, "Id", None):
             tag.ChangeTypeId(tag_symbol.Id)
         return tag
+
+    def get_face_facing_view(self, element, prefer_point=None):
+        """
+        Return (Reference, centroid_XYZ) for the face of `element` that best faces
+        the current view (self.view). Optionally prefer faces near `prefer_point`.
+        Returns (None, None) if no suitable face found.
+
+        Notes:
+        - Uses Options.ComputeReferences = True so the returned Reference can be used
+        directly with IndependentTag.Create.
+        - This method handles GeometryInstance transforms.
+        """
+        from Autodesk.Revit.DB import Options, GeometryInstance, Solid, XYZ
+
+        if element is None:
+            return None, None
+
+        opt = Options()
+        opt.DetailLevel = getattr(self.view, "DetailLevel", None)
+        opt.ComputeReferences = True
+
+        try:
+            geom = element.get_Geometry(opt)
+        except Exception:
+            return None, None
+
+        world_dir = self.view.ViewDirection  # vector from view to model
+        best = (None, 1.0, float("inf"), None)  # (face, dot_with_view_dir, dist_to_pref, centroid)
+
+        def score_face(face, transform):
+            nonlocal best
+            try:
+                tri = face.Triangulate()
+                verts = list(tri.Vertices)
+                if not verts:
+                    return
+                # centroid (in local coords); transform if needed
+                cx = sum(v.X for v in verts) / len(verts)
+                cy = sum(v.Y for v in verts) / len(verts)
+                cz = sum(v.Z for v in verts) / len(verts)
+                centroid = XYZ(cx, cy, cz)
+                if transform is not None:
+                    centroid = transform.OfPoint(centroid)
+
+                # approximate normal using first triangle
+                try:
+                    a, b, c = verts[0], verts[1], verts[2]
+                    ab = b - a; ac = c - a
+                    n = ab.CrossProduct(ac)
+                    nlen = n.GetLength()
+                    if nlen == 0:
+                        ndot = 0.0
+                    else:
+                        ndot = n.Normalize().DotProduct(world_dir)
+                except Exception:
+                    ndot = 0.0
+
+                # prefer faces that face the view (ndot should be negative);
+                # smaller ndot (more negative) is better.
+                dist = centroid.DistanceTo(prefer_point) if prefer_point is not None else 0.0
+                # choose face with minimal ndot; tie-breaker is smaller distance
+                if ndot < best[1] or (abs(ndot - best[1]) < 1e-6 and dist < best[2]):
+                    best = (face, ndot, dist, centroid)
+            except Exception:
+                return
+
+        for g in geom:
+            if isinstance(g, GeometryInstance):
+                tr = g.Transform
+                try:
+                    inst_geo = g.GetInstanceGeometry()
+                except Exception:
+                    continue
+                for sg in inst_geo:
+                    if isinstance(sg, Solid) and sg.Volume > 0:
+                        for f in sg.Faces:
+                            score_face(f, tr)
+            else:
+                if isinstance(g, Solid) and g.Volume > 0:
+                    for f in g.Faces:
+                        score_face(f, None)
+
+        face, ndot, dist, centroid = best
+        if face is None:
+            return None, None
+
+        try:
+            return face.Reference, centroid
+        except Exception:
+            return None, centroid
