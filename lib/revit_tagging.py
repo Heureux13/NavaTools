@@ -32,42 +32,6 @@ uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 
 # Classes
 # =======================================================================
-
-class RevitXYZ(object):
-    def __init__(self, element):
-        self.element = element
-        self.loc = getattr(element, "Location", None)
-        self.curve = getattr(self.loc, "Curve", None) if self.loc else None
-        self.doc = revit.doc
-        self.view = revit.active_view
-
-    def start_point(self):
-        # Return start point of the curve or None.
-        if self.curve:
-            return self.curve.GetEndPoint(0)
-        return None
-
-    def end_point(self):
-        # Return end point of the curve or None.
-        if self.curve:
-            return self.curve.GetEndPoint(1)
-        return None
-
-    def mid_point(self):
-        # Return midpoint of the curve or None.
-        if self.curve:
-            return self.curve.Evaluate(0.5, True)
-        return None
-
-    def point_at(self, param=0.25):
-        # Return point at curve parameter (0..1) or None.
-        if self.curve:
-            # clamp param to [0,1]
-            t = max(0.0, min(1.0, float(param)))
-            return self.curve.Evaluate(t, True)
-        return None
-
-
 class RevitTagging:
     """
     Helpers for finding tag family symbols and placing IndependentTag on elements.

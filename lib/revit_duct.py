@@ -9,18 +9,21 @@ the copyright holder.
 
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
-from pyrevit import revit, forms, DB
+from pyrevit import revit, script, forms, DB
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 from enum import Enum
-import re
+from revit_xyz import RevitXYZ
 import logging
+import math
+import re
 
 # Variables
 app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
 view = revit.active_view
+output = script.get_output()
 
 # Logging
 log = logging.getLogger("RevitDuct")
@@ -39,14 +42,20 @@ CONNECTOR_THRESHOLDS = {
 
 # Helpers
 # ==================================================
-
-
 def get_revit_year(app):
     name = app.VersionName
     for n in name.split():
         if n.isdigit():
             return int(n)
     return None
+
+def is_plan_view(view):
+    # Check if the view is a floor plan
+    return view.ViewType == DB.ViewType.FloorPlan
+
+def is_section_view(view):
+    # Check if the view is a section
+    return view.ViewType == DB.ViewType.Section
 
 
 # Classes
@@ -75,19 +84,40 @@ class JointSize(Enum):
     INVALID = "invalid"
 
 
+class DuctAngleAllowance(Enum):
+    HORIZONTAL = (0, 15)      # 0-15 degrees from horizontal
+    VERTICAL = (75, 90)       # 75-90 degrees from horizontal (i.e., near vertical)
+    ANGLED = (16, 74)         # 16-74 degrees (neither horizontal nor vertical)
+
+    @property
+    def min_deg(self):
+        return self.value[0]
+
+    @property
+    def max_deg(self):
+        return self.value[1]
+
+    def contains(self, angle):
+        """Check if the given angle falls within this allowance."""
+        return self.min_deg <= abs(angle) <= self.max_deg
+
+
 class RevitDuct:
     def __init__(self, doc, view, element):
         self.doc = doc
         self.view = view
         self.element = element
 
+
     @property
     def id(self):
         return self.element.Id.Value if self.element else None
 
+
     @property
     def category(self):
         return self.element.Category.Name if self.element and self.element.Category else None
+
 
     def _get_param(self, name, unit=None, as_type="string", required=False):
         # helper gettin parameters from revit
@@ -119,14 +149,17 @@ class RevitDuct:
         except Exception:
             # convert any unexpected Revit exception into None to keep callers deterministic
             return None
+        
 
     @property
     def size(self):
         return self._get_param("Size")
+    
 
     @property
     def length(self):
         return self._get_param("NaviateDBS_D_Length", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def width(self):
@@ -135,34 +168,42 @@ class RevitDuct:
     @property
     def depth(self):
         return self._get_param("NaviateDBS_D_Depth", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def connector_0(self):
         return self._get_param("NaviateDBS_Connector0_EndCondition")
+    
 
     @property
     def connector_1(self):
         return self._get_param("NaviateDBS_Connector1_EndCondition")
+    
 
     @property
     def connector_2(self):
         return self._get_param("NaviateDBS_Connector2_EndCondition")
+    
 
     @property
     def duty(self):
         return self._get_param("System Abbreviation")
+    
 
     @property
     def family(self):
         return self._get_param("NaviateDBS_Family")
+    
 
     @property
     def is_double_wall(self):
         return self._get_param("NaviateDBS_HasDoubleWall")
+    
 
     @property
     def has_insulation(self):
         return self._get_param("NaviateDBS_HasInsulation")
+    
 
     @property
     def insulation_type(self):
@@ -180,6 +221,7 @@ class RevitDuct:
 
         else:
             return MaterialDensity.LINER
+        
 
     @property
     def insulation_thickness(self):
@@ -205,6 +247,7 @@ class RevitDuct:
             except ValueError:
                 return None
         return None
+    
 
     @property
     def weight_insulation(self):
@@ -221,6 +264,7 @@ class RevitDuct:
 
         weight_lb = density_pcf * (thic_in / 12) * area_ft2
         return round(weight_lb, 2)
+    
 
     @property
     def weight_total(self):
@@ -235,42 +279,52 @@ class RevitDuct:
             insul_lb = 0.0
 
         return round(metal_lb + insul_lb, 2)
+    
 
     @property
     def weight_metal(self):
         return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
+    
 
     @property
     def service(self):
         return self._get_param("NaviateDBS_ServiceName")
+    
 
     @property
     def inner_radius(self):
         return self._get_param("NaviateDBS_InnerRadius")
+    
 
     @property
     def extension_top(self):
         return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def extension_bottom(self):
         return self._get_param("NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def extension_right(self):
         return self._get_param("NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def extension_left(self):
         return self._get_param("NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
+    
 
     @property
     def area(self):
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+    
 
     @property
     def metal_area(self):
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+    
 
     @property
     def angle(self):
@@ -282,6 +336,7 @@ class RevitDuct:
             except ValueError:
                 return cleaned
         return None
+    
 
     @property
     # returns a four option varience, one being an error. these sizes and connections can bechanged easealy across various fabs
@@ -303,6 +358,7 @@ class RevitDuct:
             return JointSize.FULL
         if self.length > threshold:
             return JointSize.LONG
+        
 
     @classmethod
     def all(cls, doc, view=None):
@@ -312,15 +368,18 @@ class RevitDuct:
                     .WhereElementIsNotElementType()
                     .ToElements())
         return [cls(doc, view, el) for el in elements]
+    
 
     @classmethod
     def count(cls, doc, view=None):
         return len(cls.all(doc, view))
+    
 
     @classmethod
     def by_system_type(cls, doc, view, system_type_name):
         return [d for d in cls.all(doc, view)
                 if d.element.LookupParameter("System Type").AsString() == system_type_name]
+    
 
     @classmethod
     def from_selection(cls, uidoc, doc, view=None):

@@ -15,7 +15,7 @@ from revit_parameter import RevitParameter
 from revit_element import RevitElement
 from tag_duct import TagDuct
 from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
-from revit_tagging import RevitXYZ
+from revit_xyz import RevitXYZ
 from Autodesk.Revit.ApplicationServices import Application
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, script, DB
@@ -83,7 +83,10 @@ for duct in ducts:
             end.X, end.Y, end.Z
         ))
     diff = start.X - end.X if start and end else None
-    output.print_md("Difference is {:.3f} feet".format(diff))
+    if isinstance(diff, (int, float)):
+        output.print_md("Difference is {:.3f} feet".format(diff))
+    else:
+        output.print_md("Difference could not be determined.")
     output.print_md("\n---\n")
 
 output.print_md("**Total duct elements processed:** {}".format(len(ducts)))
