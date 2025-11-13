@@ -1,135 +1,159 @@
 # -*- coding: utf-8 -*-
-############################################################################
-# Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
-#
-# This code and associated documentation files may not be copied, modified,
-# distributed, or used in any form without the prior written permission of 
-# the copyright holder.
-############################################################################
+"""=========================================================================
+Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
-from Autodesk.Revit.DB import *
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder.
+========================================================================="""
+
+from Autodesk.Revit.DB import (
+    FilteredElementCollector,
+    FamilySymbol,
+    IndependentTag,
+    Reference,
+    TagMode,
+    TagOrientation,
+    ElementId,
+)
 from Autodesk.Revit.DB import UnitTypeId
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
+from pyrevit import revit, forms, DB
 from enum import Enum
 import re
 
 # Variables
 # =======================================================================
-app   = __revit__.Application           #type: Application
-uidoc = __revit__.ActiveUIDocument      #type: UIDocument
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 
-#Class
+
+# Classes
 # =======================================================================
+
 class RevitXYZ(object):
     def __init__(self, element):
-        self.element        = element
-        self.loc            = getattr(element, "Location", None)
-        self.curve          = getattr(self.loc, "Curve", None) if self.loc else None
-        self.doc            = revit.doc
-        self.view           = revit.active_view
+        self.element = element
+        self.loc = getattr(element, "Location", None)
+        self.curve = getattr(self.loc, "Curve", None) if self.loc else None
+        self.doc = revit.doc
+        self.view = revit.active_view
 
     def start_point(self):
+        # Return start point of the curve or None.
         if self.curve:
             return self.curve.GetEndPoint(0)
         return None
 
     def end_point(self):
+        # Return end point of the curve or None.
         if self.curve:
             return self.curve.GetEndPoint(1)
         return None
 
-    def midpoint(self):
+    def mid_point(self):
+        # Return midpoint of the curve or None.
         if self.curve:
             return self.curve.Evaluate(0.5, True)
         return None
 
     def point_at(self, param=0.25):
+        # Return point at curve parameter (0..1) or None.
         if self.curve:
-            return self.curve.Evaluate(param, True)
+            # clamp param to [0,1]
+            t = max(0.0, min(1.0, float(param)))
+            return self.curve.Evaluate(t, True)
         return None
-
-    def loc_point(self, loc="start", point="x"):
-        # resolve index
-        if isinstance(loc, int):
-            idx = 0 if loc == 0 else 1
-        else:
-            s = str(loc).strip().lower()
-            if s in ("start", "s", "0"):
-                idx = 0
-            elif s in ("end", "e", "1"):
-                idx = 1
-            else:
-                raise ValueError("loc must be 'start'/'end' or 0/1")
-
-        # require a curve
-        if not self.curve:
-            raise ValueError("Element has no Location.Curve")
-
-        pt = self.curve.GetEndPoint(idx)
-
-        # normalize point input and validate single letter
-        if isinstance(point, (tuple, list)):
-            if len(point) != 1:
-                raise ValueError("point must be a single entry 'x', 'y', or 'z'")
-            key = str(point[0]).lower()
-        else:
-            key = str(point).strip().lower()
-
-        if key not in ("x", "y", "z"):
-            raise ValueError("point must be 'x', 'y', or 'z'")
-
-        return {"x": pt.X, "y": pt.Y, "z": pt.Z}[key]
 
 
 class RevitTagging:
-    def __init__(self, element):
-        self.element    = element
-        self.doc        = revit.doc
-        self.view       = revit.active_view
-        self.tag_syms   = (DB.FilteredElementCollector(self.doc)
-                                .OfClass(DB.FamilySymbol)
-                                .OfCategory(DB.BuiltInCategory.OST_FabricationDuctworkTags)
-                                .ToElements())
+    """
+    Helpers for finding tag family symbols and placing IndependentTag on elements.
+    """
+
+    def __init__(self, doc=None, view=None):
+        self.doc = doc or revit.doc
+        self.view = view or revit.active_view
+        # Cache tag family symbols for fabrication ductwork tags
+        self.tag_syms = (
+            FilteredElementCollector(self.doc)
+            .OfClass(FamilySymbol)
+            .OfCategory(DB.BuiltInCategory.OST_FabricationDuctworkTags)
+            .ToElements()
+        )
 
     def get_label(self, name_contains):
-        tag = name_contains.lower()
+        """Return the first FamilySymbol whose family or type name contains the substring."""
+        if not name_contains:
+            raise ValueError("name_contains must be a non-empty string")
+        needle = name_contains.lower()
         for ts in self.tag_syms:
             fam = getattr(ts, "Family", None)
-            fam_name = fam.Name if fam else ""
-            ts_name = getattr(ts, "Name", "")
+            fam_name = fam.Name if fam is not None else ""
+            ts_name = getattr(ts, "Name", "") or ""
             pool = (fam_name + " " + ts_name).lower()
-            if tag in pool:
+            if needle in pool:
                 return ts
         raise LookupError("No label found with: " + name_contains)
 
     def already_tagged(self, elem, tag_fam_name):
-        existing = (DB.FilteredElementCollector(self.doc, self.view.Id)
-                    .OfClass(DB.IndependentTag)
-                    .ToElements())
-        for itag in existing:
+        """
+        Check whether the element already has a tag of the specified family name
+        in the current view. Returns True/False.
+        """
+        if elem is None:
+            return False
+
+        tags = (
+            FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(IndependentTag)
+            .ToElements()
+        )
+        for itag in tags:
+            # try to resolve the tagged element reference safely
             try:
-                ref = itag.GetTaggedLocalElement()
-            except:
-                ref = None
-            if ref and ref.Id == elem.Id:
-                famname = itag.GetType().FamilyName
+                tagged_el = itag.GetTaggedLocalElement()
+            except Exception:
+                # fallback: try TaggedLocalElementId or other APIs depending on Revit version
+                try:
+                    eid = itag.TaggedLocalElementId
+                    tagged_el = self.doc.GetElement(eid) if eid else None
+                except Exception:
+                    tagged_el = None
+
+            if tagged_el is None:
+                continue
+
+            if tagged_el.Id == elem.Id:
+                famname = itag.GetType().FamilyName if itag.GetType() is not None else ""
                 if famname == tag_fam_name:
                     return True
         return False
 
     def place(self, element, tag_symbol, point_xyz):
-        ref = DB.Reference(element)
-        tag = DB.IndependentTag.Create(
+        """
+        Place an independent tag on the element at the given XYZ point.
+        - element: the Revit element to tag
+        - tag_symbol: FamilySymbol for the tag type (can be None to use default)
+        - point_xyz: XYZ location for the tag head
+        Returns the created IndependentTag instance.
+        """
+        if element is None:
+            raise ValueError("element is required")
+
+        ref = Reference(element)
+        tag = IndependentTag.Create(
             self.doc,
             self.view.Id,
             ref,
             False,
-            DB.TagMode.TM_ADDBY_CATEGORY,
-            DB.TagOrientation.Horizontal,
-            point_xyz
+            TagMode.TM_ADDBY_CATEGORY,
+            TagOrientation.Horizontal,
+            point_xyz,
         )
-        if tag_symbol and tag_symbol.Id:
+        # change type if provided
+        if tag_symbol is not None and getattr(tag_symbol, "Id", None):
             tag.ChangeTypeId(tag_symbol.Id)
         return tag

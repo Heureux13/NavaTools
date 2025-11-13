@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-=========================================================================
+"""=========================================================================
 Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
 This code and associated documentation files may not be copied, modified,
 distributed, or used in any form without the prior written permission of
 the copyright holder.
-=========================================================================
-"""
-
+========================================================================="""
 
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
@@ -17,12 +14,16 @@ from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.ApplicationServices import Application
 from enum import Enum
 import re
+import logging
 
 # Variables
-app   = __revit__.Application #type: Application
-uidoc = __revit__.ActiveUIDocument #type: UIDocument
-doc   = revit.doc #type: Document
-view  = revit.active_view
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+doc = revit.doc  # type: Document
+view = revit.active_view
+
+# Logging
+log = logging.getLogger("RevitDuct")
 
 # Define Constants
 CONNECTOR_THRESHOLDS = {
@@ -38,38 +39,41 @@ CONNECTOR_THRESHOLDS = {
 
 # Helpers
 # ==================================================
+
+
 def get_revit_year(app):
     name = app.VersionName
     for n in name.split():
         if n.isdigit():
             return int(n)
     return None
-        
+
 
 # Classes
 # ==================================================
 class MaterialDensity(Enum):
-    LINER   = (2.5, "lb/ft³", "Acoustic Liner")
-    WRAP    = (3.0, "lb/ft³", "Insulation Wrap")
+    LINER = (1.5, "lb/ft³", "Acoustic Liner")
+    WRAP = (1.5, "lb/ft³", "Insulation Wrap")
 
     @property
     def density(self):
         return self.value[0]
-    
+
     @property
     def unit(self):
         return self.value[1]
-    
+
     @property
     def descrs(self):
         return self.value[2]
 
 
 class JointSize(Enum):
-    SHORT   = "short"
-    FULL    = "full"
-    LONG    = "long"
+    SHORT = "short"
+    FULL = "full"
+    LONG = "long"
     INVALID = "invalid"
+
 
 class RevitDuct:
     def __init__(self, doc, view, element):
@@ -84,29 +88,46 @@ class RevitDuct:
     @property
     def category(self):
         return self.element.Category.Name if self.element and self.element.Category else None
-    
-    def _get_param(self, name, unit=None, as_type="string"):
+
+    def _get_param(self, name, unit=None, as_type="string", required=False):
+        # helper gettin parameters from revit
         p = self.element.LookupParameter(name)
         if not p:
-            forms.alert("[MISSING PARAM] '{0}' on element {1}".format(name, self.id))
+            if required:
+                raise KeyError(
+                    "Missing parameter '{}' on element {}".format(name, self.element.Id))
             return None
-        if as_type == "double":
-            val = p.AsDouble()
-            if unit:
-                val = UnitUtils.ConvertFromInternalUnits(val, unit)
-            return round(val, 2)
-        if as_type == "int":
-            return p.AsInteger()
-        return p.AsString() or p.AsValueString()
-    
+
+        try:
+            if as_type == "double":
+                val = p.AsDouble()
+                if val is None:
+                    return None
+                if unit:
+                    val = UnitUtils.ConvertFromInternalUnits(val, unit)
+                return float(round(val, 2))
+            if as_type == "int":
+                return p.AsInteger()
+            if as_type == "elementid":
+                eid = p.AsElementId()
+                return eid if isinstance(eid, ElementId) else None
+            # fallback string: prefer AsString, then AsValueString
+            s = p.AsString()
+            if s is None:
+                s = p.AsValueString()
+            return s
+        except Exception:
+            # convert any unexpected Revit exception into None to keep callers deterministic
+            return None
+
     @property
     def size(self):
         return self._get_param("Size")
-    
+
     @property
     def length(self):
         return self._get_param("NaviateDBS_D_Length", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def width(self):
         return self._get_param("NaviateDBS_D_Width", unit=UnitTypeId.Inches, as_type="double")
@@ -114,7 +135,7 @@ class RevitDuct:
     @property
     def depth(self):
         return self._get_param("NaviateDBS_D_Depth", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def connector_0(self):
         return self._get_param("NaviateDBS_Connector0_EndCondition")
@@ -122,7 +143,7 @@ class RevitDuct:
     @property
     def connector_1(self):
         return self._get_param("NaviateDBS_Connector1_EndCondition")
-    
+
     @property
     def connector_2(self):
         return self._get_param("NaviateDBS_Connector2_EndCondition")
@@ -134,11 +155,11 @@ class RevitDuct:
     @property
     def family(self):
         return self._get_param("NaviateDBS_Family")
-    
+
     @property
     def is_double_wall(self):
         return self._get_param("NaviateDBS_HasDoubleWall")
-    
+
     @property
     def has_insulation(self):
         return self._get_param("NaviateDBS_HasInsulation")
@@ -164,10 +185,18 @@ class RevitDuct:
     def insulation_thickness(self):
         raw = self._get_param("Insulation Specification")
         if not raw:
-            forms.alert("its not raw")
+            # Use logger instead of print to avoid polluting pyRevit output
+            log.debug(
+                "Insulation Specification parameter not found or empty on element {}".format(self.id))
             return None
 
-        cleaned = raw.replace("″", '"').replace("”", '"').replace("’", "'")
+        # Normalise various unicode quotation marks likely to appear in insulation specs
+        # Original intent: convert smart inch and quote characters to plain ASCII for regex parsing
+        cleaned = (raw
+                   .replace(u"″", '"')   # double prime
+                   .replace(u"”", '"')   # right double quotation mark
+                   .replace(u"’", "'")  # right single quotation / apostrophe
+                   )
 
         match = re.search(r"([\d\.]+)", cleaned)
         if match:
@@ -183,7 +212,8 @@ class RevitDuct:
         area_ft2 = self.metal_area
 
         if area_ft2 is None:
-            print("Sheet metal area was parameter not there")
+            log.debug(
+                "Sheet metal area parameter not found on element {}".format(self.id))
             return None
 
         material = self.insulation_type
@@ -198,50 +228,50 @@ class RevitDuct:
         insul_lb = self.weight_insulation
 
         if metal_lb is None:
-            print("weight parameter not there")
+            log.debug("Weight parameter not found on element {}".format(self.id))
             return None
-        
+
         if not isinstance(insul_lb, (int, float)):
             insul_lb = 0.0
-        
+
         return round(metal_lb + insul_lb, 2)
-    
+
     @property
     def weight_metal(self):
         return self._get_param("NaviateDBS_Weight", unit=UnitTypeId.PoundsMass, as_type="double")
-    
+
     @property
     def service(self):
         return self._get_param("NaviateDBS_ServiceName")
-    
+
     @property
     def inner_radius(self):
         return self._get_param("NaviateDBS_InnerRadius")
-    
+
     @property
     def extension_top(self):
         return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def extension_bottom(self):
         return self._get_param("NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def extension_right(self):
         return self._get_param("NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def extension_left(self):
         return self._get_param("NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
-    
+
     @property
     def area(self):
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
-    
+
     @property
     def metal_area(self):
         return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
-    
+
     @property
     def angle(self):
         raw = self._get_param("Angle")
@@ -291,7 +321,7 @@ class RevitDuct:
     def by_system_type(cls, doc, view, system_type_name):
         return [d for d in cls.all(doc, view)
                 if d.element.LookupParameter("System Type").AsString() == system_type_name]
-    
+
     @classmethod
     def from_selection(cls, uidoc, doc, view=None):
         sel_ids = uidoc.Selection.GetElementIds()
@@ -304,15 +334,15 @@ class RevitDuct:
         if revit_year <= 2023:
             duct = [
                 el for el in elements if isinstance(el, FabricationPart)
-                    and el.Category
-                    and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
-                    ]
-            
+                and el.Category
+                and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
+            ]
+
         else:
             duct = [
                 el for el in elements if isinstance(el, FabricationPart)
-                    and el.Category
-                    and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
-                    ]
-            
+                and el.Category
+                and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
+            ]
+
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]
