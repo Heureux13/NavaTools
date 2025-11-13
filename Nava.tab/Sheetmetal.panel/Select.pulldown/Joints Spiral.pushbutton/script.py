@@ -44,7 +44,8 @@ output = script.get_output()
 # ==================================================
 allowed_joints = {
                     ("Tube", "GRC_Swage-Female"),
-                    ("Spiral Duct", "Raw")
+                    ("Spiral Duct", "Raw"),
+                    ("Spiral Pipe", "Raw")
                 }
 
 ducts = RevitDuct.all(doc, view)

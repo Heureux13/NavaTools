@@ -38,6 +38,7 @@ CONNECTOR_THRESHOLDS = {
     ("Tube", "AccuFlange"): 120.00,
     ("Tube", "GRC_Swage-Female"): 120.00,
     ("Spiral Duct", "Raw"): 120.00,
+    ("Spiral Pipe", "Raw"): 120.00,
 }
 
 # Helpers
