@@ -19,33 +19,18 @@ from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
 from revit_xyz import RevitXYZ
 import clr
 
-# Button display information
-# =================================================
 __title__ = "Joints Short Horizontal"
-__doc__ = """
-____________________________________________________
-Description:
-
-Returns the value of whatever is coded here, should be a parameter or
-something simple
-____________________________________________________
-"""
 
 # Variables
 # ==================================================
-app = __revit__.Application  # type: Application
-uidoc = __revit__.ActiveUIDocument  # type: UIDocuments 
-doc = revit.doc  # type: Documents  
-view = revit.active_view
+app = __revit__.Application        # type: Application
+uidoc = __revit__.ActiveUIDocument # type: UIDocument
+doc = revit.doc                    # type: Document
 output = script.get_output()
 
-# Main Code
+# View determination
 # ==================================================
-
-# Get the current view object
-view = revit.active_view  # or uidoc.ActiveView
-
-# Determine view type for filtering
+view = revit.active_view
 if view.ViewType == DB.ViewType.FloorPlan:
     current_view_type = "floor"
 elif view.ViewType == DB.ViewType.Section:
@@ -53,42 +38,64 @@ elif view.ViewType == DB.ViewType.Section:
 else:
     current_view_type = "other"
 
+# Collect ducts in view
+# ==================================================
 ducts = RevitDuct.all(doc, view)
-
 if not ducts:
-    forms.alert("Please select a duct element", exitscript=True)
+    forms.alert("No ducts found in the current view", exitscript=True)
 
+# Filtered results
+# ==================================================
 fil_ducts = []
- 
 for d in ducts:
-    output.print_md("Selected {} short joint(s)".format(len(fil_ducts)))
+    if d.joint_size != JointSize.SHORT:
+        continue
+    angle = RevitXYZ(d.element).straight_joint_degree()
+    if isinstance(angle, (int, float)):
+        abs_angle = abs(angle)
+        if current_view_type == "floor":
+            if DuctAngleAllowance.VERTICAL.contains(abs_angle):
+                continue
+        elif current_view_type == "section":
+            if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
+                continue
+    fil_ducts.append(d)
+
+# Select the filtered ducts  
+# ==================================================
+if fil_ducts:
+    all_ids = List[ElementId]()
     for d in fil_ducts:
-        angle = RevitXYZ(d.element).straight_joint_degree()
-        output.linkify(d.element)
-        output.print_md(" | Angle: {:.2f}".format(angle))
+        all_ids.Add(d.element.Id)
+    uidoc.Selection.SetElementIds(all_ids)
+else:
+    uidoc.Selection.SetElementIds(List[ElementId]())
 
-    if d.joint_size == JointSize.SHORT:
-        xyz = RevitXYZ(d.element)
-        angle = xyz.straight_joint_degree()
-        output.print_md("Duct ID: {}, Angle: {}".format(d.id, angle))
+# Out put results
+# ==================================================
+output.print_md("## Selected {} short joint(s)".format(len(fil_ducts)))
+output.print_md("---")
 
-        if isinstance(angle, (int, float)):
-            abs_angle = abs(angle)
-            
-            if current_view_type == "floor":
-                # Omit vertical ducts in plan view
+for d in fil_ducts:
+    eid = d.element.Id
+    angle = RevitXYZ(d.element).straight_joint_degree()
+    abs_angle = abs(angle)
 
-                if not DuctAngleAllowance.VERTICAL.contains(abs_angle):
-                    fil_ducts.append(d)
+    link_token = output.linkify(eid)
 
-            elif current_view_type == "section":
-                # Omit horizontal ducts in section view
-                if not DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
-                    fil_ducts.append(d)
-            else:
-                fil_ducts.append(d)
+    if link_token is None:
+        if isinstance(abs_angle, (int, float)):
+            output.print_md("  Angle: {:.2f}°".format(abs_angle))
         else:
-            fil_ducts.append(d)
+            output.print_md("  Angle: N/A")
+        output.print_md("------------------------------------------------")
+    else:
+        # link_token is printable inline
+        if isinstance(abs_angle, (int, float)):
+            output.print_md("- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
+        else:
+            output.print_md("- {}  |  Angle: N/A".format(link_token))
 
-RevitElement.select_many(uidoc, fil_ducts)
-output.print_md("Selected {} short joint(s)".format(len(fil_ducts)))
+# Add a single "Select all" link (optional)
+if fil_ducts:
+    output.print_md("**{}**".format(output.linkify(all_ids)))

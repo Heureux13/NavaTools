@@ -48,8 +48,7 @@ if not ducts:
     forms.alert("Please select one or more ducts first.")
 else:
     # keep both the ElementId and the weight
-    weights = [(d.element.Id, d.id, d.weight_metal) 
-            for d in ducts if d.weight_metal is not None]
+    weights = [(d.element.Id, d.id, d.weight_metal) for d in ducts if d.weight_metal is not None]
 
     # Section title
     output.print_md("### Metal Weights")
