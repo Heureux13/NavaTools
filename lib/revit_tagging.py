@@ -86,11 +86,28 @@ class RevitTagging:
                     return True
         return False
 
-    def place(self, element, tag_symbol, point_xyz):
-        if element is None:
-            raise ValueError("element is required")
+    def place_tag(self, element_or_ref, tag_symbol=None, point_xyz=None):
+        """
+        Create an IndependentTag attached to element or reference.
+        - element_or_ref: either a Revit Element or a Reference (face/element)
+        - tag_symbol: optional FamilySymbol to set type (pass symbol object)
+        - point_xyz: XYZ insertion point
+        Note: caller must open a Transaction before calling this method.
+        """
+        from Autodesk.Revit.DB import ElementId
 
-        ref = Reference(element)
+        if element_or_ref is None:
+            raise ValueError("element_or_ref is required")
+
+        # If caller passed an element wrapper (e.g. RevitDuct), accept .element
+        el_or_ref = getattr(element_or_ref, "element", element_or_ref)
+
+        # If el_or_ref is a Reference already, use it; otherwise build Reference(element)
+        if isinstance(el_or_ref, Reference):
+            ref = el_or_ref
+        else:
+            ref = Reference(el_or_ref)
+
         tag = IndependentTag.Create(
             self.doc,
             self.view.Id,
@@ -100,9 +117,13 @@ class RevitTagging:
             TagOrientation.Horizontal,
             point_xyz,
         )
-        # change type if provided
+
         if tag_symbol is not None and getattr(tag_symbol, "Id", None):
-            tag.ChangeTypeId(tag_symbol.Id)
+            # Accept either ElementId or FamilySymbol
+            new_id = tag_symbol.Id if hasattr(tag_symbol, "Id") else tag_symbol
+            if isinstance(new_id, ElementId):
+                tag.ChangeTypeId(new_id)
+
         return tag
 
     def get_face_facing_view(self, element, prefer_point=None):
@@ -131,11 +152,10 @@ class RevitTagging:
             return None, None
 
         world_dir = self.view.ViewDirection  # vector from view to model
-        # (face, dot_with_view_dir, dist_to_pref, centroid)
-        best = (None, 1.0, float("inf"), None)
+        # Use a list for mutability: [face, ndot, dist, centroid]
+        best = [None, 1.0, float("inf"), None]
 
         def score_face(face, transform):
-            nonlocal best
             try:
                 tri = face.Triangulate()
                 verts = list(tri.Vertices)
@@ -169,7 +189,10 @@ class RevitTagging:
                     prefer_point) if prefer_point is not None else 0.0
                 # choose face with minimal ndot; tie-breaker is smaller distance
                 if ndot < best[1] or (abs(ndot - best[1]) < 1e-6 and dist < best[2]):
-                    best = (face, ndot, dist, centroid)
+                    best[0] = face
+                    best[1] = ndot
+                    best[2] = dist
+                    best[3] = centroid
             except Exception:
                 return
 
