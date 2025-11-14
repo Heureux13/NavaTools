@@ -76,7 +76,7 @@ else:
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("0_length")
+tag = tagger.get_label("FabDuct_LENGTH_Tag_FIX")
 
 # Transaction
 # ==================================================
@@ -84,22 +84,24 @@ t = Transaction(doc, "Short Joints Tag")
 t.Start()
 try:
     for d in fil_ducts:
+        if tagger.already_tagged(d.element, tag.FamilyName):
+            continue
         ref, centroid = tagger.get_face_facing_view(d.element)
         if ref is not None and centroid is not None:
-            output.print_md("Placing tag at centroid: {}".format(centroid))
+            # output.print_md("Placing tag at centroid: {}".format(centroid))
             tagger.place_tag(ref, tag, centroid)
         else:
             loc = d.element.Location
             if hasattr(loc, "Point") and loc.Point is not None:
-                output.print_md("Placing tag at location point: {}".format(loc.Point))
+                # output.print_md("Placing tag at location point: {}".format(loc.Point))
                 tagger.place_tag(d.element, tag, loc.Point)
             elif hasattr(loc, "Curve") and loc.Curve is not None:
                 curve = loc.Curve
                 midpoint = curve.Evaluate(0.5, True)
-                output.print_md("Placing tag at curve midpoint: {}".format(midpoint))
+                # output.print_md("Placing tag at curve midpoint: {}".format(midpoint))
                 tagger.place_tag(d.element, tag, midpoint)
             else:
-                output.print_md("No valid tag placement point for element {}".format(d.element.Id))
+                # output.print_md("No valid tag placement point for element {}".format(d.element.Id))
                 continue
     t.Commit()
 except Exception as e:
