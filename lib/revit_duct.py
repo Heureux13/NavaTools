@@ -207,7 +207,7 @@ class RevitDuct:
 
     @property
     def family(self):
-        return self._get_param("Family")
+        return self._get_param("NaviateDBS_Family")
 
     @property
     def is_double_wall(self):
