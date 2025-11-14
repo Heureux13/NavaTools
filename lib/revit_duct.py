@@ -9,9 +9,12 @@ the copyright holder.
 
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
-from pyrevit import revit, script, forms, DB
 from Autodesk.Revit.UI import UIDocument
+from Autodesk.Revit.DB import FabricationPart
+import clr
+clr.AddReference("RevitAPI")
 from Autodesk.Revit.ApplicationServices import Application
+from pyrevit import DB, revit, script, forms
 from enum import Enum
 import logging
 import math
@@ -162,23 +165,41 @@ class RevitDuct:
 
     @property
     def width(self):
-        return self._get_param("NaviateDBS_D_Width", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param("Main Primary Width", unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def depth(self):
-        return self._get_param("NaviateDBS_D_Depth", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param("Main Primary Depth", unit=UnitTypeId.Inches, as_type="double")
 
     @property
+    # Accessed throught a paid version or an extended API
     def connector_0(self):
         return self._get_param("NaviateDBS_Connector0_EndCondition")
 
     @property
+    # Accessed throught a paid version or an extended API
     def connector_1(self):
         return self._get_param("NaviateDBS_Connector1_EndCondition")
 
     @property
+    # Accessed throught a paid version or an extended API
     def connector_2(self):
         return self._get_param("NaviateDBS_Connector2_EndCondition")
+    
+    @property
+    # Accessed throught a paid version or an extended API
+    def connector_0_length(self):
+        return self._get_param("NaviateDBS_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    # Accessed throught a paid version or an extended API
+    def connector_1_length(self):
+        return self._get_param("NaviateDBS_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    # Accessed throught a paid version or an extended API
+    def connector_2_length(self):
+        return self._get_param("NaviateDBS_left Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def duty(self):
@@ -186,7 +207,7 @@ class RevitDuct:
 
     @property
     def family(self):
-        return self._get_param("NaviateDBS_Family")
+        return self._get_param("Family")
 
     @property
     def is_double_wall(self):

@@ -24,18 +24,10 @@ import clr
 
 # Button display information
 # =================================================
-__title__ = "DO NOT PRESS"
+__title__ = "Parameters"
 __doc__ = """******************************************************************
 Description:
-
-Current goal fucntion of button is: select only spiral duct.
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-This button is for testin code snippets and ideas before implementing them.
-Odds are it will be constantly changing and not useful, its entire purpose
-is for the author to have a quick button to test whatever code they are working on.
-If you press it could do nothing, throw an error, or change something in your model.
-Once working, it will most likely be moved to a more permanent location.
+Shows all available parameters for selected element.
 ******************************************************************"""
 
 # Variables
@@ -48,36 +40,34 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
+selected_ids = uidoc.Selection.GetElementIds()
+if not selected_ids:
+    forms.alert("please select one or more elements", exitscript=True)
 
-# Get selected duct(s)
-ducts = RevitDuct.from_selection(uidoc, doc)
+output.print_md("## ELEMENT PARAMETERS\n")
+output.print_md("### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
 
-if not ducts:
-    forms.alert("please select one or more duct elements", exitscript=True)
-
-# Header of pop up message
-output.print_md("## SANDBOX AREA")
-output.print_md(
-    "### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
-
-for duct in ducts:
-    el = duct.element
-    print("---- Parameters for Duct ID {} ----".format(el.Id))
+for elid in selected_ids:
+    el = doc.GetElement(elid)
+    print("---- Parameters for Element ID {} ----".format(el.Id))
+    param_list = []
     for param in el.Parameters:
         try:
             name = param.Definition.Name
-            # Try to get value as string, fallback to value string
             value = param.AsString()
             if value is None:
                 value = param.AsValueString()
             if value is None:
-                # Try double or integer if string is not available
                 if param.StorageType == StorageType.Double:
                     value = param.AsDouble()
                 elif param.StorageType == StorageType.Integer:
                     value = param.AsInteger()
                 elif param.StorageType == StorageType.ElementId:
+                    
                     value = param.AsElementId()
-            print("{}: {}".format(name, value))
+            param_list.append((name, value))
         except Exception as ex:
-            print("{}: Error - {}".format(name, ex))
+            param_list.append((name, "Error - {}".format(ex)))
+    # Sort and print
+    for name, value in sorted(param_list, key=lambda x: x[0].lower()):
+        print("{}: {}".format(name, value))
