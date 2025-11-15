@@ -20,17 +20,24 @@ from revit_xyz import RevitXYZ
 from revit_tagging import RevitTagging
 import clr
 
-
+# Button info
+# ==================================================
+__title__ = "Joints Short Horizontal"
+__doc__ = """
+************************************************************************
+Description:
+Select all mitered elbows not 90° and all radius elbows.
+************************************************************************
+"""
 
 # Variables
 # ==================================================
-__title__ = "Joints Short Horizontal"
 app = __revit__.Application        # type: Application
-uidoc = __revit__.ActiveUIDocument # type: UIDocument
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc                    # type: Document
 output = script.get_output()
 view = revit.active_view
-tagger = RevitTagging(doc= doc, view=view)
+tagger = RevitTagging(doc=doc, view=view)
 
 # View determination
 # ==================================================
@@ -64,7 +71,7 @@ for d in ducts:
                 continue
     fil_ducts.append(d)
 
-# Select the filtered ducts  
+# Select the filtered ducts
 # ==================================================
 if fil_ducts:
     all_ids = List[ElementId]()
@@ -130,7 +137,8 @@ for d in fil_ducts:
     else:
         # link_token is printable inline
         if isinstance(abs_angle, (int, float)):
-            output.print_md("- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
+            output.print_md(
+                "- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
         else:
             output.print_md("- {}  |  Angle: N/A".format(link_token))
 
