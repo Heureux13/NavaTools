@@ -18,7 +18,7 @@ import math
 import re
 
 # Variables
-# ==================================================s   
+# ==================================================s
 app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
@@ -33,6 +33,8 @@ TOL = 1e-6
 
 # Class logic
 # ==================================================
+
+
 class RevitXYZ(object):
     def __init__(self, element):
         self.element = element
@@ -94,7 +96,7 @@ class RevitXYZ(object):
 
         length = math.sqrt(dx**2 + dy**2 + dz**2)
         return round(length, 2)
-    
+
         # Geometry helpers
     def _get_geometry_solids(self):
         """Return a list of Solid objects found in the element's geometry."""
@@ -249,7 +251,8 @@ class RevitXYZ(object):
 
         if chosen is None:
             # fallback: choose largest face by area
-            infos_sorted = sorted(infos, key=lambda i: (i.get('area') or 0.0), reverse=True)
+            infos_sorted = sorted(infos, key=lambda i: (
+                i.get('area') or 0.0), reverse=True)
             chosen = infos_sorted[0] if infos_sorted else None
 
         if not chosen:
@@ -262,7 +265,8 @@ class RevitXYZ(object):
             return (face, None, None)
 
         # normalize normal
-        mag = (normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z) ** 0.5
+        mag = (normal.X * normal.X + normal.Y *
+               normal.Y + normal.Z * normal.Z) ** 0.5
         if mag == 0:
             return (face, None, centroid)
         nu = XYZ(normal.X / mag, normal.Y / mag, normal.Z / mag)
@@ -296,13 +300,15 @@ class RevitXYZ(object):
         except Exception:
             # older/newer API iterator variations
             try:
-                conns = list(elem.MEPModel.ConnectorManager.Connectors.ForwardIterator())
+                conns = list(
+                    elem.MEPModel.ConnectorManager.Connectors.ForwardIterator())
             except Exception:
                 return None
         # prefer explicit flow direction
         for c in conns:
             try:
-                fd = getattr(c, "FlowDirection", None) or getattr(c, "Direction", None)
+                fd = getattr(c, "FlowDirection", None) or getattr(
+                    c, "Direction", None)
             except Exception:
                 fd = None
             if fd is not None:
@@ -327,7 +333,8 @@ class RevitXYZ(object):
         if conns:
             try:
                 bb = elem.get_BoundingBox(None)
-                anchor = (bb.Min + bb.Max) * 0.5 if bb is not None else conns[0].Origin
+                anchor = (bb.Min + bb.Max) * \
+                    0.5 if bb is not None else conns[0].Origin
             except Exception:
                 anchor = conns[0].Origin
             return min(conns, key=lambda c: (c.Origin - anchor).GetLength())
@@ -353,7 +360,8 @@ class RevitXYZ(object):
             # fallback to triangulation perimeter (may include interior verts)
             try:
                 tris = face.Triangulate()
-                verts = [tris.get_Vertex(i) for i in range(tris.NumberOfVertices)]
+                verts = [tris.get_Vertex(i)
+                         for i in range(tris.NumberOfVertices)]
                 # keep unique
                 unique = []
                 for p in verts:
@@ -369,11 +377,13 @@ class RevitXYZ(object):
             vdir = active_view.ViewDirection
         except Exception:
             vdir = active_view.GetOrientation().ForwardDirection
-        view_up = getattr(active_view, "UpDirection", None) or active_view.GetOrientation().UpDirection
+        view_up = getattr(active_view, "UpDirection",
+                          None) or active_view.GetOrientation().UpDirection
         view_right = view_up.CrossProduct(vdir).Normalize()
         view_up = view_up.Normalize()
         # project, find min X
-        proj = [(p.DotProduct(view_right), p.DotProduct(view_up), p) for p in corners_world]
+        proj = [(p.DotProduct(view_right), p.DotProduct(view_up), p)
+                for p in corners_world]
         min_x = min(p[0] for p in proj)
         # choose point with minimum X; if multiple, choose min Y among them
         candidates = [p for p in proj if abs(p[0] - min_x) < 1e-9]
@@ -390,7 +400,8 @@ class RevitXYZ(object):
         faces = []
         if geom is None:
             return None
-        def collect(g, xform = None):
+
+        def collect(g, xform=None):
             from Autodesk.Revit.DB import Solid, GeometryInstance, Transform
             if g is None:
                 return
@@ -415,7 +426,8 @@ class RevitXYZ(object):
         if not faces:
             return None, None
         conn_pt = connector.Origin
-        best = min(faces, key=lambda fr: self.nearest_point_on_face(fr[0], fr[1], conn_pt).GetLength())
+        best = min(faces, key=lambda fr: self.nearest_point_on_face(
+            fr[0], fr[1], conn_pt).GetLength())
         return best  # (face, transform)
 
     def nearest_point_on_face(self, face, transform, pt):
@@ -454,13 +466,15 @@ class RevitXYZ(object):
         # compute face normal (approx via triangle)
         try:
             tris = face.Triangulate()
-            a = tris.get_Vertex(0); b = tris.get_Vertex(1); c = tris.get_Vertex(2)
+            a = tris.get_Vertex(0)
+            b = tris.get_Vertex(1)
+            c = tris.get_Vertex(2)
             normal = (b - a).CrossProduct(c - a).Normalize()
             if transform:
                 normal = transform.OfVector(normal).Normalize()
         except Exception:
             # fallback: compute via two edges from perimeter
-            normal = XYZ(0,0,1)
+            normal = XYZ(0, 0, 1)
         insertion = corner + normal * tag_offset
         return insertion, None
 
@@ -469,3 +483,269 @@ class RevitXYZ(object):
     # if insertion:
     #     # create/move tag here (ElementTransformUtils.MoveElement or IndependentTag creation)
     #     pass
+
+    # =========================================
+    # Transition / Reducer analysis (FOT/FOB/CL/FOS)
+    # =========================================
+    def _get_connectors(self, elem=None):
+        if elem is None:
+            elem = self.element
+        # Try common connector access patterns across MEP and Fabrication
+        for path in [
+            "MEPModel.ConnectorManager.Connectors",
+            "ConnectorManager.Connectors",
+        ]:
+            try:
+                obj = elem
+                for attr in path.split('.'):
+                    obj = getattr(obj, attr)
+                # Try to iterate
+                try:
+                    return list(obj)
+                except Exception:
+                    try:
+                        it = obj.ForwardIterator()
+                        items = []
+                        while it.MoveNext():
+                            items.append(it.Current)
+                        return items
+                    except Exception:
+                        continue
+            except Exception:
+                continue
+        return []
+
+    def _end_faces_by_opposition(self, infos):
+        """Pick two end faces whose normals are near-opposite and with large areas.
+
+        Returns (info_in, info_out) as dicts from faces_info(). If multiple, picks the best pair.
+        """
+        if not infos:
+            return (None, None)
+        # Precompute unit normals
+        normed = []
+        for i, inf in enumerate(infos):
+            n = inf.get('normal')
+            if n is None:
+                continue
+            mag = (n.X*n.X + n.Y*n.Y + n.Z*n.Z) ** 0.5
+            if mag < TOL:
+                continue
+            nu = XYZ(n.X/mag, n.Y/mag, n.Z/mag)
+            normed.append((i, inf, nu))
+        if not normed:
+            return (None, None)
+        # Find pair with most opposite normals and largest combined area
+        best = None
+        best_score = -1e9
+        for i in range(len(normed)):
+            for j in range(i+1, len(normed)):
+                ii, info_i, ni = normed[i]
+                jj, info_j, nj = normed[j]
+                dp = ni.DotProduct(nj)
+                # Opposition score: more negative dp is better (approach -1)
+                opp = -dp
+                area_sum = (info_i.get('area') or 0.0) + \
+                    (info_j.get('area') or 0.0)
+                score = opp*1000.0 + area_sum
+                if score > best_score:
+                    best_score = score
+                    best = (info_i, info_j)
+        if best is None:
+            return (None, None)
+        return best
+
+    def _face_top_bottom_elev(self, face, transform=None):
+        """Return (zmin, zmax, centroid) in world coords for a planar face perimeter."""
+        if face is None:
+            return (None, None, None)
+        pts = self.face_perimeter_points(face, transform)
+        if not pts:
+            # fallback to triangulation vertices
+            try:
+                tris = face.Triangulate()
+                pts = [tris.get_Vertex(i)
+                       for i in range(tris.NumberOfVertices)]
+            except Exception:
+                return (None, None, None)
+        zvals = [p.Z for p in pts]
+        zmin = min(zvals)
+        zmax = max(zvals)
+        # centroid approx
+        cx = sum(p.X for p in pts)/float(len(pts))
+        cy = sum(p.Y for p in pts)/float(len(pts))
+        cz = sum(p.Z for p in pts)/float(len(pts))
+        return (zmin, zmax, XYZ(cx, cy, cz))
+
+    def analyze_transition(self, active_view=None):
+        """Analyze a transition/reducer element for FOT/FOB/CL and side offset (FOS).
+
+        Returns a dict with keys:
+        - vertical_class: 'FOT'|'FOB'|'CL'|None
+        - vertical_shift_ft: signed float (+up, -down)
+        - vertical_arrow: string like '↑2"' or '↓1-1/2"' or ''
+        - side_class: 'FOS'|None
+        - side_dir: 'left'|'right'|None
+        - side_shift_ft: signed float (+right, -left)
+        - side_arrow: '→2"'|'←1"' or ''
+        - in_centroid, out_centroid: XYZ
+        - debug: dict with supporting values
+        """
+        if active_view is None:
+            active_view = self.view
+
+        infos = self.faces_info()
+        fi, fo = self._end_faces_by_opposition(infos)
+        if fi is None or fo is None:
+            return {'vertical_class': None, 'vertical_shift_ft': 0.0, 'vertical_arrow': '',
+                    'side_class': None, 'side_dir': None, 'side_shift_ft': 0.0, 'side_arrow': '',
+                    'in_centroid': None, 'out_centroid': None,
+                    'debug': {'reason': 'no end faces', 'num_faces': len(infos)}}
+
+        # If we can find inlet connector, use the nearest end face as inlet
+        inlet = self.find_inlet_connector(self.element)
+        if inlet is not None:
+            # pick face whose centroid is nearest to inlet origin
+            ci = fi.get('centroid')
+            co = fo.get('centroid')
+            if ci is not None and co is not None:
+                di = (ci - inlet.Origin).GetLength()
+                do = (co - inlet.Origin).GetLength()
+                if do < di:
+                    fi, fo = fo, fi
+
+        # Pull top/bottom elevations and centroids
+        zmin_i, zmax_i, ci = self._face_top_bottom_elev(fi.get('face'))
+        zmin_o, zmax_o, co = self._face_top_bottom_elev(fo.get('face'))
+        if None in (zmin_i, zmax_i, zmin_o, zmax_o, ci, co):
+            return {'vertical_class': None, 'vertical_shift_ft': 0.0, 'vertical_arrow': '',
+                    'side_class': None, 'side_dir': None, 'side_shift_ft': 0.0, 'side_arrow': '',
+                    'in_centroid': ci, 'out_centroid': co, 'debug': {'reason': 'missing z bounds'}}
+
+        # Vertical classification (tolerance: 0.01 ft ~ 1/8 inch)
+        TOL_FT = 0.01
+        top_diff = abs(zmax_o - zmax_i)
+        bot_diff = abs(zmin_o - zmin_i)
+        top_same = top_diff < TOL_FT
+        bot_same = bot_diff < TOL_FT
+        vertical_class = None
+        if top_same and bot_same:
+            # Both top and bottom equal = centerline reducer
+            vertical_class = 'CL'
+        elif top_same and not bot_same:
+            vertical_class = 'FOT'
+        elif bot_same and not top_same:
+            vertical_class = 'FOB'
+        elif abs(top_diff - bot_diff) < TOL_FT:
+            # Top and bottom move by same amount = centerline (parallel offset)
+            vertical_class = 'CL'
+
+        # Vertical center shift (signed): +up, -down
+        cz_i = 0.5*(zmax_i + zmin_i)
+        cz_o = 0.5*(zmax_o + zmin_o)
+        v_shift = cz_o - cz_i
+
+        def _gcd(a, b):
+            a = int(abs(a))
+            b = int(abs(b))
+            while b:
+                a, b = b, a % b
+            return a if a != 0 else 1
+
+        def fmt_inches(ft_val):
+            sign = 1.0 if ft_val >= 0 else -1.0
+            inches = abs(ft_val) * 12.0
+            # round to nearest 1/16"
+            inc16 = round(inches * 16.0) / 16.0
+            if abs(inc16) < 1e-4:
+                return ''
+            # build string like 2-3/4"
+            whole = int(math.floor(inc16 + 1e-6))
+            frac = inc16 - whole
+
+            def frac_str(x):
+                denom = 16
+                num = int(round(x * denom))
+                if num == 0:
+                    return ''
+                # reduce fraction
+                g = _gcd(num, denom)
+                return "{}/{}".format(num//g, denom//g)
+            if whole > 0 and frac > 1e-6:
+                s = "{}-{}\"".format(whole, frac_str(frac))
+            elif whole > 0:
+                s = "{}\"".format(whole)
+            else:
+                s = "{}\"".format(frac_str(frac))
+            return (u"↑" + s) if sign > 0 else (u"↓" + s)
+
+        v_arrow = fmt_inches(v_shift)
+
+        # Side (horizontal) offset relative to flow direction
+        axis = (co - ci)
+        # project onto horizontal plane
+        zunit = XYZ(0, 0, 1)
+        axis_h = axis - zunit.Multiply(axis.DotProduct(zunit))
+        try:
+            ah_len = axis_h.GetLength()
+        except Exception:
+            ah_len = 0.0
+        if ah_len < 1e-8:
+            # vertical part; choose arbitrary right vector
+            right = XYZ(1, 0, 0)
+        else:
+            axis_hu = XYZ(axis_h.X/ah_len, axis_h.Y/ah_len, axis_h.Z/ah_len)
+            # right-hand rule: right = flow x up
+            right = axis_hu.CrossProduct(zunit)
+            rlen = right.GetLength()
+            if rlen > 1e-8:
+                right = XYZ(right.X/rlen, right.Y/rlen, right.Z/rlen)
+            else:
+                right = XYZ(1, 0, 0)
+        lateral = (co - ci).DotProduct(right)
+        side_class = 'FOS' if abs(lateral) > 1e-5 else None
+        side_dir = 'right' if lateral > 0 else (
+            'left' if lateral < 0 else None)
+
+        def fmt_lr(ft_val):
+            if abs(ft_val) < 1e-5:
+                return ''
+            inches = abs(ft_val) * 12.0
+            inc16 = round(inches * 16.0) / 16.0
+            whole = int(math.floor(inc16 + 1e-6))
+            frac = inc16 - whole
+
+            def frac_str(x):
+                denom = 16
+                num = int(round(x * denom))
+                if num == 0:
+                    return ''
+                g = _gcd(num, denom)
+                return "{}/{}".format(num//g, denom//g)
+            if whole > 0 and frac > 1e-6:
+                mag = "{}-{}\"".format(whole, frac_str(frac))
+            elif whole > 0:
+                mag = "{}\"".format(whole)
+            else:
+                mag = "{}\"".format(frac_str(frac))
+            return (u"→" + mag) if ft_val > 0 else (u"←" + mag)
+
+        side_arrow = fmt_lr(lateral)
+
+        return {
+            'vertical_class': vertical_class,
+            'vertical_shift_ft': v_shift,
+            'vertical_arrow': v_arrow,
+            'side_class': side_class,
+            'side_dir': side_dir,
+            'side_shift_ft': lateral,
+            'side_arrow': side_arrow,
+            'in_centroid': ci,
+            'out_centroid': co,
+            'debug': {
+                'zmin_in': zmin_i, 'zmax_in': zmax_i,
+                'zmin_out': zmin_o, 'zmax_out': zmax_o,
+                'top_diff_ft': top_diff,
+                'bot_diff_ft': bot_diff,
+            }
+        }

@@ -39,63 +39,102 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
+
 # Collect ducts in view
 # ==================================================
 ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
-# Duct families
+# Dictionary: Family name: tag name
 # ==================================================
 duct_families = {
-    "radius bend": tagger.get_label("_jfn_radius_bend"),
-    "elbow": tagger.get_label("_jfn_elbow"),
-    "conical tap - wdamper": tagger.get_label("_jfn_conical"),
-    "boot tap - wdamper": tagger.get_label("_jfn_boot_tap"),
-    "8inch long coupler wdamper": tagger.get_label("_jfn_coupler"),
-    "cap": tagger.get_label("_jfn_cap"),
+    "radius bend": tagger.get_label("_jfn_size"),
+    "elbow": tagger.get_label("_jfn_size"),
+    "conical tap - wdamper": tagger.get_label("_jfn_size"),
+    "boot tap - wdamper": tagger.get_label("_jfn_size"),
+    "8inch long coupler wdamper": tagger.get_label("_jfn_size"),
+    "cap": tagger.get_label("_jfn_size"),
+    "square bend": tagger.get_label("_jfn_size"),
+    "tee": tagger.get_label("_jfn_size"),
+    "transition": tagger.get_label("_jfn_size"),
+    "mitred offset": tagger.get_label("_jfn_size"),
+    "radius offset": tagger.get_label("_jfn_size"),
+    "tap": tagger.get_label("_jfn_size"),  # May not be in UMI fabrication duct
 }
 
 # Filter ducts
 # ==================================================
-rb_ducts = [d for d in ducts if d.family == "Radius Bend"]
-e_ducts = [d for d in ducts if d.family == "Elbow"]
-conical = [fil_loop == "conicaltap - wdamper"]
-
-fil_ducts = rb_ducts + e_ducts
-
-
-# Tag Dictionary
-# ==================================================
-rb_tag = tagger.get_label("_jfn_radius_bend")
-e_tag = tagger.get_label("_jfn_elbow")
+# Ensure d.family is not None before calling strip()
+dic_ducts = [d for d in ducts if d.family and d.family.strip().lower()
+             in duct_families]
 
 # Transaction
 # ==================================================
-t = Transaction(doc, "Radius Elbows Tagging")
+t = Transaction(doc, "General Tagging")
 t.Start()
 try:
-    for d in fil_ducts:
-        if (tagger.already_tagged(d.element, rad_tag.FamilyName) or
-                tagger.already_tagged(d.element, el_tag.FamilyName)):
+    for d in dic_ducts:
+        tag = duct_families.get(d.family.strip().lower())
+        if not tag:
+            output.print_md("No tag found for family: '{}'".format(d.family))
+            continue
+        if tagger.already_tagged(d.element, tag.Family.Name):
+            output.print_md(
+                "Element {} is already tagged.".format(d.element.Id))
+            continue
+
+        # Check if the element is a FabricationPart
+        if isinstance(d.element, DB.FabricationPart):
+            output.print_md(
+                "Processing FabricationPart: {}".format(d.element.Id))
+            # Prefer a face reference that faces the current view
+            face_ref, face_pt = tagger.get_face_facing_view(
+                d.element, prefer_point=None)
+            if face_ref is not None and face_pt is not None:
+                tagger.place_tag(face_ref, tag, face_pt)
+                continue
+
+            # Fallback: use element bounding box center in this view (model coords)
+            bbox = d.element.get_BoundingBox(view)
+            if bbox is not None:
+                center = (bbox.Min + bbox.Max) / 2.0
+                output.print_md(
+                    "Placing tag at bbox center: {}".format(center))
+                tagger.place_tag(d.element, tag, center)
+                continue
+
+            output.print_md(
+                "No valid geometry or bbox for FabricationPart: {}".format(d.element.Id))
             continue
         else:
+            # Handle other elements with location
             loc = d.element.location
-            if hasattr(loc, "Point") and loc.Point is not None:
-                if d.family == "Radius Bend":
-                    tagger.place_tag(d.element, rb_tag, loc.Point)
-                else:
-                    tagger.place_tag(d.element, e_tag, loc.Point)
-            elif hasattr(loc, "Curve") and loc.Curve is not None:
-                curve = loc.Curve
-                midpoint = curve.Evaluate(0.5, True)
-                if d.family == "Radius Bend":
-                    tagger.place_tag(d.element, rb_tag, midpoint)
-                else:
-                    tagger.place_tag(d.element, e_tag, midpoint)
-            else:
+            if not loc:
+                output.print_md(
+                    "Element {} has no location.".format(d.element.Id))
+                # Use element bounding box center if available
+                bbox = d.element.get_BoundingBox(view)
+                if bbox is not None:
+                    center = (bbox.Min + bbox.Max) / 2.0
+                    output.print_md(
+                        "Placing tag at bbox center: {}".format(center))
+                    tagger.place_tag(d.element, tag, center)
+                    continue
                 continue
+            if hasattr(loc, "Point") and loc.Point is not None:
+                output.print_md("Placing tag at point: {}".format(loc.Point))
+                tagger.place_tag(d.element, tag, loc.Point)
+            elif hasattr(loc, "Curve") and loc.Curve is not None:
+                midpoint = loc.Curve.Evaluate(0.5, True)
+                output.print_md(
+                    "Placing tag at curve midpoint: {}".format(midpoint))
+                tagger.place_tag(d.element, tag, midpoint)
+            else:
+                output.print_md(
+                    "No valid location found for element: {}".format(d.element.Id))
     t.Commit()
+    output.print_md("Transaction committed successfully.")
 except Exception as e:
     output.print_md("Tag placement error: {}".format(e))
     t.RollBack()
@@ -103,9 +142,8 @@ except Exception as e:
 
 # Out put results
 # ==================================================
-output.print_md("## Selected {} short joint(s)".format(len(fil_ducts)))
+output.print_md("## Selected {} short joint(s)".format(len(dic_ducts)))
 output.print_md("---")
 
-RevitElement.select_many(uidoc, rad_ducts)
-forms.alert("Selected {} radius elbows\nSelected {} Mitered elbows not 90°".format(
-    len(rad_ducts), len(el_ducts)))
+RevitElement.select_many(uidoc, dic_ducts)
+output.print_md("Selected {} joints of duct".format(len(dic_ducts)))

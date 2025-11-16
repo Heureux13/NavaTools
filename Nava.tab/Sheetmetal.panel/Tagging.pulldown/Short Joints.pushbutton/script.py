@@ -83,7 +83,7 @@ else:
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("FabDuct_LENGTH_Tag_FIX")
+tag = tagger.get_label("_jfn_size")
 
 # Transaction
 # ==================================================
