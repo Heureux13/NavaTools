@@ -22,7 +22,7 @@ import clr
 
 # Button info
 # ==================================================
-__title__ = "Elbows Radius"
+__title__ = "Fittings"
 __doc__ = """
 ************************************************************************
 Description:
@@ -49,18 +49,19 @@ if not ducts:
 # Dictionary: Family name: tag name
 # ==================================================
 duct_families = {
-    "radius bend": tagger.get_label("_jfn_size"),
-    "elbow": tagger.get_label("_jfn_size"),
-    "conical tap - wdamper": tagger.get_label("_jfn_size"),
-    "boot tap - wdamper": tagger.get_label("_jfn_size"),
-    "8inch long coupler wdamper": tagger.get_label("_jfn_size"),
-    "cap": tagger.get_label("_jfn_size"),
-    "square bend": tagger.get_label("_jfn_size"),
-    "tee": tagger.get_label("_jfn_size"),
-    "transition": tagger.get_label("_jfn_size"),
-    "mitred offset": tagger.get_label("_jfn_size"),
-    "radius offset": tagger.get_label("_jfn_size"),
-    "tap": tagger.get_label("_jfn_size"),  # May not be in UMI fabrication duct
+    "radius bend": (tagger.get_label("_jfn_size"), 0.5),
+    "elbow": (tagger.get_label("_jfn_size"), 0.5),
+    "conical tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
+    "boot tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
+    "8inch long coupler wdamper": (tagger.get_label("_jfn_size"), 0.5),
+    "cap": (tagger.get_label("_jfn_size"), 0.5),
+    "square bend": (tagger.get_label("_jfn_size"), 0.5),
+    "tee": (tagger.get_label("_jfn_size"), 0.5),
+    "transition": (tagger.get_label("_jfn_size"), 0.5),
+    "mitred offset": (tagger.get_label("_jfn_size"), 0.5),
+    "radius offset": (tagger.get_label("_jfn_size"), 0.5),
+    # May not be in UMI fabrication duct
+    "tap": (tagger.get_label("_jfn_size"), 0.5),
 }
 
 # Filter ducts
@@ -75,7 +76,7 @@ t = Transaction(doc, "General Tagging")
 t.Start()
 try:
     for d in dic_ducts:
-        tag = duct_families.get(d.family.strip().lower())
+        tag, dic_duct_loc = duct_families.get(d.family.strip().lower())
         if not tag:
             output.print_md("No tag found for family: '{}'".format(d.family))
             continue
@@ -126,7 +127,7 @@ try:
                 output.print_md("Placing tag at point: {}".format(loc.Point))
                 tagger.place_tag(d.element, tag, loc.Point)
             elif hasattr(loc, "Curve") and loc.Curve is not None:
-                midpoint = loc.Curve.Evaluate(0.5, True)
+                midpoint = loc.Curve.Evaluate(dic_duct_loc, True)
                 output.print_md(
                     "Placing tag at curve midpoint: {}".format(midpoint))
                 tagger.place_tag(d.element, tag, midpoint)
