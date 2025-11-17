@@ -32,9 +32,9 @@ Select all mitered elbows not 90° and all radius elbows.
 
 # Variables
 # ==================================================
-app = __revit__.Application        # type: Application
+app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
-doc = revit.doc                    # type: Document
+doc = revit.doc  # type: Document
 output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
@@ -83,7 +83,7 @@ else:
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("_jfn_size")
+tag = tagger.get_label("_umi_size")
 
 # Transaction
 # ==================================================
@@ -137,8 +137,7 @@ for d in fil_ducts:
     else:
         # link_token is printable inline
         if isinstance(abs_angle, (int, float)):
-            output.print_md(
-                "- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
+            output.print_md("- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
         else:
             output.print_md("- {}  |  Angle: N/A".format(link_token))
 

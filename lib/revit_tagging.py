@@ -31,6 +31,21 @@ uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 
 # Classes
 # =======================================================================
+class TagConfig(object):
+    def __init__(self, names, tags, predicate=None, location_func=None):
+        # names: tuple/list of accepted family names (lowercase)
+        # tags: list of (tag, x_loc, z_offset)
+        # predicate: callable(RevitDuct) -> bool
+        # location_func: callable(RevitDuct, x_loc, z_offset) -> DB.XYZ or None
+        self.names = tuple(n.strip().lower() for n in names)
+        self.tags = tags
+        self.predicate = predicate if predicate else (lambda d: True)
+        self.location_func = location_func
+
+    def matches(self, fam_name):
+        return fam_name in self.names
+
+
 class RevitTagging:
     def __init__(self, doc=None, view=None):
         self.doc = doc or revit.doc
@@ -81,7 +96,9 @@ class RevitTagging:
                 continue
 
             if tagged_el.Id == elem.Id:
-                famname = itag.GetType().FamilyName if itag.GetType() is not None else ""
+                famname = (
+                    itag.GetType().FamilyName if itag.GetType() is not None else ""
+                )
                 if famname == tag_fam_name:
                     return True
         return False
@@ -125,6 +142,20 @@ class RevitTagging:
                 tag.ChangeTypeId(new_id)
 
         return tag
+
+    @staticmethod
+    def midpoint_location(d, x_loc, z_offset):
+        loc = d.element.Location
+        if hasattr(loc, "Curve") and loc.Curve:
+            pt = loc.Curve.Evaluate(x_loc, True)
+            return DB.XYZ(pt.X, pt.Y, pt.Z + z_offset)
+        # fallback to bbox center
+        v = getattr(d, "view", None) or revit.active_view
+        bbox = d.element.get_BoundingBox(v) if v else None
+        if bbox:
+            center = (bbox.Min + bbox.Max) / 2.0
+            return DB.XYZ(center.X, center.Y, center.Z + z_offset)
+        return None
 
     def get_face_facing_view(self, element, prefer_point=None):
         """
@@ -185,8 +216,11 @@ class RevitTagging:
 
                 # prefer faces that face the view (ndot should be negative);
                 # smaller ndot (more negative) is better.
-                dist = centroid.DistanceTo(
-                    prefer_point) if prefer_point is not None else 0.0
+                dist = (
+                    centroid.DistanceTo(prefer_point)
+                    if prefer_point is not None
+                    else 0.0
+                )
                 # choose face with minimal ndot; tie-breaker is smaller distance
                 if ndot < best[1] or (abs(ndot - best[1]) < 1e-6 and dist < best[2]):
                     best[0] = face
@@ -221,7 +255,9 @@ class RevitTagging:
         except Exception:
             return None, centroid
 
-    def get_tag_point_on_face(self, offset_ft=0.1, prefer_largest=True, preferred_direction=None):
+    def get_tag_point_on_face(
+        self, offset_ft=0.1, prefer_largest=True, preferred_direction=None
+    ):
         """Return a (face, point_xyz) suitable for placing a tag.
 
         - offset_ft: distance in feet to offset the tag point along the face normal so the tag is readable.
@@ -251,7 +287,7 @@ class RevitTagging:
 
                 if pd is not None:
                     for info in infos:
-                        n = info.get('normal')
+                        n = info.get("normal")
                         if n is None:
                             continue
                         mag = (n.X**2 + n.Y**2 + n.Z**2) ** 0.5
@@ -266,16 +302,17 @@ class RevitTagging:
 
             if chosen is None:
                 # fallback: largest area
-                infos_sorted = sorted(infos, key=lambda i: (
-                    i.get('area') or 0.0), reverse=True)
+                infos_sorted = sorted(
+                    infos, key=lambda i: (i.get("area") or 0.0), reverse=True
+                )
                 chosen = infos_sorted[0] if infos_sorted else None
 
             if not chosen:
                 return (None, None)
 
-            face = chosen.get('face')
-            centroid = chosen.get('centroid')
-            normal = chosen.get('normal')
+            face = chosen.get("face")
+            centroid = chosen.get("centroid")
+            normal = chosen.get("normal")
             if centroid is None or normal is None:
                 return (face, None)
 
