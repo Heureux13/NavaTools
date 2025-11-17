@@ -7,18 +7,18 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
+import re
+import math
+import logging
+from enum import Enum
+from pyrevit import DB, revit, script, forms
+from Autodesk.Revit.ApplicationServices import Application
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.DB import FabricationPart
 import clr
 clr.AddReference("RevitAPI")
-from Autodesk.Revit.ApplicationServices import Application
-from pyrevit import DB, revit, script, forms
-from enum import Enum
-import logging
-import math
-import re
 
 # Variables
 app = __revit__.Application  # type: Application
@@ -185,24 +185,44 @@ class RevitDuct:
     # Accessed throught a paid version or an extended API
     def connector_2(self):
         return self._get_param("NaviateDBS_Connector2_EndCondition")
-    
-    @property
-    # Accessed throught a paid version or an extended API
-    def connector_0_length(self):
-        return self._get_param("NaviateDBS_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    # @property
+    # # Accessed throught a paid version or an extended API
+    # def connector_0_length(self):
+    #     return self._get_param("NaviateDBS_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    # @property
+    # # Accessed throught a paid version or an extended API
+    # def connector_1_length(self):
+    #     return self._get_param("NaviateDBS_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    # @property
+    # # Accessed throught a paid version or an extended API
+    # def connector_2_length(self):
+    #     return self._get_param("NaviateDBS_left Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
-    # Accessed throught a paid version or an extended API
-    def connector_1_length(self):
-        return self._get_param("NaviateDBS_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+    def extension_top(self):
+        return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
-    # Accessed throught a paid version or an extended API
-    def connector_2_length(self):
-        return self._get_param("NaviateDBS_left Extension", unit=UnitTypeId.Inches, as_type="double")
+    def extension_bottom(self):
+        return self._get_param("NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def extension_right(self):
+        return self._get_param("NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def extension_left(self):
+        return self._get_param("NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def duty(self):
+        return self._get_param("System Abbreviation")
+
+    @property
+    def offset_width(self):
         return self._get_param("System Abbreviation")
 
     @property
@@ -300,22 +320,6 @@ class RevitDuct:
     @property
     def inner_radius(self):
         return self._get_param("NaviateDBS_InnerRadius")
-
-    @property
-    def extension_top(self):
-        return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
-
-    @property
-    def extension_bottom(self):
-        return self._get_param("NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
-
-    @property
-    def extension_right(self):
-        return self._get_param("NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
-
-    @property
-    def extension_left(self):
-        return self._get_param("NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def area(self):

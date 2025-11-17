@@ -43,7 +43,6 @@ ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
-
 # --- Configuration Objects -------------------------------------------------
 # Example custom location function (optional)
 configs = [
@@ -53,7 +52,8 @@ configs = [
             (tagger.get_label("_umi_radius_inner"), 0.5, 0.0),
         ],
         # Example: only radius elbows not exactly 90°
-        predicate=lambda d: d.angle is None or abs(d.angle - 90.0) > 0.01,
+        predicate=lambda d: d.angle is None or (
+            abs(d.angle - 90.0) > 0.01 and abs(d.angle - 45.0) > 0.01),
         location_func=mid_p,
     ),
     TagConfig(
@@ -71,7 +71,16 @@ configs = [
             (tagger.get_label("_umi_angle"), 0.5, 0.0),
         ],
         # Only elbows longer than 12"
-        predicate=lambda d: d.length and d.length > 12,
+        predicate=lambda d: (
+            any([
+                (d.connector_0 is not None and
+                 ((d.connector_0 == "TDF" and abs(d.extension_bottom - 6) > 0.01) or
+                  (d.connector_0 == "S&D" and abs(d.extension_bottom - 4) > 0.01))),
+                (d.connector_1 is not None and
+                 ((d.connector_1 == "TDF" and abs(d.extension_top - 6) > 0.01) or
+                  (d.connector_1 == "S&D" and abs(d.extension_top - 4) > 0.01))),
+            ])
+        ),
     ),
     TagConfig(
         names=(
@@ -83,15 +92,27 @@ configs = [
         ),
         tags=[(tagger.get_label("_umi_size"), 0.5, 0.0)],
     ),
+
     TagConfig(
         names=("tee",),
         tags=[
-            (tagger.get_label("_umi_extension_bottom"), 0.5, 0.0),
-            (tagger.get_label("_umi_extension_left"), 0.5, 0.0),
-            (tagger.get_label("_umi_extension_right"), 0.5, 0.0),
+            (tagger.get_label("_umi_extension_bottom"), 0.0, 1.0),
+            (tagger.get_label("_umi_extension_left"), 0.5, 0.5),
+            (tagger.get_label("_umi_extension_right"), 1.0, 0.0),
         ],
-        # Example: only tag tees that have a right extension
-        predicate=lambda d: d.extension_right is not None,
+        predicate=lambda d: (
+            any([
+                (d.connector_0 is not None and d.extension_bottom is not None and
+                 ((d.connector_0 == "TDF" and abs(d.extension_bottom - 6) > 0.01) or
+                  (d.connector_0 == "S&D" and abs(d.extension_bottom - 4) > 0.01))),
+                (d.connector_1 is not None and d.extension_right is not None and
+                 ((d.connector_1 == "TDF" and abs(d.extension_right - 6) > 0.01) or
+                  (d.connector_1 == "S&D" and abs(d.extension_right - 4) > 0.01))),
+                (d.connector_2 is not None and d.extension_left is not None and
+                 ((d.connector_2 == "TDF" and abs(d.extension_left - 6) > 0.01) or
+                  (d.connector_2 == "S&D" and abs(d.extension_left - 4) > 0.01))),
+            ])
+        ),
     ),
     TagConfig(
         names=("reducer", "transition"),
@@ -101,7 +122,7 @@ configs = [
         names=("mitred offset", "offset"),
         tags=[(tagger.get_label("_umi_offset"), 0.5, 0.0)],
         # Example: only offsets with length > 10"
-        predicate=lambda d: d.length and d.length > 10,
+        # predicate=lambda d: d.length and d.length > 10,
     ),
 ]
 
@@ -109,10 +130,13 @@ configs = [
 target_ducts = []
 for d in ducts:
     fam = (d.family or "").strip().lower()
+    output.print_md("Checking family: '{}'".format(fam))  # Optional debug
     if not fam:
         continue
     for cfg in configs:
+        # output.print_md("Trying config: {}".format(cfg.names))  # Optional debug
         if cfg.matches(fam) and cfg.predicate(d):
+            # output.print_md("Matched config: {}".format(cfg.names))  # Optional debug
             target_ducts.append((d, cfg))
             break  # stop after first matching config
 
@@ -157,15 +181,18 @@ try:
             else:
                 loc = d.element.Location
                 if hasattr(loc, "Point") and loc.Point:
-                    loc_pt = DB.XYZ(loc.Point.X, loc.Point.Y, loc.Point.Z + z_offset)
+                    loc_pt = DB.XYZ(loc.Point.X, loc.Point.Y,
+                                    loc.Point.Z + z_offset)
                 elif hasattr(loc, "Curve") and loc.Curve:
                     curve_pt = loc.Curve.Evaluate(x_loc, True)
-                    loc_pt = DB.XYZ(curve_pt.X, curve_pt.Y, curve_pt.Z + z_offset)
+                    loc_pt = DB.XYZ(curve_pt.X, curve_pt.Y,
+                                    curve_pt.Z + z_offset)
                 else:
                     bbox = d.element.get_BoundingBox(view)
                     if bbox:
                         center = (bbox.Min + bbox.Max) / 2.0
-                        loc_pt = DB.XYZ(center.X, center.Y, center.Z + z_offset)
+                        loc_pt = DB.XYZ(center.X, center.Y,
+                                        center.Z + z_offset)
 
             if loc_pt:
                 tagger.place_tag(d.element, tag, loc_pt)
