@@ -13,7 +13,6 @@ the copyright holder."""
 from System.Collections.Generic import List
 from revit_parameter import RevitParameter
 from revit_element import RevitElement
-from tag_duct import TagDuct
 from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
 from revit_xyz import RevitXYZ
 from Autodesk.Revit.ApplicationServices import Application
@@ -45,7 +44,8 @@ if not selected_ids:
     forms.alert("please select one or more elements", exitscript=True)
 
 output.print_md("## ELEMENT PARAMETERS\n")
-output.print_md("### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
+output.print_md(
+    "### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
 
 for elid in selected_ids:
     el = doc.GetElement(elid)
@@ -63,7 +63,7 @@ for elid in selected_ids:
                 elif param.StorageType == StorageType.Integer:
                     value = param.AsInteger()
                 elif param.StorageType == StorageType.ElementId:
-                    
+
                     value = param.AsElementId()
             param_list.append((name, value))
         except Exception as ex:

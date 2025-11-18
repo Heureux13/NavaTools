@@ -59,8 +59,7 @@ duct_families = {
     "tee": (tagger.get_label("_jfn_size"), 0.5),
     "transition": (tagger.get_label("_jfn_size"), 0.5),
     "mitred offset": (tagger.get_label("_jfn_size"), 0.5),
-    "radius offset": (tagger.get_label("_jfn_size"), 0.5), z
-    # May not be in UMI fabrication duct
+    "radius offset": (tagger.get_label("_jfn_size"), 0.5),
     "tap": (tagger.get_label("_jfn_size"), 0.5),
 }
 

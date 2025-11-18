@@ -14,17 +14,16 @@ from Autodesk.Revit.ApplicationServices import Application
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB, script
-from revit_element import RevitElement
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
 from revit_xyz import RevitXYZ
-import clr
+
 
 __title__ = "Joints Short Horizontal"
 
 # Variables
 # ==================================================
 app = __revit__.Application        # type: Application
-uidoc = __revit__.ActiveUIDocument # type: UIDocument
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc                    # type: Document
 output = script.get_output()
 
@@ -61,7 +60,7 @@ for d in ducts:
                 continue
     fil_ducts.append(d)
 
-# Select the filtered ducts  
+# Select the filtered ducts
 # ==================================================
 if fil_ducts:
     all_ids = List[ElementId]()
@@ -92,7 +91,8 @@ for d in fil_ducts:
     else:
         # link_token is printable inline
         if isinstance(abs_angle, (int, float)):
-            output.print_md("- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
+            output.print_md(
+                "- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
         else:
             output.print_md("- {}  |  Angle: N/A".format(link_token))
 

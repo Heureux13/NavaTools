@@ -17,6 +17,7 @@ from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB import UnitTypeId
 from Autodesk.Revit.UI import UIDocument
 from Autodesk.Revit.DB import FabricationPart
+from revit_xyz import RevitXYZ
 import clr
 clr.AddReference("RevitAPI")
 
@@ -65,7 +66,7 @@ def is_section_view(view):
     return view.ViewType == DB.ViewType.Section
 
 
-# Classes
+# Material Density Class
 # ==================================================
 class MaterialDensity(Enum):
     LINER = (1.5, "lb/ft³", "Acoustic Liner")
@@ -84,6 +85,8 @@ class MaterialDensity(Enum):
         return self.value[2]
 
 
+# Joint Size Class
+# ====================================================
 class JointSize(Enum):
     SHORT = "short"
     FULL = "full"
@@ -91,6 +94,8 @@ class JointSize(Enum):
     INVALID = "invalid"
 
 
+# Duct Angle Allowance
+# ====================================================
 class DuctAngleAllowance(Enum):
     HORIZONTAL = (0, 15)      # 0-15 degrees from horizontal
     # 75-90 degrees from horizontal (i.e., near vertical)
@@ -110,6 +115,8 @@ class DuctAngleAllowance(Enum):
         return self.min_deg <= abs(angle) <= self.max_deg
 
 
+# Revut Duct Class
+# ============================================================
 class RevitDuct:
     def __init__(self, doc, view, element):
         self.doc = doc
@@ -414,3 +421,164 @@ class RevitDuct:
             ]
 
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]
+
+    @property
+    def offset_data(self):
+        """Cache and return offset calculations for the duct."""
+        if not hasattr(self, '_offset_data'):
+            all_connectors = list(self.element.ConnectorManager.Connectors)
+            c_0 = all_connectors[0] if len(all_connectors) > 0 else None
+            c_1 = all_connectors[1] if len(all_connectors) > 1 else None
+
+            if c_0 and c_1:
+                w_i = self.width_in
+                h_i = self.heigth_in
+                w_o = self.width_out or w_i
+                h_o = self.heigth_out or h_i
+
+                # Revit internal units (feet) -> inches
+                p0 = (c_0.Origin.X * 12.0, c_0.Origin.Y *
+                      12.0, c_0.Origin.Z * 12.0)
+                p1 = (c_1.Origin.X * 12.0, c_1.Origin.Y *
+                      12.0, c_1.Origin.Z * 12.0)
+
+                # Get coordinate system
+                try:
+                    cs = c_0.CoordinateSystem
+                    u_hat = (cs.BasisX.X, cs.BasisX.Y, cs.BasisX.Z)
+                    v_hat = (cs.BasisY.X, cs.BasisY.Y, cs.BasisY.Z)
+                except Exception:
+                    u_hat = (1.0, 0.0, 0.0)
+                    v_hat = (0.0, 1.0, 0.0)
+
+                # Centerline offsets
+                delta = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+                width_offset = abs(RevitXYZ.dot(delta, u_hat))
+                height_offset = abs(RevitXYZ.dot(delta, v_hat))
+
+                # Edge offsets
+                edge_offsets = RevitXYZ.edge_diffs_whole_in(
+                    p0, w_i, h_i, p1, w_o, h_o, u_hat, v_hat)
+
+                self._offset_data = {
+                    'centerline_width': width_offset,
+                    'centerline_height': height_offset,
+                    'edges': edge_offsets
+                }
+            else:
+                self._offset_data = None
+
+        return self._offset_data
+
+    @property
+    def centerline_width(self):
+        """Centerline width offset in inches."""
+        data = self.offset_data
+        return data['centerline_width'] if data else None
+
+    @property
+    def centerline_height(self):
+        """Centerline height offset in inches."""
+        data = self.offset_data
+        return data['centerline_height'] if data else None
+
+    @property
+    def offset_left(self):
+        """Left edge offset in whole inches."""
+        data = self.offset_data
+        return data['edges']['whole_in']['left'] if data and data['edges'] else None
+
+    @property
+    def offset_right(self):
+        """Right edge offset in whole inches."""
+        data = self.offset_data
+        return data['edges']['whole_in']['right'] if data and data['edges'] else None
+
+    @property
+    def offset_top(self):
+        """Top edge offset in whole inches."""
+        data = self.offset_data
+        return data['edges']['whole_in']['top'] if data and data['edges'] else None
+
+    @property
+    def offset_bottom(self):
+        """Bottom edge offset in whole inches."""
+        data = self.offset_data
+        return data['edges']['whole_in']['bottom'] if data and data['edges'] else None
+
+    def connector_elevation(self, connector_index):
+        """Get Z elevation of a connector in feet."""
+        connector = self.get_connector(connector_index)
+        return connector.Origin.Z if connector else None
+
+    def higher_connector_index(self):
+        """Return the index (0 or 1) of the higher connector, or None if can't determine."""
+        c0 = self.get_connector(0)
+        c1 = self.get_connector(1)
+
+        if not c0 or not c1:
+            return None
+
+        z0 = c0.Origin.Z
+        z1 = c1.Origin.Z
+
+        if abs(z1 - z0) < 1e-6:  # essentially equal elevation
+            return None
+
+        return 1 if z1 > z0 else 0
+
+    def is_connector_higher(self, connector_index, than_index):
+        """Check if connector at connector_index is higher than connector at than_index."""
+        c1 = self.get_connector(connector_index)
+        c2 = self.get_connector(than_index)
+
+        if not c1 or not c2:
+            return None
+
+        return c1.Origin.Z > c2.Origin.Z
+
+    def top_edge_rise_in(self, tol_in=0.01):
+        """Vertical rise (+) or drop (-) of top edge in inches between outlet and inlet."""
+        c0 = self.get_connector(0)
+        c1 = self.get_connector(1)
+        if not c0 or not c1:
+            return None
+        h_in = self.heigth_in or 0.0
+        h_out = (self.heigth_out or self.heigth_in or 0.0)
+        try:
+            cs0 = c0.CoordinateSystem
+            cs1 = c1.CoordinateSystem
+            v0 = cs0.BasisY
+            v1 = cs1.BasisY
+        except:
+            from Autodesk.Revit.DB import XYZ
+            v0 = v1 = XYZ(0, 0, 1)
+        top_in_z = c0.Origin.Z + v0.Z * (h_in / 2.0 / 12.0)
+        top_out_z = c1.Origin.Z + v1.Z * (h_out / 2.0 / 12.0)
+        rise_in = (top_out_z - top_in_z) * 12.0
+        if abs(rise_in) < tol_in:
+            return 0.0
+        return round(rise_in, 2)
+
+    def bottom_edge_rise_in(self, tol_in=0.01):
+        """Vertical rise (+) or drop (-) of bottom edge in inches between outlet and inlet."""
+        c0 = self.get_connector(0)
+        c1 = self.get_connector(1)
+        if not c0 or not c1:
+            return None
+        h_in = self.heigth_in or 0.0
+        h_out = (self.heigth_out or self.heigth_in or 0.0)
+        try:
+            cs0 = c0.CoordinateSystem
+            cs1 = c1.CoordinateSystem
+            v0 = cs0.BasisY
+            v1 = cs1.BasisY
+        except:
+            from Autodesk.Revit.DB import XYZ
+            v0 = v1 = XYZ(0, 0, 1)
+        bottom_in_z = c0.Origin.Z - v0.Z * (h_in / 2.0 / 12.0)
+        bottom_out_z = c1.Origin.Z - v1.Z * (h_out / 2.0 / 12.0)
+        rise_in = (bottom_out_z - bottom_in_z) * 12.0
+        if abs(rise_in) < tol_in:
+            return 0.0
+        return round(rise_in, 2)

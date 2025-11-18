@@ -7,8 +7,19 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-__title__   = "Elbow Tee"
-__doc__     = """
+# Imports
+# ==================================================
+from revit_element import RevitElement
+from revit_duct import RevitDuct
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
+from Autodesk.Revit.DB import *
+
+# Button info
+# ===================================================
+__title__ = "Elbow Tee"
+__doc__ = """
 ************************************************************************
 Description:
 
@@ -16,33 +27,17 @@ Select all Tee elbows
 ************************************************************************
 """
 
-# Imports
-# ==================================================
-from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-from revit_duct import RevitDuct, JointSize
-from tag_duct import TagDuct
-from revit_element import RevitElement
-
-#.NET Imports
-# ==================================================
-from System.Collections.Generic import List
-import clr
-
-
 # Variables
 # ==================================================
-app   = __revit__.Application           #type: Application
-uidoc = __revit__.ActiveUIDocument      #type: UIDocument
-doc   = revit.doc                       #type: Document
-view  = revit.active_view
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+doc = revit.doc  # type: Document
+view = revit.active_view
 
 # Main Code
 # ==================================================
 ducts = RevitDuct.all(doc, view)
-sel_ducts  = [d for d in ducts if d.family == "Tee"]
+sel_ducts = [d for d in ducts if d.family == "Tee"]
 
 RevitElement.select_many(uidoc, sel_ducts)
 forms.alert("Selected {} Tee Elbows".format(len(sel_ducts)))
