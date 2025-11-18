@@ -37,7 +37,8 @@ ducts = RevitDuct.from_selection(uidoc, doc, view)
 if not ducts:
     forms.alert("Please select one or more ducts first.")
 
-family_list = ["transition", "mitred offset", "radius offset"]
+family_list = ["transition", "mitred offset",
+               "radius offset", "mitered offset"]
 
 for d in ducts:
     if d.family and d.family.strip().lower() in family_list:
