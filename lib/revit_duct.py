@@ -124,6 +124,12 @@ class RevitDuct:
     def category(self):
         return self.element.Category.Name if self.element and self.element.Category else None
 
+    def get_connector(self, index):
+        connectors = list(self.element.ConnectorManager.Connectors)
+        if 0 <= index < len(connectors):
+            return connectors[index]
+        return None
+
     def _get_param(self, name, unit=None, as_type="string", required=False):
         # helper gettin parameters from revit
         p = self.element.LookupParameter(name)
@@ -164,12 +170,32 @@ class RevitDuct:
         return self._get_param("Length", unit=UnitTypeId.Inches, as_type="double")
 
     @property
-    def width(self):
+    def width_in(self):
         return self._get_param("Main Primary Width", unit=UnitTypeId.Inches, as_type="double")
 
     @property
-    def depth(self):
+    def heigth_in(self):
         return self._get_param("Main Primary Depth", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def width_out(self):
+        return self._get_param("Main Secondary Width", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def heigth_out(self):
+        return self._get_param("Main Secondary Depth", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def connector_0(self):
+        return self.get_connector(0)
+
+    @property
+    def connector_1(self):
+        return self.get_connector(1)
+
+    @property
+    def connector_2(self):
+        return self.get_connector(2)
 
     @property
     # Accessed throught a paid version or an extended API
@@ -185,21 +211,6 @@ class RevitDuct:
     # Accessed throught a paid version or an extended API
     def connector_2(self):
         return self._get_param("NaviateDBS_Connector2_EndCondition")
-
-    # @property
-    # # Accessed throught a paid version or an extended API
-    # def connector_0_length(self):
-    #     return self._get_param("NaviateDBS_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
-
-    # @property
-    # # Accessed throught a paid version or an extended API
-    # def connector_1_length(self):
-    #     return self._get_param("NaviateDBS_Top Extension", unit=UnitTypeId.Inches, as_type="double")
-
-    # @property
-    # # Accessed throught a paid version or an extended API
-    # def connector_2_length(self):
-    #     return self._get_param("NaviateDBS_left Extension", unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_top(self):

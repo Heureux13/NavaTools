@@ -97,7 +97,6 @@ class RevitXYZ(object):
         length = math.sqrt(dx**2 + dy**2 + dz**2)
         return round(length, 2)
 
-        # Geometry helpers
     def _get_geometry_solids(self):
         """Return a list of Solid objects found in the element's geometry."""
         opts = Options()
@@ -119,6 +118,24 @@ class RevitXYZ(object):
             except Exception:
                 continue
         return solids
+
+    @staticmethod
+    def hv_offsets_inches(p1, p2):
+        """
+        p1, p2: (x, y, z) in inches
+        returns whole-inch horizontal and vertical offsets
+        """
+        x1, y1, z1 = p1
+        x2, y2, z2 = p2
+        dx, dy, dz = x2 - x1, y2 - y1, z2 - z1
+        H = math.sqrt(dx*dx + dy*dy)
+        V = abs(dz)
+        return {
+            "horizontal_offset_in": int(round(H)),
+            "vertical_offset_in": int(round(V)),
+            "exact_horizontal_in": H,
+            "exact_vertical_in": V
+        }
 
     def _face_centroid_and_normal(self, face):
         """Compute an approximate centroid and (unnormalized) normal vector for a Face using triangulation.
