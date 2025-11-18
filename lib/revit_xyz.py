@@ -83,6 +83,62 @@ class RevitXYZ(object):
         angle_deg = math.degrees(angle_rad)
         return round(angle_deg, 2)
 
+    @staticmethod
+    def normalize(v):
+        """Normalize a 3D vector to unit length."""
+        x, y, z = v
+        m = math.sqrt(x*x + y*y + z*z)
+        if m == 0:
+            return (0.0, 0.0, 0.0)
+        return (x/m, y/m, z/m)
+
+    @staticmethod
+    def dot(a, b):
+        """Dot product of two 3D vectors."""
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+
+    @staticmethod
+    def edge_diffs_whole_in(c0, W0, H0, c1, W1, H1, u_hat, v_hat, snap_tol=1/16.0):
+        """
+        Calculate edge-to-edge offsets for duct transitions.
+
+        Parameters:
+            c0, c1: Connector center positions (x, y, z) in inches
+            W0, H0, W1, H1: Widths and heights in inches
+            u_hat: Width axis unit vector (parallel to view on plan)
+            v_hat: Height axis unit vector (perpendicular to u_hat on plan)
+            snap_tol: Values below this snap to 0 before rounding (default 1/16")
+
+        Returns:
+            Dictionary with 'exact_in' and 'whole_in' offsets for left/right/top/bottom edges
+        """
+        # Check for None values
+        if None in [W0, H0, W1, H1]:
+            return None
+
+        u_hat = RevitXYZ.normalize(u_hat)
+        v_hat = RevitXYZ.normalize(v_hat)
+
+        # Scalar projections of centers along u and v
+        u0 = RevitXYZ.dot(c0, u_hat)
+        u1 = RevitXYZ.dot(c1, u_hat)
+        v0 = RevitXYZ.dot(c0, v_hat)
+        v1 = RevitXYZ.dot(c1, v_hat)
+
+        exact = {
+            "left":   abs((u1 - W1/2.0) - (u0 - W0/2.0)),
+            "right":  abs((u1 + W1/2.0) - (u0 + W0/2.0)),
+            "top":    abs((v1 + H1/2.0) - (v0 + H0/2.0)),
+            "bottom": abs((v1 - H1/2.0) - (v0 - H0/2.0)),
+        }
+
+        def snap_round(val):
+            v2 = 0.0 if val < snap_tol else val
+            return int(round(v2))
+
+        whole = {k: snap_round(v) for k, v in exact.items()}
+        return {"exact_in": exact, "whole_in": whole}
+
     def true_length(self):
         """Returns the true 3D length of the duct."""
         start = self.start_point()
