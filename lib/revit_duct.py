@@ -177,6 +177,10 @@ class RevitDuct:
         return self._get_param("Length", unit=UnitTypeId.Inches, as_type="double")
 
     @property
+    def ogee_offset(self):
+        return self._get_param("NaviateDBS_D_Offset", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
     def offset_width(self):
         return self._get_param("NaviateDBS_D_Offset-Width", unit=UnitTypeId.Inches, as_type="double")
 
@@ -415,39 +419,44 @@ class RevitDuct:
     def offset_data(self):
         """Cache and return offset calculations for the duct."""
         if not hasattr(self, '_offset_data'):
-            all_connectors = list(self.element.ConnectorManager.Connectors)
-            c_0 = all_connectors[0] if len(all_connectors) > 0 else None
-            c_1 = all_connectors[1] if len(all_connectors) > 1 else None
+            # Use identified inlet/outlet instead of raw connectors
+            c_in, c_out = self.identify_inlet_outlet()
 
-            if c_0 and c_1:
+            if c_in and c_out:
                 w_i = self.width_in
                 h_i = self.heigth_in
                 w_o = self.width_out or w_i
                 h_o = self.heigth_out or h_i
 
                 # Revit internal units (feet) -> inches
-                p0 = (c_0.Origin.X * 12.0, c_0.Origin.Y *
-                      12.0, c_0.Origin.Z * 12.0)
-                p1 = (c_1.Origin.X * 12.0, c_1.Origin.Y *
-                      12.0, c_1.Origin.Z * 12.0)
+                p_in = (c_in.Origin.X * 12.0, c_in.Origin.Y *
+                        12.0, c_in.Origin.Z * 12.0)
+                p_out = (c_out.Origin.X * 12.0, c_out.Origin.Y *
+                         12.0, c_out.Origin.Z * 12.0)
 
-                # Get coordinate system
+                # Get coordinate system from INLET
                 try:
-                    cs = c_0.CoordinateSystem
+                    cs = c_in.CoordinateSystem
                     u_hat = (cs.BasisX.X, cs.BasisX.Y, cs.BasisX.Z)
                     v_hat = (cs.BasisY.X, cs.BasisY.Y, cs.BasisY.Z)
                 except Exception:
                     u_hat = (1.0, 0.0, 0.0)
                     v_hat = (0.0, 1.0, 0.0)
 
-                # Centerline offsets
-                delta = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+                # Keep height axis pointing up in world space to stabilize top/bottom
+                if v_hat[2] < 0.0:
+                    u_hat = (-u_hat[0], -u_hat[1], -u_hat[2])
+                    v_hat = (-v_hat[0], -v_hat[1], -v_hat[2])
+
+                # Centerline offsets (inlet to outlet)
+                delta = (p_out[0] - p_in[0], p_out[1] -
+                         p_in[1], p_out[2] - p_in[2])
                 width_offset = abs(RevitXYZ.dot(delta, u_hat))
                 height_offset = abs(RevitXYZ.dot(delta, v_hat))
 
-                # Edge offsets
+                # Edge offsets (inlet to outlet)
                 edge_offsets = RevitXYZ.edge_diffs_whole_in(
-                    p0, w_i, h_i, p1, w_o, h_o, u_hat, v_hat)
+                    p_in, w_i, h_i, p_out, w_o, h_o, u_hat, v_hat)
 
                 self._offset_data = {
                     'centerline_width': width_offset,
@@ -528,46 +537,93 @@ class RevitDuct:
 
     def top_edge_rise_in(self, tol_in=0.01):
         """Vertical rise (+) or drop (-) of top edge in inches between outlet and inlet."""
-        c0 = self.get_connector(0)
-        c1 = self.get_connector(1)
-        if not c0 or not c1:
+        c_in, c_out = self.identify_inlet_outlet()
+        if not c_in or not c_out:
             return None
+
         h_in = self.heigth_in or 0.0
         h_out = (self.heigth_out or self.heigth_in or 0.0)
+
         try:
-            cs0 = c0.CoordinateSystem
-            cs1 = c1.CoordinateSystem
-            v0 = cs0.BasisY
-            v1 = cs1.BasisY
+            cs_in = c_in.CoordinateSystem
+            cs_out = c_out.CoordinateSystem
+            v_in = cs_in.BasisY
+            v_out = cs_out.BasisY
+            vz_in = abs(v_in.Z)
+            vz_out = abs(v_out.Z)
+
+            top_in_z = c_in.Origin.Z + vz_in * (h_in / 2.0 / 12.0)
+            top_out_z = c_out.Origin.Z + vz_out * (h_out / 2.0 / 12.0)
+            rise_in = (top_out_z - top_in_z) * 12.0
         except:
             from Autodesk.Revit.DB import XYZ
-            v0 = v1 = XYZ(0, 0, 1)
-        top_in_z = c0.Origin.Z + v0.Z * (h_in / 2.0 / 12.0)
-        top_out_z = c1.Origin.Z + v1.Z * (h_out / 2.0 / 12.0)
-        rise_in = (top_out_z - top_in_z) * 12.0
+            v_in = v_out = XYZ(0, 0, 1)
+
+            top_in_z = c_in.Origin.Z + v_in.Z * (h_in / 2.0 / 12.0)
+            top_out_z = c_out.Origin.Z + v_out.Z * (h_out / 2.0 / 12.0)
+            rise_in = (top_out_z - top_in_z) * 12.0
+
         if abs(rise_in) < tol_in:
             return 0.0
         return round(rise_in, 2)
 
     def bottom_edge_rise_in(self, tol_in=0.01):
         """Vertical rise (+) or drop (-) of bottom edge in inches between outlet and inlet."""
-        c0 = self.get_connector(0)
-        c1 = self.get_connector(1)
-        if not c0 or not c1:
+        c_in, c_out = self.identify_inlet_outlet()
+        if not c_in or not c_out:
             return None
+
         h_in = self.heigth_in or 0.0
         h_out = (self.heigth_out or self.heigth_in or 0.0)
+
         try:
-            cs0 = c0.CoordinateSystem
-            cs1 = c1.CoordinateSystem
-            v0 = cs0.BasisY
-            v1 = cs1.BasisY
+            cs_in = c_in.CoordinateSystem
+            cs_out = c_out.CoordinateSystem
+            v_in = cs_in.BasisY
+            v_out = cs_out.BasisY
+            vz_in = abs(v_in.Z)
+            vz_out = abs(v_out.Z)
+
+            bottom_in_z = c_in.Origin.Z - vz_in * (h_in / 2.0 / 12.0)
+            bottom_out_z = c_out.Origin.Z - vz_out * (h_out / 2.0 / 12.0)
+            rise_in = (bottom_out_z - bottom_in_z) * 12.0
         except:
             from Autodesk.Revit.DB import XYZ
-            v0 = v1 = XYZ(0, 0, 1)
-        bottom_in_z = c0.Origin.Z - v0.Z * (h_in / 2.0 / 12.0)
-        bottom_out_z = c1.Origin.Z - v1.Z * (h_out / 2.0 / 12.0)
-        rise_in = (bottom_out_z - bottom_in_z) * 12.0
+            v_in = v_out = XYZ(0, 0, 1)
+
+            bottom_in_z = c_in.Origin.Z - v_in.Z * (h_in / 2.0 / 12.0)
+            bottom_out_z = c_out.Origin.Z - v_out.Z * (h_out / 2.0 / 12.0)
+            rise_in = (bottom_out_z - bottom_in_z) * 12.0
+
         if abs(rise_in) < tol_in:
             return 0.0
         return round(rise_in, 2)
+
+    def identify_inlet_outlet(self):
+        """Deterministic inlet/outlet by matching actual connector size to Primary (inlet) size."""
+        try:
+            conns = list(self.element.ConnectorManager.Connectors)
+            if len(conns) < 2:
+                return (None, None)
+            c0, c1 = conns[0], conns[1]
+
+            # Get parameter sizes (Primary = inlet, Secondary = outlet)
+            w_primary = self.width_in
+            h_primary = self.heigth_in
+
+            # Try to get actual connector sizes
+            try:
+                # For rectangular connectors, check width/height
+                w0 = c0.Width * 12.0  # feet to inches
+                h0 = c0.Height * 12.0
+
+                # If c0 size matches primary, it's the inlet
+                if abs(w0 - w_primary) < 1.0 and abs(h0 - h_primary) < 1.0:
+                    return (c0, c1)  # c0 = inlet, c1 = outlet
+                else:
+                    return (c1, c0)  # c1 = inlet, c0 = outlet
+            except:
+                # Fallback: assume c0 is inlet
+                return (c0, c1)
+        except Exception:
+            return (None, None)
