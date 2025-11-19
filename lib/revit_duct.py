@@ -177,6 +177,14 @@ class RevitDuct:
         return self._get_param("Length", unit=UnitTypeId.Inches, as_type="double")
 
     @property
+    def offset_width(self):
+        return self._get_param("NaviateDBS_D_Offset-Width", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
+    def offset_height(self):
+        return self._get_param("NaviateDBS_D_Offset-Depth", unit=UnitTypeId.Inches, as_type="double")
+
+    @property
     def width_in(self):
         return self._get_param("Main Primary Width", unit=UnitTypeId.Inches, as_type="double")
 
@@ -205,21 +213,6 @@ class RevitDuct:
         return self.get_connector(2)
 
     @property
-    # Accessed throught a paid version or an extended API
-    def connector_0(self):
-        return self._get_param("NaviateDBS_Connector0_EndCondition")
-
-    @property
-    # Accessed throught a paid version or an extended API
-    def connector_1(self):
-        return self._get_param("NaviateDBS_Connector1_EndCondition")
-
-    @property
-    # Accessed throught a paid version or an extended API
-    def connector_2(self):
-        return self._get_param("NaviateDBS_Connector2_EndCondition")
-
-    @property
     def extension_top(self):
         return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
 
@@ -237,10 +230,6 @@ class RevitDuct:
 
     @property
     def duty(self):
-        return self._get_param("System Abbreviation")
-
-    @property
-    def offset_width(self):
         return self._get_param("System Abbreviation")
 
     @property
