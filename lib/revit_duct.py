@@ -7,17 +7,25 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
+# Standard library
+# =========================================================
+from revit_xyz import RevitXYZ
+from Autodesk.Revit.DB import (
+    ElementId,
+    FilteredElementCollector,
+    BuiltInCategory,
+    UnitUtils,
+    FabricationPart,
+    UnitTypeId
+)
 import re
-import math
 import logging
 from enum import Enum
-from pyrevit import DB, revit, script, forms
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.DB import *
-from Autodesk.Revit.DB import UnitTypeId
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.DB import FabricationPart
-from revit_xyz import RevitXYZ
+
+# Thrid Party
+from pyrevit import DB, revit, script
+
+#
 import clr
 clr.AddReference("RevitAPI")
 
@@ -137,13 +145,15 @@ class RevitDuct:
             return connectors[index]
         return None
 
-    def _get_param(self, name, unit=None, as_type="string", required=False):
+    def _get_param(
+            self, name, unit=None, as_type="string", required=False):
         # helper gettin parameters from revit
         p = self.element.LookupParameter(name)
         if not p:
             if required:
                 raise KeyError(
-                    "Missing parameter '{}' on element {}".format(name, self.element.Id))
+                    "Missing parameter '{}' on element {}".format(
+                        name, self.element.Id))
             return None
 
         try:
@@ -165,7 +175,8 @@ class RevitDuct:
                 s = p.AsValueString()
             return s
         except Exception:
-            # convert any unexpected Revit exception into None to keep callers deterministic
+            # convert any unexpected Revit exception into None to keep callers
+            # deterministic
             return None
 
     @property
@@ -174,35 +185,80 @@ class RevitDuct:
 
     @property
     def length(self):
-        return self._get_param("Length", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "Length",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def ogee_offset(self):
-        return self._get_param("NaviateDBS_D_Offset", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Offset",
+            unit=UnitTypeId.Inches,
+            as_type="double")
+
+    @property
+    def reducer_offset(self):
+        return self._get_param(
+            "NaviateDBS_D_Y-Offset",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def offset_width(self):
-        return self._get_param("NaviateDBS_D_Offset-Width", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Offset-Width",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def offset_height(self):
-        return self._get_param("NaviateDBS_D_Offset-Depth", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Offset-Depth",
+            unit=UnitTypeId.Inches,
+            as_type="double")
+
+    @property
+    def diameter_in(self):
+        return self._get_param(
+            "Main Primary Diameter",
+            unit=UnitTypeId.Inches,
+            as_type="double")
+
+    @property
+    def diameter_out(self):
+        return self._get_param(
+            "Main Secondary Diameter",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def width_in(self):
-        return self._get_param("Main Primary Width", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "Main Primary Width",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def heigth_in(self):
-        return self._get_param("Main Primary Depth", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "Main Primary Depth",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def width_out(self):
-        return self._get_param("Main Secondary Width", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "Main Secondary Width",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def heigth_out(self):
-        return self._get_param("Main Secondary Depth", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "Main Secondary Depth",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def connector_0(self):
@@ -218,19 +274,31 @@ class RevitDuct:
 
     @property
     def extension_top(self):
-        return self._get_param("NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Top Extension",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def extension_bottom(self):
-        return self._get_param("NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Bottom Extension",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def extension_right(self):
-        return self._get_param("NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Right Extension",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def extension_left(self):
-        return self._get_param("NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(
+            "NaviateDBS_D_Left Extension",
+            unit=UnitTypeId.Inches,
+            as_type="double")
 
     @property
     def duty(self):
@@ -271,11 +339,10 @@ class RevitDuct:
         if not raw:
             # Use logger instead of print to avoid polluting pyRevit output
             log.debug(
-                "Insulation Specification parameter not found or empty on element {}".format(self.id))
+                "Insulation Specification parameter not found or empty "
+                "on element {}".format(self.id))
             return None
 
-        # Normalise various unicode quotation marks likely to appear in insulation specs
-        # Original intent: convert smart inch and quote characters to plain ASCII for regex parsing
         cleaned = (raw
                    .replace(u"″", '"')   # double prime
                    .replace(u"”", '"')   # right double quotation mark
@@ -297,7 +364,8 @@ class RevitDuct:
 
         if area_ft2 is None:
             log.debug(
-                "Sheet metal area parameter not found on element {}".format(self.id))
+                "Sheet metal area parameter not found on element {}".format(
+                    self.id))
             return None
 
         material = self.insulation_type
@@ -312,7 +380,9 @@ class RevitDuct:
         insul_lb = self.weight_insulation
 
         if metal_lb is None:
-            log.debug("Weight parameter not found on element {}".format(self.id))
+            log.debug(
+                "Weight parameter not found on element {}".format(
+                    self.id))
             return None
 
         if not isinstance(insul_lb, (int, float)):
@@ -322,7 +392,10 @@ class RevitDuct:
 
     @property
     def weight_metal(self):
-        return self._get_param("Weight", unit=UnitTypeId.PoundsMass, as_type="double")
+        return self._get_param(
+            "Weight",
+            unit=UnitTypeId.PoundsMass,
+            as_type="double")
 
     @property
     def service(self):
@@ -334,11 +407,17 @@ class RevitDuct:
 
     @property
     def area(self):
-        return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+        return self._get_param(
+            "NaviateDBS_SheetMetalArea",
+            unit=UnitTypeId.SquareFeet,
+            as_type="double")
 
     @property
     def metal_area(self):
-        return self._get_param("NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+        return self._get_param(
+            "NaviateDBS_SheetMetalArea",
+            unit=UnitTypeId.SquareFeet,
+            as_type="double")
 
     @property
     def angle(self):
@@ -352,7 +431,8 @@ class RevitDuct:
         return None
 
     @property
-    # returns a four option varience, one being an error. these sizes and connections can bechanged easealy across various fabs
+    # returns a four option varience, one being an error. these sizes and
+    # connections can bechanged easealy across various fabs
     def joint_size(self):
         conn0 = (self.connector_0 or "").strip()
         conn1 = (self.connector_1 or "").strip()
@@ -387,8 +467,8 @@ class RevitDuct:
 
     @classmethod
     def by_system_type(cls, doc, view, system_type_name):
-        return [d for d in cls.all(doc, view)
-                if d.element.LookupParameter("System Type").AsString() == system_type_name]
+        return [d for d in cls.all(doc, view) if d.element.LookupParameter(
+            "System Type").AsString() == system_type_name]
 
     @classmethod
     def from_selection(cls, uidoc, doc, view=None):
@@ -401,17 +481,15 @@ class RevitDuct:
 
         if revit_year <= 2023:
             duct = [
-                el for el in elements if isinstance(el, FabricationPart)
-                and el.Category
-                and el.Category.Id.IntegerValue == int(BuiltInCategory.OST_FabricationDuctwork)
-            ]
+                el for el in elements if isinstance(
+                    el, FabricationPart) and el.Category and el.Category.Id.IntegerValue == int(
+                    BuiltInCategory.OST_FabricationDuctwork)]
 
         else:
             duct = [
-                el for el in elements if isinstance(el, FabricationPart)
-                and el.Category
-                and el.Category.Id.Value == int(BuiltInCategory.OST_FabricationDuctwork)
-            ]
+                el for el in elements if isinstance(
+                    el, FabricationPart) and el.Category and el.Category.Id.Value == int(
+                    BuiltInCategory.OST_FabricationDuctwork)]
 
         return [cls(doc, view or uidoc.ActiveView, du) for du in duct]
 
@@ -443,7 +521,8 @@ class RevitDuct:
                     u_hat = (1.0, 0.0, 0.0)
                     v_hat = (0.0, 1.0, 0.0)
 
-                # Keep height axis pointing up in world space to stabilize top/bottom
+                # Keep height axis pointing up in world space to stabilize
+                # top/bottom
                 if v_hat[2] < 0.0:
                     u_hat = (-u_hat[0], -u_hat[1], -u_hat[2])
                     v_hat = (-v_hat[0], -v_hat[1], -v_hat[2])
@@ -502,7 +581,9 @@ class RevitDuct:
     def offset_bottom(self):
         """Bottom edge offset in whole inches."""
         data = self.offset_data
-        return data['edges']['whole_in']['bottom'] if data and data['edges'] else None
+        if data and data['edges']:
+            return data['edges']['whole_in']['bottom']
+        return None
 
     def connector_elevation(self, connector_index):
         """Get Z elevation of a connector in feet."""
@@ -510,7 +591,9 @@ class RevitDuct:
         return connector.Origin.Z if connector else None
 
     def higher_connector_index(self):
-        """Return the index (0 or 1) of the higher connector, or None if can't determine."""
+        """Return the index (0 or 1) of the higher connector.
+
+        Returns None if can't determine."""
         c0 = self.get_connector(0)
         c1 = self.get_connector(1)
 
@@ -535,70 +618,6 @@ class RevitDuct:
 
         return c1.Origin.Z > c2.Origin.Z
 
-    def top_edge_rise_in(self, tol_in=0.01):
-        """Vertical rise (+) or drop (-) of top edge in inches between outlet and inlet."""
-        c_in, c_out = self.identify_inlet_outlet()
-        if not c_in or not c_out:
-            return None
-
-        h_in = self.heigth_in or 0.0
-        h_out = (self.heigth_out or self.heigth_in or 0.0)
-
-        try:
-            cs_in = c_in.CoordinateSystem
-            cs_out = c_out.CoordinateSystem
-            v_in = cs_in.BasisY
-            v_out = cs_out.BasisY
-            vz_in = abs(v_in.Z)
-            vz_out = abs(v_out.Z)
-
-            top_in_z = c_in.Origin.Z + vz_in * (h_in / 2.0 / 12.0)
-            top_out_z = c_out.Origin.Z + vz_out * (h_out / 2.0 / 12.0)
-            rise_in = (top_out_z - top_in_z) * 12.0
-        except:
-            from Autodesk.Revit.DB import XYZ
-            v_in = v_out = XYZ(0, 0, 1)
-
-            top_in_z = c_in.Origin.Z + v_in.Z * (h_in / 2.0 / 12.0)
-            top_out_z = c_out.Origin.Z + v_out.Z * (h_out / 2.0 / 12.0)
-            rise_in = (top_out_z - top_in_z) * 12.0
-
-        if abs(rise_in) < tol_in:
-            return 0.0
-        return round(rise_in, 2)
-
-    def bottom_edge_rise_in(self, tol_in=0.01):
-        """Vertical rise (+) or drop (-) of bottom edge in inches between outlet and inlet."""
-        c_in, c_out = self.identify_inlet_outlet()
-        if not c_in or not c_out:
-            return None
-
-        h_in = self.heigth_in or 0.0
-        h_out = (self.heigth_out or self.heigth_in or 0.0)
-
-        try:
-            cs_in = c_in.CoordinateSystem
-            cs_out = c_out.CoordinateSystem
-            v_in = cs_in.BasisY
-            v_out = cs_out.BasisY
-            vz_in = abs(v_in.Z)
-            vz_out = abs(v_out.Z)
-
-            bottom_in_z = c_in.Origin.Z - vz_in * (h_in / 2.0 / 12.0)
-            bottom_out_z = c_out.Origin.Z - vz_out * (h_out / 2.0 / 12.0)
-            rise_in = (bottom_out_z - bottom_in_z) * 12.0
-        except:
-            from Autodesk.Revit.DB import XYZ
-            v_in = v_out = XYZ(0, 0, 1)
-
-            bottom_in_z = c_in.Origin.Z - v_in.Z * (h_in / 2.0 / 12.0)
-            bottom_out_z = c_out.Origin.Z - v_out.Z * (h_out / 2.0 / 12.0)
-            rise_in = (bottom_out_z - bottom_in_z) * 12.0
-
-        if abs(rise_in) < tol_in:
-            return 0.0
-        return round(rise_in, 2)
-
     def identify_inlet_outlet(self):
         """Deterministic inlet/outlet by matching actual connector size to Primary (inlet) size."""
         try:
@@ -610,20 +629,118 @@ class RevitDuct:
             # Get parameter sizes (Primary = inlet, Secondary = outlet)
             w_primary = self.width_in
             h_primary = self.heigth_in
+            d_primary = self.diameter_in
 
             # Try to get actual connector sizes
             try:
-                # For rectangular connectors, check width/height
-                w0 = c0.Width * 12.0  # feet to inches
+                # Convert values from feet to inches
+                w0 = c0.Width * 12.0
                 h0 = c0.Height * 12.0
+                w1 = c1.Width * 12.0
+                h1 = c1.Height * 12.0
+                d0 = c0.Radius * 12.0 * 2
+                d1 = c1.Radius * 12.0 * 2
 
-                # If c0 size matches primary, it's the inlet
-                if abs(w0 - w_primary) < 1.0 and abs(h0 - h_primary) < 1.0:
-                    return (c0, c1)  # c0 = inlet, c1 = outlet
-                else:
-                    return (c1, c0)  # c1 = inlet, c0 = outlet
-            except:
+                # Rectangular duct: compare by area (more robust than individual dimensions)
+                if w_primary and h_primary:
+                    area_primary = w_primary * h_primary
+                    area_c0 = w0 * h0
+                    area_c1 = w1 * h1
+
+                    # Use area tolerance (5% of primary area)
+                    area_tol = max(1.0, area_primary * 0.05)
+
+                    # Check which connector's area is closer to primary area
+                    diff_c0 = abs(area_c0 - area_primary)
+                    diff_c1 = abs(area_c1 - area_primary)
+
+                    if diff_c0 < area_tol and diff_c0 <= diff_c1:
+                        return (c0, c1)  # c0 = inlet, c1 = outlet
+                    elif diff_c1 < area_tol:
+                        return (c1, c0)  # c1 = inlet, c0 = outlet
+
+                # Round duct: compare by diameter
+                if d_primary:
+                    diff_c0 = abs(d0 - d_primary)
+                    diff_c1 = abs(d1 - d_primary)
+                    d_tol = max(0.5, d_primary * 0.05)
+
+                    if diff_c0 < d_tol and diff_c0 <= diff_c1:
+                        return (c0, c1)
+                    elif diff_c1 < d_tol:
+                        return (c1, c0)
+
+            except BaseException:
                 # Fallback: assume c0 is inlet
                 return (c0, c1)
+
+            # Fallback if no match found
+            return (c0, c1)
+
         except Exception:
             return (None, None)
+
+    def classify_offset(self):
+        """Classify transition/reducer offset as CL/FOB/FOT/FOS or arrow/numeric offset.
+
+        Returns dict with:
+            - tag: str (CL, FOB, FOT, FOS, arrow like ↑2", or numeric like 3"→)
+            - centerline_h: float (vertical centerline offset, inches)
+            - centerline_w: float (horizontal centerline offset, inches)
+            - top_edge: float (top edge rise, inches, signed)
+            - bot_edge: float (bottom edge rise, inches, signed)
+            - top_mag: int (top edge magnitude, whole inches)
+            - bot_mag: int (bottom edge magnitude, whole inches)
+        """
+        c_in, c_out = self.identify_inlet_outlet()
+        if not (c_in and c_out):
+            return None
+
+        p_in = c_in.Origin
+        p_out = c_out.Origin
+
+        # Horizontal centerline offset (plan distance)
+        dx = p_out.X - p_in.X
+        dy = p_out.Y - p_in.Y
+        cen_w = (dx * dx + dy * dy) ** 0.5 * 12.0
+
+        # Vertical centerline offset
+        dz = p_out.Z - p_in.Z
+        cen_h = abs(dz) * 12.0
+
+        # Sizes
+        h_in = self.heigth_in or self.diameter_in or 0.0
+        h_out = self.heigth_out or self.diameter_out or h_in
+
+        # World Z planes (feet)
+        top_in_z = p_in.Z + 0.5 * (h_in / 12.0)
+        top_out_z = p_out.Z + 0.5 * (h_out / 12.0)
+        bot_in_z = p_in.Z - 0.5 * (h_in / 12.0)
+        bot_out_z = p_out.Z - 0.5 * (h_out / 12.0)
+
+        # Edge rises (inches, signed)
+        top_e = (top_out_z - top_in_z) * 12.0
+        bot_e = (bot_out_z - bot_in_z) * 12.0
+
+        # Tolerance
+        tol_in = 0.01
+
+        top_aligned = abs(top_e) < tol_in
+        bot_aligned = abs(bot_e) < tol_in
+        cl_vert = top_aligned and bot_aligned
+
+        # Whole-inch magnitudes
+        off_t = int(round(abs(top_e)))
+        off_b = int(round(abs(bot_e)))
+
+        return {
+            'centerline_w': cen_w,
+            'centerline_h': cen_h,
+            'top_edge': top_e,
+            'bot_edge': bot_e,
+            'top_mag': off_t,
+            'bot_mag': off_b,
+            'top_aligned': top_aligned,
+            'bot_aligned': bot_aligned,
+            'cl_vert': cl_vert
+        }
