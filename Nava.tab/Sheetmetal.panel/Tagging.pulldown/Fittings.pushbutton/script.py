@@ -19,6 +19,7 @@ from revit_element import RevitElement
 from revit_tagging import RevitTagging
 from revit_xyz import RevitXYZ
 from System.Collections.Generic import List
+from revit_parameter import RevitParameter
 
 # Button info
 # ==================================================
@@ -38,6 +39,7 @@ doc = revit.doc  # type: Document
 output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
+rp = RevitParameter(doc, app)
 
 
 # Collect ducts in view
@@ -49,18 +51,18 @@ if not ducts:
 # Dictionary: Family name: tag name
 # ==================================================
 duct_families = {
-    "radius bend": (tagger.get_label("_jfn_size"), 0.5),
-    "elbow": (tagger.get_label("_jfn_size"), 0.5),
-    "conical tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "boot tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "8inch long coupler wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "cap": (tagger.get_label("_jfn_size"), 0.5),
-    "square bend": (tagger.get_label("_jfn_size"), 0.5),
-    "tee": (tagger.get_label("_jfn_size"), 0.5),
-    "transition": (tagger.get_label("_jfn_size"), 0.5),
-    "mitred offset": (tagger.get_label("_jfn_size"), 0.5),
-    "radius offset": (tagger.get_label("_jfn_size"), 0.5),
-    "tap": (tagger.get_label("_jfn_size"), 0.5),
+    "radius bend": (tagger.get_label("0_size"), 0.5),
+    "elbow": (tagger.get_label("0_size"), 0.5),
+    "conical tap - wdamper": (tagger.get_label("0_size"), 0.5),
+    "boot tap - wdamper": (tagger.get_label("0_size"), 0.5),
+    "8inch long coupler wdamper": (tagger.get_label("0_size"), 0.5),
+    "cap": (tagger.get_label("0_size"), 0.5),
+    "square bend": (tagger.get_label("0_size"), 0.5),
+    "tee": (tagger.get_label("0_size"), 0.5),
+    "transition": (tagger.get_label("0_size"), 0.5),
+    "mitred offset": (tagger.get_label("0_size"), 0.5),
+    "radius offset": (tagger.get_label("0_size"), 0.5),
+    "tap": (tagger.get_label("0_size"), 0.5),
 }
 
 # Filter ducts
@@ -74,6 +76,11 @@ dic_ducts = [d for d in ducts if d.family and d.family.strip().lower()
 t = Transaction(doc, "General Tagging")
 t.Start()
 try:
+    for d in ducts:
+        tag = d.get_offset_value()
+
+        if tag is not None:
+            rp.set_parameter_value(d.element, "_Offset", tag)
     for d in dic_ducts:
         tag, dic_duct_loc = duct_families.get(d.family.strip().lower())
         if not tag:

@@ -10,15 +10,11 @@ the copyright holder."""
 # Imports
 # ==================================================
 from System.Collections.Generic import List
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.DB import Transaction, Reference, ElementId
-from Autodesk.Revit.UI import UIDocument
+from Autodesk.Revit.DB import Transaction, ElementId
 from pyrevit import revit, forms, DB, script
-from revit_element import RevitElement
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
 from revit_xyz import RevitXYZ
 from revit_tagging import RevitTagging
-import clr
 
 # Button info
 # ==================================================
@@ -83,7 +79,7 @@ else:
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("_umi_size")
+tag = tagger.get_label("0_size")
 
 # Transaction
 # ==================================================

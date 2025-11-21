@@ -21,6 +21,7 @@ from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
 from enum import Enum
 from revit_xyz import RevitXYZ
+from revit_duct import RevitDuct
 import re
 
 # Variables
@@ -96,11 +97,14 @@ class RevitTagging:
                 continue
 
             if tagged_el.Id == elem.Id:
-                famname = (
-                    itag.GetType().FamilyName if itag.GetType() is not None else ""
-                )
-                if famname == tag_fam_name:
-                    return True
+                try:
+                    tag_type = self.doc.GetElement(itag.GetTypeId())
+                    if tag_type and hasattr(tag_type, 'Family'):
+                        famname = tag_type.Family.Name
+                        if famname == tag_fam_name:
+                            return True
+                except Exception:
+                    continue
         return False
 
     def place_tag(self, element_or_ref, tag_symbol=None, point_xyz=None):
@@ -142,20 +146,6 @@ class RevitTagging:
                 tag.ChangeTypeId(new_id)
 
         return tag
-
-    @staticmethod
-    def midpoint_location(d, x_loc, z_offset):
-        loc = d.element.Location
-        if hasattr(loc, "Curve") and loc.Curve:
-            pt = loc.Curve.Evaluate(x_loc, True)
-            return DB.XYZ(pt.X, pt.Y, pt.Z + z_offset)
-        # fallback to bbox center
-        v = getattr(d, "view", None) or revit.active_view
-        bbox = d.element.get_BoundingBox(v) if v else None
-        if bbox:
-            center = (bbox.Min + bbox.Max) / 2.0
-            return DB.XYZ(center.X, center.Y, center.Z + z_offset)
-        return None
 
     def get_face_facing_view(self, element, prefer_point=None):
         """
@@ -254,79 +244,3 @@ class RevitTagging:
             return face.Reference, centroid
         except Exception:
             return None, centroid
-
-    def get_tag_point_on_face(
-        self, offset_ft=0.1, prefer_largest=True, preferred_direction=None
-    ):
-        """Return a (face, point_xyz) suitable for placing a tag.
-
-        - offset_ft: distance in feet to offset the tag point along the face normal so the tag is readable.
-        - prefer_largest: if True pick the largest face by area; otherwise pick the face whose normal
-          is closest to the preferred_direction (an XYZ) if provided, otherwise largest.
-
-        Returns (face, XYZ) or (None, None) if no usable face found.
-        """
-        try:
-            rxyz = RevitXYZ(self.element)
-            infos = rxyz.faces_info()
-            if not infos:
-                return (None, None)
-
-            # pick face
-            chosen = None
-            if preferred_direction is not None and not prefer_largest:
-                # choose face whose normal best aligns with preferred_direction
-                best = None
-                best_dot = -1.0
-                pd = preferred_direction
-                pd_mag = (pd.X**2 + pd.Y**2 + pd.Z**2) ** 0.5
-                if pd_mag == 0:
-                    pd = None
-                else:
-                    pd = XYZ(pd.X / pd_mag, pd.Y / pd_mag, pd.Z / pd_mag)
-
-                if pd is not None:
-                    for info in infos:
-                        n = info.get("normal")
-                        if n is None:
-                            continue
-                        mag = (n.X**2 + n.Y**2 + n.Z**2) ** 0.5
-                        if mag == 0:
-                            continue
-                        nu = XYZ(n.X / mag, n.Y / mag, n.Z / mag)
-                        dot = abs(nu.X * pd.X + nu.Y * pd.Y + nu.Z * pd.Z)
-                        if dot > best_dot:
-                            best_dot = dot
-                            best = info
-                    chosen = best
-
-            if chosen is None:
-                # fallback: largest area
-                infos_sorted = sorted(
-                    infos, key=lambda i: (i.get("area") or 0.0), reverse=True
-                )
-                chosen = infos_sorted[0] if infos_sorted else None
-
-            if not chosen:
-                return (None, None)
-
-            face = chosen.get("face")
-            centroid = chosen.get("centroid")
-            normal = chosen.get("normal")
-            if centroid is None or normal is None:
-                return (face, None)
-
-            # normalize normal
-            mag = (normal.X**2 + normal.Y**2 + normal.Z**2) ** 0.5
-            if mag == 0:
-                return (face, centroid)
-            nu = XYZ(normal.X / mag, normal.Y / mag, normal.Z / mag)
-
-            # compute offset point
-            px = centroid.X + nu.X * float(offset_ft)
-            py = centroid.Y + nu.Y * float(offset_ft)
-            pz = centroid.Z + nu.Z * float(offset_ft)
-            tag_point = XYZ(px, py, pz)
-            return (face, tag_point)
-        except Exception:
-            return (None, None)
