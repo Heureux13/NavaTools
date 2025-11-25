@@ -585,6 +585,39 @@ class RevitDuct:
             return data['edges']['whole_in']['bottom']
         return None
 
+    def connector_elevation(self, connector_index):
+        """Get Z elevation of a connector in feet."""
+        connector = self.get_connector(connector_index)
+        return connector.Origin.Z if connector else None
+
+    def higher_connector_index(self):
+        """Return the index (0 or 1) of the higher connector.
+
+        Returns None if can't determine."""
+        c0 = self.get_connector(0)
+        c1 = self.get_connector(1)
+
+        if not c0 or not c1:
+            return None
+
+        z0 = c0.Origin.Z
+        z1 = c1.Origin.Z
+
+        if abs(z1 - z0) < 1e-6:  # essentially equal elevation
+            return None
+
+        return 1 if z1 > z0 else 0
+
+    def is_connector_higher(self, connector_index, than_index):
+        """Check if connector at connector_index is higher than connector at than_index."""
+        c1 = self.get_connector(connector_index)
+        c2 = self.get_connector(than_index)
+
+        if not c1 or not c2:
+            return None
+
+        return c1.Origin.Z > c2.Origin.Z
+
     def identify_inlet_outlet(self):
         """Deterministic inlet/outlet by matching actual connector size to Primary (inlet) size."""
         try:
