@@ -41,8 +41,8 @@ log = logging.getLogger("RevitDuct")
 
 # Define Constants
 CONNECTOR_THRESHOLDS = {
-    ("Straight", "TDC"): 56.00,
-    ("Straight", "TDF"): 56.00,
+    ("Straight", "TDC"): 56.25,
+    ("Straight", "TDF"): 56.25,
     ("Straight", "Standing S&D"): 59.00,
     ("Straight", "Slip & Drive"): 59.00,
     ("Straight", "S&D"): 59.00,
@@ -261,6 +261,21 @@ class RevitDuct:
             as_type="double")
 
     @property
+    def connector_0_type(self):
+        return self._get_param(
+            "NaviateDBS_Connector0_EndCondition")
+
+    @property
+    def connector_1_type(self):
+        return self._get_param(
+            "NaviateDBS_Connector1_EndCondition")
+
+    @property
+    def connector_2_type(self):
+        return self._get_param(
+            "NaviateDBS_Connector2_EndCondition")
+
+    @property
     def connector_0(self):
         return self.get_connector(0)
 
@@ -431,11 +446,15 @@ class RevitDuct:
         return None
 
     @property
-    # returns a four option varience, one being an error. these sizes and
-    # connections can bechanged easealy across various fabs
     def joint_size(self):
-        conn0 = (self.connector_0 or "").strip()
-        conn1 = (self.connector_1 or "").strip()
+        """Returns a four option variance, one being an error. These sizes and connections can be changed easily across various fabs."""
+        # Use the new properties that read from parameters
+        conn0 = (self.connector_0_type or "").strip()
+        conn1 = (self.connector_1_type or "").strip()
+
+        if not conn0 or not conn1:
+            return JointSize.INVALID
+
         key = (self.family, conn0)
 
         if conn0 != conn1:
@@ -711,3 +730,85 @@ class RevitDuct:
             'bot_aligned': bot_aligned,
             'cl_vert': cl_vert
         }
+
+    def get_offset_value(self):
+        """Calculate offset classification tag for transitions/reducers/offsets.
+
+        Returns:
+            str: Tag like "CL", "FOB", "FOT", "FOS", "↑2"", "3"→", or None if not applicable.
+        """
+        family = (self.family or "").lower().strip()
+
+        # Family lists
+        reducer_square = ["transition"]
+        reducer_round = ["reducer"]
+        offset_list = ["ogee", "offset", "radius offset", "mitered offset", "mitred offset"]
+        family_list = reducer_square + reducer_round + offset_list
+
+        if family not in family_list:
+            return None
+
+        # Get offset data
+        offset_data = self.classify_offset()
+        if not offset_data:
+            return None
+
+        cen_w = offset_data['centerline_w']
+        cen_h = offset_data['centerline_h']
+        top_e = offset_data['top_edge']
+        bot_e = offset_data['bot_edge']
+        top_aligned = offset_data['top_aligned']
+        bot_aligned = offset_data['bot_aligned']
+        cl_vert = offset_data['cl_vert']
+
+        # Rectangular reducers/transitions
+        if family in reducer_square:
+            is_rotation = (cen_h < 0.5) and abs(abs(top_e) - abs(bot_e)) < 0.5
+
+            if cl_vert or is_rotation:
+                return "CL"
+            elif bot_aligned:
+                return "FOB"
+            elif top_aligned:
+                return "FOT"
+            else:
+                mag = int(round(abs(top_e)))
+                if mag == 0:
+                    return "CL"
+                else:
+                    return u'↑{}"'.format(mag) if top_e > 0 else u'↓{}"'.format(mag)
+
+        # Round reducers
+        elif family in reducer_round:
+            y_off = self.reducer_offset
+            d_in = self.diameter_in
+            d_out = self.diameter_out
+
+            if (y_off is not None) and (d_in is not None) and (d_out is not None):
+                expected_cl = (d_in - d_out) / 2.0
+
+                if abs(y_off - expected_cl) < 0.01:
+                    return "CL"
+                elif abs(d_out + y_off - d_in) < 0.01 or abs(y_off) < 0.1:
+                    return "FOS"
+                else:
+                    return u'{}"→'.format(int(round(y_off)))
+
+        # Horizontal offsets
+        elif family in offset_list:
+            oge_o = self.ogee_offset
+            offset = oge_o or cen_w or 0
+            return u'{}"→'.format(int(round(offset)))
+
+        return None
+
+    def get_connected_elements(self, connector_index=0):
+        """Gets all elements connected to the selected element"""
+        connector = self.get_connector(connector_index)
+        connected_elements = []
+
+        if connector and connector.IsConnected:
+            for ref_conn in connector.AllRefs:
+                if ref_conn.Owner.Id != self.element.Id:
+                    connected_elements.append(ref_conn.Owner)
+        return connected_elements
