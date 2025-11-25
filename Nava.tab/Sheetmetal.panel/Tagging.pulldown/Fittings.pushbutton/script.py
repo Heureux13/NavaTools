@@ -59,7 +59,7 @@ duct_families = {
     "cap": (tagger.get_label("0_size"), 0.5),
     "square bend": (tagger.get_label("0_size"), 0.5),
     "tee": (tagger.get_label("0_size"), 0.5),
-    "transition": (tagger.get_label("0_size"), 0.5),
+    "transition": (tagger.get_label("0_offset_param"), 0.5),
     "mitred offset": (tagger.get_label("0_size"), 0.5),
     "radius offset": (tagger.get_label("0_size"), 0.5),
     "tap": (tagger.get_label("0_size"), 0.5),
