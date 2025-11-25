@@ -20,6 +20,7 @@ from Autodesk.Revit.DB import (
 )
 import re
 import logging
+import math
 from enum import Enum
 
 # Thrid Party
@@ -556,6 +557,15 @@ class RevitDuct:
                 edge_offsets = RevitXYZ.edge_diffs_whole_in(
                     p_in, w_i, h_i, p_out, w_o, h_o, u_hat, v_hat)
 
+                # Add after calculating top_e and bot_e (around line 747):
+                left_in_z = p_in.Z - 0.5 * (w_in / 12.0)  # Assuming width is horizontal
+                left_out_z = p_out.Z - 0.5 * (w_out / 12.0)
+                right_in_z = p_in.Z + 0.5 * (w_in / 12.0)
+                right_out_z = p_out.Z + 0.5 * (w_out / 12.0)
+
+                left_e = (left_out_z - left_in_z) * 12.0
+                right_e = (right_out_z - right_in_z) * 12.0
+
                 self._offset_data = {
                     'centerline_width': width_offset,
                     'centerline_height': height_offset,
@@ -638,79 +648,55 @@ class RevitDuct:
         return c1.Origin.Z > c2.Origin.Z
 
     def identify_inlet_outlet(self):
-        """Deterministic inlet/outlet by matching actual connector size to Primary (inlet) size."""
+        """Deterministically pick inlet (larger connector) and outlet (smaller)."""
         try:
             conns = list(self.element.ConnectorManager.Connectors)
             if len(conns) < 2:
                 return (None, None)
             c0, c1 = conns[0], conns[1]
 
-            # Get parameter sizes (Primary = inlet, Secondary = outlet)
-            w_primary = self.width_in
-            h_primary = self.heigth_in
-            d_primary = self.diameter_in
+            # Try rectangular sizes (inches)
+            def rect_wh(conn):
+                try:
+                    return conn.Width * 12.0, conn.Height * 12.0
+                except Exception:
+                    return None, None
 
-            # Try to get actual connector sizes
-            try:
-                # Convert values from feet to inches
-                w0 = c0.Width * 12.0
-                h0 = c0.Height * 12.0
-                w1 = c1.Width * 12.0
-                h1 = c1.Height * 12.0
-                d0 = c0.Radius * 12.0 * 2
-                d1 = c1.Radius * 12.0 * 2
+            w0, h0 = rect_wh(c0)
+            w1, h1 = rect_wh(c1)
 
-                # Rectangular duct: compare by area (more robust than individual dimensions)
-                if w_primary and h_primary:
-                    area_primary = w_primary * h_primary
-                    area_c0 = w0 * h0
-                    area_c1 = w1 * h1
+            # Try round diameters (inches)
+            def diameter(conn):
+                try:
+                    return conn.Radius * 24.0  # 2 * radius * 12
+                except Exception:
+                    return None
+            d0 = diameter(c0)
+            d1 = diameter(c1)
 
-                    # Use area tolerance (5% of primary area)
-                    area_tol = max(1.0, area_primary * 0.05)
+            # Rectangular case first
+            if w0 and h0 and w1 and h1:
+                a0 = w0 * h0
+                a1 = w1 * h1
+                if abs(a0 - a1) > 1e-6:
+                    return (c0, c1) if a0 >= a1 else (c1, c0)
+                # Tie: fall back to element id for stability
+                return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
 
-                    # Check which connector's area is closer to primary area
-                    diff_c0 = abs(area_c0 - area_primary)
-                    diff_c1 = abs(area_c1 - area_primary)
+            # Round case
+            if d0 and d1:
+                if abs(d0 - d1) > 1e-6:
+                    return (c0, c1) if d0 >= d1 else (c1, c0)
+                return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
 
-                    if diff_c0 < area_tol and diff_c0 <= diff_c1:
-                        return (c0, c1)  # c0 = inlet, c1 = outlet
-                    elif diff_c1 < area_tol:
-                        return (c1, c0)  # c1 = inlet, c0 = outlet
-
-                # Round duct: compare by diameter
-                if d_primary:
-                    diff_c0 = abs(d0 - d_primary)
-                    diff_c1 = abs(d1 - d_primary)
-                    d_tol = max(0.5, d_primary * 0.05)
-
-                    if diff_c0 < d_tol and diff_c0 <= diff_c1:
-                        return (c0, c1)
-                    elif diff_c1 < d_tol:
-                        return (c1, c0)
-
-            except BaseException:
-                # Fallback: assume c0 is inlet
-                return (c0, c1)
-
-            # Fallback if no match found
-            return (c0, c1)
+            # Mixed or missing size info: fallback to id ordering
+            return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
 
         except Exception:
             return (None, None)
 
     def classify_offset(self):
-        """Classify transition/reducer offset as CL/FOB/FOT/FOS or arrow/numeric offset.
-
-        Returns dict with:
-            - tag: str (CL, FOB, FOT, FOS, arrow like ↑2", or numeric like 3"→)
-            - centerline_h: float (vertical centerline offset, inches)
-            - centerline_w: float (horizontal centerline offset, inches)
-            - top_edge: float (top edge rise, inches, signed)
-            - bot_edge: float (bottom edge rise, inches, signed)
-            - top_mag: int (top edge magnitude, whole inches)
-            - bot_mag: int (bottom edge magnitude, whole inches)
-        """
+        """Classify transition/reducer offset as CL/FOB/FOT/FOS or arrow/numeric offset."""
         c_in, c_out = self.identify_inlet_outlet()
         if not (c_in and c_out):
             return None
@@ -721,17 +707,24 @@ class RevitDuct:
         # Horizontal centerline offset (plan distance)
         dx = p_out.X - p_in.X
         dy = p_out.Y - p_in.Y
-        cen_w = (dx * dx + dy * dy) ** 0.5 * 12.0
+        cen_w = math.hypot(dx, dy) * 12
 
         # Vertical centerline offset
         dz = p_out.Z - p_in.Z
         cen_h = abs(dz) * 12.0
 
-        # Sizes
-        h_in = self.heigth_in or self.diameter_in or 0.0
-        h_out = self.heigth_out or self.diameter_out or h_in
+        # Sizes (both width and height)
+        w_in = c_in.Width * 12.0 if hasattr(c_in, 'Width') and c_in.Width else 0.0
+        w_out = c_out.Width * 12.0 if hasattr(c_out, 'Width') and c_out.Width else w_in
 
-        # World Z planes (feet)
+        h_in = c_in.Height * 12.0 if hasattr(c_in,
+                                             'Height') and c_in.Height else (c_in.Radius * 24.0 if hasattr(c_in,
+                                                                                                           'Radius') and c_in.Radius else 0.0)
+        h_out = c_out.Height * 12.0 if hasattr(c_out,
+                                               'Height') and c_out.Height else (c_out.Radius * 24.0 if hasattr(c_out,
+                                                                                                               'Radius') and c_out.Radius else h_in)
+
+        # World Z planes (feet) - using actual connector positions
         top_in_z = p_in.Z + 0.5 * (h_in / 12.0)
         top_out_z = p_out.Z + 0.5 * (h_out / 12.0)
         bot_in_z = p_in.Z - 0.5 * (h_in / 12.0)
@@ -741,26 +734,45 @@ class RevitDuct:
         top_e = (top_out_z - top_in_z) * 12.0
         bot_e = (bot_out_z - bot_in_z) * 12.0
 
+        # Left and right edge offsets (if rectangular)
+        left_in_z = p_in.Z - 0.5 * (w_in / 12.0)
+        left_out_z = p_out.Z - 0.5 * (w_out / 12.0)
+        right_in_z = p_in.Z + 0.5 * (w_in / 12.0)
+        right_out_z = p_out.Z + 0.5 * (w_out / 12.0)
+
+        left_e = (left_out_z - left_in_z) * 12.0
+        right_e = (right_out_z - right_in_z) * 12.0
+
         # Tolerance
         tol_in = 0.01
 
         top_aligned = abs(top_e) < tol_in
         bot_aligned = abs(bot_e) < tol_in
+        left_aligned = abs(left_e) < tol_in
+        right_aligned = abs(right_e) < tol_in
         cl_vert = top_aligned and bot_aligned
 
         # Whole-inch magnitudes
         off_t = int(round(abs(top_e)))
         off_b = int(round(abs(bot_e)))
+        off_l = int(round(abs(left_e)))
+        off_r = int(round(abs(right_e)))
 
         return {
             'centerline_w': cen_w,
             'centerline_h': cen_h,
             'top_edge': top_e,
             'bot_edge': bot_e,
+            'left_edge': left_e,
+            'right_edge': right_e,
             'top_mag': off_t,
             'bot_mag': off_b,
+            'left_mag': off_l,
+            'right_mag': off_r,
             'top_aligned': top_aligned,
             'bot_aligned': bot_aligned,
+            'left_aligned': left_aligned,
+            'right_aligned': right_aligned,
             'cl_vert': cl_vert
         }
 
@@ -798,18 +810,51 @@ class RevitDuct:
         if family in reducer_square:
             is_rotation = (cen_h < 0.5) and abs(abs(top_e) - abs(bot_e)) < 0.5
 
+            # Get left/right edge data
+            left_e = offset_data.get('left_edge', 0)
+            right_e = offset_data.get('right_edge', 0)
+            left_aligned = offset_data.get('left_aligned', False)
+            right_aligned = offset_data.get('right_aligned', False)
+
             if cl_vert or is_rotation:
                 return "CL"
-            elif bot_aligned:
-                return "FOB"
-            elif top_aligned:
-                return "FOT"
-            else:
+
+            # Build combined tag for aligned edges
+            aligned_edges = []
+            if bot_aligned:
+                aligned_edges.append("FOB")
+            if top_aligned:
+                aligned_edges.append("FOT")
+            if left_aligned:
+                aligned_edges.append("FOL")
+            if right_aligned:
+                aligned_edges.append("FOR")
+
+            if aligned_edges:
+                return "/".join(aligned_edges)
+
+            # No edges aligned - show offsets with arrows
+            # Check if both vertical AND horizontal offsets exist
+            has_vert = abs(top_e) >= 0.5
+            has_horiz = abs(left_e) >= 0.5 or abs(right_e) >= 0.5
+
+            if has_vert and has_horiz:
+                # Both directions - show both with space
+                vert_mag = int(round(abs(top_e)))
+                horiz_mag = int(round(abs(left_e)))
+                vert_str = u'↑{}"TU'.format(vert_mag) if top_e > 0 else u'↓{}"TD'.format(vert_mag)
+                horiz_str = u'←{}"'.format(horiz_mag) if left_e < 0 else u'→{}"'.format(horiz_mag)
+                return u'{} {}'.format(vert_str, horiz_str)
+            elif has_vert:
+                # Only vertical
                 mag = int(round(abs(top_e)))
-                if mag == 0:
-                    return "CL"
-                else:
-                    return u'↑{}"'.format(mag) if top_e > 0 else u'↓{}"'.format(mag)
+                return u'↑{}"TU'.format(mag) if top_e > 0 else u'↓{}"TD'.format(mag)
+            elif has_horiz:
+                # Only horizontal
+                mag = int(round(abs(left_e)))
+                return u'←{}"'.format(mag) if left_e < 0 else u'→{}"'.format(mag)
+            else:
+                return "CL"
 
         # Round reducers
         elif family in reducer_round:
@@ -825,7 +870,7 @@ class RevitDuct:
                 elif abs(d_out + y_off - d_in) < 0.01 or abs(y_off) < 0.1:
                     return "FOS"
                 else:
-                    return u'{}"→'.format(int(round(y_off)))
+                    return u'{}"→'.format(abs(int(round(y_off))))
 
         # Horizontal offsets
         elif family in offset_list:
@@ -845,3 +890,26 @@ class RevitDuct:
                 if ref_conn.Owner.Id != self.element.Id:
                     connected_elements.append(ref_conn.Owner)
         return connected_elements
+
+    def trace_run(start_duct, seen_ids, allowed_duct):
+        """Recursively follow connections to build a complete run"""
+        run = []  # Store ducts in this run
+        stack = [start_duct]  # Ducts to process
+
+        while stack:
+            current = stack.pop()
+            if current.Id.IntegerValue in seen_ids:
+                continue
+
+            run.append(current)
+            seen_ids.add(current.Id.IntegerValue)
+
+            # Follow all connections
+            for connector_index in [0, 1, 2]:
+                connected = current.get_connected_elements(connector_index)
+                for elem in connected:
+                    duct = RevitDuct(doc, view, elem)
+                    if duct.family and duct.family.strip().lower() in allowed_duct:
+                        stack.append(elem)
+
+        return run
