@@ -44,7 +44,7 @@ tagger = RevitTagging(doc=doc, view=view)
 # ==================================================
 ducts = RevitDuct.all(doc, view)
 if not ducts:
-    output.print_md("No ducts found in the current view")
+    forms.alert("No ducts found in the current view", exitscript=True)
 
 # Dictionary: Family name: tag name
 # ==================================================
