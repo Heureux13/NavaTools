@@ -63,6 +63,21 @@ class RevitXYZ(object):
             t = max(0.0, min(1.0, float(param)))
             return self.curve.Evaluate(t, True)
         return None
+    
+    def connector_origins(self, as_inches=False):
+        mgr = getattr(self.element, "ConnectorManager", None)
+        if not mgr:
+            return []
+        
+        conns = list(mgr.Connectors)
+        points = []
+
+        for c in conns:
+            o = c.Origin
+            points.append((o.X * 12.00, o.Y * 12.00, o.Z * 12))
+        else:
+            points.append((o.X, o.Y, o.Z))
+        return points
 
     def straight_joint_degree(self):
         """Returns the angle in degrees between the duct and the horizontal (XY) plane."""

@@ -31,9 +31,10 @@ doc = revit.doc
 view = revit.active_view
 output = script.get_output()
 ducts = RevitDuct.from_selection(uidoc, doc, view)
-all_ducts = RevitDuct.all(doc, view)
 rp = RevitParameter(doc, app)
 
+# Debugging
+# ======================================================
 DEBUG = False
 
 
