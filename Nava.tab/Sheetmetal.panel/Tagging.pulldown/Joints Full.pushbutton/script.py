@@ -16,7 +16,7 @@ from Autodesk.Revit.DB import Transaction
 
 # Button display information
 # =================================================
-__title__ = "Joints Full"
+__title__ = "DO NOT PRESS"
 __doc__ = """
 ******************************************************************
 Gives offset information about specific duct fittings
