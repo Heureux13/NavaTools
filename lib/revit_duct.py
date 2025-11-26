@@ -466,16 +466,11 @@ class RevitDuct:
     # returns a four option varience, one being an error. these sizes and
     # connections can bechanged easealy across various fabs
     def joint_size(self):
-<<<<<<< HEAD
         # Use end-condition parameters rather than Connector objects
         conn0 = self._get_param("NaviateDBS_Connector0_EndCondition") or ""
         conn1 = self._get_param("NaviateDBS_Connector1_EndCondition") or ""
         conn0 = conn0.strip()
         conn1 = conn1.strip()
-=======
-        conn0 = (self.connector_0 or "").strip()
-        conn1 = (self.connector_1 or "").strip()
->>>>>>> parent of ed96062 (tagging)
         key = (self.family, conn0)
 
         if conn0 != conn1:
@@ -784,7 +779,6 @@ class RevitDuct:
             'bot_aligned': bot_aligned,
             'cl_vert': cl_vert
         }
-<<<<<<< HEAD
     
         def get_offset_value(self):
             """Calculate offset classification tag for transitions/reducers/offsets.
@@ -867,5 +861,3 @@ class RevitDuct:
                     if ref_conn.Owner.Id != self.element.Id:
                         connected_elements.append(ref_conn.Owner)
             return connected_elements
-=======
->>>>>>> parent of ed96062 (tagging)
