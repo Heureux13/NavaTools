@@ -49,18 +49,18 @@ if not ducts:
 # Dictionary: Family name: tag name
 # ==================================================
 duct_families = {
-    "radius bend": (tagger.get_label("_jfn_size"), 0.5),
-    "elbow": (tagger.get_label("_jfn_size"), 0.5),
-    "conical tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "boot tap - wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "8inch long coupler wdamper": (tagger.get_label("_jfn_size"), 0.5),
-    "cap": (tagger.get_label("_jfn_size"), 0.5),
-    "square bend": (tagger.get_label("_jfn_size"), 0.5),
-    "tee": (tagger.get_label("_jfn_size"), 0.5),
-    "transition": (tagger.get_label("_jfn_size"), 0.5),
-    "mitred offset": (tagger.get_label("_jfn_size"), 0.5),
-    "radius offset": (tagger.get_label("_jfn_size"), 0.5),
-    "tap": (tagger.get_label("_jfn_size"), 0.5),
+    "radius bend": (tagger.get_label("0_size"), 0.5),
+    "elbow": (tagger.get_label("0_size"), 0.5),
+    "conical tap - wdamper": (tagger.get_label("0_size"), 0.5),
+    "boot tap - wdamper": (tagger.get_label("0_size"), 0.5),
+    "8inch long coupler wdamper": (tagger.get_label("0_size"), 0.5),
+    "cap": (tagger.get_label("0_size"), 0.5),
+    "square bend": (tagger.get_label("0_size"), 0.5),
+    "tee": (tagger.get_label("0_size"), 0.5),
+    "transition": (tagger.get_label("0_size"), 0.5),
+    "mitred offset": (tagger.get_label("0_size"), 0.5),
+    "radius offset": (tagger.get_label("0_size"), 0.5),
+    "tap": (tagger.get_label("0_size"), 0.5),
 }
 
 # Filter ducts
