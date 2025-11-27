@@ -42,8 +42,8 @@ log = logging.getLogger("RevitDuct")
 
 # Define Constants
 CONNECTOR_THRESHOLDS = {
-    ("Straight", "TDC"): 56.25,
-    ("Straight", "TDF"): 56.25,
+    ("Straight", "TDC"): 56.00,
+    ("Straight", "TDF"): 56.00,
     ("Straight", "Standing S&D"): 59.00,
     ("Straight", "Slip & Drive"): 59.00,
     ("Straight", "S&D"): 59.00,
@@ -262,21 +262,6 @@ class RevitDuct:
             as_type="double")
 
     @property
-    def connector_0_type(self):
-        return self._get_param(
-            "NaviateDBS_Connector0_EndCondition")
-
-    @property
-    def connector_1_type(self):
-        return self._get_param(
-            "NaviateDBS_Connector1_EndCondition")
-
-    @property
-    def connector_2_type(self):
-        return self._get_param(
-            "NaviateDBS_Connector2_EndCondition")
-
-    @property
     def connector_0(self):
         return self.get_connector(0)
 
@@ -447,15 +432,11 @@ class RevitDuct:
         return None
 
     @property
+    # returns a four option varience, one being an error. these sizes and
+    # connections can bechanged easealy across various fabs
     def joint_size(self):
-        """Returns a four option variance, one being an error. These sizes and connections can be changed easily across various fabs."""
-        # Use the new properties that read from parameters
-        conn0 = (self.connector_0_type or "").strip()
-        conn1 = (self.connector_1_type or "").strip()
-
-        if not conn0 or not conn1:
-            return JointSize.INVALID
-
+        conn0 = (self.connector_0 or "").strip()
+        conn1 = (self.connector_1 or "").strip()
         key = (self.family, conn0)
 
         if conn0 != conn1:
@@ -613,39 +594,6 @@ class RevitDuct:
         if data and data['edges']:
             return data['edges']['whole_in']['bottom']
         return None
-
-    def connector_elevation(self, connector_index):
-        """Get Z elevation of a connector in feet."""
-        connector = self.get_connector(connector_index)
-        return connector.Origin.Z if connector else None
-
-    def higher_connector_index(self):
-        """Return the index (0 or 1) of the higher connector.
-
-        Returns None if can't determine."""
-        c0 = self.get_connector(0)
-        c1 = self.get_connector(1)
-
-        if not c0 or not c1:
-            return None
-
-        z0 = c0.Origin.Z
-        z1 = c1.Origin.Z
-
-        if abs(z1 - z0) < 1e-6:  # essentially equal elevation
-            return None
-
-        return 1 if z1 > z0 else 0
-
-    def is_connector_higher(self, connector_index, than_index):
-        """Check if connector at connector_index is higher than connector at than_index."""
-        c1 = self.get_connector(connector_index)
-        c2 = self.get_connector(than_index)
-
-        if not c1 or not c2:
-            return None
-
-        return c1.Origin.Z > c2.Origin.Z
 
     def identify_inlet_outlet(self):
         """Deterministically pick inlet (larger connector) and outlet (smaller)."""

@@ -9,11 +9,10 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit, script
-from revit_duct import RevitDuct, JointSize
+from pyrevit import revit, script, forms
+from revit_duct import RevitDuct
 from revit_parameter import RevitParameter
-from revit_tagging import RevitTagging
-from Autodesk.Revit.DB import Transaction, FilteredElementCollector, IndependentTag, ElementId
+from Autodesk.Revit.DB import Transaction
 
 # Button display information
 # =================================================
@@ -32,117 +31,149 @@ uidoc = __revit__.ActiveUIDocument
 doc = revit.doc
 view = revit.active_view
 output = script.get_output()
-ducts = RevitDuct.all(doc, view)
-# ducts = RevitDuct.from_selection(uidoc, doc)
+ducts = RevitDuct.from_selection(uidoc, doc, view)
 rp = RevitParameter(doc, app)
+
+DEBUG = False
+
+
+def dbg(msg, *args):
+    if not DEBUG:
+        return
+    if args:
+        safe_args = []
+        for a in args:
+            try:
+                if isinstance(a, (int, float)):
+                    safe_args.append(float(a))
+                else:
+                    safe_args.append(a)
+            except Exception:
+                safe_args.append(a)
+        try:
+            output.print_md(msg.format(*safe_args))
+        except Exception:
+            output.print_md("{} | {}".format(
+                msg, ", ".join([str(x) for x in safe_args])))
+    else:
+        output.print_md(msg)
 
 
 # Code
 # ==================================================
+if not ducts:
+    forms.alert("Select fabrication ducts first.", exitscript=True)
+
+family_list = ["transition", "mitred offset",
+               "radius offset", "mitered offset",
+               "ogee", "offset", "reducer"]
+
+reducer_square = ["transition"]
+
+reducer_round = ["reducer"]
+
+offset_list = ["ogee", "offset", "radius offset",
+               "mitered offset", "mitred offset"]
+
+
 with Transaction(doc, "Offset Parameter") as t:
     t.Start()
 
-    # Step 1: Filter to only non-straight ducts (fittings, transitions, etc.)
-    non_straight_ducts = [
-        d for d in ducts if d.family and d.family.strip().lower() not in [
-            "straight", "spiral tube", "round duct", "tube"]]
-    output.print_md("**Found {} non-straight ducts**".format(len(non_straight_ducts)))
+    for d in ducts:
+        tag = None
+        family = d.family.lower().strip()
 
-    # Step 2: Get all straight ducts connected to non-straight ducts
-    connected_straights = []
-    seen_ids = set()
+        if family in family_list:
+            # Read needed parameters
+            oge_o = d.ogee_offset
 
-    for d in non_straight_ducts:
-        # Check all connectors (0, 1, 2)
-        for connector_index in [0, 1, 2]:
-            connected_elements = d.get_connected_elements(connector_index)
-            for elem in connected_elements:
-                # Skip if already processed
-                if elem.Id.IntegerValue in seen_ids:
-                    continue
+            # Get offset data from RevitDuct method
+            offset_data = d.classify_offset()
+            if not offset_data:
+                continue
 
-                # Wrap as RevitDuct to check properties
-                connected_duct = RevitDuct(doc, view, elem)
+            cen_w = offset_data['centerline_w']
+            cen_h = offset_data['centerline_h']
+            top_e = offset_data['top_edge']
+            bot_e = offset_data['bot_edge']
+            off_t = offset_data['top_mag']
+            off_b = offset_data['bot_mag']
+            top_aligned = offset_data['top_aligned']
+            bot_aligned = offset_data['bot_aligned']
+            cl_vert = offset_data['cl_vert']
 
-                # Only add if it's a straight or spiral duct
-                if connected_duct.family and connected_duct.family.strip().lower(
-                ) in ["straight", "spiral tube", "round duct", "tube"]:
-                    connected_straights.append(elem)
-                    seen_ids.add(elem.Id.IntegerValue)
+            # Optional debug
+            dbg("cen_w: {:.2f} in, cen_h: {:.2f} in", cen_w, cen_h)
+            dbg("top_e: {:+.2f}\" bot_e: {:+.2f}\"", top_e, bot_e)
 
-    output.print_md("**Found {} unique connected straight ducts**".format(len(connected_straights)))
+            # Classification
+            if family in reducer_square:
+                # Check if this is a pure rotation (centerline flat, equal opposite edge movement)
+                is_rotation = (cen_h < 0.5) and abs(
+                    abs(top_e) - abs(bot_e)) < 0.5
 
-    # Step 3: Filter to only full-size joints
-    full_joint_straights = []
-    for elem in connected_straights:
-        duct = RevitDuct(doc, view, elem)
-        if duct.joint_size == JointSize.FULL:
-            full_joint_straights.append(elem)
-
-    output.print_md("**Found {} full-size joints to tag**".format(len(full_joint_straights)))
-
-    # Step 4: Tag the full-size joints
-    tagger = RevitTagging(doc, view)
-    tagged_count = 0
-    skipped_count = 0
-
-    # Pre-build a set of (element_id, tag_family_name) tuples for already tagged elements
-    already_tagged_set = set()
-    existing_tags = FilteredElementCollector(doc, view.Id).OfClass(IndependentTag).ToElements()
-
-    for tag in existing_tags:
-        try:
-            # GetTaggedReferences returns a Python list, not a .NET collection
-            refs = tag.GetTaggedReferences()
-            if refs and len(refs) > 0:
-                # Get the first reference and extract its ElementId
-                ref = refs[0]
-                tagged_elem_id = ref.ElementId
-
-                # Get the tag family
-                tag_type = doc.GetElement(tag.GetTypeId())
-                if tag_type and hasattr(tag_type, 'Family'):
-                    already_tagged_set.add((tagged_elem_id.IntegerValue, tag_type.Family.Name))
-        except BaseException:
-            pass
-
-    output.print_md("**Found {} existing tags in view**".format(len(already_tagged_set)))
-
-    for elem in full_joint_straights:
-        tags = ["0_bod", "0_size"]
-        for tag_name in tags:
-            try:
-                tag_symbol = tagger.get_label(tag_name)
-
-                # Check if already tagged using pre-built set
-                if (elem.Id.IntegerValue, tag_symbol.Family.Name) in already_tagged_set:
-                    skipped_count += 1
-                    continue
-
-                # Get face reference and centroid for fabrication duct
-                face_ref, face_pt = tagger.get_face_facing_view(elem)
-
-                if face_ref is not None and face_pt is not None:
-                    tagger.place_tag(face_ref, tag_symbol, face_pt)
-                    tagged_count += 1
-                    # Add to set so we don't double-tag in this run
-                    already_tagged_set.add((elem.Id.IntegerValue, tag_symbol.Family.Name))
+                if cl_vert or is_rotation:
+                    tag = "CL"
+                elif bot_aligned:
+                    tag = "FOB"
+                elif top_aligned:
+                    tag = "FOT"
                 else:
-                    # Fallback to bounding box center
-                    bbox = elem.get_BoundingBox(view)
-                    if bbox is not None:
-                        center = (bbox.Min + bbox.Max) / 2.0
-                        tagger.place_tag(elem, tag_symbol, center)
-                        tagged_count += 1
-                        # Add to set so we don't double-tag in this run
-                        already_tagged_set.add((elem.Id.IntegerValue, tag_symbol.Family.Name))
+                    # Arrow based on top edge movement
+                    mag = int(round(abs(top_e)))
+                    if mag == 0:
+                        tag = "CL"
+                    else:
+                        tag = (u'↑{}"'.format(mag)) if top_e > 0 else (
+                            u'↓{}"'.format(mag))
 
-            except Exception as e:
-                output.print_md("  Failed to tag element {}: {}".format(
-                    elem.Id.IntegerValue, str(e)))
+            elif family in reducer_round:
+                y_off = d.reducer_offset
+                d_in = d.diameter_in
+                d_out = d.diameter_out
+                # output.print_md("y_off: {}\nd_in: {}\nd_out: {}".format((y_off, d_in, d_out)))
 
-    output.print_md("\n**Tagged {} elements, skipped {} already tagged**".format(tagged_count, skipped_count))
+                # Validate data
+                if y_off is not None and d_in and d_out:
+                    expected_cl = (d_in - d_out) / 2.0
+
+                    if abs(y_off - expected_cl) < 0.01:
+                        tag = "CL"
+                    elif abs(d_out + y_off - d_in) < 0.01:
+                        tag = "FOS"
+                    elif abs(y_off) < 0.1:
+                        tag = "FOS"
+                    else:
+                        tag = (u'{}"→'.format(int(round(y_off))))
+
+            elif family in offset_list:
+                # Horizontal offset family; use ogee offset parameter or calculated centerline
+                offset = oge_o or cen_w or 0
+                tag = '{}"→'.format(int(round(offset)))
+
+        if tag is not None:
+            rp.set_parameter_value(d.element, "_Offset", tag)
+
+            def f(x):
+                try:
+                    return float(x)
+                except BaseException:
+                    return 0.0
+
+            ch = f(cen_h)
+            te = f(top_e)
+            be = f(bot_e)
+            ot = int(off_t or 0)
+            ob = int(off_b or 0)
+            try:
+                eid = d.element.Id.IntegerValue
+            except BaseException:
+                eid = d.element.Id
+
+            output.print_md(
+                "{} | {} | CLh:{:.0f}\" | T:{}\" B:{}\" | ΔT:{:+.0f}\" ΔB:{:+.0f}\" | {}".format(
+                    eid, family, ch, ot, ob, te, be, tag
+                )
+            )
 
     t.Commit()
-
-    output.print_md("✓ Complete")
