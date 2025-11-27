@@ -16,10 +16,10 @@ from Autodesk.Revit.DB import Transaction
 
 # Button display information
 # =================================================
-__title__ = "DO NOT PRESS"
+__title__ = "Easy Button"
 __doc__ = """
 ******************************************************************
-Gives offset information about specific duct fittings
+Code place holder
 ******************************************************************
 """
 

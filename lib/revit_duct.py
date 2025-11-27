@@ -435,8 +435,8 @@ class RevitDuct:
     # returns a four option varience, one being an error. these sizes and
     # connections can bechanged easealy across various fabs
     def joint_size(self):
-        conn0 = (self.connector_0 or "").strip()
-        conn1 = (self.connector_1 or "").strip()
+        conn0 = (self.connector_0_type or "").strip()
+        conn1 = (self.connector_1_type or "").strip()
         key = (self.family, conn0)
 
         if conn0 != conn1:
@@ -539,10 +539,10 @@ class RevitDuct:
                     p_in, w_i, h_i, p_out, w_o, h_o, u_hat, v_hat)
 
                 # Add after calculating top_e and bot_e (around line 747):
-                left_in_z = p_in.Z - 0.5 * (w_in / 12.0)  # Assuming width is horizontal
-                left_out_z = p_out.Z - 0.5 * (w_out / 12.0)
-                right_in_z = p_in.Z + 0.5 * (w_in / 12.0)
-                right_out_z = p_out.Z + 0.5 * (w_out / 12.0)
+                left_in_z = p_in.Z - 0.5 * (w_i / 12.0)  # Assuming width is horizontal
+                left_out_z = p_out.Z - 0.5 * (w_o/ 12.0)
+                right_in_z = p_in.Z + 0.5 * (w_i / 12.0)
+                right_out_z = p_out.Z + 0.5 * (w_o / 12.0)
 
                 left_e = (left_out_z - left_in_z) * 12.0
                 right_e = (right_out_z - right_in_z) * 12.0
