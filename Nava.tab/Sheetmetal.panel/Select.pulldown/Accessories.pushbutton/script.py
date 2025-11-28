@@ -7,14 +7,13 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-import clr
-from System.Collections.Generic import List
 from revit_element import RevitElement
-from revit_duct import RevitDuct, JointSize
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, forms, DB
+from revit_duct import RevitDuct
+from pyrevit import revit, script
 from Autodesk.Revit.DB import *
+from collections import Counter
+
+
 __title__ = "Accessories"
 __doc__ = """
 ************************************************************************
@@ -37,27 +36,62 @@ app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
 view = revit.active_view
+output = script.get_output()
 
 # Main Code
 # ==================================================
 
+# Gather ducts in the view
 ducts = RevitDuct.all(doc, view)
 
-conical = [d for d in ducts if d.family.lower().strip() ==
-           "conicaltap - wdamper"]
-boot_tap = [d for d in ducts if d.family.lower().strip() ==
-            "boot tap - wdamper"]
-long_coupler = [d for d in ducts if d.family.lower().strip() ==
-                "8inch long coupler wdamper"]
-end_cap = [d for d in ducts if d.family.lower().strip() == "cap"]
+# List of acceptable families / list of what families we are after
+allowed = {"conicaltap - wdamper", "boot tap - wdamper",
+           "8inch long coupler wdamper", "end cap", "cap",
+           "tdf end cap"}
 
-RevitElement.select_many(uidoc, conical + boot_tap + long_coupler + end_cap)
+# Loops through all ducts and filters out famies not in our focus_families list
+normalized = [(d, (d.family or "").lower().strip()) for d in ducts]
+fil_ducts = [d for d, fam in normalized if fam in allowed]
 
-forms.alert(
-    "Selected {} conical taps\n"
-    "Selected {} boot tap\n"
-    "Selected {} long coupler\n"
-    "Selected {} end caps".format(
-        len(conical), len(boot_tap), len(long_coupler), len(end_cap)
-    )
-)
+# Start of our select / print loop
+if fil_ducts:
+    # Select all fitered duct
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md(
+        "# Selected {} accessories  ".format(len(fil_ducts)))
+    output.print_md(
+        "------------------------------------------------------------------------------")
+
+    # Individual links
+    for i, d in enumerate(fil_ducts, start=1):
+        output.print_md(
+            "### Index: {} | Family: {} | Size: {} | Element ID: {}".format(
+                i, d.family, d.size, output.linkify(d.element.Id)
+            )
+        )
+
+    # Counters
+    counts = Counter((d.family or "").lower().strip() for d in fil_ducts)
+
+    # Final prints
+    output.print_md(
+        "### Selected {} conical taps  ".format(
+            counts.get("conicaltap - wdamper", 0)))
+    output.print_md(
+        "### Selected {} boot tap  ".format(
+            counts.get("boot tap - wdamper", 0)))
+    output.print_md(
+        "### Selected {} long coupler  ".format(
+            counts.get("8inch long coupler wdamper", 0)))
+    output.print_md(
+        "### Selected {} end caps".format(
+            counts.get("end cap", 0) + counts.get("cap", 0) + counts.get("tdf end cap", 0)))
+    output.print_md(
+        "------------------------------------------------------------------------------")
+    output.print_md(
+        "If info is missing, make sure you have the parameters turned on from Naviate")
+    output.print_md(
+        "All from Connectors and Fabrication, and size from Fab Properties")
+else:
+    output.print_md(
+        "No accessories found.")

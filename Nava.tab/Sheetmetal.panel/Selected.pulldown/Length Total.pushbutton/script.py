@@ -9,18 +9,14 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from System.Collections.Generic import List
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.DB import ElementId, Document
-from pyrevit import revit, forms, script, DB
+from pyrevit import revit, script
 from revit_duct import RevitDuct
 
 __title__ = "Length Total"
 __doc__ = """
 ******************************************************************
 Description:
-Returns ength for duct(s) selected.
+Returns length for duct(s) selected.
 ******************************************************************
 """
 
@@ -34,28 +30,39 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
+
+# Get all ducts in view
 ducts = RevitDuct.from_selection(uidoc, doc, view)
 
-if not ducts:
-    forms.alert("Please select one or more ducts first.")
+# Select / print loop
+if ducts:
+    output.print_md('# Selected {} joints of duct'.format(len(ducts)))
+    output.print_md(
+        '---------------------------------------------------------')
+
+    # Individual properties
+    for i, d in enumerate(ducts, start=1):
+        output.print_md(
+            '### Index: {} | Size: {} | Length: {}" | Family: {} | Element ID: {}'.format(
+                i, d.size, d.length, d.family, output.linkify(d.element.Id)
+            )
+        )
+
+    # Final totals loop and link
+    element_ids = [d.element.Id for d in ducts]
+    lengths = [d.length for d in ducts if d.length is not None]
+    output.print_md(
+        '# Total elements: {} | Total length: {:.2f} ft | {}'.format(
+            len(element_ids), sum(lengths) / 12, output.linkify(element_ids)
+        )
+    )
+
+    # Final prints
+    output.print_md(
+        "------------------------------------------------------------------------------")
+    output.print_md(
+        "If info is missing, make sure you have the parameters turned on from Naviate")
+    output.print_md(
+        "All from Connectors and Fabrication, and size from Fab Properties")
 else:
-    # keep both the ElementId and the length
-    lengths = [(d.element.Id, d.length)
-               for d in ducts if d.length is not None]
-
-    # Section title
-    output.print_md("### Total Lengths")
-
-    # Individual links with lengths
-    for eid, l in lengths:
-        output.print_md("- {}: {:.3f} in".format(output.linkify(eid), l))
-
-    # Select All link
-    all_ids = List[ElementId]()
-    for eid, _ in lengths:
-        all_ids.Add(eid)
-    output.print_md("**{}**".format(output.linkify(all_ids)))
-
-    # Footer total
-    total = sum(w for _, w in lengths)
-    output.print_md('**➡️ Total Duct Length: {:.3f} ft**'.format(total/12))
+    output.print_md("No ductwork found.")

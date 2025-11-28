@@ -10,18 +10,21 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import RevitDuct
-from pyrevit import revit, script
+from revit_duct import RevitDuct, CONNECTOR_THRESHOLDS
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, script
 from Autodesk.Revit.DB import *
+from System.Collections.Generic import List
 
 # Button info
 # ===================================================
-__title__ = "Joints Spiral"
+__title__ = "Joint Spiral"
 __doc__ = """
 ************************************************************************
 Description:
 
-Selects all spiral joints
+Selects all spiral joints.
 ************************************************************************
 """
 
@@ -36,43 +39,52 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all duct
+# Get all ducts
 ducts = RevitDuct.all(doc, view)
-
-# Families allowed
-allowed = {
+allowed_joints = {
+    ("tube", "grc_swage-female"),
     ("spiral duct", "raw"),
+    ("spiral pipe", "raw")
 }
 
-# Nomalize and filter duct
+# Normalize family and connector
 normalized = [(d, (d.family or "").lower().strip(),
                (d.connector_0_type or "").lower().strip()) for d in ducts]
-fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
-# Start of select / print
+# Filter using normalized values
+fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed_joints]
+
+# Start of select / print logic
 if fil_ducts:
 
-    # Select filtered duct
+    # slect filtered ducts
     RevitElement.select_many(uidoc, fil_ducts)
     output.print_md(
-        "# Selected {} spiral straight joints".format(len(fil_ducts))
+        "# Selected {} spiral joints".format(
+            len(
+                fil_ducts
+            )
+        )
     )
     output.print_md(
-        "---------------------------------------------------------------------"
+        "----------------------------------------------------"
     )
 
-    # Individual duct and properties
-    for i, fil in enumerate(fil_ducts, start=1):
+    # Individual duct and selected parameters
+    for i, fil in enumerate(
+        fil_ducts, start=1
+    ):
         output.print_md(
             '### Index: {} | Size: {} | Length: {}" | Element ID: {}'.format(
-                i, fil.size, fil.length, output.linkify(d.element.Id)
+                i, fil.size, fil.length, output.linkify(fil.element.Id)
             )
         )
 
+    # Total count
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {}, {}".format(
-            len(fil_ducts), output.linkify(element_ids)
+        '# Total elements: {}, {}'.format(
+            len(element_ids), output.linkify(element_ids)
         )
     )
 
@@ -84,4 +96,4 @@ if fil_ducts:
     output.print_md(
         "All from Connectors and Fabrication, and size from Fab Properties")
 else:
-    output.print_md("## No spiral joints found")
+    output.print_md("## No spiral joints selected")

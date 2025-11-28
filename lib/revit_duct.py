@@ -75,6 +75,22 @@ def is_section_view(view):
     return view.ViewType == DB.ViewType.Section
 
 
+def get_element_id_value(element_id):
+    """Get integer value from ElementId, handling version differences."""
+    try:
+        return element_id.Value
+    except AttributeError:
+        return element_id.IntegerValue
+
+
+def get_element_id_value(element_id):
+    """Get integer value from ElementId, handling version differences."""
+    try:
+        return element_id.Value
+    except AttributeError:
+        return element_id.IntegerValue
+
+
 # Material Density Class
 # ==================================================
 class MaterialDensity(Enum):
@@ -262,6 +278,21 @@ class RevitDuct:
             as_type="double")
 
     @property
+    # Ex: TDF, S&D
+    def connector_0_type(self):
+        return self._get_param("NaviateDBS_Connector0_EndCondition")
+
+    @property
+    # Ex: TDF, S&D
+    def connector_1_type(self):
+        return self._get_param("NaviateDBS_Connector1_EndCondition")
+
+    @property
+    # Ex: TDF, S&D
+    def connector_2_type(self):
+        return self._get_param("NaviateDBS_Connector2_EndCondition")
+
+    @property
     def connector_0(self):
         return self.get_connector(0)
 
@@ -392,7 +423,7 @@ class RevitDuct:
         return round(metal_lb + insul_lb, 2)
 
     @property
-    def weight_metal(self):
+    def weight(self):
         return self._get_param(
             "Weight",
             unit=UnitTypeId.PoundsMass,
@@ -404,7 +435,7 @@ class RevitDuct:
 
     @property
     def inner_radius(self):
-        return self._get_param("NaviateDBS_InnerRadius")
+        return self._get_param("NaviateDBS_D_Inner Radius")
 
     @property
     def area(self):
@@ -502,10 +533,55 @@ class RevitDuct:
             c_in, c_out = self.identify_inlet_outlet()
 
             if c_in and c_out:
-                w_i = self.width_in
-                h_i = self.heigth_in
-                w_o = self.width_out or w_i
-                h_o = self.heigth_out or h_i
+                # Detect round connectors (prefer explicit connector properties)
+                def has_radius(conn):
+                    try:
+                        return hasattr(conn, 'Radius') and conn.Radius and conn.Radius > 1e-6
+                    except Exception:
+                        return False
+
+                is_round_in = has_radius(c_in)
+                is_round_out = has_radius(c_out)
+                is_round = bool(is_round_in and is_round_out)
+
+                # Get dimensions based on shape
+                if is_round:
+                    # For round: use diameter from connector or parameters
+                    w_i = None
+                    w_o = None
+                    try:
+                        r_in = c_in.Radius
+                        if r_in and r_in > 1e-6:
+                            w_i = r_in * 24.0
+                    except Exception:
+                        pass
+                    if not w_i:
+                        w_i = self.diameter_in
+
+                    try:
+                        r_out = c_out.Radius
+                        if r_out and r_out > 1e-6:
+                            w_o = r_out * 24.0
+                    except Exception:
+                        pass
+                    if not w_o:
+                        w_o = self.diameter_out
+                    if not w_o:
+                        w_o = w_i
+
+                    h_i = w_i
+                    h_o = w_o
+                else:
+                    # For rectangular: use width/height parameters
+                    w_i = self.width_in
+                    h_i = self.heigth_in
+                    w_o = self.width_out or w_i
+                    h_o = self.heigth_out or h_i
+
+                # Validate we have dimensions
+                if not w_i or not h_i:
+                    self._offset_data = None
+                    return self._offset_data
 
                 # Revit internal units (feet) -> inches
                 p_in = (c_in.Origin.X * 12.0, c_in.Origin.Y *
@@ -535,17 +611,31 @@ class RevitDuct:
                 height_offset = abs(RevitXYZ.dot(delta, v_hat))
 
                 # Edge offsets (inlet to outlet)
-                edge_offsets = RevitXYZ.edge_diffs_whole_in(
-                    p_in, w_i, h_i, p_out, w_o, h_o, u_hat, v_hat)
-
-                # Add after calculating top_e and bot_e (around line 747):
-                left_in_z = p_in.Z - 0.5 * (w_i / 12.0)  # Assuming width is horizontal
-                left_out_z = p_out.Z - 0.5 * (w_o/ 12.0)
-                right_in_z = p_in.Z + 0.5 * (w_i / 12.0)
-                right_out_z = p_out.Z + 0.5 * (w_o / 12.0)
-
-                left_e = (left_out_z - left_in_z) * 12.0
-                right_e = (right_out_z - right_in_z) * 12.0
+                if not is_round:
+                    edge_offsets = RevitXYZ.edge_diffs_whole_in(
+                        p_in, w_i, h_i, p_out, w_o, h_o, u_hat, v_hat)
+                else:
+                    # Round parts do not have meaningful rectangular edges.
+                    # Provide None for edge offsets and include diameters for context.
+                    try:
+                        d_in = c_in.Radius * 24.0
+                    except Exception:
+                        d_in = self.diameter_in
+                    try:
+                        d_out = c_out.Radius * 24.0
+                    except Exception:
+                        d_out = self.diameter_out or d_in
+                    edge_offsets = {
+                        'whole_in': {
+                            'left': None,
+                            'right': None,
+                            'top': None,
+                            'bottom': None,
+                        },
+                        'round': True,
+                        'diam_in': d_in,
+                        'diam_out': d_out,
+                    }
 
                 self._offset_data = {
                     'centerline_width': width_offset,
@@ -553,9 +643,19 @@ class RevitDuct:
                     'edges': edge_offsets
                 }
             else:
+                # No valid connectors: cannot compute geometry-based offsets
                 self._offset_data = None
 
         return self._offset_data
+
+    @property
+    def is_round(self):
+        """True if both connectors are round (edge offsets not meaningful)."""
+        data = getattr(self, '_offset_data', None)
+        if not data:
+            # Force calculation once if missing
+            data = self.offset_data
+        return bool(data and data.get('edges') and data['edges'].get('round'))
 
     @property
     def centerline_width(self):
@@ -629,16 +729,22 @@ class RevitDuct:
                 if abs(a0 - a1) > 1e-6:
                     return (c0, c1) if a0 >= a1 else (c1, c0)
                 # Tie: fall back to element id for stability
-                return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
+                id0 = get_element_id_value(c0.Owner.Id)
+                id1 = get_element_id_value(c1.Owner.Id)
+                return (c0, c1) if id0 <= id1 else (c1, c0)
 
             # Round case
             if d0 and d1:
                 if abs(d0 - d1) > 1e-6:
                     return (c0, c1) if d0 >= d1 else (c1, c0)
-                return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
+                id0 = get_element_id_value(c0.Owner.Id)
+                id1 = get_element_id_value(c1.Owner.Id)
+                return (c0, c1) if id0 <= id1 else (c1, c0)
 
             # Mixed or missing size info: fallback to id ordering
-            return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
+            id0 = get_element_id_value(c0.Owner.Id)
+            id1 = get_element_id_value(c1.Owner.Id)
+            return (c0, c1) if id0 <= id1 else (c1, c0)
 
         except Exception:
             return (None, None)
@@ -662,15 +768,15 @@ class RevitDuct:
         cen_h = abs(dz) * 12.0
 
         # Sizes (both width and height)
-        w_in = c_in.Width * 12.0 if hasattr(c_in, 'Width') and c_in.Width else 0.0
-        w_out = c_out.Width * 12.0 if hasattr(c_out, 'Width') and c_out.Width else w_in
+        w_in = c_in.Width * \
+            12.0 if hasattr(c_in, 'Width') and c_in.Width else 0.0
+        w_out = c_out.Width * \
+            12.0 if hasattr(c_out, 'Width') and c_out.Width else w_in
 
-        h_in = c_in.Height * 12.0 if hasattr(c_in,
-                                             'Height') and c_in.Height else (c_in.Radius * 24.0 if hasattr(c_in,
-                                                                                                           'Radius') and c_in.Radius else 0.0)
-        h_out = c_out.Height * 12.0 if hasattr(c_out,
-                                               'Height') and c_out.Height else (c_out.Radius * 24.0 if hasattr(c_out,
-                                                                                                               'Radius') and c_out.Radius else h_in)
+        h_in = (c_in.Height * 12.0 if hasattr(c_in, 'Height') and c_in.Height
+                else (c_in.Radius * 24.0 if hasattr(c_in, 'Radius') and c_in.Radius else 0.0))
+        h_out = (c_out.Height * 12.0 if hasattr(c_out, 'Height') and c_out.Height
+                 else (c_out.Radius * 24.0 if hasattr(c_out, 'Radius') and c_out.Radius else h_in))
 
         # World Z planes (feet) - using actual connector positions
         top_in_z = p_in.Z + 0.5 * (h_in / 12.0)
@@ -735,7 +841,8 @@ class RevitDuct:
         # Family lists
         reducer_square = ["transition"]
         reducer_round = ["reducer"]
-        offset_list = ["ogee", "offset", "radius offset", "mitered offset", "mitred offset"]
+        offset_list = ["ogee", "offset", "radius offset",
+                       "mitered offset", "mitred offset"]
         family_list = reducer_square + reducer_round + offset_list
 
         if family not in family_list:
@@ -790,8 +897,10 @@ class RevitDuct:
                 # Both directions - show both with space
                 vert_mag = int(round(abs(top_e)))
                 horiz_mag = int(round(abs(left_e)))
-                vert_str = u'↑{}"TU'.format(vert_mag) if top_e > 0 else u'↓{}"TD'.format(vert_mag)
-                horiz_str = u'←{}"'.format(horiz_mag) if left_e < 0 else u'→{}"'.format(horiz_mag)
+                vert_str = u'↑{}"TU'.format(
+                    vert_mag) if top_e > 0 else u'↓{}"TD'.format(vert_mag)
+                horiz_str = u'←{}"'.format(
+                    horiz_mag) if left_e < 0 else u'→{}"'.format(horiz_mag)
                 return u'{} {}'.format(vert_str, horiz_str)
             elif has_vert:
                 # Only vertical

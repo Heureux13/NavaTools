@@ -10,12 +10,9 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import RevitDuct, CONNECTOR_THRESHOLDS
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, forms, script
+from revit_duct import RevitDuct
+from pyrevit import revit, script
 from Autodesk.Revit.DB import *
-from System.Collections.Generic import List
 
 # Button info
 # ===================================================
@@ -38,23 +35,53 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
-allowed_joints = {
-    ("Straight", "TDC"),
-    ("Straight", "TDF"),
-}
 
+# Get all duct
 ducts = RevitDuct.all(doc, view)
 
-valid_keys = set(CONNECTOR_THRESHOLDS.keys())
+# Families allowed
+allowed = {
+    ("straight", "tdc"),
+    ("straight", "tdf"),
+}
 
-fil_ducts = [
-    d for d in ducts if (d.family, d.connector_0) in allowed_joints
-]
+# Nomalize and filter duct
+normalized = [(d, (d.family or "").lower().strip(),(d.connector_0_type or "").lower().strip()) for d in ducts]
+fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
-ids = List[ElementId]()
-for d in fil_ducts:
-    ids.Add(d.element.Id)
+# Start of select / print
+if fil_ducts:
 
-uidoc.Selection.SetElementIds(ids)
+    # Select filtered duct
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md(
+        "# Selected {} TDF straight joints".format(len(fil_ducts))
+    )
+    output.print_md(
+        "---------------------------------------------------------------------"
+    )
 
-forms.alert("Selected {} TDF ducts".format(len(fil_ducts)))
+    # Individual duct and properties
+    for i, fil in enumerate(fil_ducts, start=1):
+        output.print_md(
+            '### Index: {} | Size: {} | Length: {}" | Element ID: {}'.format(
+                i, fil.size, fil.length, output.linkify(d.element.Id)
+            )
+        )
+
+    element_ids = [d.element.Id for d in fil_ducts]
+    output.print_md(
+        "# Total elements {}, {}".format(
+            len(fil_ducts), output.linkify(element_ids)
+        )
+    )
+
+    # Final print statements
+    output.print_md(
+        "------------------------------------------------------------------------------")
+    output.print_md(
+        "If info is missing, make sure you have the parameters turned on from Naviate")
+    output.print_md(
+        "All from Connectors and Fabrication, and size from Fab Properties")
+else:
+    output.print_md("## No TDF joints found")

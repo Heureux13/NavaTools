@@ -10,10 +10,8 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import RevitDuct, CONNECTOR_THRESHOLDS
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, forms, DB
+from revit_duct import RevitDuct
+from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
@@ -33,22 +31,48 @@ app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
 view = revit.active_view
+output = script.get_output()
 
 # Main Code
 # ==================================================
-allowed_joints = {
-    ("Straight", "Slip & Drive"),
-    ("Straight", "S&D"),
-    ("Straight", "Standing S&D")
-}
 
+# Get all ducts in view
 ducts = RevitDuct.all(doc, view)
 
-valid_keys = set(CONNECTOR_THRESHOLDS.keys())
+# Family / connector combo to find
+allowed = {
+    ("straight", "slip & drive"),
+    ("straight", "s&d"),
+    ("straight", "standing s&d")
+}
 
-fil_ducts = [
-    d for d in ducts if (d.family, d.connector_0) in allowed_joints
-]
+# List of filtered ducts
+normalized = [(d, (d.family or "").lower().strip(), (d.connector_0_type or "").lower().strip()) for d in ducts]
+fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
-RevitElement.select_many(uidoc, fil_ducts)
-forms.alert("Selected {} S&D ducts.".format(len(fil_ducts)))
+# Start of select / print loop
+if fil_ducts:
+
+    # Select filtered ducs
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md("# Selected {} S&D straight joints".format(len(fil_ducts)))
+    output.print_md("------------------------------------------------------------------------------")
+
+    # Loop for individutal duct and their selected properties
+    for i, fil in enumerate(fil_ducts, start=1):
+        output.print_md('### Index: {} | Size: {} | Element ID: {}'.format(
+            i, fil.size, output.linkify(fil.element.Id)
+            ))
+
+    # Loop for total count
+    element_ids = [d.element.Id for d in fil_ducts]
+    output.print_md("# Total elements: {}, {}".format(
+        len(element_ids), output.linkify(element_ids)
+    ))
+
+     # Final print statements
+    output.print_md("------------------------------------------------------------------------------")
+    output.print_md("If info is missing, make sure you have the parameters turned on from Naviate")
+    output.print_md("All from Connectors and Fabrication, and size from Fab Properties")
+else:
+    output.print_md("## No S&D joints found")

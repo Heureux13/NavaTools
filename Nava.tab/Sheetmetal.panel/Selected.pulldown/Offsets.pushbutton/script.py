@@ -9,9 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-import math
 from revit_duct import RevitDuct
-from revit_xyz import RevitXYZ
 from pyrevit import revit, script, forms
 
 # Button display information
@@ -35,67 +33,69 @@ output = script.get_output()
 # ==================================================
 ducts = RevitDuct.from_selection(uidoc, doc, view)
 
+family_list = {
+    "transition",
+    "mitred offset",
+    "radius offset",
+    "mitered offset",
+    "ogee",
+    "offset"
+}
+
 if not ducts:
     forms.alert("Please select one or more ducts first.")
+    raise SystemExit
 
-family_list = ["transition", "mitred offset",
-               "radius offset", "mitered offset",
-               "ogee", "offset"]
+# Normalize family names once (lower + strip) and filter
+filtered_ducts = [d for d in ducts if (
+    d.family or "").lower().strip() in family_list]
 
-for d in ducts:
-    if d.family and d.family.strip().lower() in family_list:
-        # Get connectors
-        all_connectors = list(d.element.ConnectorManager.Connectors)
-        c_0 = all_connectors[0] if len(all_connectors) > 0 else None
-        c_1 = all_connectors[1] if len(all_connectors) > 1 else None
+for d in filtered_ducts:
+    data = d.offset_data
+    link = output.linkify(d.element.Id)
 
-        # Sizes
-        w_i = d.width_in
-        h_i = d.heigth_in
-        w_o = d.width_out
-        h_o = d.heigth_out
+    if not data:
+        output.print_md(
+            "\n**Duct:** {} — no offset data available.".format(link))
+        continue
 
-        # Fallbacks
-        if w_o is None:
-            w_o = w_i
-        if h_o is None:
-            h_o = h_i
+    edges = data.get('edges') or {}
+    is_round = bool(edges.get('round'))
+    output.print_md("\n**Duct:** {}".format(link))
 
-        if c_0 and c_1:
-            # Revit internal units (feet) -> inches
-            p0 = (c_0.Origin.X * 12.0, c_0.Origin.Y * 12.0, c_0.Origin.Z * 12.0)
-            p1 = (c_1.Origin.X * 12.0, c_1.Origin.Y * 12.0, c_1.Origin.Z * 12.0)
+    if is_round:
+        diam_in = edges.get('diam_in') or d.diameter_in
+        diam_out = edges.get('diam_out') or d.diameter_out or diam_in
+        if diam_in and diam_out:
+            output.print_md(
+                "Diameter: {0:.2f}\" → {1:.2f}\"".format(diam_in, diam_out))
+        else:
+            output.print_md("Diameter: (unknown)")
+    else:
+        w_in = d.width_in or 0.0
+        h_in = d.heigth_in or 0.0
+        w_out = d.width_out or w_in
+        h_out = d.heigth_out or h_in
+        output.print_md("Size: {0:.2f}x{1:.2f} → {2:.2f}x{3:.2f}".format(
+            w_in, h_in, w_out, h_out))
 
-            # Use connector CS for width/height axes when available
-            try:
-                cs = c_0.CoordinateSystem
-                u_hat = (cs.BasisX.X, cs.BasisX.Y, cs.BasisX.Z)  # width axis
-                v_hat = (cs.BasisY.X, cs.BasisY.Y, cs.BasisY.Z)  # height axis
-            except Exception:
-                u_hat = (1.0, 0.0, 0.0)
-                v_hat = (0.0, 1.0, 0.0)
+    # Centerline offsets taken from dict
+    cw = data.get('centerline_width') or 0.0
+    ch = data.get('centerline_height') or 0.0
+    output.print_md("\n**Centerline Offsets:**")
+    output.print_md("Plan: {0:.2f}\" | Vertical: {1:.2f}\"".format(cw, ch))
 
-            # Centerline offsets in inches
-            delta = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
-            width_offset = RevitXYZ.dot(delta, u_hat)
-            height_offset = RevitXYZ.dot(delta, v_hat)
+    if not is_round:
+        whole = edges.get('whole_in') or {}
+        output.print_md("\n**Edge Offsets (Whole Inches):**")
 
-            # Edge offsets (whole inches + exact)
-            offsets = RevitXYZ.edge_diffs_whole_in(
-                p0, w_i, h_i, p1, w_o, h_o, u_hat, v_hat)
+        def fmt_edge(val):
+            return str(val) if val is not None else "N/A"
+        output.print_md("Left: {0}\" | Right: {1}\" | Top: {2}\" | Bottom: {3}\"".format(
+            fmt_edge(whole.get('left')), fmt_edge(whole.get('right')), fmt_edge(whole.get('top')), fmt_edge(whole.get('bottom'))))
+    else:
+        output.print_md("\n_No rectangular edge offsets (round)._")
 
-            # Outputd
-            output.print_md("\n**Duct: {}**".format(d.element.Id))
-            output.print_md("Size: {}x{} to {}x{}".format(w_i, h_i, w_o, h_o))
-            output.print_md("\n**Centerline Offsets:**")
-            output.print_md("Width: {:.2f}\" | Height: {:.2f}\"".format(
-                width_offset, height_offset))
-
-            if offsets:
-                output.print_md("\n**Edge Offsets:**")
-                output.print_md("Left: {}\" | Right: {}\" | Top: {}\" | Bottom: {}\"".format(
-                    offsets["whole_in"]["left"],
-                    offsets["whole_in"]["right"],
-                    offsets["whole_in"]["top"],
-                    offsets["whole_in"]["bottom"]
-                ))
+    # tag = d.get_offset_value()
+    # if tag:
+    #     output.print_md("\n**Offset Tag:** {}".format(tag))

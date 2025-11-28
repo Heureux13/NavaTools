@@ -10,21 +10,19 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import JointSize, RevitDuct
+from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
+
 # Button info
-# ===================================================
-__title__ = "Joints Long"
+# # ======================================================================
+__title__ = "Tee Radius"
 __doc__ = """
 ****************************************************
 Description:
 
-Selects joints that are MORE than:
-TDF     = 56"
-S&D     = 59"
-Spiral  = 120"
+Selects all round tees
 ****************************************************
 """
 
@@ -39,32 +37,37 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts in view
+# Gathers Duct in the view
 ducts = RevitDuct.all(doc, view)
 
-# Filter ducts by size
-fil_ducts = [d for d in ducts if d.joint_size == JointSize.LONG]
+# List of acceptable families / list of what familes we are after
+allowed = ["radius tee"]
 
-# Start of our logic / print
-if fil_ducts:
+# Loops through all duct and filters down to only wanted families
+normalized = [(d, (d.family or "").lower().strip()) for d in ducts]
+sel_ducts = [d for d, fam in normalized if fam in allowed]
 
-    # Select filtered duct list
-    RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md("# Selected {} long joints".format(len(fil_ducts)))
+# start of our select / print loop
+if sel_ducts:
+
+    # Selectes the filtered ducts
+    RevitElement.select_many(uidoc, sel_ducts)
+    output.print_md("# Selected {} square tees".format(len(sel_ducts)))
     output.print_md(
         "------------------------------------------------------------------------------")
 
-    # loop for individutal duct and their selected properties
-    for i, sel in enumerate(fil_ducts, start=1):
-        output.print_md('### Index: {} | Lenght: {}" | Size: {} | Connectors: {}, {} | Element ID: {}'.format(
-            i, sel.length, sel.size, sel.connector_0_type, sel.connector_1_type, output.linkify(
-                sel.element.Id)
+    # Loop for individual duct and their selected properties
+    for i, sel in enumerate(sel_ducts, start=1):
+        output.print_md('### Index: {} | Size: {} | Throat(s): {}", {}", {}" | Connectors: {}, {}, {} | Element ID: {}'.format(
+            i, sel.size, sel.extension_bottom, sel.extension_left,
+            sel.extension_right, sel.connector_0_type, sel.connector_1_type,
+            sel.connector_2_type, output.linkify(sel.element.Id)
         ))
 
-    # loop for totals
-    element_ids = [d.element.Id for d in fil_ducts]
+    # Loop for total count
+    element_ids = [d.element.Id for d in sel_ducts]
     output.print_md("# Total elements: {}, {}".format(
-        len(fil_ducts), output.linkify(element_ids)
+        len(element_ids), output.linkify(element_ids)
     ))
 
     # Final print statements
@@ -75,4 +78,4 @@ if fil_ducts:
     output.print_md(
         "All from Connectors and Fabrication, and size from Fab Properties")
 else:
-    output.print_md("No short joints found")
+    output.print_md("No radius tees found.")

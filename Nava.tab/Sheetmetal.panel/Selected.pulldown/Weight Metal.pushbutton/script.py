@@ -7,20 +7,16 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from System.Collections.Generic import List
+# Imports
+# ==================================================
+from pyrevit import revit, script
 from revit_duct import RevitDuct
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, forms, script
-from Autodesk.Revit.DB import *
 
-# Button info
-# =================================================
-__title__ = "Weight Metal"
+__title__ = "Total Weight"
 __doc__ = """
 ******************************************************************
 Description:
-Returns metal weight for duct(s) selected.
+Returns weight for duct(s) selected.
 ******************************************************************
 """
 
@@ -34,28 +30,37 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
+
+# Get all ducts in view
 ducts = RevitDuct.from_selection(uidoc, doc, view)
 
-if not ducts:
-    forms.alert("Please select one or more ducts first.")
+# Select / print loop
+if ducts:
+    output.print_md('# Selected {} joints of duct'.format(len(ducts)))
+    output.print_md('---')
+
+    # Individual properties
+    for i, d in enumerate(ducts, start=1):
+        output.print_md(
+            '### Index: {} | Size: {} | Weight: {} lbs | Family: {} | Element ID: {}'.format(
+                i, d.size, d.weight, d.family, output.linkify(d.element.Id)
+            )
+        )
+
+    # Final totals loop and link
+    element_ids = [d.element.Id for d in ducts]
+    weights = [d.weight for d in ducts if d.weight is not None]
+    output.print_md(
+        '# Total elements: {} | Total weight: {:.2f} lbs | {}'.format(
+            len(element_ids), sum(weights), output.linkify(element_ids)
+        )
+    )
+
+    # Final prints
+    output.print_md("---")
+    output.print_md(
+        "If info is missing, make sure you have the parameters turned on from Naviate")
+    output.print_md(
+        "All from Connectors and Fabrication, and size from Fab Properties")
 else:
-    # keep both the ElementId and the weight
-    weights = [(d.element.Id, d.id, d.weight_metal)
-               for d in ducts if d.weight_metal is not None]
-
-    # Section title
-    output.print_md("### Metal Weights")
-
-    # Individual links with weights
-    for eid, id_int, w in weights:
-        output.print_md("- {}: {:.2f} lbs".format(output.linkify(eid), w))
-
-    # Select All link
-    all_ids = List[ElementId]()
-    for eid, _, _ in weights:
-        all_ids.Add(eid)
-    output.print_md("**{}**".format(output.linkify(all_ids)))
-
-    # Footer total
-    total = sum(w for _, _, w in weights)
-    output.print_md("**➡️ Total Metal weight: {:.2f} lbs**".format(total))
+    output.print_md("No ductwork found.")
