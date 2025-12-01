@@ -11,20 +11,15 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, script, DB
+from revit_output import print_parameter_help
+from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
 __title__ = "Elbows Radius"
 __doc__ = """
-************************************************************************
-Description:
-
 Select all radius elbows
-************************************************************************
 """
 
 # Variables
@@ -37,6 +32,8 @@ output = script.get_output()
 
 # Main Code
 # ==================================================
+
+
 # Gathers Duct in the view
 ducts = RevitDuct.all(doc, view)
 
@@ -68,12 +65,7 @@ if fil_ducts:
         "# Total elements: {}, {}".format(
             len(element_ids), output.linkify(element_ids)))
 
-    # Final prints
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    # Final print statements
+    print_parameter_help(output)
 else:
     output.print_md("No radius elbows found.")

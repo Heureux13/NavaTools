@@ -10,6 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from pyrevit import revit, script
+from revit_output import print_parameter_help
 from revit_duct import RevitDuct
 
 __title__ = "Length Total"
@@ -57,12 +58,7 @@ if ducts:
         )
     )
 
-    # Final prints
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    # Final print statements
+    print_parameter_help(output)
 else:
     output.print_md("No ductwork found.")

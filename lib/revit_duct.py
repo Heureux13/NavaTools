@@ -83,14 +83,6 @@ def get_element_id_value(element_id):
         return element_id.IntegerValue
 
 
-def get_element_id_value(element_id):
-    """Get integer value from ElementId, handling version differences."""
-    try:
-        return element_id.Value
-    except AttributeError:
-        return element_id.IntegerValue
-
-
 # Material Density Class
 # ==================================================
 class MaterialDensity(Enum):
@@ -589,11 +581,13 @@ class RevitDuct:
                 p_out = (c_out.Origin.X * 12.0, c_out.Origin.Y *
                          12.0, c_out.Origin.Z * 12.0)
 
-                # Get coordinate system from INLET
+                # Get coordinate system from INLET (cache to avoid repeated access)
                 try:
                     cs = c_in.CoordinateSystem
-                    u_hat = (cs.BasisX.X, cs.BasisX.Y, cs.BasisX.Z)
-                    v_hat = (cs.BasisY.X, cs.BasisY.Y, cs.BasisY.Z)
+                    bx = cs.BasisX
+                    by = cs.BasisY
+                    u_hat = (bx.X, bx.Y, bx.Z)
+                    v_hat = (by.X, by.Y, by.Z)
                 except Exception:
                     u_hat = (1.0, 0.0, 0.0)
                     v_hat = (0.0, 1.0, 0.0)
@@ -605,8 +599,8 @@ class RevitDuct:
                     v_hat = (-v_hat[0], -v_hat[1], -v_hat[2])
 
                 # Centerline offsets (inlet to outlet)
-                delta = (p_out[0] - p_in[0], p_out[1] -
-                         p_in[1], p_out[2] - p_in[2])
+                delta = (
+                    p_out[0] - p_in[0], p_out[1] - p_in[1], p_out[2] - p_in[2])
                 width_offset = abs(RevitXYZ.dot(delta, u_hat))
                 height_offset = abs(RevitXYZ.dot(delta, v_hat))
 
@@ -741,10 +735,26 @@ class RevitDuct:
                 id1 = get_element_id_value(c1.Owner.Id)
                 return (c0, c1) if id0 <= id1 else (c1, c0)
 
-            # Mixed or missing size info: fallback to id ordering
-            id0 = get_element_id_value(c0.Owner.Id)
-            id1 = get_element_id_value(c1.Owner.Id)
-            return (c0, c1) if id0 <= id1 else (c1, c0)
+            # Mixed shape case: one rectangular, one round
+            # Compute areas and compare
+            a0 = None
+            a1 = None
+            if w0 and h0:
+                a0 = w0 * h0
+            elif d0:
+                a0 = 3.14159 * (d0 / 2.0) ** 2
+
+            if w1 and h1:
+                a1 = w1 * h1
+            elif d1:
+                a1 = 3.14159 * (d1 / 2.0) ** 2
+
+            if a0 is not None and a1 is not None and abs(a0 - a1) > 1e-6:
+                return (c0, c1) if a0 >= a1 else (c1, c0)
+
+            # Last resort: use connector index for deterministic ordering
+            # (both connectors belong to same element, so Owner.Id won't help)
+            return (c0, c1)  # c0 is always inlet for consistency
 
         except Exception:
             return (None, None)
@@ -758,14 +768,66 @@ class RevitDuct:
         p_in = c_in.Origin
         p_out = c_out.Origin
 
-        # Horizontal centerline offset (plan distance)
-        dx = p_out.X - p_in.X
-        dy = p_out.Y - p_in.Y
-        cen_w = math.hypot(dx, dy) * 12
+        # Vector from inlet to outlet
+        delta = p_out - p_in
 
-        # Vertical centerline offset
-        dz = p_out.Z - p_in.Z
-        cen_h = abs(dz) * 12.0
+        # Get width direction (BasisX) from inlet connector
+        # BasisX points along the width of rectangular duct (left-right direction)
+        try:
+            width_dir = c_in.CoordinateSystem.BasisX
+            # Project delta onto width direction to get signed horizontal offset
+            # Positive = offset in +BasisX direction (right), Negative = offset in -BasisX direction (left)
+            offset_perp_signed = (delta.X * width_dir.X +
+                                  delta.Y * width_dir.Y +
+                                  delta.Z * width_dir.Z) * 12.0
+            offset_perp = abs(offset_perp_signed)
+        except Exception:
+            # Fallback: no horizontal offset
+            offset_perp_signed = 0.0
+            offset_perp = 0.0
+            offset_perp = 0.0
+
+        # Horizontal centerline offset (plan distance - for reference)
+        cen_w = math.hypot(delta.X, delta.Y) * 12
+
+        # Vertical centerline offset (signed and magnitude)
+        cen_h_signed = delta.Z * 12.0
+        cen_h = abs(cen_h_signed)
+
+        # Detect connector shapes
+        def is_round(conn):
+            try:
+                return hasattr(conn, 'Radius') and conn.Radius and conn.Radius > 1e-6
+            except Exception:
+                return False
+
+        round_in = is_round(c_in)
+        round_out = is_round(c_out)
+
+        # Handle mixed transitions (square to round)
+        if round_in != round_out:
+            # Mixed transition: use centerline offsets and perpendicular offset
+            return {
+                'centerline_w': cen_w,
+                'centerline_h': cen_h,
+                'centerline_h_signed': delta.Z * 12.0,
+                'offset_perp': offset_perp,
+                'offset_perp_signed': offset_perp_signed,
+                'top_edge': None,
+                'bot_edge': None,
+                'left_edge': None,
+                'right_edge': None,
+                'top_mag': None,
+                'bot_mag': None,
+                'left_mag': None,
+                'right_mag': None,
+                'top_aligned': False,
+                'bot_aligned': False,
+                'left_aligned': False,
+                'right_aligned': False,
+                'cl_vert': True,
+                'is_mixed': True
+            }
 
         # Sizes (both width and height)
         w_in = c_in.Width * \
@@ -815,6 +877,9 @@ class RevitDuct:
         return {
             'centerline_w': cen_w,
             'centerline_h': cen_h,
+            'centerline_h_signed': cen_h_signed,
+            'offset_perp': offset_perp,
+            'offset_perp_signed': offset_perp_signed,
             'top_edge': top_e,
             'bot_edge': bot_e,
             'left_edge': left_e,
@@ -827,7 +892,12 @@ class RevitDuct:
             'bot_aligned': bot_aligned,
             'left_aligned': left_aligned,
             'right_aligned': right_aligned,
-            'cl_vert': cl_vert
+            'cl_vert': cl_vert,
+            'is_mixed': False,
+            'w_in': w_in,
+            'w_out': w_out,
+            'h_in': h_in,
+            'h_out': h_out
         }
 
     def get_offset_value(self):

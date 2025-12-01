@@ -10,16 +10,14 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_duct import RevitDuct
+from revit_output import print_parameter_help
 from pyrevit import revit, script, forms
 
 # Button display information
 # =================================================
 __title__ = "Offset info"
 __doc__ = """
-******************************************************************
-Description:
 Gives offset information about specific selected duct.
-******************************************************************
 """
 
 # Variables
@@ -96,6 +94,5 @@ for d in filtered_ducts:
     else:
         output.print_md("\n_No rectangular edge offsets (round)._")
 
-    # tag = d.get_offset_value()
-    # if tag:
-    #     output.print_md("\n**Offset Tag:** {}".format(tag))
+# Final print statements
+print_parameter_help(output)

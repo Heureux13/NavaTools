@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from Autodesk.Revit.DB import *
 from pyrevit import revit, script
+from revit_output import print_parameter_help
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance, is_plan_view, is_section_view
 from revit_xyz import RevitXYZ
 from revit_element import RevitElement
@@ -65,37 +66,23 @@ fil_ducts = [d for d in ducts if is_allowed(d)]
 if fil_ducts:
     RevitElement.select_many(uidoc, fil_ducts)
     output.print_md("# Selected {} short joints".format(len(fil_ducts)))
-    output.print_md(
-        "---")
+    output.print_md("---")
 
     for i, fil in enumerate(fil_ducts, start=1):
         output.print_md(
             '### Index: {} | Type: {} | Size: {} | Length: {}" | ID: {}'.format(
                 i, fil.connector_0_type, fil.size, fil.length, output.linkify(
-                    fil.element.Id
-                )
+                    fil.element.Id)
             )
         )
 
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
         "# Total elements {}, {}".format(
-            len(
-                element_ids
-            ),
-            output.linkify(
-                element_ids
-            )
-        )
-    )
+            len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
-    output.print_md(
-        "---")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md(
         "# There is nothing to select"

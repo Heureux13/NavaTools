@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
+from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -18,11 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Joints TDF"
 __doc__ = """
-************************************************************************
-Description:
-
 Selects all TDF joints
-************************************************************************
 """
 
 # Variables
@@ -46,7 +43,10 @@ allowed = {
 }
 
 # Nomalize and filter duct
-normalized = [(d, (d.family or "").lower().strip(),(d.connector_0_type or "").lower().strip()) for d in ducts]
+normalized = [(
+    d, (d.family or "").lower().strip(
+    ), (d.connector_0_type or "").lower().strip()
+) for d in ducts]
 fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
 # Start of select / print
@@ -57,15 +57,13 @@ if fil_ducts:
     output.print_md(
         "# Selected {} TDF straight joints".format(len(fil_ducts))
     )
-    output.print_md(
-        "---------------------------------------------------------------------"
-    )
+    output.print_md("---")
 
     # Individual duct and properties
     for i, fil in enumerate(fil_ducts, start=1):
         output.print_md(
             '### Index: {} | Size: {} | Length: {}" | Element ID: {}'.format(
-                i, fil.size, fil.length, output.linkify(d.element.Id)
+                i, fil.size, fil.length, output.linkify(fil.element.Id)
             )
         )
 
@@ -77,11 +75,6 @@ if fil_ducts:
     )
 
     # Final print statements
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md("## No TDF joints found")

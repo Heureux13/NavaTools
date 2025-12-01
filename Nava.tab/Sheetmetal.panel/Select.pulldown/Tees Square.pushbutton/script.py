@@ -9,12 +9,9 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-# Imports
-# ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
+from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -23,11 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Tee Square"
 __doc__ = """
-****************************************************
-Description:
-
 Selects all square tees
-****************************************************
 """
 
 # Variables
@@ -57,8 +50,7 @@ if sel_ducts:
     # Selectes filtered ducts
     RevitElement.select_many(uidoc, sel_ducts)
     output.print_md("# Selected {} square tees".format(len(sel_ducts)))
-    output.print_md(
-        "------------------------------------------------------------------------------")
+    output.print_md("---")
 
     # Loop for individual duct and their selected properties
     for i, sel in enumerate(sel_ducts, start=1):
@@ -77,11 +69,6 @@ if sel_ducts:
     ))
 
     # Final print statements
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md("No square tees found.")

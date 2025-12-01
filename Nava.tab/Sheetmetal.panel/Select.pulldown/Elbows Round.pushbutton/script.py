@@ -11,18 +11,15 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from pyrevit import revit, script, DB
+from revit_output import print_parameter_help
+from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
 __title__ = "Elbows Round"
 __doc__ = """
-************************************************************************
-Description:
-
 Select all round elbows
-************************************************************************
 """
 
 # Variables
@@ -64,12 +61,7 @@ if sel_ducts:
     output.print_md("# Total elements: {}, {}".format(
         len(element_ids), output.linkify(element_ids)))
 
-    # Final prints
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    # Final print statements
+    print_parameter_help(output)
 else:
     output.print_md("No round elbows found.")

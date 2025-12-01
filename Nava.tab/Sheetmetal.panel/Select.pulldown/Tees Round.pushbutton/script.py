@@ -10,6 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
+from revit_output import print_parameter_help
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
@@ -19,11 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Tee Radius"
 __doc__ = """
-****************************************************
-Description:
-
 Selects all round tees
-****************************************************
 """
 
 # Variables
@@ -53,8 +50,7 @@ if sel_ducts:
     # Selectes the filtered ducts
     RevitElement.select_many(uidoc, sel_ducts)
     output.print_md("# Selected {} square tees".format(len(sel_ducts)))
-    output.print_md(
-        "------------------------------------------------------------------------------")
+    output.print_md("---")
 
     # Loop for individual duct and their selected properties
     for i, sel in enumerate(sel_ducts, start=1):
@@ -71,11 +67,6 @@ if sel_ducts:
     ))
 
     # Final print statements
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md("No radius tees found.")

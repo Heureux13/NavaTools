@@ -8,6 +8,7 @@ the copyright holder."""
 # ======================================================================
 
 from revit_element import RevitElement
+from revit_output import print_parameter_help
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
@@ -16,11 +17,7 @@ from collections import Counter
 
 __title__ = "Accessories"
 __doc__ = """
-************************************************************************
-Description:
-
 Selects all end caps and taps
-************************************************************************
 """
 
 # Imports
@@ -86,12 +83,9 @@ if fil_ducts:
     output.print_md(
         "### Selected {} end caps".format(
             counts.get("end cap", 0) + counts.get("cap", 0) + counts.get("tdf end cap", 0)))
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+
+    # Final print statements
+    print_parameter_help(output)
 else:
     output.print_md(
         "No accessories found.")

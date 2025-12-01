@@ -9,105 +9,140 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit, script
-from revit_duct import RevitDuct
-from revit_parameter import RevitParameter
-from Autodesk.Revit.DB import Transaction
+from System.Collections.Generic import List
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.DB import Transaction, Reference, ElementId
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB, script
+from revit_element import RevitElement
+from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
+from revit_xyz import RevitXYZ
+from revit_tagging import RevitTagging
+import clr
 
-# Button display information
-# =================================================
-__title__ = "Easy Button"
+# Button info
+# ==================================================
+__title__ = "Joints Short Horizontal"
 __doc__ = """
-******************************************************************
-Code place holder
-******************************************************************
+************************************************************************
+Description:
+Select all mitered elbows not 90° and all radius elbows.
+************************************************************************
 """
 
 # Variables
 # ==================================================
-app = __revit__.Application
-uidoc = __revit__.ActiveUIDocument
-doc = revit.doc
-view = revit.active_view
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+doc = revit.doc  # type: Document
 output = script.get_output()
-ducts = RevitDuct.all(doc, view)
-# ducts = RevitDuct.from_selection(uidoc, doc)
-rp = RevitParameter(doc, app)
+view = revit.active_view
+tagger = RevitTagging(doc=doc, view=view)
 
-
-# Code
+# View determination
 # ==================================================
-# with Transaction(doc, "Offset Parameter") as t:
-#     t.Start()
+if view.ViewType == DB.ViewType.FloorPlan:
+    current_view_type = "floor"
+elif view.ViewType == DB.ViewType.Section:
+    current_view_type = "section"
+else:
+    current_view_type = "other"
 
-#     # What a run is
-#     allowed_duct = [
-#         "straight", "radius elbow", "transition",
-#         "offset", "Tee", "elbow", "gored elbow",
-#         "reducer"
-#     ]
+# Collect ducts in view
+# ==================================================
+ducts = RevitDuct.all(doc, view)
+if not ducts:
+    forms.alert("No ducts found in the current view", exitscript=True)
 
-#     seen_ids = set()
+# Filtered results
+# ==================================================
+fil_ducts = []
+for d in ducts:
+    if d.joint_size != JointSize.SHORT:
+        continue
+    angle = RevitXYZ(d.element).straight_joint_degree()
+    if isinstance(angle, (int, float)):
+        abs_angle = abs(angle)
+        if current_view_type == "floor":
+            if DuctAngleAllowance.VERTICAL.contains(abs_angle):
+                continue
+        elif current_view_type == "section":
+            if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
+                continue
+    fil_ducts.append(d)
 
-#     # Find a starting point
-#     for d in ducts:
-#         for connector_index in [0, 1, 2]:
-#             connected_elements = d.get_connected_elements(connector_index)
-#             for elem in connected_elements:
-#                 if elem.Id.IntegerValue in seen_ids:
-#                     continue
+# Select the filtered ducts
+# ==================================================
+if fil_ducts:
+    all_ids = List[ElementId]()
+    for d in fil_ducts:
+        all_ids.Add(d.element.Id)
+    uidoc.Selection.SetElementIds(all_ids)
+else:
+    uidoc.Selection.SetElementIds(List[ElementId]())
 
-#                 connected_duct = RevitDuct(doc, view, elem)
+# Choose tag
+# ==================================================
+tag = tagger.get_label("_umi_size")
 
-#                 if connected_duct.family and connected_duct.family.strip().lower() in allowed_duct:
-#                     seen_ids.add(elem.Id.IntegerValue)
+# Transaction
+# ==================================================
+t = Transaction(doc, "Short Joints Tag")
+t.Start()
+try:
+    for d in fil_ducts:
+        if tagger.already_tagged(d.element, tag.FamilyName):
+            continue
+        ref, centroid = tagger.get_face_facing_view(d.element)
+        if ref is not None and centroid is not None:
+            # output.print_md("Placing tag at centroid: {}".format(centroid))
+            tagger.place_tag(ref, tag, centroid)
+        else:
+            loc = d.element.Location
+            if hasattr(loc, "Point") and loc.Point is not None:
+                # output.print_md("Placing tag at location point: {}".format(loc.Point))
+                tagger.place_tag(d.element, tag, loc.Point)
+            elif hasattr(loc, "Curve") and loc.Curve is not None:
+                curve = loc.Curve
+                midpoint = curve.Evaluate(0.5, True)
+                # output.print_md("Placing tag at curve midpoint: {}".format(midpoint))
+                tagger.place_tag(d.element, tag, midpoint)
+            else:
+                # output.print_md("No valid tag placement point for element {}".format(d.element.Id))
+                continue
+    t.Commit()
+except Exception as e:
+    output.print_md("Tag placement error: {}".format(e))
+    t.RollBack()
+    raise
 
-#     #
+# Out put results
+# ==================================================
+output.print_md("## Selected {} short joint(s)".format(len(fil_ducts)))
+output.print_md("---")
 
-#     t.Commit()
+for d in fil_ducts:
+    eid = d.element.Id
+    angle = RevitXYZ(d.element).straight_joint_degree()
+    abs_angle = abs(angle)
 
-# try:
-#     conns = list(self.element.ConnectorManager.Connectors)
-#     if len(conns) < 2:
-#         return (None, None)
-#     c0, c1 = conns[0], conns[1]
+    link_token = output.linkify(eid)
 
-#     # Try rectangular sizes (inches)
-#     def rect_wh(conn):
-#         try:
-#             return conn.Width * 12.0, conn.Height * 12.0
-#         except Exception:
-#             return None, None
+    if link_token is None:
+        if isinstance(abs_angle, (int, float)):
+            output.print_md("  Angle: {:.2f}°".format(abs_angle))
+        else:
+            output.print_md("  Angle: N/A")
+        output.print_md("------------------------------------------------")
+    else:
+        # link_token is printable inline
+        if isinstance(abs_angle, (int, float)):
+            output.print_md(
+                "- {}  |  Angle: {:.2f}°".format(link_token, abs_angle))
+        else:
+            output.print_md("- {}  |  Angle: N/A".format(link_token))
 
-#     w0, h0 = rect_wh(c0)
-#     w1, h1 = rect_wh(c1)
-
-#     # Try round diameters (inches)
-#     def diameter(conn):
-#         try:
-#             return conn.Radius * 24.0  # 2 * radius * 12
-#         except Exception:
-#             return None
-#     d0 = diameter(c0)
-#     d1 = diameter(c1)
-
-#     # Rectangular case first
-#     if w0 and h0 and w1 and h1:
-#         a0 = w0 * h0
-#         a1 = w1 * h1
-#         if abs(a0 - a1) > 1e-6:
-#             return (c0, c1) if a0 >= a1 else (c1, c0)
-#         # Tie: fall back to element id for stability
-#         return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
-
-#     # Round case
-#     if d0 and d1:
-#         if abs(d0 - d1) > 1e-6:
-#             return (c0, c1) if d0 >= d1 else (c1, c0)
-#         return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
-
-#     # Mixed or missing size info: fallback to id ordering
-#     return (c0, c1) if c0.Owner.Id.IntegerValue <= c1.Owner.Id.IntegerValue else (c1, c0)
-
-# except Exception:
-#     return (None, None)
+# Select all
+# ==================================================
+if fil_ducts:
+    output.print_md("**{}**".format(output.linkify(all_ids)))

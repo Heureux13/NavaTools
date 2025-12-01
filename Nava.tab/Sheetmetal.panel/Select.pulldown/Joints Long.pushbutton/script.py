@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import JointSize, RevitDuct
+from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -18,14 +19,10 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Joints Long"
 __doc__ = """
-****************************************************
-Description:
-
 Selects joints that are MORE than:
 TDF     = 56"
 S&D     = 59"
 Spiral  = 120"
-****************************************************
 """
 
 # Variables
@@ -55,10 +52,10 @@ if fil_ducts:
         "------------------------------------------------------------------------------")
 
     # loop for individutal duct and their selected properties
-    for i, sel in enumerate(fil_ducts, start=1):
+    for i, fil in enumerate(fil_ducts, start=1):
         output.print_md('### Index: {} | Lenght: {}" | Size: {} | Connectors: {}, {} | Element ID: {}'.format(
-            i, sel.length, sel.size, sel.connector_0_type, sel.connector_1_type, output.linkify(
-                sel.element.Id)
+            i, fil.length, fil.size, fil.connector_0_type, fil.connector_1_type, output.linkify(
+                fil.element.Id)
         ))
 
     # loop for totals
@@ -68,11 +65,6 @@ if fil_ducts:
     ))
 
     # Final print statements
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md("No short joints found")

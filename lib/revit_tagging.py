@@ -29,6 +29,17 @@ app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 
 
+# Functions
+# =======================================================================
+def get_revit_year(app):
+    """Extract Revit year from Application.VersionName."""
+    name = app.VersionName
+    for n in name.split():
+        if n.isdigit():
+            return int(n)
+    return None
+
+
 # Classes
 # =======================================================================
 class TagConfig(object):
@@ -75,32 +86,42 @@ class RevitTagging:
         if elem is None:
             return False
 
-        tags = (
+        tags = list(
             FilteredElementCollector(self.doc, self.view.Id)
             .OfClass(IndependentTag)
             .ToElements()
         )
+
+        revit_year = get_revit_year(app)
+
         for itag in tags:
-            # try to resolve the tagged element reference safely
             try:
-                tagged_el = itag.GetTaggedLocalElement()
+                tagged_elem_id = None
+
+                # Revit 2026+ uses GetTaggedLocalElementIds() method
+                if revit_year and revit_year >= 2026:
+                    tagged_elem_ids = itag.GetTaggedLocalElementIds()
+                    if not tagged_elem_ids:
+                        continue
+                    # Check if any of the tagged element IDs match our element
+                    for tid in tagged_elem_ids:
+                        if tid == elem.Id:
+                            tagged_elem_id = tid
+                            break
+                # Revit 2022-2025 uses TaggedLocalElementId property
+                else:
+                    tagged_elem_id = itag.TaggedLocalElementId
+
+                if tagged_elem_id and tagged_elem_id == elem.Id:
+                    # Get the tag's FamilySymbol to check family name
+                    tag_type_id = itag.GetTypeId()
+                    tag_type = self.doc.GetElement(tag_type_id)
+                    if tag_type and hasattr(tag_type, 'Family'):
+                        famname = tag_type.Family.Name
+                        if famname == tag_fam_name:
+                            return True
             except Exception:
-                # fallback: try TaggedLocalElementId or other APIs depending on Revit version
-                try:
-                    eid = itag.TaggedLocalElementId
-                    tagged_el = self.doc.GetElement(eid) if eid else None
-                except Exception:
-                    tagged_el = None
-
-            if tagged_el is None:
                 continue
-
-            if tagged_el.Id == elem.Id:
-                famname = (
-                    itag.GetType().FamilyName if itag.GetType() is not None else ""
-                )
-                if famname == tag_fam_name:
-                    return True
         return False
 
     def place_tag(self, element_or_ref, tag_symbol=None, point_xyz=None):

@@ -9,15 +9,12 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-import clr
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.DB import ElementId, Reference, Transaction
-from Autodesk.Revit.UI import UIDocument
+from Autodesk.Revit.DB import ElementId, Transaction
 from pyrevit import DB, forms, revit, script
-from revit_duct import DuctAngleAllowance, JointSize, RevitDuct
+from revit_duct import RevitDuct
 from revit_element import RevitElement
 from revit_tagging import RevitTagging
-from revit_xyz import RevitXYZ
+from revit_output import print_parameter_help
 from System.Collections.Generic import List
 
 # Button info
@@ -46,24 +43,69 @@ ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
-# Dictionary: Family name: tag name
+# Dictionary: Family name: list of (tag, location) tuples
 # ==================================================
 duct_families = {
-    "radius bend": (tagger.get_label("_umi_size"), 0.5),
-    "elbow": (tagger.get_label("_umi_size"), 0.5),
-    "conical tap - wdamper": (tagger.get_label("_umi_size"), 0.5),
-    "boot tap - wdamper": (tagger.get_label("_umi_size"), 0.5),
-    "8inch long coupler wdamper": (tagger.get_label("_umi_size"), 0.5),
-    "cap": (tagger.get_label("_umi_size"), 0.5),
-    "square bend": (tagger.get_label("_umi_size"), 0.5),
-    "tee": (tagger.get_label("_umi_size"), 0.5),
-    "transition": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "mitred offset": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "reducer": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "radius offset": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "offset": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "ogee": (tagger.get_label("_umi_offset_testing"), 0.5),
-    "tap": (tagger.get_label("_umi_size"), 0.5),
+    "radius bend": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "elbow": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "conical tap - wdamper": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "boot tap - wdamper": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "8inch long coupler wdamper": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "cap": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "end cap": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "tdf end cap": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "square bend": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "tee": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
+    "transition": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "mitred offset": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "reducer": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "radius offset": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "square to ø": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "radius elbow": [
+        (tagger.get_label("_umi_radius_inner"), 0.5)
+    ],
+    "gored elbow": [
+        (tagger.get_label("_umi_radius_inner"), 0.5)
+    ],
+    "offset": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "ogee": [
+        (tagger.get_label("_umi_offset_testing"), 0.5)
+    ],
+    "tap": [
+        (tagger.get_label("_umi_size"), 0.5)
+    ],
 }
 
 # Filter ducts
@@ -77,76 +119,117 @@ dic_ducts = [d for d in ducts if d.family and d.family.strip().lower()
 t = Transaction(doc, "General Tagging")
 t.Start()
 try:
+    # Track status for reporting/selection
+    needs_tagging = []
+    already_tagged = []
+
     for d in dic_ducts:
-        tag, dic_duct_loc = duct_families.get(d.family.strip().lower())
-        if not tag:
-            output.print_md("No tag found for family: '{}'".format(d.family))
-            continue
-        if tagger.already_tagged(d.element, tag.Family.Name):
-            output.print_md(
-                "Element {} is already tagged.".format(d.element.Id))
+        key = d.family.strip().lower() if d.family else None
+        tag_configs = duct_families.get(key)
+        if not tag_configs:
             continue
 
-        # Check if the element is a FabricationPart
-        if isinstance(d.element, DB.FabricationPart):
-            output.print_md(
-                "Processing FabricationPart: {}".format(d.element.Id))
-            # Prefer a face reference that faces the current view
-            face_ref, face_pt = tagger.get_face_facing_view(
-                d.element, prefer_point=None)
-            if face_ref is not None and face_pt is not None:
-                tagger.place_tag(face_ref, tag, face_pt)
+        # Track if element was newly tagged or already had all tags
+        element_newly_tagged = False
+        element_already_tagged = True
+
+        # Place each tag for this element
+        for tag, dic_duct_loc in tag_configs:
+            if tagger.already_tagged(d.element, tag.Family.Name):
                 continue
 
-            # Fallback: use element bounding box center in this view (model coords)
-            bbox = d.element.get_BoundingBox(view)
-            if bbox is not None:
-                center = (bbox.Min + bbox.Max) / 2.0
-                output.print_md(
-                    "Placing tag at bbox center: {}".format(center))
-                tagger.place_tag(d.element, tag, center)
-                continue
+            element_already_tagged = False
+            element_newly_tagged = True
 
-            output.print_md(
-                "No valid geometry or bbox for FabricationPart: {}".format(d.element.Id))
-            continue
-        else:
-            # Handle other elements with location
-            loc = d.element.location
-            if not loc:
-                output.print_md(
-                    "Element {} has no location.".format(d.element.Id))
-                # Use element bounding box center if available
+            # Check if the element is a FabricationPart
+            if isinstance(d.element, DB.FabricationPart):
+                face_ref, face_pt = tagger.get_face_facing_view(
+                    d.element, prefer_point=None)
+                if face_ref is not None and face_pt is not None:
+                    tagger.place_tag(face_ref, tag, face_pt)
+                    continue
+
+                # Fallback: bbox center
                 bbox = d.element.get_BoundingBox(view)
                 if bbox is not None:
                     center = (bbox.Min + bbox.Max) / 2.0
-                    output.print_md(
-                        "Placing tag at bbox center: {}".format(center))
                     tagger.place_tag(d.element, tag, center)
                     continue
                 continue
-            if hasattr(loc, "Point") and loc.Point is not None:
-                output.print_md("Placing tag at point: {}".format(loc.Point))
-                tagger.place_tag(d.element, tag, loc.Point)
-            elif hasattr(loc, "Curve") and loc.Curve is not None:
-                midpoint = loc.Curve.Evaluate(dic_duct_loc, True)
-                output.print_md(
-                    "Placing tag at curve midpoint: {}".format(midpoint))
-                tagger.place_tag(d.element, tag, midpoint)
             else:
-                output.print_md(
-                    "No valid location found for element: {}".format(d.element.Id))
+                # Handle other elements with location
+                loc = getattr(d.element, "Location", None)
+                if not loc:
+                    bbox = d.element.get_BoundingBox(view)
+                    if bbox is not None:
+                        center = (bbox.Min + bbox.Max) / 2.0
+                        tagger.place_tag(d.element, tag, center)
+                        continue
+                    continue
+                if hasattr(loc, "Point") and loc.Point is not None:
+                    tagger.place_tag(d.element, tag, loc.Point)
+                elif hasattr(loc, "Curve") and loc.Curve is not None:
+                    midpoint = loc.Curve.Evaluate(dic_duct_loc, True)
+                    tagger.place_tag(d.element, tag, midpoint)
+                else:
+                    continue
+
+        # Add to appropriate list (only once per element)
+        if element_newly_tagged:
+            needs_tagging.append(d)
+        elif element_already_tagged:
+            already_tagged.append(d)
+
+    # Selection and reporting (standardized)
+    if needs_tagging:
+        RevitElement.select_many(uidoc, needs_tagging)
+        output.print_md("# Tagged {} new fitting(s) | {} total fittings in view".format(
+            len(needs_tagging), len(dic_ducts)))
+    else:
+        uidoc.Selection.SetElementIds(List[ElementId]())
+        output.print_md(
+            "# All {} fitting(s) were already tagged".format(len(dic_ducts)))
+
+    output.print_md("---")
+
+    if needs_tagging:
+        output.print_md("## Newly Tagged")
+        for i, d in enumerate(needs_tagging, start=1):
+            output.print_md(
+                "### Index {} | Size: {} | Family: {} | Length: {} | Element ID: {}".format(
+                    i, d.size, d.family, d.length, output.linkify(
+                        d.element.Id)
+                )
+            )
+        output.print_md("---")
+
+    if already_tagged:
+        output.print_md("## Already Tagged")
+        for i, d in enumerate(already_tagged, start=1):
+            output.print_md(
+                "### Index {} | Size: {} | Family: {} | Length: {} | Element ID: {}".format(
+                    i, d.size, d.family, d.length, output.linkify(
+                        d.element.Id)
+                )
+            )
+        output.print_md("---")
+
+    if needs_tagging:
+        newly_ids = [d.element.Id for d in needs_tagging]
+        output.print_md("# Newly tagged: {}, {}".format(
+            len(needs_tagging), output.linkify(newly_ids)))
+    if already_tagged:
+        already_ids = [d.element.Id for d in already_tagged]
+        output.print_md("# Already tagged: {}, {}".format(
+            len(already_tagged), output.linkify(already_ids)))
+    all_ids = [d.element.Id for d in dic_ducts]
+    output.print_md("# Total: {}, {}".format(
+        len(dic_ducts), output.linkify(all_ids)))
+
+    print_parameter_help(output)
+
     t.Commit()
-    output.print_md("Transaction committed successfully.")
 except Exception as e:
     output.print_md("Tag placement error: {}".format(e))
     t.RollBack()
     raise
-
-# Out put results
-# ==================================================
-output.print_md("## Selected {} short joint(s)".format(len(dic_ducts)))
-output.print_md("---")
-
-RevitElement.select_many(uidoc, dic_ducts)
-output.print_md("Selected {} joints of duct".format(len(dic_ducts)))

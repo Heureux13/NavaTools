@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct, script
+from revit_output import print_parameter_help
 from pyrevit import revit
 from Autodesk.Revit.DB import *
 
@@ -19,11 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Elbows Square"
 __doc__ = """
-****************************************************
-Description:
-
 Selects all square elbows
-****************************************************
 """
 
 # Variables
@@ -54,7 +51,7 @@ if sel_ducts:
     RevitElement.select_many(uidoc, sel_ducts)
     output.print_md("# Selected {} square elbows".format(len(sel_ducts)))
     output.print_md(
-        "------------------------------------------------------------------------------")
+        "---")
 
     # loop for individual duct and their selected properties
     for i, sel in enumerate(sel_ducts, start=1):
@@ -66,12 +63,7 @@ if sel_ducts:
     output.print_md("# Total elements: {}, {}".format(
         len(element_ids), output.linkify(element_ids)))
 
-    # Final prints
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    # Final print statements
+    print_parameter_help(output)
 else:
     output.print_md("No mitered elbows found.")

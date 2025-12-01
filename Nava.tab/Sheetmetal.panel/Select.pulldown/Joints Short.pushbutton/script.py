@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct, JointSize
+from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -18,14 +19,10 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Joints Short"
 __doc__ = """
-****************************************************************
-Description:
-
 Selects joints that are LESS than:
 TDF     = 56"
 S&D     = 59"
 Spiral  = 120"
-****************************************************************
 """
 
 # Variables
@@ -51,16 +48,14 @@ if fil_ducts:
     # Select filtered dcuts
     RevitElement.select_many(uidoc, fil_ducts)
     output.print_md("# Selected {} short joints".format(len(fil_ducts)))
-    output.print_md(
-        "------------------------------------------------------------------------------")
+    output.print_md("---")
 
     # Individutal duct and selected properties
-    for i, fil in enumerate(
-        fil_ducts, start=1
-    ):
+    for i, fil in enumerate(fil_ducts, start=1):
         output.print_md(
             '### Index: {} | Type: {} | Size: {} | Length: {}" | Element ID: {}'.format(
-                i, fil.connector_0_type, fil.size, fil.length, output.linkify(fil.element.Id)
+                i, fil.connector_0_type, fil.size, fil.length, output.linkify(
+                    fil.element.Id)
             )
         )
 
@@ -68,21 +63,10 @@ if fil_ducts:
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
         "# Total elements {}, {}".format(
-            len(
-                element_ids
-            ),
-            output.linkify(
-                element_ids
-            )
-        )
+            len(element_ids), output.linkify(element_ids))
     )
 
     # Final print statements
-    output.print_md(
-        "------------------------------------------------------------------------------")
-    output.print_md(
-        "If info is missing, make sure you have the parameters turned on from Naviate")
-    output.print_md(
-        "All from Connectors and Fabrication, and size from Fab Properties")
+    print_parameter_help(output)
 else:
     output.print_md("## No short joints selected")
