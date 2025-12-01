@@ -89,8 +89,13 @@ for d in filtered_ducts:
 
         def fmt_edge(val):
             return str(val) if val is not None else "N/A"
-        output.print_md("Left: {0}\" | Right: {1}\" | Top: {2}\" | Bottom: {3}\"".format(
-            fmt_edge(whole.get('left')), fmt_edge(whole.get('right')), fmt_edge(whole.get('top')), fmt_edge(whole.get('bottom'))))
+        output.print_md(
+            "Left: {0}\" | Right: {1}\" | Top: {2}\" | Bottom: {3}\"".format(
+                fmt_edge(
+                    whole.get('left')), fmt_edge(
+                    whole.get('right')), fmt_edge(
+                    whole.get('top')), fmt_edge(
+                        whole.get('bottom'))))
     else:
         output.print_md("\n_No rectangular edge offsets (round)._")
 

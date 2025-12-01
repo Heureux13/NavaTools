@@ -16,7 +16,8 @@ from Autodesk.Revit.DB import (
     BuiltInCategory,
     UnitUtils,
     FabricationPart,
-    UnitTypeId
+    UnitTypeId,
+    ConnectorType
 )
 import re
 import logging
@@ -139,6 +140,13 @@ class RevitDuct:
         self.doc = doc
         self.view = view
         self.element = element
+
+    def get_connectors(self):
+        """Return a list of all connectors for this duct element."""
+        try:
+            return list(self.element.ConnectorManager.Connectors)
+        except Exception:
+            return []
 
     @property
     def id(self):
@@ -295,6 +303,13 @@ class RevitDuct:
     @property
     def connector_2(self):
         return self.get_connector(2)
+
+    def fully_connected(self):
+        for connector in self.get_connectors():
+            if connector.ConnectorType == ConnectorType.End:
+                if not connector.IsConnected:
+                    return False
+        return True
 
     @property
     def extension_top(self):
