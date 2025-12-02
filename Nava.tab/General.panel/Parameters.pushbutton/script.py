@@ -43,13 +43,12 @@ selected_ids = uidoc.Selection.GetElementIds()
 if not selected_ids:
     forms.alert("please select one or more elements", exitscript=True)
 
-output.print_md("## ELEMENT PARAMETERS\n")
-output.print_md(
-    "### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
+output.print_md("# ELEMENT PARAMETERS")
+output.print_md("---")
 
 for elid in selected_ids:
     el = doc.GetElement(elid)
-    print("---- Parameters for Element ID {} ----".format(el.Id))
+    output.print_md("###---- Parameters for Element ID {} ----".format(el.Id))
     param_list = []
     for param in el.Parameters:
         try:
@@ -70,4 +69,4 @@ for elid in selected_ids:
             param_list.append((name, "Error - {}".format(ex)))
     # Sort and print
     for name, value in sorted(param_list, key=lambda x: x[0].lower()):
-        print("{}: {}".format(name, value))
+        output.print_md("{}: {}".format(name, value))

@@ -10,14 +10,14 @@ Created on Thu Mar  2 10:00:00 2023
 # Imports
 # ==================================================
 from revit_duct import RevitDuct, JointSize
-from pyrevit import revit, script, forms
+from pyrevit import revit, script
 from revit_parameter import RevitParameter
 from Autodesk.Revit.DB import Transaction, FilteredElementCollector, IndependentTag
 from revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
-__title__ = "Full Joints"
+__title__ = "Joints Full"
 __doc__ = """
 Tags full-size straight duct joints connected to fittings
 """
@@ -45,7 +45,8 @@ straight_joint_families = {
 }
 
 tags = {
-    "_umi_bod", "_umi_size"
+    "_umi_bod",
+    "_umi_size"
 }
 
 t = Transaction(doc, "Tag Full Joints")
