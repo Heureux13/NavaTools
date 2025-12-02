@@ -8,14 +8,9 @@ the copyright holder.
 ========================================================================="""
 
 from Autodesk.Revit.DB import *
-from Autodesk.Revit.DB import UnitTypeId
-from pyrevit import revit, script, forms, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-from enum import Enum
+from pyrevit import revit, script, DB
 import logging
 import math
-import re
 
 # Variables
 # ==================================================s
@@ -30,9 +25,6 @@ log = logging.getLogger("RevitDuct")
 
 # Constants
 TOL = 1e-6
-
-# Class logic
-# ==================================================
 
 
 class RevitXYZ(object):

@@ -7,48 +7,15 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
-try:
-    from Autodesk.Revit.DB import *  # noqa: F401,F403
-    from pyrevit import revit, script, DB  # noqa: F401
-    IN_REVIT = True
-except ImportError:
-    IN_REVIT = False
-import logging
-import math
+# Imports
+# ========================================================================
 import re
-
-# Variables
-# ==================================================s
-if IN_REVIT:
-    app = __revit__.Application  # type: Application
-    uidoc = __revit__.ActiveUIDocument  # type: UIDocument
-    doc = revit.doc  # type: Document
-    view = revit.active_view
-    output = script.get_output()
-else:
-    app = uidoc = doc = view = output = None
-
-# Logging
-log = logging.getLogger("RevitDuct")
-
-# Constants
-TOL = 1e-6
-
-# Format examples:
-# oval to round = 40"/20"-12"ø
-# oval = 40"/20"
-# oval to oval reducer = 40"/20"-12"/8"
-# rectanggle/square = 12"x12"
-# round = 12"Ø
 
 
 class RevitSize:
     def __init__(self, size):
         self.size = size
-
-        # Parse the size string
         parsed = self._parse_size()
-
         self.in_size = parsed['in_size']
         self.in_width = parsed['in_width']
         self.in_height = parsed['in_height']
@@ -63,27 +30,13 @@ class RevitSize:
         self.out_oval_flat = parsed['out_oval_flat']
 
     def _parse_size(self):
-        """Parse size string and extract inlet/outlet dimensions."""
         s = str(self.size).strip().replace('"', '').lower()
-
-        # Split on hyphen if present (inlet-outlet)
         if '-' in s:
-            parts = s.split('-', 1)
-            inlet = parts[0].strip()
-            outlet = parts[1].strip()
+            inlet, outlet = [p.strip() for p in s.split('-', 1)]
         else:
-            inlet = s
-            outlet = None
-
-        # Parse inlet
+            inlet, outlet = s, None
         in_data = self._parse_token(inlet)
-
-        # Parse outlet if exists, otherwise copy inlet
-        if outlet:
-            out_data = self._parse_token(outlet)
-        else:
-            out_data = in_data.copy()
-
+        out_data = self._parse_token(outlet) if outlet else in_data.copy()
         return {
             'in_size': inlet,
             'in_width': in_data.get('width'),
@@ -100,53 +53,44 @@ class RevitSize:
         }
 
     def _parse_token(self, token):
-        """Parse a single size token (inlet or outlet)."""
         result = {}
+        if not token:
+            result['width'] = result['height'] = result['diameter'] = None
+            result['oval_dia'] = result['oval_flat'] = None
+            return result
 
-        # Round: 12ø
+        # Logic for rounds
         m = re.match(r'(\d+(?:\.\d+)?)\s*[øØ]', token)
         if m:
             result['diameter'] = float(m.group(1))
-            result['width'] = None
-            result['height'] = None
-            result['oval_dia'] = None
-            result['oval_flat'] = None
+            result['width'] = result['height'] = None
+            result['oval_dia'] = result['oval_flat'] = None
             return result
 
-        # Oval: 40/20
+        # Logic for ovals
         m = re.match(r'(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)', token)
         if m:
             w = float(m.group(1))
             h = float(m.group(2))
             result['width'] = w
             result['height'] = h
-            result['diameter'] = h
+            result['diameter'] = h  # per user: oval diameter = height
             result['oval_dia'] = (w + h) / 2.0
-            result['oval_flat'] = max(w, h) - min(w, h) if w != h else 0.0
+            result['oval_flat'] = (max(w, h) - min(w, h)) if w != h else 0.0
             return result
 
-        # Rect: 12x12
+        # Logic for rectangle / square
         m = re.match(r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)', token)
         if m:
             result['width'] = float(m.group(1))
             result['height'] = float(m.group(2))
             result['diameter'] = None
-            result['oval_dia'] = None
-            result['oval_flat'] = None
+            result['oval_dia'] = result['oval_flat'] = None
             return result
 
-        # Default: all None
-        result['width'] = None
-        result['height'] = None
-        result['diameter'] = None
-        result['oval_dia'] = None
-        result['oval_flat'] = None
+        result['width'] = result['height'] = result['diameter'] = None
+        result['oval_dia'] = result['oval_flat'] = None
         return result
-
-
-class RevitXYZ(object):
-    def __init__(self, element):
-        self.element = element
 
 
 if __name__ == "__main__":

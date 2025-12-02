@@ -41,7 +41,8 @@ duct = RevitDuct.from_selection(uidoc, doc, view)
 SPIRAL_LENGTH = 1.5
 
 normalize = [
-    (d.family.strip().lower(), d.length) for d in ducts if d.family and d.length]
+    (d.family.strip().lower(), d.length) for d in ducts if d.family and d.length
+]
 
 acceptable = {
     "spiral duct"
@@ -57,7 +58,8 @@ if fil_ducts:
 
     # Select filtered dcuts
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md('# Selected {} sprial joints under 3" long'.format(len(fil_ducts)))
+    output.print_md(
+        '# Selected {} sprial joints under 3" long'.format(len(fil_ducts)))
     output.print_md("---")
 
     # Individutal duct and selected properties
