@@ -1,15 +1,4 @@
 # -*- coding: utf-8 -*-
-# Flexible tag skipping logic
-from System.Collections.Generic import List
-from revit_output import print_parameter_help
-from revit_tagging import RevitTagging
-from revit_element import RevitElement
-from revit_duct import RevitDuct
-from pyrevit import DB, forms, revit, script
-from Autodesk.Revit.DB import ElementId, Transaction
-
-
-# -*- coding: utf-8 -*-
 # ======================================================================
 """Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
@@ -20,10 +9,17 @@ the copyright holder."""
 
 # Imports
 # ==================================================
+from System.Collections.Generic import List
+from revit_output import print_parameter_help
+from revit_tagging import RevitTagging
+from revit_element import RevitElement
+from revit_duct import RevitDuct
+from pyrevit import DB, forms, revit, script
+from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Fittings"
+__title__ = "Tag Fittings"
 __doc__ = """
 Tag all fitting not standard sizes
 """
@@ -311,7 +307,8 @@ try:
         for i, d in enumerate(needs_tagging, start=1):
             output.print_md(
                 "### No.{} | ID: {} | Fam: {} | Size: {} | Le: {} | Ex: {}".format(
-                    i, output.linkify(d.element.Id), d.family, d.size, d.length, d.extension_bottom
+                    i, output.linkify(
+                        d.element.Id), d.family, d.size, d.length, d.extension_bottom
                 )
             )
         output.print_md("---")

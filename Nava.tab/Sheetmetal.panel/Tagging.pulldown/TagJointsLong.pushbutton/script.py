@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  2 10:00:00 2023
+# ======================================================================
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
-@author: user
-"""
-
-"""Revit Python Shell script to tag full-size duct joints"""
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+# ======================================================================
 
 # Imports
 # ==================================================
+from revit_tagging import RevitTagging
+from Autodesk.Revit.DB import Transaction, FilteredElementCollector, IndependentTag
+from revit_parameter import RevitParameter
 from revit_duct import RevitDuct, JointSize
 from pyrevit import revit, script
-from revit_parameter import RevitParameter
-from Autodesk.Revit.DB import Transaction, FilteredElementCollector, IndependentTag
-from revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
-__title__ = "Joints Full"
+__title__ = "Tag Joints Long"
 __doc__ = """
 Tags full-size straight duct joints connected to fittings
 """
@@ -56,7 +56,8 @@ try:
     non_straight_ducts = [
         d for d in ducts if d.family and d.family.strip().lower() not in straight_joint_families
     ]
-    output.print_md("**Found {} non-straight ducts**".format(len(non_straight_ducts)))
+    output.print_md(
+        "**Found {} non-straight ducts**".format(len(non_straight_ducts)))
 
     # Step 2: Get all straight ducts connected to non-straight ducts
     connected_straights = []
@@ -72,7 +73,8 @@ try:
                 ).lower() in straight_joint_families:
                     connected_straights.append(elem)
                     seen_ids.add(elem.Id.IntegerValue)
-    output.print_md("**Found {} unique connected straight ducts**".format(len(connected_straights)))
+    output.print_md(
+        "**Found {} unique connected straight ducts**".format(len(connected_straights)))
 
     # Step 3: Filter to only full-size joints
     full_joint_straights = []
@@ -80,12 +82,14 @@ try:
         duct = RevitDuct(doc, view, elem)
         if duct.joint_size == JointSize.FULL:
             full_joint_straights.append(elem)
-    output.print_md("**Found {} full-size joints to tag**".format(len(full_joint_straights)))
+    output.print_md(
+        "**Found {} full-size joints to tag**".format(len(full_joint_straights)))
 
     # Step 4: Tag the full-size joints
     already_tagged_set = set()
     from Autodesk.Revit.DB import FilteredElementCollector, IndependentTag
-    existing_tags = FilteredElementCollector(doc, view.Id).OfClass(IndependentTag).ToElements()
+    existing_tags = FilteredElementCollector(
+        doc, view.Id).OfClass(IndependentTag).ToElements()
     for tag in existing_tags:
         try:
             refs = tag.GetTaggedReferences()
@@ -94,10 +98,12 @@ try:
                 tagged_elem_id = ref.ElementId
                 tag_type = doc.GetElement(tag.GetTypeId())
                 if tag_type and hasattr(tag_type, 'Family'):
-                    already_tagged_set.add((tagged_elem_id.IntegerValue, tag_type.Family.Name))
+                    already_tagged_set.add(
+                        (tagged_elem_id.IntegerValue, tag_type.Family.Name))
         except BaseException:
             pass
-    output.print_md("**Found {} existing tags in view**".format(len(already_tagged_set)))
+    output.print_md(
+        "**Found {} existing tags in view**".format(len(already_tagged_set)))
 
     for elem in full_joint_straights:
         for tag_name in tags:
@@ -110,14 +116,16 @@ try:
                 if face_ref is not None and face_pt is not None:
                     tagger.place_tag(face_ref, tag_symbol, face_pt)
                     tagged_count += 1
-                    already_tagged_set.add((elem.Id.IntegerValue, tag_symbol.Family.Name))
+                    already_tagged_set.add(
+                        (elem.Id.IntegerValue, tag_symbol.Family.Name))
                 else:
                     bbox = elem.get_BoundingBox(view)
                     if bbox is not None:
                         center = (bbox.Min + bbox.Max) / 2.0
                         tagger.place_tag(elem, tag_symbol, center)
                         tagged_count += 1
-                        already_tagged_set.add((elem.Id.IntegerValue, tag_symbol.Family.Name))
+                        already_tagged_set.add(
+                            (elem.Id.IntegerValue, tag_symbol.Family.Name))
                     else:
                         skipped_count += 1
                         continue
@@ -128,8 +136,10 @@ try:
     output.print_md("---")
     output.print_md("# Tagging Summary")
     output.print_md("**Tagged: {}**".format(tagged_count))
-    output.print_md("**Skipped (already tagged or no placement): {}**".format(skipped_count))
-    output.print_md("**Total full joints processed: {}**".format(len(full_joint_straights)))
+    output.print_md(
+        "**Skipped (already tagged or no placement): {}**".format(skipped_count))
+    output.print_md(
+        "**Total full joints processed: {}**".format(len(full_joint_straights)))
     t.Commit()
 except Exception as e:
     output.print_md("Tag placement error: {}".format(e))
