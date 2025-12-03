@@ -17,9 +17,9 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Create Runs"
+__title__ = "Joints TDF"
 __doc__ = """
-Create a duct run based on size
+Selects all TDF joints
 """
 
 # Variables
@@ -33,29 +33,55 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts
+# Get all duct
 ducts = RevitDuct.all(doc, view)
-duct = RevitDuct.from_selection(uidoc, doc, view)
 
-# Filter down to short joints
-selected_duct = RevitDuct.from_selection(uidoc, doc, view)
-selected_duct = selected_duct[0] if selected_duct else None
+# Families allowed
+allowed = {
+    ("straight", "tdc"),
+    ("straight", "tdf"),
+}
 
-# Start of select / print loop
-if selected_duct:
-    # Selets duct that is connected to the selected duct based on size
-    run = RevitDuct.create_duct_run(selected_duct, doc, view)
-    RevitElement.select_many(uidoc, run)
+# Nomalize and filter duct
+normalized = [
+    (
+        d,
+        (d.family or "").lower().strip(),
+        (d.connector_0_type or "").lower().strip()
+    ) for d in ducts
+]
+fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
-    # Total count
-    element_ids = [d.element.Id for d in run]
+# Start of select / print
+if fil_ducts:
+
+    # Select filtered duct
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md(
+        "# Selected {:03} TDF straight joints".format(len(fil_ducts))
+    )
+    output.print_md("---")
+
+    # Individual duct and properties
+    for i, fil in enumerate(fil_ducts, start=1):
+        output.print_md(
+            '### No: {:03} | ID: {} | Size: {}" | Length: {}'.format(
+                i,
+                output.linkify(fil.element.Id),
+                fil.size,
+                fil.length,
+            )
+        )
+
+    element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
         "# Total elements {:03}, {}".format(
-            len(element_ids),
-            output.linkify(element_ids)),
+            len(fil_ducts),
+            output.linkify(element_ids)
+        )
     )
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No duct runs made")
+    output.print_md("## No TDF joints found")

@@ -10,16 +10,19 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import RevitDuct
+from revit_duct import JointSize, RevitDuct
 from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Create Runs"
+__title__ = "Joints Long"
 __doc__ = """
-Create a duct run based on size
+Selects joints that are MORE than:
+TDF     = 56"
+S&D     = 59"
+Spiral  = 120"
 """
 
 # Variables
@@ -33,29 +36,39 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts
+# Get all ducts in view
 ducts = RevitDuct.all(doc, view)
-duct = RevitDuct.from_selection(uidoc, doc, view)
 
-# Filter down to short joints
-selected_duct = RevitDuct.from_selection(uidoc, doc, view)
-selected_duct = selected_duct[0] if selected_duct else None
+# Filter ducts by size
+fil_ducts = [d for d in ducts if d.joint_size == JointSize.LONG]
 
-# Start of select / print loop
-if selected_duct:
-    # Selets duct that is connected to the selected duct based on size
-    run = RevitDuct.create_duct_run(selected_duct, doc, view)
-    RevitElement.select_many(uidoc, run)
+# Start of our logic / print
+if fil_ducts:
 
-    # Total count
-    element_ids = [d.element.Id for d in run]
+    # Select filtered duct list
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md("# Selected {:03} long joints".format(len(fil_ducts)))
     output.print_md(
-        "# Total elements {:03}, {}".format(
-            len(element_ids),
-            output.linkify(element_ids)),
-    )
+        "---")
+
+    # loop for individutal duct and their selected properties
+    for i, fil in enumerate(fil_ducts, start=1):
+        output.print_md('### Index: {:03} | Element ID: {} | Lenght: {}" | Size: {} | Connectors: {}, {}'.format(
+            i,
+            output.linkify(fil.element.Id),
+            fil.length,
+            fil.size,
+            fil.connector_0_type,
+            fil.connector_1_type,
+        ))
+
+    # loop for totals
+    element_ids = [d.element.Id for d in fil_ducts]
+    output.print_md("# Total elements: {:03}, {}".format(
+        len(fil_ducts), output.linkify(element_ids)
+    ))
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No duct runs made")
+    output.print_md("No short joints found")

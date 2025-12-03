@@ -7,10 +7,9 @@ the copyright holder."""
 
 import webbrowser
 
-__title__ = "Fieldwire"
+__title__ = "Sharepoint"
 __doc__ = """
-Takes you to the Fieldwire site
+Takes you to the United Mechanical sharepoint.
 """
 
-
-webbrowser.open("https://app.fieldwire.com/index/projects?lang=en")
+webbrowser.open("https://unitedmech0.sharepoint.com/sites/BIMDepartment/SitePages/Home.aspx")

@@ -17,9 +17,9 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Create Runs"
+__title__ = 'Spiral Under 3" Long'
 __doc__ = """
-Create a duct run based on size
+placeholder
 """
 
 # Variables
@@ -38,24 +38,51 @@ ducts = RevitDuct.all(doc, view)
 duct = RevitDuct.from_selection(uidoc, doc, view)
 
 # Filter down to short joints
-selected_duct = RevitDuct.from_selection(uidoc, doc, view)
-selected_duct = selected_duct[0] if selected_duct else None
+DUCT_LENGTH = 6
+
+normalize = [
+    (d.family.strip().lower(), d.length) for d in ducts if d.family and d.length
+]
+
+acceptable = {
+    "spiral duct",
+    "straight",
+}
+
+fil_ducts = [
+    d for d in ducts
+    if d.length and d.length < DUCT_LENGTH and d.family and d.family.strip().lower() in acceptable
+]
 
 # Start of select / print loop
-if selected_duct:
-    # Selets duct that is connected to the selected duct based on size
-    run = RevitDuct.create_duct_run(selected_duct, doc, view)
-    RevitElement.select_many(uidoc, run)
+if fil_ducts:
+
+    # Select filtered dcuts
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md(
+        '# Selected {:03} sprial joints under 3" long'.format(len(fil_ducts)))
+    output.print_md("---")
+
+    # Individutal duct and selected properties
+    for i, fil in enumerate(fil_ducts, start=1):
+        output.print_md(
+            '### No: {:03} | ID: {} | Size: {} | Length: {:06.2f}"'.format(
+                i,
+                output.linkify(fil.element.Id),
+                fil.size,
+                fil.length,
+            )
+        )
 
     # Total count
-    element_ids = [d.element.Id for d in run]
+    element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
         "# Total elements {:03}, {}".format(
             len(element_ids),
-            output.linkify(element_ids)),
+            output.linkify(element_ids))
     )
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No duct runs made")
+    output.print_md('## No straight duct under 6" found')

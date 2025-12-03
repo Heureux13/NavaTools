@@ -17,9 +17,9 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Create Runs"
+__title__ = "Elbows Radius"
 __doc__ = """
-Create a duct run based on size
+Select all radius elbows
 """
 
 # Variables
@@ -33,29 +33,39 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts
+
+# Gathers Duct in the view
 ducts = RevitDuct.all(doc, view)
-duct = RevitDuct.from_selection(uidoc, doc, view)
 
-# Filter down to short joints
-selected_duct = RevitDuct.from_selection(uidoc, doc, view)
-selected_duct = selected_duct[0] if selected_duct else None
+# List of acceptable families / list of what familes we are after
+allowed = {"radius elbow"}
 
-# Start of select / print loop
-if selected_duct:
-    # Selets duct that is connected to the selected duct based on size
-    run = RevitDuct.create_duct_run(selected_duct, doc, view)
-    RevitElement.select_many(uidoc, run)
+# Normalize and filter
+normalized = [(d, (d.family or "").lower().strip()) for d in ducts]
+fil_ducts = [d for d, fam in normalized if fam in allowed]
 
-    # Total count
-    element_ids = [d.element.Id for d in run]
+# start of our select / print loop
+if fil_ducts:
+
+    # Select filtered ducts
+    RevitElement.select_many(uidoc, fil_ducts)
+    output.print_md("# Selected {:03} radius elbows".format(len(fil_ducts)))
+    output.print_md("---")
+
+    # Loop for individudal duct and their selected properties
+    for i, sel in enumerate(fil_ducts, start=1):
+        output.print_md(
+            "### No: {:03} | ID: {} | Size: {} | Angle: {} | IR: {}".format(
+                i, output.linkify(sel.element.Id), sel.size, sel.angle, sel.inner_radius
+            ))
+
+    # Loop for total counts
+    element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {:03}, {}".format(
-            len(element_ids),
-            output.linkify(element_ids)),
-    )
+        "# Total elements: {:03}, {}".format(
+            len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No duct runs made")
+    output.print_md("No radius elbows found.")

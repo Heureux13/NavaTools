@@ -10,6 +10,7 @@ the copyright holder.
 # Standard library
 # =========================================================
 from revit_xyz import RevitXYZ
+from revit_size import RevitSize
 from Autodesk.Revit.DB import (
     ElementId,
     FilteredElementCollector,
@@ -1033,18 +1034,19 @@ class RevitDuct:
                     connected_elements.append(ref_conn.Owner)
         return connected_elements
 
-    def trace_run(start_duct, seen_ids, allowed_duct):
+    @staticmethod
+    def trace_run(start_duct, seen_ids, allowed_duct, doc, view):
         """Recursively follow connections to build a complete run"""
         run = []  # Store ducts in this run
         stack = [start_duct]  # Ducts to process
 
         while stack:
             current = stack.pop()
-            if current.Id.IntegerValue in seen_ids:
+            if current.id in seen_ids:
                 continue
 
             run.append(current)
-            seen_ids.add(current.Id.IntegerValue)
+            seen_ids.add(current.id)
 
             # Follow all connections
             for connector_index in [0, 1, 2]:
@@ -1052,6 +1054,55 @@ class RevitDuct:
                 for elem in connected:
                     duct = RevitDuct(doc, view, elem)
                     if duct.family and duct.family.strip().lower() in allowed_duct:
-                        stack.append(elem)
+                        stack.append(duct)
 
         return run
+
+    @staticmethod
+    def create_duct_run(start_duct, doc, view):
+        """Find all connected ducts/fittings that match both shape and size of the starting duct."""
+        run = set()
+        to_visit = [start_duct]
+        visited = set()
+        # Parse starting duct shape and size
+        start_size_obj = RevitSize(str(start_duct.size))
+
+        def get_shape_key(size_obj):
+            # Returns a tuple representing the shape (round, oval, rectangular) and main dimensions
+            if size_obj.in_diameter:
+                return ("round", round(size_obj.in_diameter, 2))
+            elif size_obj.in_oval_dia and size_obj.in_oval_flat is not None:
+                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
+            elif size_obj.in_width and size_obj.in_height:
+                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
+            else:
+                return ("unknown", str(size_obj.in_size))
+
+        start_shape = get_shape_key(start_size_obj)
+        start_size_str = str(start_size_obj.in_size)
+
+        while to_visit:
+            duct = to_visit.pop()
+            if duct.id in visited:
+                continue
+            visited.add(duct.id)
+            run.add(duct)
+            for connector in duct.get_connectors():
+                if not connector.IsConnected:
+                    continue
+                all_refs = list(connector.AllRefs)
+                for ref in all_refs:
+                    if ref and hasattr(ref, 'Owner'):
+                        connected_elem = ref.Owner
+                        try:
+                            connected_duct = RevitDuct(doc, view, connected_elem)
+                        except Exception:
+                            continue
+                        # Parse connected duct shape and size
+                        connected_size_obj = RevitSize(str(connected_duct.size))
+                        connected_shape = get_shape_key(connected_size_obj)
+                        connected_size_str = str(connected_size_obj.in_size)
+                        # Match both shape and size
+                        if connected_shape == start_shape and connected_size_str == start_size_str and connected_duct.id not in visited:
+                            to_visit.append(connected_duct)
+        return list(run)

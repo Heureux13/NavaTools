@@ -1,0 +1,7 @@
+layout:
+  - update
+  - reload
+  - sync_save
+  - remane
+  - parameters
+  - pick
