@@ -202,6 +202,10 @@ class RevitDuct:
         return self._get_param("Size")
 
     @property
+    def centerline_length(self):
+        return self._get_param("NaviateDBS_CenterlineLength")
+
+    @property
     def length(self):
         return self._get_param(
             "Length",
@@ -1106,3 +1110,29 @@ class RevitDuct:
                         if connected_shape == start_shape and connected_size_str == start_size_str and connected_duct.id not in visited:
                             to_visit.append(connected_duct)
         return list(run)
+
+    @staticmethod
+    def parse_length_string(length_str):
+        """
+        Convert a Revit length string (e.g., "4' - 8\"", "2' - 4 23/32\"") to inches (float).
+        Returns 0.0 if parsing fails.
+        """
+        if not length_str or not isinstance(length_str, str):
+            return 0.0
+        # Pattern: feet, inches, optional fraction
+        pattern = r"(\d+)'\s*-\s*(\d+)?(?:\s+(\d+)/(\d+))?\s*\""
+        cleaned = length_str.replace("’", "'").replace("”", '"').replace("″", '"')
+        match = re.match(pattern, cleaned)
+        if not match:
+            # Try to parse as a simple float
+            try:
+                return float(length_str)
+            except Exception:
+                return 0.0
+        feet = int(match.group(1)) if match.group(1) else 0
+        inches = int(match.group(2)) if match.group(2) else 0
+        num = int(match.group(3)) if match.group(3) else 0
+        denom = int(match.group(4)) if match.group(4) else 1
+        fraction = float(num) / float(denom) if denom else 0
+        total_inches = feet * 12 + inches + fraction
+        return total_inches
