@@ -17,7 +17,12 @@ def print_parameter_help(output):
     output.print_md(
         "Dimensions: Turn all on (may require enabling per family/element)")
     output.print_md(
-        "Fab Properties: Size, Weight, Diameter, Family, Left Extension, Right Extension, and Elevations")
+        "Fab Properties: Size, Weight, Diameter, Family, Left Extension, Right Extension, Elevations")
+    output.print_md(
+        'Centerline Length, Depth, Inner Radius, and SheetMetalArea')
+    output.print_md(
+        'If you see an empty variable, odds are it needs to be turned on in Naviate'
+    )
 
 
 def print_selection_summary(output, element_ids, label="Total elements"):

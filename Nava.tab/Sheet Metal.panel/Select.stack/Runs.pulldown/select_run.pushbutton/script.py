@@ -55,18 +55,20 @@ if selected_duct:
 
     for i, sel in enumerate(run, start=1):
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {} | Length: {:6.3f} | Weight {:6.2f}'.format(
+            '### No: {:03} | ID: {} | Size: {} | Length: {:6.2f} | Weight {:6.2f}'.format(
                 i,
                 output.linkify(sel.element.Id),
                 sel.size,
-                round(safe_float(RevitDuct.parse_length_string(sel.centerline_length)), 3),
+                round(safe_float(RevitDuct.parse_length_string(
+                    sel.centerline_length)), 3),
                 round(safe_float(sel.weight), 2),
             )
         )
 
     # Total count
     element_ids = [d.element.Id for d in run]
-    total_length = sum(safe_float(RevitDuct.parse_length_string(d.centerline_length)) or 0 for d in run)
+    total_length = sum(safe_float(RevitDuct.parse_length_string(
+        d.centerline_length)) or 0 for d in run)
     total_weight = sum(safe_float(d.weight) or 0 for d in run)
     output.print_md("---")
     output.print_md(

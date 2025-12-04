@@ -17,9 +17,9 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Create Runs"
+__title__ = "Select Run"
 __doc__ = """
-Create a duct run based on size
+Select joints based on size,
 """
 
 # Variables
@@ -47,15 +47,39 @@ if selected_duct:
     run = RevitDuct.create_duct_run(selected_duct, doc, view)
     RevitElement.select_many(uidoc, run)
 
+    def safe_float(val):
+        try:
+            return float(val)
+        except Exception:
+            return 0.0
+
+    for i, sel in enumerate(run, start=1):
+        output.print_md(
+            '### No: {:03} | ID: {} | Size: {} | Length: {:6.2f} | Weight {:6.2f}'.format(
+                i,
+                output.linkify(sel.element.Id),
+                sel.size,
+                round(safe_float(RevitDuct.parse_length_string(
+                    sel.centerline_length)), 3),
+                round(safe_float(sel.weight), 2),
+            )
+        )
+
     # Total count
     element_ids = [d.element.Id for d in run]
+    total_length = sum(safe_float(RevitDuct.parse_length_string(
+        d.centerline_length)) or 0 for d in run)
+    total_weight = sum(safe_float(d.weight) or 0 for d in run)
+    output.print_md("---")
     output.print_md(
-        "# Total elements {:03}, {}".format(
+        "# Total elements {:03} | Total feet: {:6.2f} | Total lbs: {:6.2f} | {}".format(
             len(element_ids),
+            round(total_length / 12, 3),
+            total_weight,
             output.linkify(element_ids)),
     )
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No duct runs made")
+    output.print_md("## Select a duct first")
