@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Select Run"
 __doc__ = """
-Select joints based on size,
+Selects/creates a run bases on size of seleted duct.
 """
 
 # Variables

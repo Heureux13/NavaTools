@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Hangers on Run"
 __doc__ = """
-Puts weight of entire run defined by size on hangers
+Total weight of run / hanger amount.
 """
 
 # Variables

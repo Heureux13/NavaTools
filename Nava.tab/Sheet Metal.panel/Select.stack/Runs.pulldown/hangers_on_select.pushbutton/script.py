@@ -17,7 +17,9 @@ from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory
 # Button info
 # ===================================================
 __title__ = "Hangers on Select"
-__doc__ = """Calculate and display weight distribution on hangers for selected duct"""
+__doc__ = """
+Total weight of selected duct / amount of hangers
+"""
 
 # Variables
 # ==================================================
