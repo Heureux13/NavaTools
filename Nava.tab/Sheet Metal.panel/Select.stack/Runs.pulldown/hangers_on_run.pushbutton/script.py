@@ -30,9 +30,10 @@ doc = revit.doc  # type: Document
 view = revit.active_view
 output = script.get_output()
 
-hanger_families = {
-    1: ""
-}
+print_parameter = [
+    '_weight_supporting',
+    'mark',
+]
 
 
 def safe_float(val):
@@ -109,9 +110,13 @@ if selected_duct:
 
         # Print hanger info and set Mark parameter in a transaction
         with revit.Transaction("Set Hanger Mark"):
+
             for i, h in enumerate(hangers, start=1):
-                family_name = h.Symbol.FamilyName if hasattr(
-                    h, 'Symbol') else "Unknown"
+                family_name = doc.GetElement(
+                    h.GetTypeId()).FamilyName if hasattr(
+                    doc.GetElement(
+                        h.GetTypeId()),
+                    'FamilyName') else "Unknown"
                 output.print_md(
                     "### {} | ID: {} | Supporting: {:6.2f}lbs".format(
                         i,
@@ -119,26 +124,61 @@ if selected_duct:
                         weight_per_hanger,
                     ))
 
-                # Set the Mark parameter
-                mark_param = h.LookupParameter("Mark")
-                if mark_param:
-                    mark_param.Set(str(weight_per_hanger))
+                # Set the _weight_supporting parameter on the instance
+                set_parameter = None
+                for parameter_name in print_parameter:
+                    p = h.LookupParameter(parameter_name)
+                    if not p:
+                        # output.print_md(
+                        #     'Parameter "{}" not found on hanger ID {}'.format(
+                        #         parameter_name,
+                        #         output.linkify(h.Id)
+                        #     )
+                        # )
+                        continue
+                    elif p.IsReadOnly:
+                        # output.print_md(
+                        #     'Parameter "{}" is read-only on hanger ID {}'.format(
+                        #         parameter_name,
+                        #         output.linkify(h.Id)
+                        #     )
+                        # )
+                        continue
+                    else:
+                        set_parameter = p
+                        break
 
-    # Total count
-    duct_element_ids = [d.element.Id for d in run]
-    output.print_md("---")
-    output.print_md("# Duct Run Information")
-    output.print_md(
-        "### Duct Qty: {:02} | Length: {:6.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
-            len(duct_element_ids),
-            round(total_length / 12, 3),
-            total_weight,
-            total_weight / (total_length / 12),
-            output.linkify(duct_element_ids)
-        )
-    )
+                if set_parameter:
+                    set_parameter.Set(weight_per_hanger)
+                    # output.print_md(
+                    #     'Set parameter "{}" on hanger ID {} to {:6.2f}'.format(
+                    #         set_parameter.Definition.Name,
+                    #         output.linkify(h.Id),
+                    #         weight_per_hanger
+                    #     )
+                    # )
+                else:
+                    output.print_md(
+                        'Could not set parameter on hanger ID {}'.format(
+                            output.linkify(h.Id)
+                        )
+                    )
 
-    # Final print statements
-    print_parameter_help(output)
+            # Total count
+            duct_element_ids = [d.element.Id for d in run]
+            output.print_md("---")
+            output.print_md("# Duct Run Information")
+            output.print_md(
+                "### Duct Qty: {:02} | Length: {:6.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
+                    len(duct_element_ids),
+                    round(total_length / 12, 3),
+                    total_weight,
+                    total_weight / (total_length / 12),
+                    output.linkify(duct_element_ids)
+                )
+            )
+
+        # Final print statements
+        print_parameter_help(output)
 else:
     output.print_md("## Select a duct first")

@@ -28,6 +28,11 @@ uidoc = __revit__.ActiveUIDocument
 view = revit.active_view
 output = script.get_output()
 
+print_parameter = [
+    '_weight_supporting',
+    'mark',
+]
+
 
 def safe_float(val):
     """Convert value to float, return 0.0 if conversion fails"""
@@ -69,15 +74,34 @@ else:
     # Find hangers matching the duct size
     hangers = []
     duct_size_normalized = normalize_size(duct_size)
+    selected_duct_ids = set(d.element.Id for d in selected_ducts)
 
     for hanger in all_hangers:
+        # Print Primary Element parameter for diagnostics
+        ref_param = hanger.LookupParameter("Primary Element")
+        ref_val = ref_param.AsString() if ref_param else None
+        output.print_md(
+            "Hanger ID {} | Primary Element: {}".format(
+                hanger.Id,
+                ref_val
+            ))
+
         size_param = hanger.LookupParameter("Size of Primary End")
         if size_param:
             hanger_size = size_param.AsString()
             # Match both normalized and original formats
-            if (hanger_size == duct_size or
-                    normalize_size(hanger_size) == duct_size_normalized):
-                hangers.append(hanger)
+            if (hanger_size == duct_size or normalize_size(hanger_size) == duct_size_normalized):
+                # Check if hanger is connected to any selected duct
+                # For FabricationPart, try using the 'Primary Element' reference
+                ref_param = hanger.LookupParameter("Primary Element")
+                if ref_param:
+                    ref_id_str = ref_param.AsString()
+                    try:
+                        ref_id = int(ref_id_str)
+                        if ref_id in selected_duct_ids:
+                            hangers.append(hanger)
+                    except Exception:
+                        pass
 
     # Display results and set hanger marks
     if hangers:
@@ -101,9 +125,19 @@ else:
                     weight_per_hanger
                 ))
 
-                mark_param = hanger.LookupParameter("Mark")
-                if mark_param:
-                    mark_param.Set(str(weight_per_hanger))
+                # Try each parameter in order, set the first writable one
+                set_success = False
+                for parameter_name in print_parameter:
+                    param = hanger.LookupParameter(parameter_name)
+                    if param and not param.IsReadOnly:
+                        param.Set(weight_per_hanger)
+                        set_success = True
+                        break
+                if not set_success:
+                    output.print_md(
+                        'Could not set any parameter on hanger ID {}'.format(
+                            output.linkify(hanger.Id)
+                        ))
 
         output.print_md("---")
 

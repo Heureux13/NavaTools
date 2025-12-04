@@ -1,4 +1,56 @@
-# -*- coding: utf-8 -*-
+# Simple Box class for 3D geometry
+import math
+
+
+class Box:
+    def __init__(self, min_xyz, max_xyz):
+        self.min = min_xyz  # XYZ: lower corner
+        self.max = max_xyz  # XYZ: upper corner
+
+    def top(self):
+        return self.max.Z
+
+    def bottom(self):
+        return self.min.Z
+
+    def left(self):
+        return min(self.min.X, self.max.X)
+
+    def right(self):
+        return max(self.min.X, self.max.X)
+
+    def front(self):
+        return min(self.min.Y, self.max.Y)
+
+    def back(self):
+        return max(self.min.Y, self.max.Y)
+
+    def height(self):
+        return abs(self.max.Z - self.min.Z)
+
+    def width(self):
+        return abs(self.max.X - self.min.X)
+
+    def depth(self):
+        return abs(self.max.Y - self.min.Y)
+
+    def angle_to_floor(self):
+        # Returns angle (degrees) between box's vertical axis and Z axis (floor)
+        # For a box aligned to world axes, this is always 0
+        # For a duct, you might use the vector from min to max
+        v = self.max - self.min
+        vertical = XYZ(0, 0, 1)
+        dot = v.dot(vertical)
+        mag_v = math.sqrt(v.X**2 + v.Y**2 + v.Z**2)
+        mag_vert = 1.0
+        cos_theta = dot / (mag_v * mag_vert) if mag_v != 0 else 0
+        angle_rad = math.acos(max(-1, min(1, cos_theta)))
+        return math.degrees(angle_rad)
+
+    def __repr__(self):
+        return f"Box(min={self.min}, max={self.max})"
+
+
 """=========================================================================
 Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
@@ -7,162 +59,74 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
-try:
-    from Autodesk.Revit.DB import *  # noqa: F401,F403
-    from pyrevit import revit, script, DB  # noqa: F401
-    IN_REVIT = True
-except ImportError:
-    IN_REVIT = False
-import logging
-import math
-import re
-
-# Variables
-# ==================================================s
-if IN_REVIT:
-    app = __revit__.Application  # type: Application
-    uidoc = __revit__.ActiveUIDocument  # type: UIDocument
-    doc = revit.doc  # type: Document
-    view = revit.active_view
-    output = script.get_output()
-else:
-    app = uidoc = doc = view = output = None
-
-# Logging
-log = logging.getLogger("RevitDuct")
-
-# Constants
-TOL = 1e-6
-
-# Format examples:
-# oval to round = 40"/20"-12"ø
-# oval = 40"/20"
-# oval to oval reducer = 40"/20"-12"/8"
-# rectanggle/square = 12"x12"
-# round = 12"Ø
+# Imports
+# ===========================================================================
 
 
-class RevitSize:
-    def __init__(self, size):
-        self.size = size
+class XYZ:
+    def __init__(self, x, y, z):
+        self.X = x
+        self.Y = y
+        self.Z = z
 
-        # Parse the size string
-        parsed = self._parse_size()
+    def __add__(self, other):
+        return XYZ(self.X + other.X, self.Y + other.Y, self.Z + other.Z)
 
-        self.in_size = parsed['in_size']
-        self.in_width = parsed['in_width']
-        self.in_height = parsed['in_height']
-        self.in_diameter = parsed['in_diameter']
-        self.in_oval_dia = parsed['in_oval_dia']
-        self.in_oval_flat = parsed['in_oval_flat']
-        self.out_size = parsed['out_size']
-        self.out_width = parsed['out_width']
-        self.out_height = parsed['out_height']
-        self.out_diameter = parsed['out_diameter']
-        self.out_oval_dia = parsed['out_oval_dia']
-        self.out_oval_flat = parsed['out_oval_flat']
+    def __sub__(self, other):
+        return XYZ(self.X - other.X, self.Y - other.Y, self.Z - other.Z)
 
-    def _parse_size(self):
-        """Parse size string and extract inlet/outlet dimensions."""
-        s = str(self.size).strip().replace('"', '').lower()
+    def __mul__(self, scalar):
+        return XYZ(self.X * scalar, self.Y * scalar, self.Z * scalar)
 
-        # Split on hyphen if present (inlet-outlet)
-        if '-' in s:
-            parts = s.split('-', 1)
-            inlet = parts[0].strip()
-            outlet = parts[1].strip()
-        else:
-            inlet = s
-            outlet = None
+    def __truediv__(self, scalar):
+        return XYZ(self.X / scalar, self.Y / scalar, self.Z / scalar)
 
-        # Parse inlet
-        in_data = self._parse_token(inlet)
+    def dot(self, other):
+        return self.X * other.X + self.Y * other.Y + self.Z * other.Z
 
-        # Parse outlet if exists, otherwise copy inlet
-        if outlet:
-            out_data = self._parse_token(outlet)
-        else:
-            out_data = in_data.copy()
+    def cross(self, other):
+        return XYZ(
+            self.Y * other.Z - self.Z * other.Y,
+            self.Z * other.X - self.X * other.Z,
+            self.X * other.Y - self.Y * other.X
+        )
 
-        return {
-            'in_size': inlet,
-            'in_width': in_data.get('width'),
-            'in_height': in_data.get('height'),
-            'in_diameter': in_data.get('diameter'),
-            'in_oval_dia': in_data.get('oval_dia'),
-            'in_oval_flat': in_data.get('oval_flat'),
-            'out_size': outlet if outlet else inlet,
-            'out_width': out_data.get('width'),
-            'out_height': out_data.get('height'),
-            'out_diameter': out_data.get('diameter'),
-            'out_oval_dia': out_data.get('oval_dia'),
-            'out_oval_flat': out_data.get('oval_flat'),
-        }
+    def distance_to(self, other):
+        return math.sqrt((self.X - other.X) ** 2 + (self.Y - other.Y) ** 2 + (self.Z - other.Z) ** 2)
 
-    def _parse_token(self, token):
-        """Parse a single size token (inlet or outlet)."""
-        result = {}
-
-        # Round: 12ø
-        m = re.match(r'(\d+(?:\.\d+)?)\s*[øØ]', token)
-        if m:
-            result['diameter'] = float(m.group(1))
-            result['width'] = None
-            result['height'] = None
-            result['oval_dia'] = None
-            result['oval_flat'] = None
-            return result
-
-        # Oval: 40/20
-        m = re.match(r'(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)', token)
-        if m:
-            w = float(m.group(1))
-            h = float(m.group(2))
-            result['width'] = w
-            result['height'] = h
-            result['diameter'] = h
-            result['oval_dia'] = (w + h) / 2.0
-            result['oval_flat'] = max(w, h) - min(w, h) if w != h else 0.0
-            return result
-
-        # Rect: 12x12
-        m = re.match(r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)', token)
-        if m:
-            result['width'] = float(m.group(1))
-            result['height'] = float(m.group(2))
-            result['diameter'] = None
-            result['oval_dia'] = None
-            result['oval_flat'] = None
-            return result
-
-        # Default: all None
-        result['width'] = None
-        result['height'] = None
-        result['diameter'] = None
-        result['oval_dia'] = None
-        result['oval_flat'] = None
-        return result
-
-
-class RevitXYZ(object):
-    def __init__(self, element):
-        self.element = element
+    def __repr__(self):
+        return f"XYZ({self.X}, {self.Y}, {self.Z})"
 
 
 if __name__ == "__main__":
-    # Quick sanity examples
-    for sample in [
-        "40/20-12ø", "40/20", "12x12", "12ø"
-    ]:
-        rs = RevitSize(sample)
-        print("\nSample:", sample)
-        print("  inlet size:", rs.in_size)
-        print("    width:", rs.in_width)
-        print("    height:", rs.in_height)
-        print("    diameter:", rs.in_diameter)
-        print("    oval_flat:", rs.in_oval_flat)
-        print("  outlet size:", rs.out_size)
-        print("    width:", rs.out_width)
-        print("    height:", rs.out_height)
-        print("    diameter:", rs.out_diameter)
-        print("    oval_flat:", rs.out_oval_flat)
+    # Example usage of XYZ for 3D math
+    a = XYZ(1, 2, 3)
+    b = XYZ(4, 5, 6)
+    print(f"{a} is vector a")
+    print(f"{b} is vector b")
+    print(f"{a + b} is a + b")
+    print(f"{a - b} is a - b")
+    print(f"{a.dot(b)} is a . b (dot product)")
+    print(f"{a.cross(b)} is a x b (cross product)")
+    print(f"{a.distance_to(b)} is the distance from a to b")
+    # You can still use XYZ for mock curve endpoints as before
+
+    class MockCurve(object):
+        def __init__(self, start, end):
+            self.start = XYZ(*start)
+            self.end = XYZ(*end)
+
+        def GetEndPoint(self, idx):
+            return self.start if idx == 0 else self.end
+
+        def Evaluate(self, t, _):
+            x = self.start.X + t * (self.end.X - self.start.X)
+            y = self.start.Y + t * (self.end.Y - self.start.Y)
+            z = self.start.Z + t * (self.end.Z - self.start.Z)
+            return XYZ(x, y, z)
+    start = (8.115217245, -20.102905699, 10.500000000)
+    end = (8.115217245, -12.181281631, 10.500000000)
+    curve = MockCurve(start, end)
+    print(f"{curve.GetEndPoint(0)} is curve start")
+    print(f"{curve.GetEndPoint(1)} is curve end")
+    print(f"{curve.Evaluate(0.5, True)} is curve midpoint")

@@ -8,6 +8,7 @@ the copyright holder.
 ========================================================================="""
 
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import XYZ, Solid, GeometryInstance, Options
 from pyrevit import revit, script, DB
 import logging
 import math
@@ -79,18 +80,18 @@ class RevitXYZ(object):
     def normalize(v):
         """Normalize a 3D vector to unit length."""
         x, y, z = v
-        m = math.sqrt(x*x + y*y + z*z)
+        m = math.sqrt(x * x + y * y + z * z)
         if m == 0:
             return (0.0, 0.0, 0.0)
-        return (x/m, y/m, z/m)
+        return (x / m, y / m, z / m)
 
     @staticmethod
     def dot(a, b):
         """Dot product of two 3D vectors."""
-        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
     @staticmethod
-    def edge_diffs_whole_in(c0, W0, H0, c1, W1, H1, u_hat, v_hat, snap_tol=1/16.0):
+    def edge_diffs_whole_in(c0, W0, H0, c1, W1, H1, u_hat, v_hat, snap_tol=1 / 16.0):
         """
         Calculate edge-to-edge offsets for duct transitions.
 
@@ -118,10 +119,10 @@ class RevitXYZ(object):
         v1 = RevitXYZ.dot(c1, v_hat)
 
         exact = {
-            "left":   (u1 - W1/2.0) - (u0 - W0/2.0),
-            "right":  (u1 + W1/2.0) - (u0 + W0/2.0),
-            "top":    (v1 + H1/2.0) - (v0 + H0/2.0),
-            "bottom": (v1 - H1/2.0) - (v0 - H0/2.0),
+            "left": (u1 - W1 / 2.0) - (u0 - W0 / 2.0),
+            "right": (u1 + W1 / 2.0) - (u0 + W0 / 2.0),
+            "top": (v1 + H1 / 2.0) - (v0 + H0 / 2.0),
+            "bottom": (v1 - H1 / 2.0) - (v0 - H0 / 2.0),
         }
 
         def snap_round(val):
@@ -186,8 +187,8 @@ class RevitXYZ(object):
             for i in range(0, len(inds), 3):
                 try:
                     v0 = verts[inds[i]]
-                    v1 = verts[inds[i+1]]
-                    v2 = verts[inds[i+2]]
+                    v1 = verts[inds[i + 1]]
+                    v2 = verts[inds[i + 2]]
                 except Exception:
                     continue
 
@@ -355,10 +356,10 @@ class RevitXYZ(object):
             n = inf.get('normal')
             if n is None:
                 continue
-            mag = (n.X*n.X + n.Y*n.Y + n.Z*n.Z) ** 0.5
+            mag = (n.X * n.X + n.Y * n.Y + n.Z * n.Z) ** 0.5
             if mag < TOL:
                 continue
-            nu = XYZ(n.X/mag, n.Y/mag, n.Z/mag)
+            nu = XYZ(n.X / mag, n.Y / mag, n.Z / mag)
             normed.append((i, inf, nu))
         if not normed:
             return (None, None)
@@ -366,7 +367,7 @@ class RevitXYZ(object):
         best = None
         best_score = -1e9
         for i in range(len(normed)):
-            for j in range(i+1, len(normed)):
+            for j in range(i + 1, len(normed)):
                 ii, info_i, ni = normed[i]
                 jj, info_j, nj = normed[j]
                 dp = ni.DotProduct(nj)
@@ -374,7 +375,7 @@ class RevitXYZ(object):
                 opp = -dp
                 area_sum = (info_i.get('area') or 0.0) + \
                     (info_j.get('area') or 0.0)
-                score = opp*1000.0 + area_sum
+                score = opp * 1000.0 + area_sum
                 if score > best_score:
                     best_score = score
                     best = (info_i, info_j)
@@ -399,9 +400,9 @@ class RevitXYZ(object):
         zmin = min(zvals)
         zmax = max(zvals)
         # centroid approx
-        cx = sum(p.X for p in pts)/float(len(pts))
-        cy = sum(p.Y for p in pts)/float(len(pts))
-        cz = sum(p.Z for p in pts)/float(len(pts))
+        cx = sum(p.X for p in pts) / float(len(pts))
+        cy = sum(p.Y for p in pts) / float(len(pts))
+        cz = sum(p.Z for p in pts) / float(len(pts))
         return (zmin, zmax, XYZ(cx, cy, cz))
 
     def analyze_transition(self, active_view=None):
@@ -468,8 +469,8 @@ class RevitXYZ(object):
             vertical_class = 'CL'
 
         # Vertical center shift (signed): +up, -down
-        cz_i = 0.5*(zmax_i + zmin_i)
-        cz_o = 0.5*(zmax_o + zmin_o)
+        cz_i = 0.5 * (zmax_i + zmin_i)
+        cz_o = 0.5 * (zmax_o + zmin_o)
         v_shift = cz_o - cz_i
 
         def _gcd(a, b):
@@ -497,7 +498,7 @@ class RevitXYZ(object):
                     return ''
                 # reduce fraction
                 g = _gcd(num, denom)
-                return "{}/{}".format(num//g, denom//g)
+                return "{}/{}".format(num // g, denom // g)
             if whole > 0 and frac > 1e-6:
                 s = "{}-{}\"".format(whole, frac_str(frac))
             elif whole > 0:
@@ -521,12 +522,12 @@ class RevitXYZ(object):
             # vertical part; choose arbitrary right vector
             right = XYZ(1, 0, 0)
         else:
-            axis_hu = XYZ(axis_h.X/ah_len, axis_h.Y/ah_len, axis_h.Z/ah_len)
+            axis_hu = XYZ(axis_h.X / ah_len, axis_h.Y / ah_len, axis_h.Z / ah_len)
             # right-hand rule: right = flow x up
             right = axis_hu.CrossProduct(zunit)
             rlen = right.GetLength()
             if rlen > 1e-8:
-                right = XYZ(right.X/rlen, right.Y/rlen, right.Z/rlen)
+                right = XYZ(right.X / rlen, right.Y / rlen, right.Z / rlen)
             else:
                 right = XYZ(1, 0, 0)
         lateral = (co - ci).DotProduct(right)
@@ -548,7 +549,7 @@ class RevitXYZ(object):
                 if num == 0:
                     return ''
                 g = _gcd(num, denom)
-                return "{}/{}".format(num//g, denom//g)
+                return "{}/{}".format(num // g, denom // g)
             if whole > 0 and frac > 1e-6:
                 mag = "{}-{}\"".format(whole, frac_str(frac))
             elif whole > 0:
