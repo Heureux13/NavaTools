@@ -7,16 +7,18 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+from Autodesk.Revit.UI.Selection import ObjectType
+from Autodesk.Revit.DB import *
+from pyrevit import revit, script
+from revit_xyz import RevitXYZ
+from revit_output import print_parameter_help
+from revit_duct import RevitDuct
+from revit_element import RevitElement
+abcdefghijklmnopqrstuv 1234567890
+
 # Imports
 # ==================================================
 
-from revit_element import RevitElement
-from revit_duct import RevitDuct
-from revit_output import print_parameter_help
-from revit_xyz import RevitXYZ
-from pyrevit import revit, script
-from Autodesk.Revit.DB import *
-from Autodesk.Revit.UI.Selection import ObjectType
 
 # Button info
 # ===================================================
@@ -45,7 +47,8 @@ if selected_ducts:
     for i, d in enumerate(selected_ducts, start=1):
         elem = d.element if hasattr(d, 'element') else d
         xyz = RevitXYZ(elem)
-        output.print_md("Duct {} | Location type: {} | Curve: {}".format(i, type(xyz.loc), xyz.curve))
+        output.print_md("Duct {} | Location type: {} | Curve: {}".format(
+            i, type(xyz.loc), xyz.curve))
         output.print_md(
             'Index: {} | ID: {} | Start: {}'.format(
                 i,
