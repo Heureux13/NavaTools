@@ -306,9 +306,13 @@ try:
         output.print_md("## Newly Tagged")
         for i, d in enumerate(needs_tagging, start=1):
             output.print_md(
-                "### No.{} | ID: {} | Fam: {} | Size: {} | Le: {} | Ex: {}".format(
-                    i, output.linkify(
-                        d.element.Id), d.family, d.size, d.length, d.extension_bottom
+                "### No.{} | ID: {} | Fam: {} | Size: {} | Le: {:06.2f} | Ex: {}".format(
+                    i,
+                    output.linkify(d.element.Id),
+                    d.family,
+                    d.size,
+                    d.length,
+                    d.extension_bottom
                 )
             )
         output.print_md("---")
@@ -317,9 +321,12 @@ try:
         output.print_md("## Already Tagged")
         for i, d in enumerate(already_tagged, start=1):
             output.print_md(
-                "### Index {} | Size: {} | Family: {} | Length: {} | Element ID: {}".format(
-                    i, d.size, d.family, d.length, output.linkify(
-                        d.element.Id)
+                "### Index {} | Size: {} | Family: {} | Length: {:06.2f} | Element ID: {}".format(
+                    i,
+                    d.size,
+                    d.family,
+                    d.length,
+                    output.linkify(d.element.Id)
                 )
             )
         output.print_md("---")

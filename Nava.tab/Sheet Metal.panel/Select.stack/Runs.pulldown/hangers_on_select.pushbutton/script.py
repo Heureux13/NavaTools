@@ -144,7 +144,7 @@ else:
     # Display duct information
     duct_element_ids = [d.element.Id for d in selected_ducts]
     output.print_md("# Selected Ducts Information")
-    output.print_md("## Qty: {} | Size: {} | Length: {:.2f} ft | Weight: {:.2f} lbs | Weight/ft: {:.2f} lbs/ft | {}".format(
+    output.print_md("## Qty: {} | Size: {} | Length: {:06.2f} ft | Weight: {:06.2f} lbs | Weight/ft: {:06.2f} lbs/ft | {}".format(
         len(selected_ducts),
         duct_size,
         total_length / 12,

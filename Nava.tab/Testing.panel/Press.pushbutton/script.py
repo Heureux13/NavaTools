@@ -92,8 +92,10 @@ with Transaction(doc, "Offset Parameter") as t:
         tag = None
         family = d.family.lower().strip()
         output.print_md(
-            "Family: {} | Size: {} | Length: {}".format(
-                d.family, d.size, d.length
+            "Family: {} | Size: {} | Length: {:06.2f}".format(
+                d.family,
+                d.size,
+                d.length
             )
         )
 
@@ -133,7 +135,13 @@ with Transaction(doc, "Offset Parameter") as t:
             h_signed = float(offset_data.get('offset_perp_signed', 0) or 0)
             EPS = 0.49
             dbg("top_al:{} bot_al:{} right_al:{} left_al:{} | vCL:{} hCL:{}",
-                top_al, bot_al, right_al, left_al, v_is_cl, h_is_cl)
+                top_al,
+                bot_al,
+                right_al,
+                left_al,
+                v_is_cl,
+                h_is_cl
+                )
             # Tag priority: CL -> single-side flush -> combos -> else numeric
             # Exception: offset families skip CL/flush checks (alignment flags not meaningful)
             tag = None

@@ -11,18 +11,15 @@ the copyright holder.
 def print_parameter_help(output):
     """Print standard help message about missing parameters."""
     output.print_md("---")
-    output.print_md("If info is missing, Naviate parameters must be imported")
     output.print_md(
-        "Connectors: Turn all on (may require enabling per family/element)")
+        "*If info is missing, Naviate parameters must be imported (may require enabling per family/element)*")
     output.print_md(
-        "Dimensions: Turn all on (may require enabling per family/element)")
+        "**Connectors**: *Turn all on*")
     output.print_md(
-        "Fab Properties: Size, Weight, Diameter, Family, Left Extension, Right Extension, Elevations")
+        "**Dimensions**: *Turn all on*")
     output.print_md(
-        'Centerline Length, Depth, Inner Radius, and SheetMetalArea')
-    output.print_md(
-        'If you see an empty variable, odds are it needs to be turned on in Naviate'
-    )
+        "**Fab Properties:** *Size, Weight, Diameter, Family, Left Extension, Right Extension, Elevations, \
+            Centerline Length, Depth, Inner Radius, and SheetMetalArea*")
 
 
 def print_selection_summary(output, element_ids, label="Total elements"):

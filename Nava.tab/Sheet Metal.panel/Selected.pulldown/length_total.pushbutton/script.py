@@ -44,8 +44,12 @@ if ducts:
     # Individual properties
     for i, d in enumerate(ducts, start=1):
         output.print_md(
-            '### Index: {} | Size: {} | Length: {}" | Family: {} | Element ID: {}'.format(
-                i, d.size, d.length, d.family, output.linkify(d.element.Id)
+            '### Index: {} | Length: {:06.2f}" | Size: {} | Family: {} | Element ID: {}'.format(
+                i,
+                d.length,
+                d.size,
+                d.family,
+                output.linkify(d.element.Id)
             )
         )
 
@@ -54,7 +58,9 @@ if ducts:
     lengths = [d.length for d in ducts if d.length is not None]
     output.print_md(
         '# No: {:03} | ID: {} | Total length: {:.2f} ft'.format(
-            len(element_ids), output.linkify(element_ids), sum(lengths) / 12
+            len(element_ids),
+            output.linkify(element_ids),
+            sum(lengths) / 12
         )
     )
 

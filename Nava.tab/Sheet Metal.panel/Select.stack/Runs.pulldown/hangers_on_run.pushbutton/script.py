@@ -169,7 +169,7 @@ if selected_duct:
             output.print_md("---")
             output.print_md("# Duct Run Information")
             output.print_md(
-                "### Duct Qty: {:02} | Length: {:6.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
+                "### Duct Qty: {:02} | Length: {:06.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
                     len(duct_element_ids),
                     round(total_length / 12, 3),
                     total_weight,

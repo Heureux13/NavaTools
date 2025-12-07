@@ -47,17 +47,17 @@ if fil_ducts:
 
     # Select filtered dcuts
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md("# Selected {:03} short joints".format(len(fil_ducts)))
+    output.print_md("# Selected {} short joints".format(len(fil_ducts)))
     output.print_md("---")
 
     # Individutal duct and selected properties
     for i, fil in enumerate(fil_ducts, start=1):
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {} | Length: {}" | Connectors: 1 = {}, 2 = {}'.format(
+            '### No: {:03} | ID: {} | Length: {:06.2f}" | Size: {} | Connectors: 1 = {}, 2 = {}'.format(
                 i,
                 output.linkify(fil.element.Id),
-                fil.size,
                 fil.length,
+                fil.size,
                 fil.connector_0_type,
                 fil.connector_1_type,
             )
@@ -66,7 +66,7 @@ if fil_ducts:
     # Total count
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {:03}, {}".format(
+        "# Total elements {}, {}".format(
             len(element_ids), output.linkify(element_ids))
     )
 

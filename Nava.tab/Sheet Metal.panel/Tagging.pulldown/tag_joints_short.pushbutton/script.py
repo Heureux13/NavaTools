@@ -107,15 +107,20 @@ try:
             abs_angle = abs(angle)
             output.print_md(
                 "### Index {} | Type: {} | Size: {} | Length: {} | Angle: {:.2f}° | Element ID: {}".format(
-                    i, d.connector_0_type, d.size, d.length, abs_angle, output.linkify(
-                        d.element.Id)
+                    i,
+                    d.connector_0_type,
+                    d.size,
+                    d.length,
+                    abs_angle,
+                    output.linkify(d.element.Id)
                 )
             )
 
         element_ids = [d.element.Id for d in already_tagged]
         output.print_md(
             "# Total elements already tagged {}, {}".format(
-                len(already_tagged), output.linkify(element_ids)
+                len(already_tagged),
+                output.linkify(element_ids)
             )
         )
 
@@ -128,15 +133,20 @@ try:
             abs_angle = abs(angle)
             output.print_md(
                 "### Index {} | Type: {} | Size: {} | Length: {} | Angle: {:.2f}° | Element ID: {}".format(
-                    i, d.connector_0_type, d.size, d.length, abs_angle, output.linkify(
-                        d.element.Id)
+                    i,
+                    d.connector_0_type,
+                    d.size,
+                    d.length,
+                    abs_angle,
+                    output.linkify(d.element.Id)
                 )
             )
 
         element_ids = [d.element.Id for d in needs_tagging]
         output.print_md(
             "# Total elements tagged {}, {}".format(
-                len(needs_tagging), output.linkify(element_ids)
+                len(needs_tagging),
+                output.linkify(element_ids)
             )
         )
 
@@ -145,7 +155,8 @@ try:
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
         "# Total elements {}, {}".format(
-            len(fil_ducts), output.linkify(element_ids)
+            len(fil_ducts),
+            output.linkify(element_ids)
         )
     )
 

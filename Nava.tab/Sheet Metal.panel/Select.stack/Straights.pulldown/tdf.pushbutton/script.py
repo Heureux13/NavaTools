@@ -10,19 +10,16 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import JointSize, RevitDuct
+from revit_duct import RevitDuct
 from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints Long"
+__title__ = "Joints TDF"
 __doc__ = """
-Selects joints that are MORE than:
-TDF     = 56"
-S&D     = 59"
-Spiral  = 120"
+Selects all TDF joints
 """
 
 # Variables
@@ -36,39 +33,55 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts in view
+# Get all duct
 ducts = RevitDuct.all(doc, view)
 
-# Filter ducts by size
-fil_ducts = [d for d in ducts if d.joint_size == JointSize.LONG]
+# Families allowed
+allowed = {
+    ("straight", "tdc"),
+    ("straight", "tdf"),
+}
 
-# Start of our logic / print
+# Nomalize and filter duct
+normalized = [
+    (
+        d,
+        (d.family or "").lower().strip(),
+        (d.connector_0_type or "").lower().strip()
+    ) for d in ducts
+]
+fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
+
+# Start of select / print
 if fil_ducts:
 
-    # Select filtered duct list
+    # Select filtered duct
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md("# Selected {:03} long joints".format(len(fil_ducts)))
     output.print_md(
-        "---")
+        "# Selected {} TDF straight joints".format(len(fil_ducts))
+    )
+    output.print_md("---")
 
-    # loop for individutal duct and their selected properties
+    # Individual duct and properties
     for i, fil in enumerate(fil_ducts, start=1):
-        output.print_md('### Index: {:03} | Element ID: {} | Lenght: {}" | Size: {} | Connectors: {}, {}'.format(
-            i,
-            output.linkify(fil.element.Id),
-            fil.length,
-            fil.size,
-            fil.connector_0_type,
-            fil.connector_1_type,
-        ))
+        output.print_md(
+            '### No: {:03} | ID: {} | Length: {:06.2f}" | Size: {}'.format(
+                i,
+                output.linkify(fil.element.Id),
+                fil.length,
+                fil.size,
+            )
+        )
 
-    # loop for totals
     element_ids = [d.element.Id for d in fil_ducts]
-    output.print_md("# Total elements: {:03}, {}".format(
-        len(fil_ducts), output.linkify(element_ids)
-    ))
+    output.print_md(
+        "# Total elements {}, {}".format(
+            len(fil_ducts),
+            output.linkify(element_ids)
+        )
+    )
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("No short joints found")
+    output.print_md("## No TDF joints found")

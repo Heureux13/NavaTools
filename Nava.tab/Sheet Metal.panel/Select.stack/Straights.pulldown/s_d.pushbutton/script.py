@@ -17,9 +17,9 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints Spiral"
+__title__ = "Joints S&D"
 __doc__ = """
-Selects all spiral joints
+Selects all S&D joints
 """
 
 # Variables
@@ -33,49 +33,47 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all duct
+# Get all ducts in view
 ducts = RevitDuct.all(doc, view)
 
-# Families allowed
+# Family / connector combo to find
 allowed = {
-    ("spiral duct", "raw"),
+    ("straight", "slip & drive"),
+    ("straight", "s&d"),
+    ("straight", "standing s&d")
 }
 
-# Nomalize and filter duct
+# List of filtered ducts
 normalized = [(d, (d.family or "").lower().strip(),
                (d.connector_0_type or "").lower().strip()) for d in ducts]
 fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
-# Start of select / print
+# Start of select / print loop
 if fil_ducts:
 
-    # Select filtered duct
+    # Select filtered ducs
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md(
-        "# Selected {:03} spiral straight joints".format(len(fil_ducts))
-    )
+    output.print_md("# Selected {} S&D straight joints".format(len(fil_ducts)))
     output.print_md("---")
 
-    # Individual duct and properties
+    # Loop for individutal duct and their selected properties
     for i, fil in enumerate(fil_ducts, start=1):
-        length_in = fil.length or 0.0
         output.print_md(
-            '### Index: {:03} | ID: {} | Length: {:+.2f}" | Size: {}'.format(
+            '### No: {:03} | ID: {} | Size: {}'.format(
                 i,
                 output.linkify(fil.element.Id),
-                length_in,
-                fil.size,
-            )
-        )
+                fil.size
+            ))
 
+    # Loop for total count
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {:03}, {}".format(
-            len(fil_ducts), output.linkify(element_ids)
-        )
-    )
+        "# Total elements: {:03}, {}".format(
+            len(element_ids),
+            output.linkify(element_ids)
+        ))
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No spiral joints found")
+    output.print_md("## No S&D joints found")

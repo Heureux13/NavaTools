@@ -75,7 +75,7 @@ if sd:
     # Select filtered duct
     RevitElement.select_many(uidoc, sd)
     output.print_md(
-        "# Selected {:03} odd size joints".format(len(sd))
+        "# Selected {} odd size joints".format(len(sd))
     )
     output.print_md("---")
 
@@ -93,7 +93,7 @@ if sd:
 
     element_ids = [d.element.Id for d in sd]
     output.print_md(
-        "# Total elements {:03}, {}".format(
+        "# Total elements {}, {}".format(
             len(sd), output.linkify(element_ids)
         )
     )

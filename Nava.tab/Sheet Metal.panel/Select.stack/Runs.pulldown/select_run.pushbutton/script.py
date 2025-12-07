@@ -55,7 +55,7 @@ if selected_duct:
 
     for i, sel in enumerate(run, start=1):
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {} | Length: {:6.2f} | Weight {:6.2f}'.format(
+            '### No: {:03} | ID: {} | Size: {} | Length: {:06.2f} | Weight {:06.2f}'.format(
                 i,
                 output.linkify(sel.element.Id),
                 sel.size,
@@ -72,7 +72,7 @@ if selected_duct:
     total_weight = sum(safe_float(d.weight) or 0 for d in run)
     output.print_md("---")
     output.print_md(
-        "# Total elements {:03} | Total feet: {:6.2f} | Total lbs: {:6.2f} | {}".format(
+        "# Total elements {:03} | Total feet: {:06.2f} | Total lbs: {:06.2f} | {}".format(
             len(element_ids),
             round(total_length / 12, 3),
             total_weight,

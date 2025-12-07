@@ -10,16 +10,19 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_output import print_parameter_help
 from revit_duct import RevitDuct
+from revit_output import print_parameter_help
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
+# Filter down to short joints
+DUCT_LENGTH = 6
+
 # Button info
 # ===================================================
-__title__ = "Joints S&D"
+__title__ = 'Spiral Under 6" Long'
 __doc__ = """
-Selects all S&D joints
+Selects straight duct and spiral smaller than 6" long
 """
 
 # Variables
@@ -33,42 +36,54 @@ output = script.get_output()
 # Main Code
 # ==================================================
 
-# Get all ducts in view
+# Get all ducts
 ducts = RevitDuct.all(doc, view)
+duct = RevitDuct.from_selection(uidoc, doc, view)
 
-# Family / connector combo to find
-allowed = {
-    ("straight", "slip & drive"),
-    ("straight", "s&d"),
-    ("straight", "standing s&d")
+
+normalize = [
+    (d.family.strip().lower(), d.length) for d in ducts if d.family and d.length
+]
+
+acceptable = {
+    "spiral duct",
+    "straight",
 }
 
-# List of filtered ducts
-normalized = [(d, (d.family or "").lower().strip(),
-               (d.connector_0_type or "").lower().strip()) for d in ducts]
-fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
+fil_ducts = [
+    d for d in ducts
+    if d.length and d.length < DUCT_LENGTH and d.family and d.family.strip().lower() in acceptable
+]
 
 # Start of select / print loop
 if fil_ducts:
 
-    # Select filtered ducs
+    # Select filtered dcuts
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md("# Selected {:03} S&D straight joints".format(len(fil_ducts)))
+    output.print_md(
+        '# Selected {} sprial joints under 3" long'.format(len(fil_ducts)))
     output.print_md("---")
 
-    # Loop for individutal duct and their selected properties
+    # Individutal duct and selected properties
     for i, fil in enumerate(fil_ducts, start=1):
-        output.print_md('### No: {:03} | ID: {} | Size: {}'.format(
-            i, output.linkify(fil.element.Id), fil.size
-        ))
+        output.print_md(
+            '### No: {:03} | ID: {} | Length: {:05.2f}" | Size: {}'.format(
+                i,
+                output.linkify(fil.element.Id),
+                fil.length,
+                fil.size,
+            )
+        )
 
-    # Loop for total count
+    # Total count
     element_ids = [d.element.Id for d in fil_ducts]
-    output.print_md("# Total elements: {:03}, {}".format(
-        len(element_ids), output.linkify(element_ids)
-    ))
+    output.print_md(
+        "# Total elements {}, {}".format(
+            len(element_ids),
+            output.linkify(element_ids))
+    )
 
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No S&D joints found")
+    output.print_md('## No straight duct under 6" found')

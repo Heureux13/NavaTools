@@ -202,8 +202,7 @@ if __name__ == "__main__":
 
     direction = outlet - inlet  # Vector from inlet to outlet
     print(f"\nDirection vector (outlet - inlet): {direction}")
-    print(
-        f"Direction length: {math.sqrt(direction.X**2 + direction.Y**2 + direction.Z**2)}")
+    print(f"Direction length: {math.sqrt(direction.X**2 + direction.Y**2 + direction.Z**2)}")
     normalized_dir = direction.normalize()
     print(f"Normalized direction: {normalized_dir}")
     print(

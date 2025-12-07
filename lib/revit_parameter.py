@@ -3,20 +3,20 @@
 # Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 #
 # This code and associated documentation files may not be copied, modified,
-# distributed, or used in any form without the prior written permission of 
+# distributed, or used in any form without the prior written permission of
 # the copyright holder.
 ############################################################################
 
 # Imports
 # ==========================================================================
+from pyrevit import revit, forms
+from Autodesk.Revit.DB import CategorySet  # only if you need it explicitly
+from Autodesk.Revit.DB import StorageType, ExternalDefinitionCreationOptions, BuiltInCategory, ElementId
 import clr
 clr.AddReference('RevitAPI')
-clr.AddReference('RevitServices')   # optional if you use RevitServices, adjust as needed
+# optional if you use RevitServices, adjust as needed
+clr.AddReference('RevitServices')
 
-from Autodesk.Revit.DB import StorageType, ExternalDefinitionCreationOptions, BuiltInCategory, ElementId
-from Autodesk.Revit.DB import CategorySet  # only if you need it explicitly
-
-from pyrevit import revit, forms
 
 # Variables
 # ==========================================================================
@@ -25,6 +25,8 @@ doc = revit.doc
 
 # Class
 # ==========================================================================
+
+
 class RevitParameter:
     def __init__(self, doc, app):
         self.doc = doc
@@ -34,7 +36,8 @@ class RevitParameter:
         """Retrieve the value of a parameter by name from a given element."""
         param = element.LookupParameter(param_name)
         if not param:
-            raise LookupError("Parameter '{}' not found on element.".format(param_name))
+            raise LookupError(
+                "Parameter '{}' not found on element.".format(param_name))
 
         st = param.StorageType
         if st == StorageType.String:
@@ -47,12 +50,12 @@ class RevitParameter:
             return param.AsElementId()
         else:
             return None
-        
+
     def set_parameter_value(self, element, param_name, value):
         param = element.LookupParameter(param_name)
         if not param:
             raise LookupError("Parameter '{}' not found".format(param_name))
-        
+
         st = param.StorageType
         if st == StorageType.String:
             param.Set(str(value))
@@ -63,17 +66,19 @@ class RevitParameter:
         elif st == StorageType.ElementId and isinstance(value, ElementId):
             param.Set(value)
         else:
-            raise TypeError("Unsupported type for parameter '{}'".format(param_name))
-
+            raise TypeError(
+                "Unsupported type for parameter '{}'".format(param_name))
 
     def create_parameter(self,
-                         name,                                                      # Name of Paramter
-                         param_type         = None,                   # Type: Text, Number, YesNo, Length, etc.
-                         group_name         = "MyGroup",                            # Name of the group
-                         categories_to_bind = None,                                 # OST_Walls, OST_Doors, etc. defaluts to OST_DuctCurves
-                         is_instance        = True,                                 # True = Instance, False = Type; parameter wise
-                         param_group        = None):    # Group in properties palette, DATA, GEOMETRY, etc.
-        
+                         name,  # Name of Paramter
+                         # Type: Text, Number, YesNo, Length, etc.
+                         param_type=None,
+                         group_name="MyGroup",                            # Name of the group
+                         categories_to_bind=None,  # OST_Walls, OST_Doors, etc. defaluts to OST_DuctCurves
+                         # True = Instance, False = Type; parameter wise
+                         is_instance=True,
+                         param_group=None):    # Group in properties palette, DATA, GEOMETRY, etc.
+
         # 1) Open shared parameter file
         spfile = self.app.OpenSharedParameterFile()
         if not spfile:
@@ -102,7 +107,8 @@ class RevitParameter:
                 catset.Insert(self.doc.Settings.Categories.get_Item(bic))
         else:
             # Default example: ducts
-            catset.Insert(self.doc.Settings.Categories.get_Item(BuiltInCategory.OST_DuctCurves))
+            catset.Insert(self.doc.Settings.Categories.get_Item(
+                BuiltInCategory.OST_DuctCurves))
 
         # 5) Choose binding type
         binding = (self.app.Create.NewInstanceBinding(catset)

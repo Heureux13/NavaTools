@@ -10,16 +10,16 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_duct import RevitDuct
 from revit_output import print_parameter_help
+from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints TDF"
+__title__ = "Joints Spiral"
 __doc__ = """
-Selects all TDF joints
+Selects all spiral joints
 """
 
 # Variables
@@ -38,18 +38,12 @@ ducts = RevitDuct.all(doc, view)
 
 # Families allowed
 allowed = {
-    ("straight", "tdc"),
-    ("straight", "tdf"),
+    ("spiral duct", "raw"),
 }
 
 # Nomalize and filter duct
-normalized = [
-    (
-        d,
-        (d.family or "").lower().strip(),
-        (d.connector_0_type or "").lower().strip()
-    ) for d in ducts
-]
+normalized = [(d, (d.family or "").lower().strip(),
+               (d.connector_0_type or "").lower().strip()) for d in ducts]
 fil_ducts = [d for d, fam, conn in normalized if (fam, conn) in allowed]
 
 # Start of select / print
@@ -58,24 +52,25 @@ if fil_ducts:
     # Select filtered duct
     RevitElement.select_many(uidoc, fil_ducts)
     output.print_md(
-        "# Selected {:03} TDF straight joints".format(len(fil_ducts))
+        "# Selected {} spiral straight joints".format(len(fil_ducts))
     )
     output.print_md("---")
 
     # Individual duct and properties
     for i, fil in enumerate(fil_ducts, start=1):
+        length_in = fil.length or 0.0
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {}" | Length: {}'.format(
+            '### Index: {:03} | ID: {} | Length: {:06.2f}" | Size: {}'.format(
                 i,
                 output.linkify(fil.element.Id),
+                length_in,
                 fil.size,
-                fil.length,
             )
         )
 
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {:03}, {}".format(
+        "# Total elements {}, {}".format(
             len(fil_ducts),
             output.linkify(element_ids)
         )
@@ -84,4 +79,4 @@ if fil_ducts:
     # Final print statements
     print_parameter_help(output)
 else:
-    output.print_md("## No TDF joints found")
+    output.print_md("## No spiral joints found")

@@ -350,7 +350,13 @@ class RevitDuct:
 
     @property
     def family(self):
-        return self._get_param("NaviateDBS_Family")
+        fam = self._get_param("NaviateDBS_Family")
+        if fam:
+            return fam
+        fam = self._get_param("Family")
+        if fam:
+            return fam
+        return None
 
     @property
     def is_double_wall(self):
@@ -475,8 +481,6 @@ class RevitDuct:
         return None
 
     @property
-    # returns a four option varience, one being an error. these sizes and
-    # connections can bechanged easealy across various fabs
     def joint_size(self):
         conn0 = (self.connector_0_type or "").strip()
         conn1 = (self.connector_1_type or "").strip()

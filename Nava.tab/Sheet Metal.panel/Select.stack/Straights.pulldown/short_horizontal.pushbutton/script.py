@@ -65,20 +65,23 @@ fil_ducts = [d for d in ducts if is_allowed(d)]
 # Start of select / print loop
 if fil_ducts:
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md("# Selected {:03} short joints".format(len(fil_ducts)))
+    output.print_md("# Selected {} short joints".format(len(fil_ducts)))
     output.print_md("---")
 
     for i, fil in enumerate(fil_ducts, start=1):
         output.print_md(
-            '### Index: {:03} | Type: {} | Size: {} | Length: {}" | ID: {}'.format(
-                i, fil.connector_0_type, fil.size, fil.length, output.linkify(
-                    fil.element.Id)
+            '### Index: {:03} | Type: {} | Length: {:06.2f}" | Size: {} | ID: {}'.format(
+                i,
+                fil.connector_0_type,
+                fil.length,
+                fil.size,
+                output.linkify(fil.element.Id)
             )
         )
 
     element_ids = [d.element.Id for d in fil_ducts]
     output.print_md(
-        "# Total elements {:03}, {}".format(
+        "# Total elements {}, {}".format(
             len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
