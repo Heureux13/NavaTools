@@ -56,14 +56,15 @@ if selected_duct:
     for i, sel in enumerate(run, start=1):
         d_length = safe_float(
             RevitDuct.parse_length_string(sel.centerline_length))
-        d_weight = safe_float(sel.weight)
+        d_weight = safe_float(
+            sel.weight)
         output.print_md(
             '### No: {:03} | ID: {} | Length: {:06.2f} | Weight {:06.2f} | lbs/ft: {:06.2f} | Size: {}'.format(
                 i,
                 output.linkify(sel.element.Id),
                 d_length,
                 d_weight,
-                d_weight / d_length / 12,
+                d_weight / (d_length / 12),
                 sel.size,
             )
         )
@@ -80,7 +81,7 @@ if selected_duct:
             len(element_ids),
             total_length / 12,
             total_weight,
-            total_weight / total_length,
+            total_weight / (total_length / 12),
             output.linkify(element_ids)),
     )
 
