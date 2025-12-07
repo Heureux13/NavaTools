@@ -8,7 +8,7 @@ the copyright holder."""
 # ======================================================================
 
 from revit_element import RevitElement
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
@@ -59,7 +59,7 @@ if fil_ducts:
     output.print_md(
         "# Selected {:03} accessories  ".format(len(fil_ducts)))
     output.print_md(
-        "------------------------------------------------------------------------------")
+        "---")
 
     # Individual links
     for i, d in enumerate(fil_ducts, start=1):
@@ -87,7 +87,7 @@ if fil_ducts:
             counts.get("end cap", 0) + counts.get("cap", 0) + counts.get("tdf end cap", 0)))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md(
         "No accessories found.")

@@ -11,15 +11,18 @@ the copyright holder."""
 # ==================================================
 from Autodesk.Revit.DB import *
 from pyrevit import revit, script
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance, is_plan_view, is_section_view
 from revit_xyz import RevitXYZ
 from revit_element import RevitElement
 
 
-__title__ = "Joints Short Horizontal"
+__title__ = "Short Horizontal"
 __doc__ = """
-Returns weight for duct(s) selected.
+Selects all horzontal duct that is shorter than:
+TDF     = 56"
+S&D     = 59"
+Spiral  = 120"
 """
 
 # Variables
@@ -85,7 +88,7 @@ if fil_ducts:
             len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md(
         "# There is nothing to select"

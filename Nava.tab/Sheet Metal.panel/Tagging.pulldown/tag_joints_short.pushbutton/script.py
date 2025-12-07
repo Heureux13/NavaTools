@@ -15,7 +15,7 @@ from pyrevit import revit, forms, DB, script
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
 from revit_xyz import RevitXYZ
 from revit_tagging import RevitTagging
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_element import RevitElement
 
 # Button info
@@ -161,7 +161,7 @@ try:
     )
 
     # Final helper print
-    print_parameter_help(output)
+    print_disclaimer(output)
 
     t.Commit()
 except Exception as e:

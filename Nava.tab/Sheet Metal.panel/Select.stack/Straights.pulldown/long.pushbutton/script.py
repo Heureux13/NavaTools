@@ -11,15 +11,15 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import JointSize, RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints Long"
+__title__ = "Long"
 __doc__ = """
-Selects joints that are MORE than:
+Selects straight duct that are LONGER than:
 TDF     = 56"
 S&D     = 59"
 Spiral  = 120"
@@ -69,6 +69,6 @@ if fil_ducts:
     ))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("No short joints found")

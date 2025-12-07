@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -20,9 +20,9 @@ DUCT_LENGTH = 6
 
 # Button info
 # ===================================================
-__title__ = 'Spiral Under 6" Long'
+__title__ = 'Under 6" Long'
 __doc__ = """
-Selects straight duct and spiral smaller than 6" long
+Selects straight duct and spiral, smaller than 6" long
 """
 
 # Variables
@@ -84,6 +84,6 @@ if fil_ducts:
     )
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md('## No straight duct under 6" found')

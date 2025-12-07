@@ -10,16 +10,16 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints S&D"
+__title__ = "S&D"
 __doc__ = """
-Selects all S&D joints
+Selects all S&D straight duct
 """
 
 # Variables
@@ -74,6 +74,6 @@ if fil_ducts:
         ))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("## No S&D joints found")

@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
@@ -74,6 +74,6 @@ if sel_ducts:
     ))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("No radius tees found.")

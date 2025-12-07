@@ -7,17 +7,16 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+from revit_output import print_disclaimer
+from revit_duct import RevitDuct
+from System.Collections.Generic import List
+from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
+from pyrevit import revit, script
+from Autodesk.Revit.UI import TaskDialog
+from Autodesk.Revit.DB import *
 import clr
 import re
 clr.AddReference("System.Windows.Forms")
-
-from Autodesk.Revit.DB import *
-from Autodesk.Revit.UI import TaskDialog
-from pyrevit import revit, script
-from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
-from System.Collections.Generic import List
-from revit_duct import RevitDuct
-from revit_output import print_parameter_help
 
 
 # Button info
@@ -37,6 +36,8 @@ output = script.get_output()
 
 # Class
 # =====================================================================
+
+
 class SystemSelectorForm(Form):
     def __init__(self, runs):
         self.Text = "Select Duct Family"
@@ -88,14 +89,17 @@ class SystemSelectorForm(Form):
 
 # Helpers
 # ========================================================================
+
+
 def natural_sort_key(s):
-# Sort runs with natural/numeric sorting
+    # Sort runs with natural/numeric sorting
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)
-            ]
+    ]
 
 # Main Code
 # ==================================================
+
 
 try:
     # Collect all non-fabricated ducts
@@ -103,13 +107,13 @@ try:
     all_straights = collector_0.OfCategory(BuiltInCategory.OST_DuctCurves)\
         .WhereElementIsNotElementType()\
         .ToElements()
-    
+
     # Collects ll non-fabricated fittins
     collector_1 = FilteredElementCollector(doc, view.Id)
     all_fittings = collector_1.OfCategory(BuiltInCategory.OST_DuctFitting)\
         .WhereElementIsNotElementType()\
         .ToElements()
-    
+
     # Combines both list into one
     all_duct = list(all_straights) + list(all_fittings)
 
@@ -125,12 +129,12 @@ try:
             # Get family name using RevitDuct class
             duct_obj = RevitDuct(doc, view, d)
             family_name = duct_obj.family if duct_obj.family else "Unknown"
-            
+
             # Addes keys and values to dictionary
             if family_name not in duct_runs:
                 duct_runs[family_name] = []
             duct_runs[family_name].append(d)
-            
+
         # Handles erros from missing/bad data or parameters
         except Exception as e:
             output.print_md("Error grouping element: {}".format(str(e)))
@@ -164,18 +168,18 @@ try:
     duct_run = duct_runs[family_name]
     duct_ids = List[ElementId]([d.Id for d in duct_run])
     uidoc.Selection.SetElementIds(duct_ids)
-    
+
     # final printout with links to duct
     for i, d in enumerate(duct_run, start=1):
-            duct_obj = RevitDuct(doc, view, d)
-            family_name = duct_obj.family if duct_obj.family else "Unknown"
-            output.print_md(
-                "### No: {:03} | ID: {} | Family: {}".format(
-                    i,
-                    output.linkify(d.Id),
-                    family_name
-                )
+        duct_obj = RevitDuct(doc, view, d)
+        family_name = duct_obj.family if duct_obj.family else "Unknown"
+        output.print_md(
+            "### No: {:03} | ID: {} | Family: {}".format(
+                i,
+                output.linkify(d.Id),
+                family_name
             )
+        )
 
     element_ids = [d.Id for d in duct_run]
     output.print_md("---")
@@ -185,9 +189,9 @@ try:
             output.linkify(element_ids)
         )
     )
-    
+
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 
 except Exception as e:
     TaskDialog.Show("Error", "Script failed: {}".format(str(e)))

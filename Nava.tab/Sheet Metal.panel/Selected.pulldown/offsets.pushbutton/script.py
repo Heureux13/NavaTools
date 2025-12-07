@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script, forms
 
 # Button display information
@@ -100,4 +100,4 @@ for d in filtered_ducts:
         output.print_md("\n_No rectangular edge offsets (round)._")
 
 # Final print statements
-print_parameter_help(output)
+print_disclaimer(output)

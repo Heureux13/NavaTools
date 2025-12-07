@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from pyrevit import revit, script
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct
 
 __title__ = "Length Total"
@@ -65,6 +65,6 @@ if ducts:
     )
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("No ductwork found.")

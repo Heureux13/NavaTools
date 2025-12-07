@@ -8,7 +8,7 @@ the copyright holder.
 ========================================================================="""
 
 
-def print_parameter_help(output):
+def print_disclaimer(output):
     """Print standard help message about missing parameters."""
     output.print_md("---")
     output.print_md(
@@ -20,10 +20,3 @@ def print_parameter_help(output):
     output.print_md(
         "**Fab Properties:** *Size, Weight, Diameter, Family, Left Extension, Right Extension, Elevations, \
             Centerline Length, Depth, Inner Radius, and SheetMetalArea*")
-
-
-def print_selection_summary(output, element_ids, label="Total elements"):
-    """Print summary of selected elements with linkified IDs."""
-    output.print_md("# {}: {}, {}".format(
-        label, len(element_ids), output.linkify(element_ids)
-    ))

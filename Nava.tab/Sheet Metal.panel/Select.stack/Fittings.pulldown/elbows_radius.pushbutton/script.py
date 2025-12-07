@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -56,7 +56,8 @@ if fil_ducts:
     for i, sel in enumerate(fil_ducts, start=1):
         output.print_md(
             "### No: {:03} | ID: {} | Size: {} | Angle: {} | IR: {}".format(
-                i, output.linkify(sel.element.Id), sel.size, sel.angle, sel.inner_radius
+                i, output.linkify(
+                    sel.element.Id), sel.size, sel.angle, sel.inner_radius
             ))
 
     # Loop for total counts
@@ -66,6 +67,6 @@ if fil_ducts:
             len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("No radius elbows found.")

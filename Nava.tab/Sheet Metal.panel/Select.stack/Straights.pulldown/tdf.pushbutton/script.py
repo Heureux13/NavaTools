@@ -11,15 +11,15 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints TDF"
+__title__ = "TDF"
 __doc__ = """
-Selects all TDF joints
+Selects all TDF straight duct
 """
 
 # Variables
@@ -82,6 +82,6 @@ if fil_ducts:
     )
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("## No TDF joints found")

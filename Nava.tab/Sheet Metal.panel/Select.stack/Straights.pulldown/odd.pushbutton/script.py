@@ -10,16 +10,16 @@ the copyright holder."""
 # Imports
 # ==================================================
 from revit_element import RevitElement
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Joints Odd"
+__title__ = "Odd"
 __doc__ = """
-Selects all spiral joints that are odd size
+Selects all spiral duct that is odd size
 """
 
 # Variables
@@ -99,6 +99,6 @@ if sd:
     )
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("## No odd size joints found")

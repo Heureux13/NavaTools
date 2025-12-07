@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -54,32 +54,37 @@ if selected_duct:
             return 0.0
 
     for i, sel in enumerate(run, start=1):
+        d_length = safe_float(
+            RevitDuct.parse_length_string(sel.centerline_length))
+        d_weight = safe_float(sel.weight)
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {} | Length: {:06.2f} | Weight {:06.2f}'.format(
+            '### No: {:03} | ID: {} | Length: {:06.2f} | Weight {:06.2f} | lbs/ft: {:06.2f} | Size: {}'.format(
                 i,
                 output.linkify(sel.element.Id),
+                d_length,
+                d_weight,
+                d_weight / d_length / 12,
                 sel.size,
-                round(safe_float(RevitDuct.parse_length_string(
-                    sel.centerline_length)), 3),
-                round(safe_float(sel.weight), 2),
             )
         )
 
     # Total count
     element_ids = [d.element.Id for d in run]
-    total_length = sum(safe_float(RevitDuct.parse_length_string(
-        d.centerline_length)) or 0 for d in run)
-    total_weight = sum(safe_float(d.weight) or 0 for d in run)
+    total_length = sum(
+        safe_float(RevitDuct.parse_length_string(d.centerline_length)) or 0 for d in run)
+    total_weight = sum(
+        safe_float(d.weight) or 0 for d in run)
     output.print_md("---")
     output.print_md(
-        "# Total elements {:03} | Total feet: {:06.2f} | Total lbs: {:06.2f} | {}".format(
+        "# Total elements {:03} | Total feet: {:06.2f} | Total lbs: {:06.2f} | lbs/ft {:06.2f} | {}".format(
             len(element_ids),
-            round(total_length / 12, 3),
+            total_length / 12,
             total_weight,
+            total_weight / total_length,
             output.linkify(element_ids)),
     )
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("## Select a duct first")

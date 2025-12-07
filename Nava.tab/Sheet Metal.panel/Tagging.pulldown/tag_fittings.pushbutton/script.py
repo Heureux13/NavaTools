@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from System.Collections.Generic import List
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from revit_tagging import RevitTagging
 from revit_element import RevitElement
 from revit_duct import RevitDuct
@@ -343,7 +343,7 @@ try:
     output.print_md("# Total: {}, {}".format(
         len(dic_ducts), output.linkify(all_ids)))
 
-    print_parameter_help(output)
+    print_disclaimer(output)
 
     t.Commit()
 except Exception as e:

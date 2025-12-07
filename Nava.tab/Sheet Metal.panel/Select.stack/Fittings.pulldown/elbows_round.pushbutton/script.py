@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_output import print_parameter_help
+from revit_output import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -62,6 +62,6 @@ if sel_ducts:
         len(element_ids), output.linkify(element_ids)))
 
     # Final print statements
-    print_parameter_help(output)
+    print_disclaimer(output)
 else:
     output.print_md("No round elbows found.")
