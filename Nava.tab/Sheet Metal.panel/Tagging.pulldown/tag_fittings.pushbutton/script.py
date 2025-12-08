@@ -19,9 +19,9 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag Fittings"
+__title__ = "Fittings"
 __doc__ = """
-Tag all fitting not standard sizes
+Tag all fitting with assosiated label
 """
 
 # Variables

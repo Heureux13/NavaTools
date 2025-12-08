@@ -7,13 +7,13 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from revit_output import print_disclaimer
-from revit_duct import RevitDuct
-from System.Collections.Generic import List
-from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
-from pyrevit import revit, script
-from Autodesk.Revit.UI import TaskDialog
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.UI import TaskDialog
+from pyrevit import revit, script
+from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
+from System.Collections.Generic import List
+from revit_duct import RevitDuct
+from revit_output import print_disclaimer
 import clr
 import re
 clr.AddReference("System.Windows.Forms")
@@ -21,7 +21,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Select Duct Family"
+__title__ = "By Family"
 __doc__ = """
 Group and select all ducts by family that are NOT fab parts.
 """
@@ -38,11 +38,12 @@ output = script.get_output()
 # =====================================================================
 
 
-class SystemSelectorForm(Form):
+class SystemSelectorForm(object):
     def __init__(self, runs):
-        self.Text = "Select Duct Family"
-        self.Width = 500
-        self.Height = 180
+        self.form = Form()
+        self.form.Text = "Select Duct Family"
+        self.form.Width = 500
+        self.form.Height = 180
         self.selected_family = None
 
         # Info label
@@ -52,7 +53,7 @@ class SystemSelectorForm(Form):
         message.Left = 20
         message.Width = 350
         message.Height = 25
-        self.Controls.Add(message)
+        self.form.Controls.Add(message)
 
         # System dropdown
         self.drop_down = ComboBox()
@@ -75,7 +76,7 @@ class SystemSelectorForm(Form):
         if self.drop_down.Items.Count > 0:
             self.drop_down.SelectedIndex = 0
 
-        self.Controls.Add(self.drop_down)
+        self.form.Controls.Add(self.drop_down)
 
         # OK button
         btn_ok = Button()
@@ -84,8 +85,11 @@ class SystemSelectorForm(Form):
         btn_ok.Left = 20
         btn_ok.Width = 80
         btn_ok.DialogResult = DialogResult.OK
-        self.Controls.Add(btn_ok)
-        self.AcceptButton = btn_ok
+        self.form.Controls.Add(btn_ok)
+        self.form.AcceptButton = btn_ok
+
+    def ShowDialog(self):
+        return self.form.ShowDialog()
 
 # Helpers
 # ========================================================================

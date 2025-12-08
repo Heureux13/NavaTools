@@ -20,9 +20,9 @@ from revit_element import RevitElement
 
 # Button info
 # ==================================================
-__title__ = "Tag Joints Short"
+__title__ = "Straight Duct Short"
 __doc__ = """
-Tag all short straight joints with length.
+Tag all short straight duct with length.
 """
 
 # Variables

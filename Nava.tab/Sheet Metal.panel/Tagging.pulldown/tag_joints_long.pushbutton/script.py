@@ -17,9 +17,9 @@ from pyrevit import revit, script
 
 # Button display information
 # =================================================
-__title__ = "Tag Joints Long"
+__title__ = "Straight Duct Full"
 __doc__ = """
-Tags full-size straight duct joints connected to fittings
+Tags full straight duct connected to fittings with size label
 """
 
 

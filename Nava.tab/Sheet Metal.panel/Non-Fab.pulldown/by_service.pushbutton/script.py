@@ -7,13 +7,13 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from revit_output import print_disclaimer
-from revit_duct import RevitDuct
-from System.Collections.Generic import List
-from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
-from pyrevit import revit, script
-from Autodesk.Revit.UI import TaskDialog
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.UI import TaskDialog
+from pyrevit import revit, script
+from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
+from System.Collections.Generic import List
+from revit_duct import RevitDuct
+from revit_output import print_disclaimer
 import clr
 import re
 clr.AddReference("System.Windows.Forms")
@@ -21,7 +21,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Select Duct System"
+__title__ = "By System"
 __doc__ = """
 Group and select all ducts by HVAC system that are NOT fab parts.
 """
@@ -36,10 +36,9 @@ output = script.get_output()
 
 # Class
 # =====================================================================
-
-
 class SystemSelectorForm(Form):
     def __init__(self, runs):
+        Form.__init__(self)
         self.Text = "Select Duct System"
         self.Width = 500
         self.Height = 180
@@ -89,18 +88,15 @@ class SystemSelectorForm(Form):
 
 # Helpers
 # ========================================================================
-
-
 def natural_sort_key(s):
     # Sort runs with natural/numeric sorting
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)
     ]
 
+
 # Main Code
 # ==================================================
-
-
 try:
     # Collect all non-fabricated ducts
     collector_0 = FilteredElementCollector(doc, view.Id)
