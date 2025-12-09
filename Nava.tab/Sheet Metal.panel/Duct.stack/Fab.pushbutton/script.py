@@ -21,9 +21,9 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Fab By Parameter"
+__title__ = "Fab"
 __doc__ = """
-Select fabrication duct parts in the current view grouped by any parameter (e.g., Service, Item Number, Size).
+Selects all fabrication duct, and filters them down by parameters to select
 """
 
 # Variables

@@ -7,7 +7,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, VisibleInViewFilter
 from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
 from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
@@ -21,9 +21,9 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "By Family"
+__title__ = "By System"
 __doc__ = """
-Group and select all ducts by family that are NOT fab parts.
+Group and select all ducts by HVAC system that are NOT fab parts.
 """
 
 # Variables
@@ -36,30 +36,28 @@ output = script.get_output()
 
 # Class
 # =====================================================================
-
-
-class SystemSelectorForm(object):
+class SystemSelectorForm(Form):
     def __init__(self, runs):
-        self.form = Form()
-        self.form.Text = "Select Duct Family"
-        self.form.Width = 500
-        self.form.Height = 180
-        self.selected_family = None
+        Form.__init__(self)
+        self.Text = "Select Duct System"
+        self.Width = 500
+        self.Height = 180
+        self.selected_system = None
 
         # Info label
         message = Label()
-        message.Text = "Select family to select all its ducts:"
+        message.Text = "Select Non MEP system to select all its ducts:"
         message.Top = 20
         message.Left = 20
         message.Width = 350
         message.Height = 25
-        self.form.Controls.Add(message)
+        self.Controls.Add(message)
 
         # System dropdown
         self.drop_down = ComboBox()
         self.drop_down.Top = 60
         self.drop_down.Left = 20
-        self.drop_down.Width = 450
+        self.drop_down.Width = 350
         self.drop_down.DropDownStyle = ComboBoxStyle.DropDownList
 
         # Sorts and creates the dropdown menu
@@ -76,7 +74,7 @@ class SystemSelectorForm(object):
         if self.drop_down.Items.Count > 0:
             self.drop_down.SelectedIndex = 0
 
-        self.form.Controls.Add(self.drop_down)
+        self.Controls.Add(self.drop_down)
 
         # OK button
         btn_ok = Button()
@@ -85,38 +83,38 @@ class SystemSelectorForm(object):
         btn_ok.Left = 20
         btn_ok.Width = 80
         btn_ok.DialogResult = DialogResult.OK
-        self.form.Controls.Add(btn_ok)
-        self.form.AcceptButton = btn_ok
-
-    def ShowDialog(self):
-        return self.form.ShowDialog()
+        self.Controls.Add(btn_ok)
+        self.AcceptButton = btn_ok
 
 # Helpers
 # ========================================================================
-
-
 def natural_sort_key(s):
     # Sort runs with natural/numeric sorting
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)
     ]
 
+
 # Main Code
 # ==================================================
-
-
 try:
     # Collect all non-fabricated ducts
-    collector_0 = FilteredElementCollector(doc, view.Id)
-    all_straights = collector_0.OfCategory(BuiltInCategory.OST_DuctCurves)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
 
-    # Collects ll non-fabricated fittins
-    collector_1 = FilteredElementCollector(doc, view.Id)
-    all_fittings = collector_1.OfCategory(BuiltInCategory.OST_DuctFitting)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
+    vis = VisibleInViewFilter(doc, view.Id)
+    
+    all_straights = (FilteredElementCollector(doc, view.Id)\
+                     .OfCategory(BuiltInCategory.OST_DuctCurves)
+                     .WherePasses(vis)
+                     .WhereElementIsNotElementType()
+                     .ToElements()
+                     )
+    
+    all_fittings = (FilteredElementCollector(doc, view.Id)\
+                     .OfCategory(BuiltInCategory.OST_DuctFitting)
+                     .WherePasses(vis)
+                     .WhereElementIsNotElementType()
+                     .ToElements()
+                     )
 
     # Combines both list into one
     all_duct = list(all_straights) + list(all_fittings)
@@ -126,18 +124,31 @@ try:
         TaskDialog.Show("No Ducts", "No ducts found in current view.")
         script.exit()
 
-    # Group by Family
+    # Group by System Name AND Fabrication Service
     duct_runs = {}
     for d in all_duct:
         try:
-            # Get family name using RevitDuct class
-            duct_obj = RevitDuct(doc, view, d)
-            family_name = duct_obj.family if duct_obj.family else "Unknown"
+            # Creates a fall back system for the grouping of ducts.
+            system_param = d.LookupParameter("System Name")
+            system_name = system_param.AsString(
+            ) if system_param and system_param.AsString() else "No System"
+
+            fab_serv = d.LookupParameter("Fabrication Service")
+            fab_service = fab_serv.AsString() if fab_serv and fab_serv.AsString() else system_name
+
+            # Create combined key - if service is empty, just use system name
+            if fab_service and fab_service != "No System":
+                group_name = "{} - {}".format(
+                    system_name,
+                    fab_service
+                )
+            else:
+                group_name = system_name
 
             # Addes keys and values to dictionary
-            if family_name not in duct_runs:
-                duct_runs[family_name] = []
-            duct_runs[family_name].append(d)
+            if group_name not in duct_runs:
+                duct_runs[group_name] = []
+            duct_runs[group_name].append(d)
 
         # Handles erros from missing/bad data or parameters
         except Exception as e:
@@ -156,20 +167,20 @@ try:
     if result != DialogResult.OK or not form.drop_down.SelectedItem:
         script.exit()
 
-    # Convert our user selection to string, split it, and get our Family Name
+    # Convert our user selection to string, split it, and get our System Name
     selected_text = str(form.drop_down.SelectedItem)
-    family_name = selected_text.rsplit(" (", 1)[0]
+    system_name = selected_text.rsplit(" (", 1)[0]
 
-    # Check to see if our family name exist
-    if family_name not in duct_runs:
+    # Check to see if our sytem name exist
+    if system_name not in duct_runs:
         TaskDialog.Show(
-            "Family not found",
-            "The selected family was not found in the grouped ducts."
+            "System not found",
+            "The selected system was not found in the grouped ducts."
         )
         script.exit()
 
     # Select all ducts in duct run
-    duct_run = duct_runs[family_name]
+    duct_run = duct_runs[system_name]
     duct_ids = List[ElementId]([d.Id for d in duct_run])
     uidoc.Selection.SetElementIds(duct_ids)
 
@@ -178,7 +189,7 @@ try:
         duct_obj = RevitDuct(doc, view, d)
         family_name = duct_obj.family if duct_obj.family else "Unknown"
         output.print_md(
-            "### No: {:03} | ID: {} | Family: {}".format(
+            "### No: {} | ID: {} | Family: {}".format(
                 i,
                 output.linkify(d.Id),
                 family_name

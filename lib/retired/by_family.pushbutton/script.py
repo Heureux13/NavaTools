@@ -106,17 +106,21 @@ def natural_sort_key(s):
 
 
 try:
-    # Collect all non-fabricated ducts
-    collector_0 = FilteredElementCollector(doc, view.Id)
-    all_straights = collector_0.OfCategory(BuiltInCategory.OST_DuctCurves)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
+    vis = VisibleInViewFilter(doc, view.Id)
 
-    # Collects ll non-fabricated fittins
-    collector_1 = FilteredElementCollector(doc, view.Id)
-    all_fittings = collector_1.OfCategory(BuiltInCategory.OST_DuctFitting)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
+    all_straights = (FilteredElementCollector(doc, view.Id)
+                     .OfCategory(BuiltInCategory.OST_DuctCurves)
+                     .WherePasses(vis)
+                     .WhereElementIsNotElementType()
+                     .ToElements()
+                     )
+
+    all_fittings = (FilteredElementCollector(doc, view.Id)
+                    .OfCategory(BuiltInCategory.OST_DuctFitting)
+                    .WherePasses(vis)
+                    .WhereElementIsNotElementType()
+                    .ToElements()
+                    )
 
     # Combines both list into one
     all_duct = list(all_straights) + list(all_fittings)

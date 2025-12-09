@@ -21,9 +21,9 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Fab By Parameter"
+__title__ = "Non-Fab"
 __doc__ = """
-Select fabrication duct parts in the current view grouped by any parameter (e.g., Service, Item Number, Size).
+Selects all non-fabrication duct, and filters them down by parameters to select
 """
 
 # Variables
@@ -108,8 +108,7 @@ class ParamSelectorForm(Form):
             return
         values = self.param_groups[pname]
         for val in sorted(values.keys(), key=natural_sort_key):
-            self.value_drop.Items.Add(
-                "{} ({} parts)".format(val, len(values[val])))
+            self.value_drop.Items.Add("{} ({} parts)".format(val, len(values[val])))
         if self.value_drop.Items.Count > 0:
             self.value_drop.SelectedIndex = 0
 
@@ -149,17 +148,26 @@ def get_param_value(param):
 # Main Code
 # ==================================================
 try:
-    # Collect only fabrication ductwork (visible in view)
+    # Collect all non-fabricated ducts
+
     vis = VisibleInViewFilter(doc, view.Id)
 
-    fab_duct = (FilteredElementCollector(doc, view.Id)
-                .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
-                .WherePasses(vis)
-                .WhereElementIsNotElementType()
-                .ToElements())
+    all_straights = (FilteredElementCollector(doc, view.Id)
+                     .OfCategory(BuiltInCategory.OST_DuctCurves)
+                     .WherePasses(vis)
+                     .WhereElementIsNotElementType()
+                     .ToElements()
+                     )
 
-    # Combines list into one (only fab ductwork available)
-    all_duct = list(fab_duct)
+    all_fittings = (FilteredElementCollector(doc, view.Id)
+                    .OfCategory(BuiltInCategory.OST_DuctFitting)
+                    .WherePasses(vis)
+                    .WhereElementIsNotElementType()
+                    .ToElements()
+                    )
+
+    # Combines both list into one
+    all_duct = list(all_straights) + list(all_fittings)
 
     if not all_duct:
         TaskDialog.Show("No Ducts", "No ducts found in current view.")
@@ -169,7 +177,7 @@ try:
     param_groups = {}
     for d in all_duct:
         try:
-            for p in list(d.Parameters):
+            for p in d.Parameters:
                 pname = p.Definition.Name
                 pval = get_param_value(p)
                 if pval is None or pval == "":
@@ -184,10 +192,7 @@ try:
             continue
 
     if not param_groups:
-        TaskDialog.Show(
-            "No Parameters",
-            "No parameter data found on ducts in view."
-        )
+        TaskDialog.Show("No Parameters", "No parameter data found on ducts in view.")
         script.exit()
 
     # Show window with parameter/value dropdowns
@@ -202,14 +207,11 @@ try:
     selected_val = str(form.value_drop.SelectedItem).rsplit(" (", 1)[0]
 
     if selected_param not in param_groups or selected_val not in param_groups[selected_param]:
-        TaskDialog.Show(
-            "Not found", "The selection was not found in the grouped ducts.")
+        TaskDialog.Show("Not found", "The selection was not found in the grouped ducts.")
         script.exit()
 
     duct_run = param_groups[selected_param][selected_val]
-    duct_ids = List[ElementId]()
-    for d in duct_run:
-        duct_ids.Add(d.Id)
+    duct_ids = List[ElementId]([d.Id for d in duct_run])
     uidoc.Selection.SetElementIds(duct_ids)
 
     # final printout with links to duct

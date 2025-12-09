@@ -1,0 +1,6 @@
+title:
+  en_us: Rename
+layout:
+  - rename_families
+  - rename_sheets
+  - rename_views
