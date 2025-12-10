@@ -7,236 +7,259 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, VisibleInViewFilter, ElementId
-from Autodesk.Revit.UI import TaskDialog
-from pyrevit import revit, script
-from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
-from System.Collections.Generic import List
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from pyrevit import script
+from System.Windows.Forms import Form, Label, Button, DialogResult, ComboBox, TextBox
+import webbrowser
+import json
+import os
 import clr
-import re
 clr.AddReference("System.Windows.Forms")
 
 
 # Button info
 # ===================================================
-__title__ = "Fab By Parameter"
+__title__ = "Fieldwire"
 __doc__ = """
-Select fabrication duct parts in the current view grouped by any parameter (e.g., Service, Item Number, Size).
+Open Fieldwire website with multiple page options
 """
 
 # Variables
 # ==================================================
-app = __revit__.Application
-uidoc = __revit__.ActiveUIDocument
-doc = revit.doc
-view = revit.active_view
 output = script.get_output()
+
+# Configuration file to store project names and IDs
+# Stored in user's AppData so each user has their own copy (not shared via git)
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "NavaTools", "fieldwire_projects.txt")
+
+# Create the directory if it doesn't exist
+CONFIG_DIR = os.path.dirname(CONFIG_FILE)
+if not os.path.exists(CONFIG_DIR):
+    try:
+        os.makedirs(CONFIG_DIR)
+    except:
+        pass
 
 # Class
 # =====================================================================
 
-
-class ParamSelectorForm(Form):
-    def __init__(self, param_groups):
+class FieldwireForm(Form):
+    def __init__(self):
         Form.__init__(self)
-        self.Text = "Select Ducts by Parameter"
-        self.Width = 520
-        self.Height = 220
-        self.param_groups = param_groups
+        self.Text = "Open Fieldwire"
+        self.Width = 500
+        self.Height = 350
+        self.projects = self.load_projects()
 
-        # Parameter label
-        lbl_param = Label()
-        lbl_param.Text = "Choose parameter:"
-        lbl_param.Top = 20
-        lbl_param.Left = 20
-        lbl_param.Width = 180
-        lbl_param.Height = 20
-        self.Controls.Add(lbl_param)
+        # Title label
+        lbl_title = Label()
+        lbl_title.Text = "Fieldwire - Select a project:"
+        lbl_title.Top = 20
+        lbl_title.Left = 20
+        lbl_title.Width = 450
+        lbl_title.Height = 20
+        self.Controls.Add(lbl_title)
 
-        # Parameter dropdown
-        self.param_drop = ComboBox()
-        self.param_drop.Top = 45
-        self.param_drop.Left = 20
-        self.param_drop.Width = 460
-        self.param_drop.DropDownStyle = ComboBoxStyle.DropDownList
-        for pname in sorted(param_groups.keys(), key=natural_sort_key):
-            self.param_drop.Items.Add(pname)
-        if self.param_drop.Items.Count > 0:
-            self.param_drop.SelectedIndex = 0
-        self.param_drop.SelectedIndexChanged += self._on_param_changed
-        self.Controls.Add(self.param_drop)
+        # Project dropdown
+        self.combo_projects = ComboBox()
+        self.combo_projects.Top = 45
+        self.combo_projects.Left = 20
+        self.combo_projects.Width = 450
+        for project_name in sorted(self.projects.keys()):
+            self.combo_projects.Items.Add(project_name)
+        self.Controls.Add(self.combo_projects)
 
-        # Value label
-        lbl_val = Label()
-        lbl_val.Text = "Choose value:"
-        lbl_val.Top = 80
-        lbl_val.Left = 20
-        lbl_val.Width = 180
-        lbl_val.Height = 20
-        self.Controls.Add(lbl_val)
+        # Add project button
+        btn_add = Button()
+        btn_add.Text = "Add New Project"
+        btn_add.Top = 75
+        btn_add.Left = 20
+        btn_add.Width = 150
+        btn_add.Click += lambda s, e: self.add_project()
+        self.Controls.Add(btn_add)
 
-        # Value dropdown
-        self.value_drop = ComboBox()
-        self.value_drop.Top = 105
-        self.value_drop.Left = 20
-        self.value_drop.Width = 460
-        self.value_drop.DropDownStyle = ComboBoxStyle.DropDownList
-        self.Controls.Add(self.value_drop)
+        # Remove project button
+        btn_remove = Button()
+        btn_remove.Text = "Remove Project"
+        btn_remove.Top = 75
+        btn_remove.Left = 200
+        btn_remove.Width = 150
+        btn_remove.Click += lambda s, e: self.remove_project()
+        self.Controls.Add(btn_remove)
 
-        # OK button
+        # Separator
+        lbl_sep = Label()
+        lbl_sep.Text = "Select page to open:"
+        lbl_sep.Top = 115
+        lbl_sep.Left = 20
+        lbl_sep.Width = 450
+        lbl_sep.Height = 20
+        self.Controls.Add(lbl_sep)
+
+        # Projects button
+        btn_projects = Button()
+        btn_projects.Text = "Plans"
+        btn_projects.Top = 145
+        btn_projects.Left = 20
+        btn_projects.Width = 100
+        btn_projects.Click += lambda s, e: self.open_plans()
+        self.Controls.Add(btn_projects)
+
+        # Submittals button
+        btn_submittals = Button()
+        btn_submittals.Text = "Submittals"
+        btn_submittals.Top = 145
+        btn_submittals.Left = 130
+        btn_submittals.Width = 100
+        btn_submittals.Click += lambda s, e: self.open_submittals()
+        self.Controls.Add(btn_submittals)
+
+        # Specs button
+        btn_specs = Button()
+        btn_specs.Text = "Specs"
+        btn_specs.Top = 145
+        btn_specs.Left = 240
+        btn_specs.Width = 100
+        btn_specs.Click += lambda s, e: self.open_specs()
+        self.Controls.Add(btn_specs)
+
+        # Tasks button
+        btn_tasks = Button()
+        btn_tasks.Text = "Tasks"
+        btn_tasks.Top = 145
+        btn_tasks.Left = 350
+        btn_tasks.Width = 100
+        btn_tasks.Click += lambda s, e: self.open_tasks()
+        self.Controls.Add(btn_tasks)
+
+        # Close button
+        btn_close = Button()
+        btn_close.Text = "Close"
+        btn_close.Top = 185
+        btn_close.Left = 20
+        btn_close.Width = 450
+        btn_close.DialogResult = DialogResult.Cancel
+        self.Controls.Add(btn_close)
+        self.CancelButton = btn_close
+
+    def load_projects(self):
+        """Load saved projects from config file"""
+        projects = {}
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, 'r') as f:
+                    projects = json.load(f)
+            except:
+                pass
+        return projects
+
+    def save_projects(self):
+        """Save projects to config file"""
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(self.projects, f, indent=2)
+
+    def add_project(self):
+        """Add a new project"""
+        # Get project name
+        project_name = self.show_input_dialog("Enter project name:", "Add Project")
+        if not project_name:
+            return
+        
+        # Get project ID
+        project_id = self.show_input_dialog("Enter Fieldwire project ID:", "Add Project")
+        if not project_id:
+            return
+        
+        self.projects[project_name] = project_id
+        self.save_projects()
+        self.refresh_combo()
+
+    def remove_project(self):
+        """Remove selected project"""
+        if self.combo_projects.SelectedIndex >= 0:
+            project_name = self.combo_projects.SelectedItem
+            del self.projects[project_name]
+            self.save_projects()
+            self.refresh_combo()
+
+    def refresh_combo(self):
+        """Refresh dropdown list"""
+        self.combo_projects.Items.Clear()
+        for project_name in sorted(self.projects.keys()):
+            self.combo_projects.Items.Add(project_name)
+
+    def show_input_dialog(self, prompt, title):
+        """Show input dialog"""
+        dlg = Form()
+        dlg.Text = title
+        dlg.Width = 400
+        dlg.Height = 150
+        
+        lbl = Label()
+        lbl.Text = prompt
+        lbl.Top = 20
+        lbl.Left = 20
+        lbl.Width = 350
+        dlg.Controls.Add(lbl)
+        
+        txt = TextBox()
+        txt.Top = 50
+        txt.Left = 20
+        txt.Width = 350
+        dlg.Controls.Add(txt)
+        
         btn_ok = Button()
-        btn_ok.Text = "Select"
-        btn_ok.Top = 140
+        btn_ok.Text = "OK"
+        btn_ok.Top = 85
         btn_ok.Left = 20
         btn_ok.Width = 80
         btn_ok.DialogResult = DialogResult.OK
-        self.Controls.Add(btn_ok)
-        self.AcceptButton = btn_ok
-
-        # init second dropdown
-        self._populate_values()
-
-    def _on_param_changed(self, sender, args):
-        self._populate_values()
-
-    def _populate_values(self):
-        self.value_drop.Items.Clear()
-        pname = self.param_drop.SelectedItem
-        if not pname or pname not in self.param_groups:
-            return
-        values = self.param_groups[pname]
-        for val in sorted(values.keys(), key=natural_sort_key):
-            self.value_drop.Items.Add(
-                "{} ({} parts)".format(val, len(values[val])))
-        if self.value_drop.Items.Count > 0:
-            self.value_drop.SelectedIndex = 0
-
-# Helpers
-# ========================================================================
-
-
-def natural_sort_key(s):
-    # Sort runs with natural/numeric sorting
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)
-    ]
-
-
-def get_param_value(param):
-    try:
-        if param.StorageType == 0:  # None
-            return None
-        # Prefer string if present
-        if param.AsString():
-            return param.AsString()
-        # Next, use value string (formatted)
-        if param.AsValueString():
-            return param.AsValueString()
-        # Finally, raw numeric
-        if param.StorageType == 1:  # Double
-            return param.AsDouble()
-        if param.StorageType == 2:  # Integer
-            return param.AsInteger()
-        if param.StorageType == 3:  # ElementId
-            return param.AsElementId().IntegerValue
-    except Exception:
+        dlg.Controls.Add(btn_ok)
+        dlg.AcceptButton = btn_ok
+        
+        if dlg.ShowDialog() == DialogResult.OK:
+            return txt.Text
         return None
-    return None
+
+    def get_selected_project_id(self):
+        """Get ID of selected project"""
+        if self.combo_projects.SelectedIndex >= 0:
+            project_name = self.combo_projects.SelectedItem
+            return self.projects.get(project_name)
+        return None
+
+    def _get_url(self, base_path):
+        """Build URL with project ID"""
+        project_id = self.get_selected_project_id()
+        if project_id:
+            return "https://app.fieldwire.com/projects/{}/{}".format(project_id, base_path)
+        else:
+            return "https://app.fieldwire.com/index/{}".format(base_path)
+
+    def open_plans(self):
+        url = self._get_url("plans")
+        webbrowser.open(url)
+
+    def open_submittals(self):
+        url = self._get_url("files")
+        webbrowser.open(url)
+
+    def open_specs(self):
+        url = self._get_url("specifications")
+        webbrowser.open(url)
+
+    def open_tasks(self):
+        url = self._get_url("tasks")
+        webbrowser.open(url)
 
 
 # Main Code
-# ==================================================
+# ==========================================================================================
 try:
-    # Collect only fabrication ductwork (visible in view)
-    vis = VisibleInViewFilter(doc, view.Id)
-
-    fab_duct = (FilteredElementCollector(doc, view.Id)
-                .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
-                .WherePasses(vis)
-                .WhereElementIsNotElementType()
-                .ToElements())
-
-    # Combines list into one (only fab ductwork available)
-    all_duct = list(fab_duct)
-
-    if not all_duct:
-        TaskDialog.Show("No Ducts", "No ducts found in current view.")
-        script.exit()
-
-    # Build parameter -> value -> elements map
-    param_groups = {}
-    for d in all_duct:
-        try:
-            for p in list(d.Parameters):
-                pname = p.Definition.Name
-                pval = get_param_value(p)
-                if pval is None or pval == "":
-                    continue
-                if pname not in param_groups:
-                    param_groups[pname] = {}
-                if pval not in param_groups[pname]:
-                    param_groups[pname][pval] = []
-                param_groups[pname][pval].append(d)
-        except Exception as e:
-            output.print_md("Error reading parameters: {}".format(str(e)))
-            continue
-
-    if not param_groups:
-        TaskDialog.Show(
-            "No Parameters",
-            "No parameter data found on ducts in view."
-        )
-        script.exit()
-
-    # Show window with parameter/value dropdowns
-    form = ParamSelectorForm(param_groups)
-    result = form.ShowDialog()
-
-    # Stop script if user does not select OK
-    if result != DialogResult.OK or not form.param_drop.SelectedItem or not form.value_drop.SelectedItem:
-        script.exit()
-
-    selected_param = str(form.param_drop.SelectedItem)
-    selected_val = str(form.value_drop.SelectedItem).rsplit(" (", 1)[0]
-
-    if selected_param not in param_groups or selected_val not in param_groups[selected_param]:
-        TaskDialog.Show(
-            "Not found", "The selection was not found in the grouped ducts.")
-        script.exit()
-
-    duct_run = param_groups[selected_param][selected_val]
-    duct_ids = List[ElementId]()
-    for d in duct_run:
-        duct_ids.Add(d.Id)
-    uidoc.Selection.SetElementIds(duct_ids)
-
-    # final printout with links to duct
-    for i, d in enumerate(duct_run, start=1):
-        duct_obj = RevitDuct(doc, view, d)
-        family_name = duct_obj.family if duct_obj.family else "Unknown"
-        output.print_md(
-            "### No: {} | ID: {} | Family: {}".format(
-                i,
-                output.linkify(d.Id),
-                family_name
-            )
-        )
-
-    element_ids = [d.Id for d in duct_run]
-    output.print_md("---")
-    output.print_md(
-        "# Total Elements: {:03}, {}".format(
-            len(duct_run),
-            output.linkify(element_ids)
-        )
-    )
-
-    # Final print statements
-    print_disclaimer(output)
+    form = FieldwireForm()
+    form.ShowDialog()
+    # output.print_md("✅ Fieldwire opened in your browser")
 
 except Exception as e:
-    TaskDialog.Show("Error", "Script failed: {}".format(str(e)))
+    output.print_md("❌ Error: {}".format(str(e)))
     import traceback
     output.print_md("```\n{}\n```".format(traceback.format_exc()))

@@ -23,7 +23,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Non-Fab"
 __doc__ = """
-Selects all non-fabrication duct, and filters them down by parameters to select
+Selects all non-fabrication piping, and filters them down by parameters to select
 """
 
 # Variables
@@ -41,7 +41,7 @@ output = script.get_output()
 class EnhancedParamForm(Form):
     def __init__(self, param_groups):
         Form.__init__(self)
-        self.Text = "Select Ducts by Parameter"
+        self.Text = "Select Pipes by Parameter"
         self.Width = 700
         self.Height = 700
         self.param_groups = param_groups
@@ -180,13 +180,13 @@ def get_param_value(param):
 try:
 
     all_straights = (FilteredElementCollector(doc, view.Id)
-                     .OfCategory(BuiltInCategory.OST_DuctCurves)
+                     .OfCategory(BuiltInCategory.OST_PipeCurves)
                      .WhereElementIsNotElementType()
                      .ToElements()
                      )
 
     all_fittings = (FilteredElementCollector(doc, view.Id)
-                    .OfCategory(BuiltInCategory.OST_DuctFitting)
+                    .OfCategory(BuiltInCategory.OST_PipeFitting)
                     .WhereElementIsNotElementType()
                     .ToElements()
                     )
@@ -215,7 +215,7 @@ try:
     if not param_groups:
         TaskDialog.Show(
             "No Parameters",
-            "No parameter data found on ducts in view."
+            "No parameter data found on pipes in view."
         )
         script.exit()
 
@@ -229,7 +229,7 @@ try:
 
     duct_run = form.get_checked_ducts()
     if not duct_run:
-        TaskDialog.Show("No Selection", "No ducts were selected.")
+        TaskDialog.Show("No Selection", "No pipes were selected.")
         script.exit()
 
     # Select ducts in Revit

@@ -7,10 +7,10 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, VisibleInViewFilter, ElementId
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
 from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
-from System.Windows.Forms import Form, Label, ComboBox, Button, DialogResult, ComboBoxStyle
+from System.Windows.Forms import Form, Label, Button, DialogResult, TextBox, TreeView, TreeNode
 from System.Collections.Generic import List
 from revit_duct import RevitDuct
 from revit_output import print_disclaimer
@@ -21,7 +21,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Fab"
+__title__ = "Fab Duct"
 __doc__ = """
 Selects all fabrication duct, and filters them down by parameters to select
 """
@@ -38,80 +38,109 @@ output = script.get_output()
 # =====================================================================
 
 
-class ParamSelectorForm(Form):
+class EnhancedParamForm(Form):
     def __init__(self, param_groups):
         Form.__init__(self)
         self.Text = "Select Ducts by Parameter"
-        self.Width = 520
-        self.Height = 220
+        self.Width = 700
+        self.Height = 700
         self.param_groups = param_groups
 
-        # Parameter label
-        lbl_param = Label()
-        lbl_param.Text = "Choose parameter:"
-        lbl_param.Top = 20
-        lbl_param.Left = 20
-        lbl_param.Width = 180
-        lbl_param.Height = 20
-        self.Controls.Add(lbl_param)
+        # Search box
+        self.search_box = TextBox()
+        self.search_box.Top = 20
+        self.search_box.Left = 20
+        self.search_box.Width = 640
+        self.search_box.PlaceholderText = "Search parameters..."
+        self.search_box.TextChanged += self._filter_tree
+        self.Controls.Add(self.search_box)
 
-        # Parameter dropdown
-        self.param_drop = ComboBox()
-        self.param_drop.Top = 45
-        self.param_drop.Left = 20
-        self.param_drop.Width = 460
-        self.param_drop.DropDownStyle = ComboBoxStyle.DropDownList
-        for pname in sorted(param_groups.keys(), key=natural_sort_key):
-            self.param_drop.Items.Add(pname)
-        if self.param_drop.Items.Count > 0:
-            self.param_drop.SelectedIndex = 0
-        self.param_drop.SelectedIndexChanged += self._on_param_changed
-        self.Controls.Add(self.param_drop)
+        # TreeView with checkboxes for expandable hierarchy
+        self.tree_view = TreeView()
+        self.tree_view.Top = 50
+        self.tree_view.Left = 20
+        self.tree_view.Width = 640
+        self.tree_view.Height = 550
+        self.tree_view.CheckBoxes = True
+        self.tree_view.AfterCheck += self._on_node_checked
+        self.Controls.Add(self.tree_view)
 
-        # Value label
-        lbl_val = Label()
-        lbl_val.Text = "Choose value:"
-        lbl_val.Top = 80
-        lbl_val.Left = 20
-        lbl_val.Width = 180
-        lbl_val.Height = 20
-        self.Controls.Add(lbl_val)
-
-        # Value dropdown
-        self.value_drop = ComboBox()
-        self.value_drop.Top = 105
-        self.value_drop.Left = 20
-        self.value_drop.Width = 460
-        self.value_drop.DropDownStyle = ComboBoxStyle.DropDownList
-        self.Controls.Add(self.value_drop)
+        # Build tree structure
+        self._build_tree()
 
         # OK button
         btn_ok = Button()
-        btn_ok.Text = "Select"
-        btn_ok.Top = 140
+        btn_ok.Text = "Select All Checked"
+        btn_ok.Top = 620
         btn_ok.Left = 20
-        btn_ok.Width = 80
+        btn_ok.Width = 200
         btn_ok.DialogResult = DialogResult.OK
         self.Controls.Add(btn_ok)
         self.AcceptButton = btn_ok
 
-        # init second dropdown
-        self._populate_values()
+    def _build_tree(self, search_filter=None):
+        self.tree_view.Nodes.Clear()
 
-    def _on_param_changed(self, sender, args):
-        self._populate_values()
+        for param_name in sorted(self.param_groups.keys(), key=natural_sort_key):
+            # Check if parameter name matches search
+            param_matches = not search_filter or search_filter in param_name.lower()
 
-    def _populate_values(self):
-        self.value_drop.Items.Clear()
-        pname = self.param_drop.SelectedItem
-        if not pname or pname not in self.param_groups:
-            return
-        values = self.param_groups[pname]
-        for val in sorted(values.keys(), key=natural_sort_key):
-            self.value_drop.Items.Add(
-                "{} ({} parts)".format(val, len(values[val])))
-        if self.value_drop.Items.Count > 0:
-            self.value_drop.SelectedIndex = 0
+            # Create parent node for parameter
+            param_node = TreeNode(param_name)
+            param_node.Tag = ("param", param_name)
+
+            # Add child nodes for each value
+            for value in sorted(self.param_groups[param_name].keys(), key=natural_sort_key):
+                # If parameter name matches, show all its values
+                # Otherwise, only show values that match the search
+                if param_matches or (search_filter and search_filter in str(value).lower()):
+                    value_text = "{} ({} parts)".format(
+                        value, len(self.param_groups[param_name][value]))
+                    value_node = TreeNode(value_text)
+                    value_node.Tag = ("value", param_name, value)
+                    param_node.Nodes.Add(value_node)
+
+            # Only add param node if it has children
+            if param_node.Nodes.Count > 0:
+                self.tree_view.Nodes.Add(param_node)
+
+    def _filter_tree(self, sender, args):
+        search = sender.Text.lower()
+        self._build_tree(search if search else None)
+
+    def _on_node_checked(self, sender, args):
+        # Prevent event recursion
+        self.tree_view.AfterCheck -= self._on_node_checked
+
+        node = args.Node
+        # If parent is checked/unchecked, check/uncheck all children
+        if node.Tag and node.Tag[0] == "param":
+            for child in node.Nodes:
+                child.Checked = node.Checked
+
+        self.tree_view.AfterCheck += self._on_node_checked
+
+    def get_checked_ducts(self):
+        """Returns list of duct elements from all checked nodes"""
+        ducts = set()
+
+        for param_node in self.tree_view.Nodes:
+            # If parent is checked, add all ducts from this parameter
+            if param_node.Checked and param_node.Tag[0] == "param":
+                param_name = param_node.Tag[1]
+                for value_list in self.param_groups[param_name].values():
+                    for duct in value_list:
+                        ducts.add(duct)
+            else:
+                # Check individual value nodes
+                for value_node in param_node.Nodes:
+                    if value_node.Checked and value_node.Tag[0] == "value":
+                        param_name = value_node.Tag[1]
+                        value = value_node.Tag[2]
+                        for duct in self.param_groups[param_name][value]:
+                            ducts.add(duct)
+
+        return list(ducts)
 
 # Helpers
 # ========================================================================
@@ -150,11 +179,8 @@ def get_param_value(param):
 # ==================================================
 try:
     # Collect only fabrication ductwork (visible in view)
-    vis = VisibleInViewFilter(doc, view.Id)
-
     fab_duct = (FilteredElementCollector(doc, view.Id)
                 .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
-                .WherePasses(vis)
                 .WhereElementIsNotElementType()
                 .ToElements())
 
@@ -190,39 +216,37 @@ try:
         )
         script.exit()
 
-    # Show window with parameter/value dropdowns
-    form = ParamSelectorForm(param_groups)
+    # Show window with checkbox parameter selection
+    form = EnhancedParamForm(param_groups)
     result = form.ShowDialog()
 
     # Stop script if user does not select OK
-    if result != DialogResult.OK or not form.param_drop.SelectedItem or not form.value_drop.SelectedItem:
+    if result != DialogResult.OK:
         script.exit()
 
-    selected_param = str(form.param_drop.SelectedItem)
-    selected_val = str(form.value_drop.SelectedItem).rsplit(" (", 1)[0]
-
-    if selected_param not in param_groups or selected_val not in param_groups[selected_param]:
-        TaskDialog.Show(
-            "Not found", "The selection was not found in the grouped ducts.")
+    duct_run = form.get_checked_ducts()
+    if not duct_run:
+        TaskDialog.Show("No Selection", "No ducts were selected.")
         script.exit()
 
-    duct_run = param_groups[selected_param][selected_val]
+    # Select ducts in Revit
     duct_ids = List[ElementId]()
     for d in duct_run:
         duct_ids.Add(d.Id)
     uidoc.Selection.SetElementIds(duct_ids)
 
     # final printout with links to duct
-    for i, d in enumerate(duct_run, start=1):
-        duct_obj = RevitDuct(doc, view, d)
-        family_name = duct_obj.family if duct_obj.family else "Unknown"
-        output.print_md(
-            "### No: {} | ID: {} | Family: {}".format(
-                i,
-                output.linkify(d.Id),
-                family_name
+    if len(duct_run) < 500:
+        for i, d in enumerate(duct_run, start=1):
+            duct_obj = RevitDuct(doc, view, d)
+            family_name = duct_obj.family if duct_obj.family else "Unknown"
+            output.print_md(
+                "### No: {} | ID: {} | Family: {}".format(
+                    i,
+                    output.linkify(d.Id),
+                    family_name
+                )
             )
-        )
 
     element_ids = [d.Id for d in duct_run]
     output.print_md("---")
