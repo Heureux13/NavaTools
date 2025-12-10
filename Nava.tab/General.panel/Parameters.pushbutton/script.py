@@ -68,4 +68,4 @@ for elid in selected_ids:
             param_list.append((name, "Error - {}".format(ex)))
     # Sort and print
     for name, value in sorted(param_list, key=lambda x: x[0].lower()):
-        output.print_md("{}: {}".format(name, value))
+        output.print_md("**{}**:     *{}*".format(name, value))
