@@ -32,7 +32,7 @@ transact_options = TransactWithCentralOptions()
 
 try:
     doc.SynchronizeWithCentral(transact_options, sync_options)
-    output.print_md("# Sync & Save complete")
-    output.print_md("### I am proud of you")
+    # output.print_md("# Sync & Save complete")
+    # output.print_md("### I am proud of you")
 except Exception as e:
     output.print_md("Sync & Save failed: {}".format(e))
