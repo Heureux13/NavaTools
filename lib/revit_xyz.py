@@ -39,23 +39,108 @@ class RevitXYZ(object):
     def start_point(self):
         if self.curve:
             return self.curve.GetEndPoint(0)
+        pts = self._connector_points()
+        if pts:
+            return pts[0]
         return None
 
     def end_point(self):
         if self.curve:
             return self.curve.GetEndPoint(1)
+        pts = self._connector_points()
+        if pts:
+            return pts[-1]
         return None
 
     def mid_point(self):
         if self.curve:
             return self.curve.Evaluate(0.5, True)
+        pts = self._connector_points()
+        if len(pts) >= 2:
+            p0, p1 = pts[0], pts[-1]
+            return XYZ((p0.X + p1.X) / 2.0, (p0.Y + p1.Y) / 2.0, (p0.Z + p1.Z) / 2.0)
+        if pts:
+            return pts[0]
         return None
 
     def point_at(self, param=0.25):
         if self.curve:
             t = max(0.0, min(1.0, float(param)))
             return self.curve.Evaluate(t, True)
+        pts = self._connector_points()
+        if len(pts) >= 2:
+            p0, p1 = pts[0], pts[-1]
+            t = max(0.0, min(1.0, float(param)))
+            return XYZ(p0.X + (p1.X - p0.X) * t,
+                       p0.Y + (p1.Y - p0.Y) * t,
+                       p0.Z + (p1.Z - p0.Z) * t)
+        if pts:
+            return pts[0]
         return None
+
+    def _connector_points(self):
+        pts = []
+        seen = set()
+
+        def add_pt(o):
+            if o:
+                key = (round(o.X, 9), round(o.Y, 9), round(o.Z, 9))
+                if key not in seen:
+                    seen.add(key)
+                    pts.append(o)
+
+        try:
+            # ConnectorManager / Connectors
+            cm = getattr(self.element, 'ConnectorManager', None)
+            connectors = cm.Connectors if cm else getattr(
+                self.element, 'Connectors', None)
+            if connectors:
+                count = getattr(connectors, 'Size',
+                                getattr(connectors, 'Count', 0))
+                if count and hasattr(connectors, 'Item'):
+                    for i in range(count):
+                        add_pt(getattr(connectors.Item(i), 'Origin', None))
+                try:
+                    for c in connectors:
+                        add_pt(getattr(c, 'Origin', None))
+                except Exception:
+                    pass
+
+            # Primary/Secondary connectors on fabrication parts
+            pc = getattr(self.element, 'PrimaryConnector', None)
+            sc = getattr(self.element, 'SecondaryConnector', None)
+            add_pt(getattr(pc, 'Origin', None))
+            add_pt(getattr(sc, 'Origin', None))
+
+            # Some fabrication APIs expose GetConnectors()
+            get_conns = getattr(self.element, 'GetConnectors', None)
+            if get_conns:
+                try:
+                    conns = get_conns()
+                    if conns:
+                        for c in conns:
+                            add_pt(getattr(c, 'Origin', None))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # If more than two points, choose the pair with max distance to define start/end
+        if len(pts) > 2:
+            max_d = -1.0
+            a_idx, b_idx = 0, 1
+            for i in range(len(pts)):
+                for j in range(i + 1, len(pts)):
+                    dx = pts[i].X - pts[j].X
+                    dy = pts[i].Y - pts[j].Y
+                    dz = pts[i].Z - pts[j].Z
+                    d2 = dx*dx + dy*dy + dz*dz
+                    if d2 > max_d:
+                        max_d = d2
+                        a_idx, b_idx = i, j
+            return [pts[a_idx], pts[b_idx]]
+
+        return pts
 
     def straight_joint_degree(self):
         """Returns the angle in degrees between the duct and the horizontal (XY) plane."""
@@ -522,7 +607,8 @@ class RevitXYZ(object):
             # vertical part; choose arbitrary right vector
             right = XYZ(1, 0, 0)
         else:
-            axis_hu = XYZ(axis_h.X / ah_len, axis_h.Y / ah_len, axis_h.Z / ah_len)
+            axis_hu = XYZ(axis_h.X / ah_len, axis_h.Y /
+                          ah_len, axis_h.Z / ah_len)
             # right-hand rule: right = flow x up
             right = axis_hu.CrossProduct(zunit)
             rlen = right.GetLength()

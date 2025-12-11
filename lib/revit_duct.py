@@ -10,7 +10,7 @@ the copyright holder.
 # Standard library
 # =========================================================
 from revit_xyz import RevitXYZ
-from revit_size import RevitSize
+from size import Size
 from Autodesk.Revit.DB import (
     ElementId,
     FilteredElementCollector,
@@ -1073,7 +1073,7 @@ class RevitDuct:
         to_visit = [start_duct]
         visited = set()
         # Parse starting duct shape and size
-        start_size_obj = RevitSize(str(start_duct.size))
+        start_size_obj = Size(str(start_duct.size))
 
         def get_shape_key(size_obj):
             # Returns a tuple representing the shape (round, oval, rectangular) and main dimensions
@@ -1103,11 +1103,13 @@ class RevitDuct:
                     if ref and hasattr(ref, 'Owner'):
                         connected_elem = ref.Owner
                         try:
-                            connected_duct = RevitDuct(doc, view, connected_elem)
+                            connected_duct = RevitDuct(
+                                doc, view, connected_elem)
                         except Exception:
                             continue
                         # Parse connected duct shape and size
-                        connected_size_obj = RevitSize(str(connected_duct.size))
+                        connected_size_obj = Size(
+                            str(connected_duct.size))
                         connected_shape = get_shape_key(connected_size_obj)
                         connected_size_str = str(connected_size_obj.in_size)
                         # Match both shape and size
@@ -1125,7 +1127,8 @@ class RevitDuct:
             return 0.0
         # Pattern: feet, inches, optional fraction
         pattern = r"(\d+)'\s*-\s*(\d+)?(?:\s+(\d+)/(\d+))?\s*\""
-        cleaned = length_str.replace("’", "'").replace("”", '"').replace("″", '"')
+        cleaned = length_str.replace("’", "'").replace(
+            "”", '"').replace("″", '"')
         match = re.match(pattern, cleaned)
         if not match:
             # Try to parse as a simple float

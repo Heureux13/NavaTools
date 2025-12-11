@@ -12,7 +12,7 @@ the copyright holder.
 import re
 
 
-class RevitSize:
+class Size:
     def __init__(self, size):
         self.size = size
         parsed = self._parse_size()
@@ -92,13 +92,29 @@ class RevitSize:
         result['oval_dia'] = result['oval_flat'] = None
         return result
 
+    def in_shape(self):
+        if self.in_diameter is not None:
+            return "round"
+        if self.in_oval_dia is not None:
+            return "oval"
+        if self.in_width is not None and self.in_height is not None:
+            return "rectangle"
+
+    def out_shape(self):
+        if self.out_diameter is not None:
+            return "round"
+        if self.out_oval_dia is not None:
+            return "oval"
+        if self.out_width is not None and self.out_height is not None:
+            return "rectangle"
+
 
 if __name__ == "__main__":
     # Quick sanity examples
     for sample in [
         "40/20-12ø", "40/20", "12x12", "12ø"
     ]:
-        rs = RevitSize(sample)
+        rs = Size(sample)
         print("\nSample:", sample)
         print("  inlet size:", rs.in_size)
         print("    width:", rs.in_width)
