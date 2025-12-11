@@ -7,7 +7,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, BoundingBoxIntersectsFilter, Outline
 from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
 from System.Windows.Forms import Form, Label, Button, DialogResult, TextBox, TreeView, TreeNode
@@ -178,21 +178,34 @@ def get_param_value(param):
 # Main Code
 # ==================================================
 try:
+    # Get view's crop box to filter elements within view range
+    crop_box = view.CropBox
+    outline = Outline(crop_box.Min, crop_box.Max)
+    bbox_filter = BoundingBoxIntersectsFilter(outline)
 
     all_straights = (FilteredElementCollector(doc, view.Id)
                      .OfCategory(BuiltInCategory.OST_PipeCurves)
                      .WhereElementIsNotElementType()
+                     .WherePasses(bbox_filter)
                      .ToElements()
                      )
 
     all_fittings = (FilteredElementCollector(doc, view.Id)
                     .OfCategory(BuiltInCategory.OST_PipeFitting)
                     .WhereElementIsNotElementType()
+                    .WherePasses(bbox_filter)
                     .ToElements()
                     )
 
+    # Filter to only elements visible in view (not hidden)
+    all_straights = [e for e in all_straights if not e.IsHidden(view)]
+    all_fittings = [e for e in all_fittings if not e.IsHidden(view)]
+
     # Combines both list into one
     all_duct = list(all_straights) + list(all_fittings)
+
+    # Debug: verify view filtering worked
+    output.print_md("**Debug:** Found {} pipes in view '{}'".format(len(all_duct), view.Name))
 
     # Build parameter -> value -> elements map
     param_groups = {}
@@ -244,10 +257,11 @@ try:
             duct_obj = RevitDuct(doc, view, d)
             family_name = duct_obj.family if duct_obj.family else "Unknown"
             output.print_md(
-                "### No: {} | ID: {} | Family: {}".format(
+                "### No: {} | ID: {} | Family: {} | View: {}".format(
                     i,
                     output.linkify(d.Id),
-                    family_name
+                    family_name,
+                    view.Name
                 )
             )
 

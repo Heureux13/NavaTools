@@ -241,10 +241,11 @@ try:
             duct_obj = RevitDuct(doc, view, d)
             family_name = duct_obj.family if duct_obj.family else "Unknown"
             output.print_md(
-                "### No: {} | ID: {} | Family: {}".format(
+                "### No: **{}** | ID: {} | Family: **{}** | View: **{}**".format(
                     i,
                     output.linkify(d.Id),
-                    family_name
+                    family_name,
+                    view.Name
                 )
             )
 
