@@ -37,19 +37,41 @@ class RevitXYZ(object):
         self.view = revit.active_view
 
     def start_point(self):
+        # Prefer connector origins; if only one connector exists, pair with curve endpoints
+        pts = self._connector_points()
+        if len(pts) >= 2:
+            if self.curve:
+                p0 = self.curve.GetEndPoint(0)
+                # choose connector closest to curve start as start
+                return min(pts, key=lambda p: (p - p0).GetLength())
+            return pts[0]
+        if len(pts) == 1 and self.curve:
+            # single connector: use it as start by proximity to curve start
+            p0 = self.curve.GetEndPoint(0)
+            p1 = self.curve.GetEndPoint(1)
+            c = pts[0]
+            return c if (c - p0).GetLength() <= (c - p1).GetLength() else p0
         if self.curve:
             return self.curve.GetEndPoint(0)
-        pts = self._connector_points()
-        if pts:
-            return pts[0]
         return None
 
     def end_point(self):
+        # Prefer connector origins; if only one connector exists, pair with curve endpoints
+        pts = self._connector_points()
+        if len(pts) >= 2:
+            if self.curve:
+                p1 = self.curve.GetEndPoint(1)
+                # choose connector closest to curve end as end
+                return min(pts, key=lambda p: (p - p1).GetLength())
+            return pts[-1]
+        if len(pts) == 1 and self.curve:
+            # single connector: use the opposite of start logic
+            p0 = self.curve.GetEndPoint(0)
+            p1 = self.curve.GetEndPoint(1)
+            c = pts[0]
+            return p1 if (c - p0).GetLength() <= (c - p1).GetLength() else c
         if self.curve:
             return self.curve.GetEndPoint(1)
-        pts = self._connector_points()
-        if pts:
-            return pts[-1]
         return None
 
     def mid_point(self):
@@ -134,7 +156,7 @@ class RevitXYZ(object):
                     dx = pts[i].X - pts[j].X
                     dy = pts[i].Y - pts[j].Y
                     dz = pts[i].Z - pts[j].Z
-                    d2 = dx*dx + dy*dy + dz*dz
+                    d2 = dx * dx + dy * dy + dz * dz
                     if d2 > max_d:
                         max_d = d2
                         a_idx, b_idx = i, j

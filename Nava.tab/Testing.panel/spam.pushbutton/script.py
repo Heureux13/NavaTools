@@ -34,11 +34,12 @@ else:
         if curve:
             sp = curve.GetEndPoint(0)
             ep = curve.GetEndPoint(1)
-            output.print_md("Element {}: start=({:.3f}, {:.3f}, {:.3f}), end=({:.3f}, {:.3f}, {:.3f})".format(
-                el.Id.Value,
-                sp.X, sp.Y, sp.Z,
-                ep.X, ep.Y, ep.Z,
-            ))
+            output.print_md(
+                "Element {}: start=({:.3f}, {:.3f}, {:.3f}), end=({:.3f}, {:.3f}, {:.3f})".format(
+                    el.Id.Value,
+                    sp.X, sp.Y, sp.Z,
+                    ep.X, ep.Y, ep.Z,
+                ))
         else:
             # Try connectors for fabrication parts
             printed = False
@@ -49,6 +50,7 @@ else:
                 count = getattr(connectors, 'Size', getattr(
                     connectors, 'Count', 0)) if connectors else 0
                 origins = []
+
                 if connectors:
                     if count > 0 and hasattr(connectors, 'Item'):
                         for i in range(count):
@@ -56,19 +58,29 @@ else:
                             o = getattr(c, 'Origin', None)
                             if o:
                                 origins.append(o)
+
                     else:
                         try:
                             for c in connectors:
                                 o = getattr(c, 'Origin', None)
                                 if o:
                                     origins.append(o)
+
                         except Exception:
                             pass
+
                 if origins:
                     printed = True
                     for idx, o in enumerate(origins):
-                        output.print_md("Element {}: connector {} origin=({:.3f}, {:.3f}, {:.3f})".format(
-                            el.Id.Value, idx, o.X, o.Y, o.Z))
+                        output.print_md(
+                            "Element {}: connector {} origin=({:.3f}, {:.3f}, {:.3f})".format(
+                                el.Id.Value,
+                                idx,
+                                o.X,
+                                o.Y,
+                                o.Z
+                            ))
+
             except Exception:
                 pass
 

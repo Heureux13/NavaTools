@@ -24,9 +24,8 @@ class Offsets:
         self.xyz = RevitXYZ(element)
         self.error_msg = None
 
-        # Get start and end points
-        self.start_point = self.xyz.start_point()
-        self.end_point = self.xyz.end_point()
+        # Get start and end points preferring connector origins (like spam script)
+        self.start_point, self.end_point = self._get_inlet_outlet_points()
 
         # Get size from element parameter
         size_param = element.LookupParameter("Size")
@@ -137,6 +136,88 @@ class Offsets:
         }
 
         return offsets
+
+    def _get_inlet_outlet_points(self):
+        """Return (inlet, outlet) XYZs using connector origins when available,
+        mirroring the spam script approach. Fallback to Location.Curve endpoints.
+        """
+        # Try connectors first
+        pts = []
+        seen = set()
+
+        def add_xyz(o):
+            if o:
+                key = (round(o.X, 9), round(o.Y, 9), round(o.Z, 9))
+                if key not in seen:
+                    seen.add(key)
+                    pts.append(o)
+
+        try:
+            cm = getattr(self.element, 'ConnectorManager', None)
+            connectors = cm.Connectors if cm else getattr(self.element, 'Connectors', None)
+            if connectors:
+                count = getattr(connectors, 'Size', getattr(connectors, 'Count', 0))
+                if count and hasattr(connectors, 'Item'):
+                    for i in range(count):
+                        add_xyz(getattr(connectors.Item(i), 'Origin', None))
+                try:
+                    for c in connectors:
+                        add_xyz(getattr(c, 'Origin', None))
+                except Exception:
+                    pass
+
+            # Primary/Secondary connectors
+            pc = getattr(self.element, 'PrimaryConnector', None)
+            sc = getattr(self.element, 'SecondaryConnector', None)
+            add_xyz(getattr(pc, 'Origin', None))
+            add_xyz(getattr(sc, 'Origin', None))
+
+            # GetConnectors API (fabrication)
+            get_conns = getattr(self.element, 'GetConnectors', None)
+            if get_conns:
+                try:
+                    for c in get_conns() or []:
+                        add_xyz(getattr(c, 'Origin', None))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # If more than two points, choose the pair with max distance to define inlet/outlet
+        if len(pts) > 2:
+            max_d2 = -1.0
+            a, b = 0, 1
+            for i in range(len(pts)):
+                for j in range(i + 1, len(pts)):
+                    d2 = (pts[i].X - pts[j].X) ** 2 + (pts[i].Y - pts[j].Y) ** 2 + (pts[i].Z - pts[j].Z) ** 2
+                    if d2 > max_d2:
+                        max_d2 = d2
+                        a, b = i, j
+            pts = [pts[a], pts[b]]
+
+        # If we found two distinct connector points, use them directly
+        if len(pts) >= 2:
+            # Return in the order given; Offsets is symmetric and uses direction defined by these
+            return pts[0], pts[1]
+
+        # If only one connector point, pair it with curve endpoints to create distinct points
+        loc = getattr(self.element, 'Location', None)
+        curve = getattr(loc, 'Curve', None) if loc else None
+        if len(pts) == 1 and curve:
+            p0 = curve.GetEndPoint(0)
+            p1 = curve.GetEndPoint(1)
+            c = pts[0]
+            # Closest to start becomes inlet; other becomes outlet
+            inlet = c if (c - p0).GetLength() <= (c - p1).GetLength() else p0
+            outlet = p1 if inlet == c else c
+            return inlet, outlet
+
+        # Fallback: use curve endpoints if available
+        if curve:
+            return curve.GetEndPoint(0), curve.GetEndPoint(1)
+
+        # Nothing found
+        return None, None
 
 
 if __name__ == "__main__":
