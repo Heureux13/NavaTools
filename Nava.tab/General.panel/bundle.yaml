@@ -1,7 +1,7 @@
 layout:
   - Update
   - Reload
-  - Sync_save
+  - Sync
   - Remane
   - Parameters
   - Pick
