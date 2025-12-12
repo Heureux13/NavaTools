@@ -144,6 +144,30 @@ class RevitXYZ(object):
         For elements with 2+ connectors, returns the two farthest apart.
         Returns (None, None) if no data available or orientation unavailable.
         """
+        # Prefer Primary/Secondary connectors when present
+        pc = getattr(self.element, 'PrimaryConnector', None)
+        sc = getattr(self.element, 'SecondaryConnector', None)
+
+        def _build_data(conn):
+            if not conn:
+                return None
+            origin = getattr(conn, 'Origin', None)
+            if not origin:
+                return None
+            cs = getattr(conn, 'CoordinateSystem', None)
+            return {
+                'origin': origin,
+                'basis_x': cs.BasisX if cs else None,
+                'basis_y': cs.BasisY if cs else None,
+                'basis_z': cs.BasisZ if cs else None,
+            }
+
+        if pc and sc:
+            inlet = _build_data(pc)
+            outlet = _build_data(sc)
+            if inlet and outlet:
+                return inlet, outlet
+
         conn_data = self.connector_data()
 
         # Two or more distinct connectors
