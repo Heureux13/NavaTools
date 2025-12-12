@@ -40,17 +40,37 @@ if ducts:
     # Individual properties
     for i, d in enumerate(ducts, start=1):
         output.print_md(
-            '### No: {:03} | ID: {} | Size: {} | Weight: {} lbs | Family: {}'.format(
-                i, output.linkify(d.element.Id), d.size, d.weight, d.family
+            '### No: {:03} | ID: {} | Weight: {}-lbs | Size: {}" | Family: {}'.format(
+                i,
+                output.linkify(d.element.Id),
+                d.weight,
+                d.size,
+                d.family
             )
         )
 
     # Final totals loop and link
     element_ids = [d.element.Id for d in ducts]
-    weights = [d.weight for d in ducts if d.weight is not None]
+
+    def _to_float(v):
+        try:
+            return float(v)
+        except Exception:
+            return None
+
+    weights = [w for w in (_to_float(d.weight) for d in ducts) if w is not None]
+    lengths_in = [l for l in (_to_float(d.length) for d in ducts) if l is not None]
+
+    total_weight = sum(weights)
+    total_length_in = sum(lengths_in)
+    weight_per_ft = (total_weight / (total_length_in / 12.0)) if total_length_in else 0.0
+
     output.print_md(
-        '# Total elements: {} | Total weight: {:.2f} lbs | {}'.format(
-            len(element_ids), sum(weights), output.linkify(element_ids)
+        '# Total elements: {} | IDs: {} | Total weight: {:.2f} lbs | Weight/ft: {:.2f}'.format(
+            len(element_ids),
+            output.linkify(element_ids),
+            total_weight,
+            weight_per_ft
         )
     )
 

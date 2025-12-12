@@ -203,7 +203,12 @@ class RevitDuct:
 
     @property
     def centerline_length(self):
-        return self._get_param("NaviateDBS_CenterlineLength")
+        # Return centerline length as a numeric value in inches
+        return self._get_param(
+            "NaviateDBS_CenterlineLength",
+            unit=UnitTypeId.Inches,
+            as_type="double"
+        )
 
     @property
     def length(self):
