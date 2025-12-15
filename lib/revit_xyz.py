@@ -7,6 +7,8 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
+import math
+
 # Constants
 TOL = 1e-6
 
@@ -243,3 +245,21 @@ class RevitXYZ(object):
         for use cases where you need all connection points, not just two.
         """
         return self.connector_origins()
+
+    def straight_joint_degree(self):
+        """Returns the angle in degrees between the duct and the horizontal (XY) plane."""
+        inlet, outlet = self.inlet_outlet_points()
+        if not inlet or not outlet:
+            return None
+
+        dx = outlet.X - inlet.X
+        dy = outlet.Y - inlet.Y
+        dz = outlet.Z - inlet.Z
+
+        horizontal_length = math.sqrt(dx**2 + dy**2)
+        if horizontal_length == 0:
+            return 90.0 if dz != 0 else 0.0
+
+        angle_rad = math.atan2(dz, horizontal_length)
+        angle_deg = math.degrees(angle_rad)
+        return round(angle_deg, 2)

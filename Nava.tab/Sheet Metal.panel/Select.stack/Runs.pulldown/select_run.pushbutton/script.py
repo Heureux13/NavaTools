@@ -47,41 +47,38 @@ if selected_duct:
     run = RevitDuct.create_duct_run(selected_duct, doc, view)
     RevitElement.select_many(uidoc, run)
 
-    def safe_float(val):
-        try:
-            return float(val)
-        except Exception:
-            return 0.0
-
     for i, sel in enumerate(run, start=1):
-        d_length = safe_float(
-            RevitDuct.parse_length_string(sel.centerline_length))
-        d_weight = safe_float(
-            sel.weight)
+        length_val = sel.length if sel.length else 0.0
+        weight_val = sel.weight if sel.weight else 0.0
+        lbs_per_ft = (weight_val / (length_val / 12.0)) if length_val else 0.0
+        size_val = sel.size if sel.size else "Unknown"
+
+        length_str = "{:06.2f}".format(float(length_val))
+        weight_str = "{:06.2f}".format(float(weight_val))
+        lbs_ft_str = "{:06.2f}".format(float(lbs_per_ft))
         output.print_md(
-            '### No: {:03} | ID: {} | Length: {:06.2f} | Weight {:06.2f} | lbs/ft: {:06.2f} | Size: {}'.format(
+            '### No: {:03} | ID: {} | Length: {} | Weight {} | lbs/ft: {} | Size: {}'.format(
                 i,
                 output.linkify(sel.element.Id),
-                d_length,
-                d_weight,
-                d_weight / (d_length / 12),
-                sel.size,
-            )
-        )
+                length_str,
+                weight_str,
+                lbs_ft_str,
+                size_val,
+            ))
 
     # Total count
     element_ids = [d.element.Id for d in run]
-    total_length = sum(
-        safe_float(RevitDuct.parse_length_string(d.centerline_length)) or 0 for d in run)
-    total_weight = sum(
-        safe_float(d.weight) or 0 for d in run)
+    total_length = sum(d.length or 0 for d in run)
+    total_weight = sum(d.weight or 0 for d in run)
+    total_lbs_per_ft = (total_weight / (total_length / 12.0)
+                        ) if total_length else 0.0
     output.print_md("---")
     output.print_md(
-        "# Total elements {:03} | Total feet: {:06.2f} | Total lbs: {:06.2f} | lbs/ft {:06.2f} | {}".format(
+        "# Total elements {} | Total feet: {} | Total lbs: {} | lbs/ft {} | {}".format(
             len(element_ids),
-            total_length / 12,
-            total_weight,
-            total_weight / (total_length / 12),
+            "{:.2f}".format(total_length / 12.0),
+            "{:.2f}".format(total_weight),
+            "{:.2f}".format(total_lbs_per_ft),
             output.linkify(element_ids)),
     )
 

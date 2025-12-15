@@ -241,7 +241,7 @@ try:
             duct_obj = RevitDuct(doc, view, d)
             family_name = duct_obj.family if duct_obj.family else "Unknown"
             output.print_md(
-                "### No: {} | ID: {} | Family: {}".format(
+                "### No: {:03} | ID: {} | Family: {}".format(
                     i,
                     output.linkify(d.Id),
                     family_name
@@ -251,7 +251,7 @@ try:
     element_ids = [d.Id for d in duct_run]
     output.print_md("---")
     output.print_md(
-        "# Total Elements: {:03}, {}".format(
+        "# Total Elements: {}, {}".format(
             len(duct_run),
             output.linkify(element_ids)
         )

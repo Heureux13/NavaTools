@@ -12,7 +12,7 @@ the copyright holder."""
 from revit_element import RevitElement
 from revit_duct import RevitDuct
 from pyrevit import revit, script
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory
+from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
@@ -28,10 +28,15 @@ uidoc = __revit__.ActiveUIDocument
 view = revit.active_view
 output = script.get_output()
 
-print_parameter = [
-    '_weight_supporting',
+hanger_parameters = {
+    '_umi_duct_supporting_weight',
     'mark',
-]
+}
+
+duct_parameters = {
+    '_umi_duc_run_weight',
+    'mark'
+}
 
 
 def safe_float(val):
@@ -59,53 +64,35 @@ if not selected_ducts:
     output.print_md("## Select one or more ducts first")
 else:
     # Calculate total properties from all selected ducts
-    total_length = sum(safe_float(RevitDuct.parse_length_string(
-        d.centerline_length)) or 0 for d in selected_ducts)
+    total_length = sum(d.length or 0 for d in selected_ducts)
     total_weight = sum(safe_float(d.weight) or 0 for d in selected_ducts)
-    # Use first duct's size for hanger matching
+
+    # Get hangers that intersect with selected ducts via bounding box
+    hangers = set()  # Use set to avoid duplicates
+
+    for duct in selected_ducts:
+        bbox = duct.element.get_BoundingBox(None)
+        if bbox:
+            # Create filter for elements intersecting this bounding box
+            outline = Outline(bbox.Min, bbox.Max)
+            bbox_filter = BoundingBoxIntersectsFilter(outline)
+
+            # Collect hangers intersecting this duct
+            intersecting_hangers = FilteredElementCollector(doc)\
+                .OfCategory(BuiltInCategory.OST_FabricationHangers)\
+                .WherePasses(bbox_filter)\
+                .WhereElementIsNotElementType()\
+                .ToElements()
+
+            for h in intersecting_hangers:
+                hangers.add(h)
+
+    hangers = list(hangers)  # Convert back to list
     duct_size = selected_ducts[0].size
-
-    # Get all fabrication hangers in the view
-    all_hangers = FilteredElementCollector(doc, view.Id)\
-        .OfCategory(BuiltInCategory.OST_FabricationHangers)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
-
-    # Find hangers matching the duct size
-    hangers = []
-    duct_size_normalized = normalize_size(duct_size)
-    selected_duct_ids = set(d.element.Id for d in selected_ducts)
-
-    for hanger in all_hangers:
-        # Print Primary Element parameter for diagnostics
-        ref_param = hanger.LookupParameter("Primary Element")
-        ref_val = ref_param.AsString() if ref_param else None
-        output.print_md(
-            "Hanger ID {} | Primary Element: {}".format(
-                hanger.Id,
-                ref_val
-            ))
-
-        size_param = hanger.LookupParameter("Size of Primary End")
-        if size_param:
-            hanger_size = size_param.AsString()
-            # Match both normalized and original formats
-            if (hanger_size == duct_size or normalize_size(hanger_size) == duct_size_normalized):
-                # Check if hanger is connected to any selected duct
-                # For FabricationPart, try using the 'Primary Element' reference
-                ref_param = hanger.LookupParameter("Primary Element")
-                if ref_param:
-                    ref_id_str = ref_param.AsString()
-                    try:
-                        ref_id = int(ref_id_str)
-                        if ref_id in selected_duct_ids:
-                            hangers.append(hanger)
-                    except Exception:
-                        pass
 
     # Display results and set hanger marks
     if hangers:
-        weight_per_hanger = round(total_weight / len(hangers), 2)
+        weight_per_hanger = total_weight / len(hangers)
         hanger_ids = [h.Id for h in hangers]
 
         RevitElement.select_many(uidoc, hangers)
@@ -116,8 +103,8 @@ else:
             output.linkify(hanger_ids)
         ))
 
-        # Set Mark parameter on each hanger
-        with revit.Transaction("Set Hanger Marks"):
+        # Set parameters on hangers and ducts
+        with revit.Transaction("Set Hanger and Duct Marks"):
             for i, hanger in enumerate(hangers, start=1):
                 output.print_md("### {} | ID: {} | Supporting: {:.2f} lbs".format(
                     i,
@@ -125,9 +112,9 @@ else:
                     weight_per_hanger
                 ))
 
-                # Try each parameter in order, set the first writable one
+                # Try each hanger parameter in order, set the first writable one
                 set_success = False
-                for parameter_name in print_parameter:
+                for parameter_name in hanger_parameters:
                     param = hanger.LookupParameter(parameter_name)
                     if param and not param.IsReadOnly:
                         param.Set(weight_per_hanger)
@@ -139,16 +126,34 @@ else:
                             output.linkify(hanger.Id)
                         ))
 
+            # Set run weight on each selected duct
+            for d in selected_ducts:
+                set_parameter = None
+                for parameter_name in duct_parameters:
+                    p = d.element.LookupParameter(parameter_name)
+                    if not p:
+                        continue
+                    elif p.IsReadOnly:
+                        continue
+                    else:
+                        set_parameter = p
+                        break
+
+                if set_parameter:
+                    set_parameter.Set(total_weight)
+
         output.print_md("---")
 
     # Display duct information
     duct_element_ids = [d.element.Id for d in selected_ducts]
+    total_length_ft = total_length / 12.0 if total_length else 0.0
+    lbs_per_ft = (total_weight / total_length_ft) if total_length_ft else 0.0
     output.print_md("# Selected Ducts Information")
     output.print_md("## Qty: {} | Size: {} | Length: {:06.2f} ft | Weight: {:06.2f} lbs | Weight/ft: {:06.2f} lbs/ft | {}".format(
         len(selected_ducts),
         duct_size,
-        total_length / 12,
+        total_length_ft,
         total_weight,
-        total_weight / (total_length / 12) if total_length > 0 else 0,
+        lbs_per_ft,
         output.linkify(duct_element_ids)
     ))

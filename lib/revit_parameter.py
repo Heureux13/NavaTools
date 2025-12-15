@@ -10,8 +10,10 @@
 # Imports
 # ==========================================================================
 from pyrevit import revit, forms
-from Autodesk.Revit.DB import CategorySet  # only if you need it explicitly
-from Autodesk.Revit.DB import StorageType, ExternalDefinitionCreationOptions, BuiltInCategory, ElementId
+from Autodesk.Revit.DB import (
+    CategorySet, StorageType, ExternalDefinitionCreationOptions,
+    BuiltInCategory, ElementId, ParameterTypeId
+)
 import clr
 clr.AddReference('RevitAPI')
 # optional if you use RevitServices, adjust as needed
@@ -78,6 +80,39 @@ class RevitParameter:
                          # True = Instance, False = Type; parameter wise
                          is_instance=True,
                          param_group=None):    # Group in properties palette, DATA, GEOMETRY, etc.
+
+        # Convert string param_type to ForgeTypeId if needed
+        if isinstance(param_type, str):
+            # Revit 2026 uses ForgeTypeId for parameter types
+            try:
+                # ParameterTypeId is a sealed class with static properties
+                # that return ForgeTypeId objects
+                param_lower = param_type.lower()
+
+                if param_lower == 'text':
+                    param_type = ParameterTypeId.Text
+                elif param_lower == 'length':
+                    param_type = ParameterTypeId.Length
+                elif param_lower == 'number':
+                    param_type = ParameterTypeId.Number
+                else:
+                    # Default to text for unknown types
+                    param_type = ParameterTypeId.Text
+            except Exception as e:
+                # If that fails, try ForgeTypeId.Parse as fallback
+                try:
+                    from Autodesk.Revit.DB import ForgeTypeId
+                    schema_map = {
+                        'text': 'autodesk.revit.db.parameters:type-text',
+                        'length': 'autodesk.revit.db.parameters:type-length',
+                        'number': 'autodesk.revit.db.parameters:type-number',
+                    }
+                    schema = schema_map.get(
+                        param_type.lower(), 'autodesk.revit.db.parameters:type-text')
+                    param_type = ForgeTypeId.Parse(schema)
+                except Exception as parse_error:
+                    # Last resort - pass the string and let it fail with clear error
+                    pass
 
         # 1) Open shared parameter file
         spfile = self.app.OpenSharedParameterFile()

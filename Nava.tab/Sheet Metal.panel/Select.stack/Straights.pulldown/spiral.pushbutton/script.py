@@ -58,7 +58,7 @@ if fil_ducts:
 
     # Individual duct and properties
     for i, fil in enumerate(fil_ducts, start=1):
-        length_in = fil.length or 0.0
+        length_in = fil.length if fil.length else 0.0
         output.print_md(
             '### Index: {:03} | ID: {} | Length: {:06.2f}" | Size: {}'.format(
                 i,

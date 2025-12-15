@@ -67,7 +67,7 @@ class Size:
             result['oval_dia'] = result['oval_flat'] = None
             return result
 
-        # Logic for ovals
+        # Logic for ovals with slash (e.g., 24/12)
         m = re.match(r'(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)', token)
         if m:
             w = float(m.group(1))
@@ -75,6 +75,20 @@ class Size:
             result['width'] = w
             result['height'] = h
             result['diameter'] = h  # per user: oval diameter = height
+            result['oval_dia'] = (w + h) / 2.0
+            result['oval_flat'] = (max(w, h) - min(w, h)) if w != h else 0.0
+            return result
+
+        # Logic for ovals marked with x/× (quotes and Ø suffix optional, e.g., 24x12, 24x12Ø, 24"x12"Ø)
+        m = re.match(
+            r'(\d+(?:\.\d+)?)\s*"?\s*[x×]\s*"?\s*(\d+(?:\.\d+)?)\s*"?(?:[ ]*[øØ])?', token)
+        if m:
+            w = float(m.group(1))
+            h = float(m.group(2))
+            result['width'] = w
+            result['height'] = h
+            # per user convention: oval diameter from height
+            result['diameter'] = h
             result['oval_dia'] = (w + h) / 2.0
             result['oval_flat'] = (max(w, h) - min(w, h)) if w != h else 0.0
             return result
@@ -112,7 +126,7 @@ class Size:
 if __name__ == "__main__":
     # Quick sanity examples
     for sample in [
-        "40/20-12ø", "40/20", "12x12", "12ø"
+        "40/20-12ø", "40/20", "12x12", "12ø", "24×12Ø"
     ]:
         rs = Size(sample)
         print("\nSample:", sample)

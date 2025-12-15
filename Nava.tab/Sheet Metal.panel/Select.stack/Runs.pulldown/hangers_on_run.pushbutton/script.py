@@ -30,24 +30,19 @@ doc = revit.doc  # type: Document
 view = revit.active_view
 output = script.get_output()
 
-print_parameter = [
-    '_weight_supporting',
+hanger_parameters = {
+    '_umi_duct_supporting_weight',
     'mark',
-]
+}
 
-
-def safe_float(val):
-    try:
-        return float(val)
-    except Exception:
-        return 0.0
+duct_parameters = {
+    '_umi_duct_run_weight',
+    'mark'
+}
 
 # Main Code
-# ==================================================
-
-
+# =================================================
 # Get all ducts
-ducts = RevitDuct.all(doc, view)
 duct = RevitDuct.from_selection(uidoc, doc, view)
 
 # Filter down to short joints
@@ -59,51 +54,38 @@ if selected_duct:
     # Selets duct that is connected to the selected duct based on size
     run = RevitDuct.create_duct_run(selected_duct, doc, view)
     RevitElement.select_many(uidoc, run)
-    total_length = sum(safe_float(RevitDuct.parse_length_string(
-        d.centerline_length)) or 0 for d in run)
-    total_weight = sum(safe_float(d.weight) or 0 for d in run)
+    run_total_length = sum(d.length or 0 for d in run)
+    run_total_weight = sum(d.weight or 0 for d in run)
 
-    # Get all hangers in the view and filter for ones supporting ducts in the run
-    hangers = []
-    duct_ids = set([d.element.Id for d in run])
+    # Get all hangers that intersect with any duct in the run
+    hangers = set()  # Use set to avoid duplicates
 
-    # Collect all fabrication hangers in the view
-    all_hangers = FilteredElementCollector(doc, view.Id)\
-        .OfCategory(BuiltInCategory.OST_FabricationHangers)\
-        .WhereElementIsNotElementType()\
-        .ToElements()
+    for duct in run:
+        bbox = duct.element.get_BoundingBox(None)
+        if bbox:
+            # Create filter for elements intersecting this bounding box
+            outline = Outline(bbox.Min, bbox.Max)
+            bbox_filter = BoundingBoxIntersectsFilter(outline)
 
-    # Check which hangers reference our duct size
-    duct_size = run[0].size if run else None  # Get size from first duct
-    # Normalize duct size for comparison
-    duct_size_no_x = duct_size.replace(
-        "x", "") if duct_size else None  # 12"x12" -> 12"12"
-    duct_size_no_symbol = duct_size.replace("ø", "").replace(
-        "x", "") if duct_size else None  # 12"ø -> 12"
+            # Collect hangers intersecting this duct
+            intersecting_hangers = FilteredElementCollector(doc)\
+                .OfCategory(BuiltInCategory.OST_FabricationHangers)\
+                .WherePasses(bbox_filter)\
+                .WhereElementIsNotElementType()\
+                .ToElements()
 
-    for hanger in all_hangers:
-        # Check "Size of Primary End" parameter
-        size_param = hanger.LookupParameter("Size of Primary End")
-        if size_param:
-            hanger_size = size_param.AsString()
-            # Normalize hanger size
-            hanger_size_clean = hanger_size.replace(
-                "ø", "").replace("x", "") if hanger_size else None
+            for h in intersecting_hangers:
+                hangers.add(h)
 
-            # Match formats: 12"x12", 12"12", 12"ø, 12"
-            if (hanger_size == duct_size or
-                hanger_size == duct_size_no_x or
-                hanger_size == duct_size_no_symbol or
-                    hanger_size_clean == duct_size_no_symbol):
-                hangers.append(hanger)
+    hangers = list(hangers)  # Convert back to list
 
     # Select the hangers
     if hangers:
-        weight_per_hanger = round(total_weight / len(hangers), 2)
+        weight_per_hanger = run_total_weight / len(hangers)
         hanger_ids = [h.Id for h in hangers]
         RevitElement.select_many(uidoc, hangers)
         output.print_md("---")
-        output.print_md("# Found {} hangers on the run: {}".format(
+        output.print_md("### Found {} hangers on the run: {}".format(
             len(hangers),
             output.linkify(hanger_ids)
         ))
@@ -126,7 +108,7 @@ if selected_duct:
 
                 # Set the _weight_supporting parameter on the instance
                 set_parameter = None
-                for parameter_name in print_parameter:
+                for parameter_name in hanger_parameters:
                     p = h.LookupParameter(parameter_name)
                     if not p:
                         # output.print_md(
@@ -164,16 +146,35 @@ if selected_duct:
                         )
                     )
 
+            # Set run weight on each duct in the run
+            for d in run:
+                set_parameter = None
+                for parameter_name in duct_parameters:
+                    p = d.element.LookupParameter(parameter_name)
+                    if not p:
+                        continue
+                    elif p.IsReadOnly:
+                        continue
+                    else:
+                        set_parameter = p
+                        break
+
+                if set_parameter:
+                    set_parameter.Set(run_total_weight)
+
             # Total count
             duct_element_ids = [d.element.Id for d in run]
+            total_length_ft = run_total_length / 12.0 if run_total_length else 0.0
+            lbs_per_ft = (
+                run_total_weight / total_length_ft) if total_length_ft else 0.0
             output.print_md("---")
             output.print_md("# Duct Run Information")
             output.print_md(
-                "### Duct Qty: {:02} | Length: {:06.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
+                "### Duct Qty: {} | Length: {:06.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
                     len(duct_element_ids),
-                    round(total_length / 12, 3),
-                    total_weight,
-                    total_weight / (total_length / 12),
+                    total_length_ft,
+                    run_total_weight,
+                    lbs_per_ft,
                     output.linkify(duct_element_ids)
                 )
             )
