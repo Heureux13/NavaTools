@@ -30,154 +30,122 @@ doc = revit.doc  # type: Document
 view = revit.active_view
 output = script.get_output()
 
-hanger_parameters = {
-    '_umi_duct_supporting_weight',
+# Ordered preference: custom param first, then Revit built-in Mark, then lowercase fallback
+hanger_parameters = [
+    '_hang_weight_supporting',
+    'Mark',
     'mark',
-}
+]
 
-duct_parameters = {
-    '_umi_duct_run_weight',
-    'mark'
-}
+duct_parameters = [
+    '_duct_weight_run',
+    'Mark',
+    'mark',
+]
 
 # Main Code
 # =================================================
-# Get all ducts
-duct = RevitDuct.from_selection(uidoc, doc, view)
 
-# Filter down to short joints
+# Filter down to a single selected duct
 selected_duct = RevitDuct.from_selection(uidoc, doc, view)
 selected_duct = selected_duct[0] if selected_duct else None
 
-# Start of select / print loop
 if selected_duct:
-    # Selets duct that is connected to the selected duct based on size
+    # Build the run from the selected duct
     run = RevitDuct.create_duct_run(selected_duct, doc, view)
     RevitElement.select_many(uidoc, run)
+
     run_total_length = sum(d.length or 0 for d in run)
     run_total_weight = sum(d.weight or 0 for d in run)
 
-    # Get all hangers that intersect with any duct in the run
-    hangers = set()  # Use set to avoid duplicates
-
+    # Collect hangers that intersect any duct in the run
+    hangers = set()
     for duct in run:
         bbox = duct.element.get_BoundingBox(None)
-        if bbox:
-            # Create filter for elements intersecting this bounding box
-            outline = Outline(bbox.Min, bbox.Max)
-            bbox_filter = BoundingBoxIntersectsFilter(outline)
+        if not bbox:
+            continue
+        outline = Outline(bbox.Min, bbox.Max)
+        bbox_filter = BoundingBoxIntersectsFilter(outline)
+        intersecting = (FilteredElementCollector(doc)
+                        .OfCategory(BuiltInCategory.OST_FabricationHangers)
+                        .WherePasses(bbox_filter)
+                        .WhereElementIsNotElementType()
+                        .ToElements())
+        for h in intersecting:
+            hangers.add(h)
 
-            # Collect hangers intersecting this duct
-            intersecting_hangers = FilteredElementCollector(doc)\
-                .OfCategory(BuiltInCategory.OST_FabricationHangers)\
-                .WherePasses(bbox_filter)\
-                .WhereElementIsNotElementType()\
-                .ToElements()
+    hangers = list(hangers)
 
-            for h in intersecting_hangers:
-                hangers.add(h)
-
-    hangers = list(hangers)  # Convert back to list
-
-    # Select the hangers
     if hangers:
-        weight_per_hanger = run_total_weight / len(hangers)
+        weight_per_hanger = run_total_weight / \
+            float(len(hangers)) if hangers else 0.0
         hanger_ids = [h.Id for h in hangers]
         RevitElement.select_many(uidoc, hangers)
+
         output.print_md("---")
         output.print_md("### Found {} hangers on the run: {}".format(
-            len(hangers),
-            output.linkify(hanger_ids)
+            len(hangers), output.linkify(hanger_ids)
         ))
 
-        # Print hanger info and set Mark parameter in a transaction
+        # Write parameters
         with revit.Transaction("Set Hanger Mark"):
-
+            # Hanger instance values
             for i, h in enumerate(hangers, start=1):
-                family_name = doc.GetElement(
-                    h.GetTypeId()).FamilyName if hasattr(
-                    doc.GetElement(
-                        h.GetTypeId()),
-                    'FamilyName') else "Unknown"
                 output.print_md(
                     "### {} | ID: {} | Supporting: {:6.2f}lbs".format(
-                        i,
-                        output.linkify(h.Id),
-                        weight_per_hanger,
-                    ))
+                        i, output.linkify(h.Id), weight_per_hanger
+                    )
+                )
 
-                # Set the _weight_supporting parameter on the instance
                 set_parameter = None
-                for parameter_name in hanger_parameters:
-                    p = h.LookupParameter(parameter_name)
-                    if not p:
-                        # output.print_md(
-                        #     'Parameter "{}" not found on hanger ID {}'.format(
-                        #         parameter_name,
-                        #         output.linkify(h.Id)
-                        #     )
-                        # )
+                for name in hanger_parameters:
+                    p = h.LookupParameter(name)
+                    if not p or p.IsReadOnly:
                         continue
-                    elif p.IsReadOnly:
-                        # output.print_md(
-                        #     'Parameter "{}" is read-only on hanger ID {}'.format(
-                        #         parameter_name,
-                        #         output.linkify(h.Id)
-                        #     )
-                        # )
-                        continue
-                    else:
-                        set_parameter = p
-                        break
+                    set_parameter = p
+                    break
 
                 if set_parameter:
-                    set_parameter.Set(weight_per_hanger)
-                    # output.print_md(
-                    #     'Set parameter "{}" on hanger ID {} to {:6.2f}'.format(
-                    #         set_parameter.Definition.Name,
-                    #         output.linkify(h.Id),
-                    #         weight_per_hanger
-                    #     )
-                    # )
-                else:
-                    output.print_md(
-                        'Could not set parameter on hanger ID {}'.format(
-                            output.linkify(h.Id)
-                        )
-                    )
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(weight_per_hanger)
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(weight_per_hanger, 2)))
+                    except Exception:
+                        pass
 
-            # Set run weight on each duct in the run
+            # Run weight on each duct in the run
             for d in run:
                 set_parameter = None
-                for parameter_name in duct_parameters:
-                    p = d.element.LookupParameter(parameter_name)
-                    if not p:
+                for name in duct_parameters:
+                    p = d.element.LookupParameter(name)
+                    if not p or p.IsReadOnly:
                         continue
-                    elif p.IsReadOnly:
-                        continue
-                    else:
-                        set_parameter = p
-                        break
+                    set_parameter = p
+                    break
 
                 if set_parameter:
-                    set_parameter.Set(run_total_weight)
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(round(run_total_weight, 2))
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(run_total_weight, 2)))
+                    except Exception:
+                        pass
 
-            # Total count
-            duct_element_ids = [d.element.Id for d in run]
-            total_length_ft = run_total_length / 12.0 if run_total_length else 0.0
-            lbs_per_ft = (
-                run_total_weight / total_length_ft) if total_length_ft else 0.0
-            output.print_md("---")
-            output.print_md("# Duct Run Information")
-            output.print_md(
-                "### Duct Qty: {} | Length: {:06.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
-                    len(duct_element_ids),
-                    total_length_ft,
-                    run_total_weight,
-                    lbs_per_ft,
-                    output.linkify(duct_element_ids)
-                )
+        # Summary
+        duct_element_ids = [d.element.Id for d in run]
+        total_length_ft = run_total_length / 12.0 if run_total_length else 0.0
+        lbs_per_ft = (run_total_weight /
+                      total_length_ft) if total_length_ft else 0.0
+        output.print_md("---")
+        output.print_md("# Duct Run Information")
+        output.print_md(
+            "### Duct Qty: {} | Length: {:06.2f}ft | Run Weight: {:6.2f}lbs | lbs/ft: {:6.2f} | {}".format(
+                len(duct_element_ids), total_length_ft, run_total_weight, lbs_per_ft, output.linkify(
+                    duct_element_ids)
             )
+        )
 
         # Final print statements
         print_disclaimer(output)

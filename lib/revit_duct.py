@@ -680,8 +680,7 @@ class RevitDuct:
                         except Exception:
                             continue
                         # Parse connected duct shape and size via Size.in_shape()
-                        connected_size_
-                        obj = Size(str(connected_duct.size))
+                        connected_size_obj = Size(str(connected_duct.size))
                         connected_shape = shape_key_from_size(
                             connected_size_obj)
                         connected_size_str = str(connected_size_obj.in_size)

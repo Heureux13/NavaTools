@@ -30,18 +30,20 @@ doc = revit.doc  # type: Document
 view = revit.active_view
 output = script.get_output()
 
-hanger_parameters = {
-    '_umi_duct_supporting_weight',
-    'mark',
-}
+hanger_parameters = [
+    '_hang_weight_supporting',
+]
 
-duct_parameters = {
-    '_umi_duct_run_weight',
-    'mark'
-}
+duct_parameters = [
+    '_duct_weight_run',
+]
 
 # Main Code
 # =================================================
+
+# Regenerate document to clear cache and refresh parameters
+with revit.Transaction("Regenerate Document"):
+    doc.Regenerate()
 
 
 def get_host_duct_from_hanger(hanger, ducts_cache):
@@ -154,7 +156,13 @@ while pending_hanger_ids:
                     break
 
                 if set_parameter:
-                    set_parameter.Set(weight_per_hanger)
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(weight_per_hanger)
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(weight_per_hanger, 2)))
+                    except Exception:
+                        pass
 
             # Set run weight on each duct in the run
             for d in run:
@@ -167,7 +175,13 @@ while pending_hanger_ids:
                     break
 
                 if set_parameter:
-                    set_parameter.Set(run_total_weight)
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(round(run_total_weight, 2))
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(run_total_weight, 2)))
+                    except Exception:
+                        pass
 
         output.print_md("---")
         output.print_md("# Run {}".format(run_number))
@@ -190,7 +204,13 @@ while pending_hanger_ids:
                     break
 
                 if set_parameter:
-                    set_parameter.Set(run_total_weight)
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(round(run_total_weight, 2))
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(run_total_weight, 2)))
+                    except Exception:
+                        pass
 
     # Totals
     duct_element_ids = [d.element.Id for d in run]
@@ -245,7 +265,13 @@ while remaining_ducts:
                     break
 
                 if set_parameter:
-                    set_parameter.Set(run_total_weight)
+                    try:
+                        if set_parameter.StorageType == StorageType.Double:
+                            set_parameter.Set(round(run_total_weight, 2))
+                        elif set_parameter.StorageType == StorageType.String:
+                            set_parameter.Set(str(round(run_total_weight, 2)))
+                    except Exception:
+                        pass
 
     # Output
     duct_element_ids = [d.element.Id for d in run]
