@@ -11,13 +11,14 @@ from offsets import Offsets
 from size import Size
 from revit_xyz import RevitXYZ
 from pyrevit import revit, script
+from Autodesk.Revit.DB import StorageType
 import traceback
 
 # Button info
 # ======================================================================
 __title__ = 'Offset Data'
 __doc__ = '''
-Gives raw offset data
+Gives raw offset data and writes to parameters
 ---
 Values are representative of raw vector formulas used in linear mathmatics, seeing (-) and (+) does not mean in/out, it is movement from vector origins
 '''
@@ -26,6 +27,30 @@ Values are representative of raw vector formulas used in linear mathmatics, seei
 # ======================================================================
 
 output = script.get_output()
+
+family_list = {
+    'offset',
+    'gored elbow',
+    'oval reducer',
+    'oval to round',
+    'reducer',
+    'square to ø',
+    'transition',
+    'cid330 - (radius 2-way offset)'
+}
+
+parameters = {
+    '_duct_offset_center_h': 'center_horizontal',
+    '_duct_offset_center_v': 'center_vertical',
+    '_duct_offset_top': 'top',
+    '_duct_offset_bottom': 'bottom',
+    '_duct_offset_right': 'right',
+    '_duct_offset_left': 'left',
+}
+
+tag_parameter = {
+    '_duct_tag_offset'
+}
 
 
 def classify_offset(fit):
@@ -110,10 +135,11 @@ def classify_offset(fit):
 
 # Get selected elements
 selection = revit.get_selection()
+doc = revit.doc
 
 if not selection:
     output.print_md(
-        "# Please select an offset and try again"
+        "# Please select offset fittings and try again"
     )
 
 else:
@@ -121,15 +147,29 @@ else:
         "# Offset Information"
     )
 
+    processed = []
+    matched_count = 0
+
     for element in selection:
         try:
+            # Get family name and normalize
+            family_type = doc.GetElement(element.GetTypeId())
+            if not family_type:
+                continue
+
+            family_name = family_type.FamilyName.lower()
+            family_name = family_name.replace('*', '').strip()
+
+            if family_name not in family_list:
+                continue
+
+            matched_count += 1
+
             # Extract XYZ coordinates and orientation using RevitXYZ
             xyz_extractor = RevitXYZ(element)
             inlet_data, outlet_data = xyz_extractor.inlet_outlet_data()
 
             if not inlet_data or not outlet_data:
-                output.print_md("ERROR: Element {} has no connector data".format(
-                    element.Id.Value))
                 continue
 
             inlet = inlet_data['origin']
@@ -138,8 +178,6 @@ else:
             # Parse size from element parameter
             size_param = element.LookupParameter("Size")
             if not size_param:
-                output.print_md("ERROR: Element {} has no Size parameter".format(
-                    element.Id.Value))
                 continue
 
             size_str = size_param.AsString()
@@ -149,83 +187,116 @@ else:
             offsets_calc = Offsets(inlet_data, outlet_data, size)
             fitting = offsets_calc.calculate()
 
-            output.print_md("# Element ID: {} | Category {}".format(
-                element.Id.Value,
-                element.Category.Name))
-
-            # General fitting information
-            output.print_md(
-                "### Size: {} | Inlet: {} | Outlet {}".format(
-                    size.size,
-                    size.in_size,
-                    size.out_size,
-                ))
-            output.print_md(
-                "### Inlet: {} | Shape: {} | W:{} H:{} D:{}".format(
-                    size.in_size,
-                    size.in_shape(),
-                    size.in_width,
-                    size.in_height,
-                    size.in_diameter,
-                ))
-            output.print_md(
-                "### Outlet: {} | Shape: {} | W:{} H:{} D:{}".format(
-                    size.out_size,
-                    size.out_shape(),
-                    size.out_width,
-                    size.out_height,
-                    size.out_diameter,
-                ))
-
-            # Coordinate
-            output.print_md("## **Coordinates**")
-            output.print_md(
-                "### Inlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
-                    inlet.X,
-                    inlet.Y,
-                    inlet.Z,
-                ))
-            output.print_md(
-                "### Outlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
-                    outlet.X,
-                    outlet.Y,
-                    outlet.Z,
-                ))
-
             if fitting:
-                output.print_md("## Offset data")
-                order = [
-                    "center_vertical",
-                    "center_horizontal",
-                    "top",
-                    "bottom",
-                    "right",
-                    "left",
-                ]
+                # Store for output
+                processed.append((element, family_name, size_str, fitting))
 
-                for key in order:
-                    if key in fitting:
-                        output.print_md("### {} | '{:.3f}'".format(
-                            key,
-                            fitting[key],
-                        ))
-
-                # Add classification
+                # Calculate classification
                 classification = classify_offset(fitting)
-                output.print_md("## Classification")
-                output.print_md("### {}".format(classification))
 
-            else:
-                output.print_md("**ERROR**")
-                output.print_md("Could not calculate for {}".format(
-                    element.Id.Value
-                ))
+                # Write values to parameters
+                with revit.Transaction("Set Offset Parameters"):
+                    for param_name, fitting_key in parameters.items():
+                        if fitting_key in fitting:
+                            p = element.LookupParameter(param_name)
+                            if p and not p.IsReadOnly:
+                                try:
+                                    if p.StorageType == StorageType.Double:
+                                        p.Set(fitting[fitting_key])
+                                    elif p.StorageType == StorageType.String:
+                                        p.Set(str(round(fitting[fitting_key], 3)))
+                                except Exception:
+                                    pass
+
+                    # Write classification to tag offset parameter
+                    tag_p = element.LookupParameter('_duct_tag_offset')
+                    if tag_p and not tag_p.IsReadOnly:
+                        try:
+                            if tag_p.StorageType == StorageType.String:
+                                tag_p.Set(classification)
+                        except Exception:
+                            pass
 
         except Exception as e:
             output.print_md("ERROR: processing element {} : {}".format(
                 element.Id.Value,
                 str(e)
             ))
-            output.print_md("\n{}\n".format(
-                traceback.format_exc()
+
+    # Print detailed results
+    for i, (elem, fam, size_str, fit) in enumerate(processed, start=1):
+        size = Size(size_str)
+        inlet_data, outlet_data = RevitXYZ(elem).inlet_outlet_data()
+        inlet = inlet_data['origin']
+        outlet = outlet_data['origin']
+        classification = classify_offset(fit)
+
+        output.print_md("# Element ID: {} | Category {}".format(
+            elem.Id.Value,
+            elem.Category.Name))
+
+        # General fitting information
+        output.print_md(
+            "### Size: {} | Inlet: {} | Outlet {}".format(
+                size.size,
+                size.in_size,
+                size.out_size,
             ))
+        output.print_md(
+            "### Inlet: {} | Shape: {} | W:{} H:{} D:{}".format(
+                size.in_size,
+                size.in_shape(),
+                size.in_width,
+                size.in_height,
+                size.in_diameter,
+            ))
+        output.print_md(
+            "### Outlet: {} | Shape: {} | W:{} H:{} D:{}".format(
+                size.out_size,
+                size.out_shape(),
+                size.out_width,
+                size.out_height,
+                size.out_diameter,
+            ))
+
+        # Coordinate
+        output.print_md("## **Coordinates**")
+        output.print_md(
+            "### Inlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
+                inlet.X,
+                inlet.Y,
+                inlet.Z,
+            ))
+        output.print_md(
+            "### Outlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
+                outlet.X,
+                outlet.Y,
+                outlet.Z,
+            ))
+
+        # Offset data
+        output.print_md("## Offset data")
+        order = [
+            "center_vertical",
+            "center_horizontal",
+            "top",
+            "bottom",
+            "right",
+            "left",
+        ]
+
+        for key in order:
+            if key in fit:
+                output.print_md("### {} | '{:.3f}'".format(
+                    key,
+                    fit[key],
+                ))
+
+        # Add classification
+        output.print_md("## Classification")
+        output.print_md("### {}".format(classification))
+
+    output.print_md("---")
+    output.print_md(
+        "# Summary: {} offset fittings processed, {} parameters updated".format(
+            matched_count, len(processed)))

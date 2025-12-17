@@ -48,6 +48,7 @@ family_list = {
     'reducer',
     'square to ø',
     'transition',
+    'cid330 - (radius 2-way offset)'
 }
 
 parameters = {

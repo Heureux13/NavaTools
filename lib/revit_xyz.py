@@ -76,7 +76,7 @@ class RevitXYZ(object):
         Each dict contains:
             'origin': XYZ point
             'basis_x': XYZ vector (width direction)
-            'basis_y': XYZ vector (height direction)  
+            'basis_y': XYZ vector (height direction)
             'basis_z': XYZ vector (flow direction)
 
         Returns empty list if no connectors found.
@@ -140,7 +140,7 @@ class RevitXYZ(object):
         Returns tuple: (inlet_dict, outlet_dict) where each dict contains:
             'origin': XYZ point
             'basis_x': XYZ vector (width direction)
-            'basis_y': XYZ vector (height direction)  
+            'basis_y': XYZ vector (height direction)
             'basis_z': XYZ vector (flow direction)
 
         For elements with 2+ connectors, returns the two farthest apart.
@@ -188,6 +188,16 @@ class RevitXYZ(object):
                     if dist_sq > max_dist_sq:
                         max_dist_sq = dist_sq
                         inlet, outlet = conn_data[i], conn_data[j]
+
+            # Ensure consistent assignment: inlet is upstream (lower Z, then lower Y, then lower X)
+            o1 = inlet['origin']
+            o2 = outlet['origin']
+            # Sort by Z descending (outlet higher), then Y, then X for consistency
+            if (o1.Z < o2.Z or
+                (abs(o1.Z - o2.Z) < TOL and o1.Y < o2.Y) or
+                    (abs(o1.Z - o2.Z) < TOL and abs(o1.Y - o2.Y) < TOL and o1.X < o2.X)):
+                inlet, outlet = outlet, inlet
+
             return inlet, outlet
 
         return None, None
