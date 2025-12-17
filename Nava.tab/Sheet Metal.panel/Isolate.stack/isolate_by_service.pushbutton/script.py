@@ -75,7 +75,7 @@ with revit.Transaction("Isolate by Fabrication Service"):
         from Autodesk.Revit.DB import ElementId
         id_list = List[ElementId](element_ids)
         active_view.IsolateElementsTemporary(id_list)
-        print("Isolated {} elements from {} services".format(
-            len(element_ids), len(selected_services)))
+        # print("Isolated {} elements from {} services".format(
+        #     len(element_ids), len(selected_services)))
     else:
         print("No elements found for selected services")

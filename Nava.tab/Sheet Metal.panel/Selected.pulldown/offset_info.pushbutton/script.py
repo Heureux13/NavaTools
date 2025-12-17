@@ -27,8 +27,86 @@ Values are representative of raw vector formulas used in linear mathmatics, seei
 
 output = script.get_output()
 
+
+def classify_offset(fit):
+    """Classify offset values - vertical | horizontal."""
+    tol = 0.01
+
+    cv = fit.get('center_vertical', 0)
+    ch = fit.get('center_horizontal', 0)
+    top = fit.get('top', 0)
+    bottom = fit.get('bottom', 0)
+    right = fit.get('right', 0)
+    left = fit.get('left', 0)
+
+    # If top and bottom are both 0, it's just a horizontal offset
+    if abs(top) < tol and abs(bottom) < tol:
+        if abs(left) < tol:
+            return "FOR"
+        elif abs(right) < tol:
+            return "FOL"
+        elif abs(ch) < tol:
+            return "CL"
+        else:
+            magnitude = max(abs(left), abs(right))
+            # Use the dominant edge sign to decide IN/OUT (positive right => OUT)
+            if abs(right) >= abs(left):
+                direction = "OUT" if right > 0 else "IN"
+            else:
+                direction = "IN" if left > 0 else "OUT"
+            return "{} {:.0f}".format(direction, magnitude)
+
+    # If left and right are both 0, it's just a vertical offset
+    elif abs(left) < tol and abs(right) < tol:
+        if abs(bottom) < tol:
+            return "FOB"
+        elif abs(top) < tol:
+            return "FOT"
+        elif abs(cv) < tol:
+            return "CL"
+        else:
+            magnitude = max(abs(top), abs(bottom))
+            # Flip vertical sense per user: positive center_v => DN
+            direction = "DN" if cv > 0 else "UP"
+            return "{} {:.0f}".format(direction, magnitude)
+
+    # Both vertical and horizontal
+    else:
+        if abs(bottom) < tol:
+            vertical = "FOB"
+        elif abs(top) < tol:
+            vertical = "FOT"
+        elif abs(cv) < tol:
+            vertical = "CL"
+        else:
+            magnitude = max(abs(top), abs(bottom))
+            # Flip vertical sense per user: positive center_v => DN
+            direction = "DN" if cv > 0 else "UP"
+            vertical = "{} {:.0f}".format(direction, magnitude)
+
+        if abs(left) < tol:
+            horizontal = "FOR"
+        elif abs(right) < tol:
+            horizontal = "FOL"
+        elif abs(ch) < tol:
+            horizontal = "CL"
+        else:
+            magnitude = max(abs(left), abs(right))
+            # Use the dominant edge sign to decide IN/OUT (positive right => OUT)
+            if abs(right) >= abs(left):
+                direction = "OUT" if right > 0 else "IN"
+            else:
+                direction = "IN" if left > 0 else "OUT"
+            horizontal = "{} {:.0f}".format(direction, magnitude)
+
+        if vertical == "CL" and horizontal == "CL":
+            return "CL"
+
+        return "{} | {}".format(vertical, horizontal)
+
 # Main Code
 # ======================================================================
+
 
 # Get selected elements
 selection = revit.get_selection()
@@ -83,14 +161,20 @@ else:
                     size.out_size,
                 ))
             output.print_md(
-                "### Inlet: {} | Shape: {}".format(
+                "### Inlet: {} | Shape: {} | W:{} H:{} D:{}".format(
                     size.in_size,
                     size.in_shape(),
+                    size.in_width,
+                    size.in_height,
+                    size.in_diameter,
                 ))
             output.print_md(
-                "### Outlet: {} | Shape: {}".format(
+                "### Outlet: {} | Shape: {} | W:{} H:{} D:{}".format(
                     size.out_size,
                     size.out_shape(),
+                    size.out_width,
+                    size.out_height,
+                    size.out_diameter,
                 ))
 
             # Coordinate
@@ -125,6 +209,11 @@ else:
                             key,
                             fitting[key],
                         ))
+
+                # Add classification
+                classification = classify_offset(fitting)
+                output.print_md("## Classification")
+                output.print_md("### {}".format(classification))
 
             else:
                 output.print_md("**ERROR**")

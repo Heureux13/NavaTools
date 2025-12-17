@@ -79,9 +79,9 @@ class Size:
             result['oval_flat'] = (max(w, h) - min(w, h)) if w != h else 0.0
             return result
 
-        # Logic for ovals marked with x/× (quotes and Ø suffix optional, e.g., 24x12, 24x12Ø, 24"x12"Ø)
+        # Logic for ovals marked with x/× with Ø suffix (e.g., 24x12Ø, 24"x12"Ø)
         m = re.match(
-            r'(\d+(?:\.\d+)?)\s*"?\s*[x×]\s*"?\s*(\d+(?:\.\d+)?)\s*"?(?:[ ]*[øØ])?', token)
+            r'(\d+(?:\.\d+)?)\s*"?\s*[x×]\s*"?\s*(\d+(?:\.\d+)?)\s*"?\s*[øØ]', token)
         if m:
             w = float(m.group(1))
             h = float(m.group(2))
@@ -94,7 +94,8 @@ class Size:
             return result
 
         # Logic for rectangle / square
-        m = re.match(r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)', token)
+        m = re.match(
+            r'(\d+(?:\.\d+)?)\s*"?\s*[x×]\s*"?\s*(\d+(?:\.\d+)?)\s*"?', token)
         if m:
             result['width'] = float(m.group(1))
             result['height'] = float(m.group(2))
