@@ -351,3 +351,37 @@ class RevitTagging:
             return (face, tag_point)
         except Exception:
             return (None, None)
+
+    def get_existing_tag_families(self, elem):
+        """Return lowercase family names of tags already placed on elem in this view."""
+        fams = set()
+        if elem is None:
+            return fams
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tagged_ids = None
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+
+                if not tagged_ids or elem.Id not in tagged_ids:
+                    continue
+
+                tag_type = self.doc.GetElement(itag.GetTypeId())
+                fam = getattr(tag_type, "Family", None)
+                fam_name = (fam.Name if fam else "").strip().lower()
+                if fam_name:
+                    fams.add(fam_name)
+            except Exception:
+                continue
+
+        return fams

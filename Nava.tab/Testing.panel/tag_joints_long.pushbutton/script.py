@@ -13,7 +13,6 @@ from revit_tagging import RevitTagging
 from Autodesk.Revit.DB import Transaction, FilteredElementCollector, IndependentTag, ElementTransformUtils, XYZ, Line
 from revit_parameter import RevitParameter
 from revit_duct import RevitDuct, JointSize
-from revit_xyz import RevitXYZ
 from pyrevit import revit, script
 import math
 
@@ -55,50 +54,45 @@ tags = {
 t = Transaction(doc, "Tag Full Joints")
 t.Start()
 try:
-    # Step 1: Get all ducts in view
-    all_ducts_in_view = ducts
-    output.print_md("**Found {} total ducts in view**".format(len(all_ducts_in_view)))
-
-    # Step 2: Filter out straight families - get only non-straight (fittings, transitions, etc.)
+    # Step 1: Filter to only non-straight ducts (fittings, transitions, etc.)
     non_straight_ducts = [
-        d for d in all_ducts_in_view if d.family and d.family.strip().lower() not in straight_joint_families
+        d for d in ducts if d.family and d.family.strip().lower() not in straight_joint_families
     ]
-    output.print_md("**Found {} non-straight ducts (fittings/transitions)**".format(len(non_straight_ducts)))
+    output.print_md(
+        "**Found {} non-straight ducts**".format(len(non_straight_ducts)))
 
-    # Step 3: Find all straight ducts connected to those non-straight ducts
-    connected_straights_to_tag = []
+    # Step 2: Get all straight ducts connected to non-straight ducts
+    connected_straights = []
     seen_ids = set()
-
-    for fitting in non_straight_ducts:
-        for connector_idx in [0, 1, 2, 3]:
-            connected_elems = fitting.get_connected_elements(connector_idx)
-            for elem in connected_elems:
+    for d in non_straight_ducts:
+        for connector_index in [0, 1, 2]:
+            connected_elements = d.get_connected_elements(connector_index)
+            for elem in connected_elements:
                 if elem.Id.IntegerValue in seen_ids:
                     continue
-                # Check if connected element is a straight duct
                 connected_duct = RevitDuct(doc, view, elem)
-                if connected_duct.family and connected_duct.family.strip().lower() in straight_joint_families:
-                    connected_straights_to_tag.append(elem)
+                if connected_duct.family and connected_duct.family.strip(
+                ).lower() in straight_joint_families:
+                    connected_straights.append(elem)
                     seen_ids.add(elem.Id.IntegerValue)
+    output.print_md(
+        "**Found {} unique connected straight ducts**".format(len(connected_straights)))
 
-    output.print_md("**Found {} unique straight ducts connected to fittings**".format(len(connected_straights_to_tag)))
+    # Step 3: Filter to only full-size joints
+    full_joint_straights = []
+    for elem in connected_straights:
+        duct = RevitDuct(doc, view, elem)
+        if duct.joint_size == JointSize.FULL:
+            full_joint_straights.append(elem)
+    output.print_md(
+        "**Found {} full-size joints to tag**".format(len(full_joint_straights)))
 
-    # Step 4: Tag the connected straights, avoiding duplicates and skipping vertical ducts
-    for elem in connected_straights_to_tag:
-        # Skip if duct is vertical
-        try:
-            xyz_checker = RevitXYZ(elem)
-            angle = xyz_checker.straight_joint_degree()
-            if angle is not None and abs(angle) >= 85:  # Skip if near vertical (85° or more)
-                already_tagged.append(RevitDuct(doc, view, elem))
-                continue
-        except BaseException:
-            pass  # If we can't check angle, proceed with tagging
-
+    # Step 4: Tag the full-size joints (skip if same tag family already on element in view)
+    for elem in full_joint_straights:
         existing_tag_fams = tagger.get_existing_tag_families(elem)
         tagged_this_element = False
-        tag_index = 0
-        tag_spacing = 1.0
+        tag_index = 0  # Track how many tags we've placed on this element
+        tag_spacing = 1.0  # Spacing in feet between tags
 
         for tag_name in tags:
             try:
@@ -107,7 +101,7 @@ try:
                 if not fam_name:
                     continue
 
-                # Skip if this tag family already exists on this element in this view
+                # Skip if a tag with this family name already exists on this element in this view
                 if fam_name in existing_tag_fams:
                     continue
 
@@ -120,6 +114,7 @@ try:
                         if loc and hasattr(loc, 'Curve') and loc.Curve:
                             curve = loc.Curve
                             dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+                            # Offset each tag along the duct direction
                             offset_distance = tag_index * tag_spacing
                             offset_pt = XYZ(face_pt.X + dir_vec.X * offset_distance,
                                             face_pt.Y + dir_vec.Y * offset_distance,
@@ -147,12 +142,14 @@ try:
                     bbox = elem.get_BoundingBox(view)
                     if bbox is not None:
                         center = (bbox.Min + bbox.Max) / 2.0
+                        # Calculate offset for multiple tags along duct direction
                         offset_pt = center
                         try:
                             loc = elem.Location
                             if loc and hasattr(loc, 'Curve') and loc.Curve:
                                 curve = loc.Curve
                                 dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+                                # Offset each tag along the duct direction
                                 offset_distance = tag_index * tag_spacing
                                 offset_pt = XYZ(center.X + dir_vec.X * offset_distance,
                                                 center.Y + dir_vec.Y * offset_distance,

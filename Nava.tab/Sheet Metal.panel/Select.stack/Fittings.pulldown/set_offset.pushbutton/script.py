@@ -33,9 +33,10 @@ output = script.get_output()
 # ======================================================================
 
 
-# Collect all fabrication ductwork in the document
+# Collect fabrication ductwork in the current view only
 doc = revit.doc
-all_fittings = FilteredElementCollector(doc)\
+current_view = revit.active_view
+all_fittings = FilteredElementCollector(doc, current_view.Id)\
     .OfCategory(BuiltInCategory.OST_FabricationDuctwork)\
     .WhereElementIsNotElementType()\
     .ToElements()
@@ -48,7 +49,8 @@ family_list = {
     'reducer',
     'square to ø',
     'transition',
-    'cid330 - (radius 2-way offset)'
+    'cid330 - (radius 2-way offset)',
+    'ogee',
 }
 
 parameters = {

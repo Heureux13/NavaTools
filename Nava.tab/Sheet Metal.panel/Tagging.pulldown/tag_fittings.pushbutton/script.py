@@ -35,14 +35,14 @@ tagger = RevitTagging(doc=doc, view=view)
 
 elbow_throat_allowances = {
     'tdf': 6,
-    's&d': 4
+    's&d': 4,
 }
 
 elbow_tag_excluted = {
-    '_umi_extension_bottom',
-    '_umi_extension_top',
-    '_umi_extension_left',
-    '_umi_extension_right'
+    '-FabDuct_EXT IN_MV_Tag',
+    '-FabDuct_EXT OUT_MV_Tag',
+    '-FabDuct_EXT LEFT_MV_Tag',
+    '-FabDuct_EXT RIGHT_MV_Tag'
 }
 
 elbow_families = {
@@ -65,11 +65,9 @@ family_to_angle_skip = {
 
 def should_skip_tag(duct, tag):
     fam = (duct.family or '').strip().lower()
-    tag_name = tag.Family.Name
-    # Skip _umi_angle for Radius Elbow with angle 45 or 90
-    if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '_umi_angle':
-        # Debug
-        # print('SKIP: Radius Elbow angle {} for tag {}'.format(duct.angle, tag_name))
+    tag_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+    # Skip -FabDuct_DEGREE_MV_Tag for Radius Elbow with angle 45 or 90
+    if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
         return True
     # Skip extension tags for elbows/tees with tdf connector and extension == 6
     if fam in elbow_families:
@@ -84,15 +82,9 @@ def should_skip_tag(duct, tag):
                     duct.extension_top == required_ext
                     or duct.extension_bottom == required_ext
                 )
-                and tag_name in elbow_tag_excluted
+                and tag_name in {t.strip().lower() for t in elbow_tag_excluted}
             ):
-                # Debug
-                # print('SKIP: {} family with connector {} and extension {} for tag {}'.format(
-                # fam, connector_type_keys, required_ext, tag_name))
                 return True
-    # Debug: Not skipped
-    # print('TAG: {} | Angle: {} | ExtTop: {} | ExtBot: {} | Tag: {}'.format(
-        # fam, duct.angle, duct.extension_top, duct.extension_bottom, tag_name))
     return False
 
 
@@ -110,114 +102,115 @@ if not ducts:
 # ==================================================
 duct_families = {
     "8inch long coupler wdamper": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     "conical tap - wdamper": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # Rectangle tap usually on the main trunk.
     "boot tap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # Round tap usually from main to VAV.
     "boot tap - wdamper": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # Round tap usually from main to VAV.
     "boot saddle tap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     "cap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # Offset Radius elbow
-    'drop cheeck': [
-        (tagger.get_label('_umi_size'), 0.5)
+    'drop check': [
+        (tagger.get_label('-FabDuct_SIZE_FIX_Tag'), 0.5)
     ],
 
     # Square elbows from 5° to 90+°
     "elbow": [
-        (tagger.get_label("_umi_extension_bottom"), 0.5),
-        (tagger.get_label("_umi_extension_top"), 0.5)
+        (tagger.get_label("-FabDuct_EXT IN_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_EXT OUT_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_DEGREE_MV_Tag"), 0.5),
     ],
 
     # Round/square/rectangle end cap
     "end cap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # 90° adjustable elbow
     "gored elbow": [
-        (tagger.get_label("_umi_angle"), 0.5)
+        (tagger.get_label("-FabDuct_DEGREE_MV_Tag"), 0.5)
     ],
 
     "mitred offset": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     # Square/rectangle to square/rectangle
     "offset": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     # Offset ogee
     "ogee": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     "radius bend": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_SIZE_FIX_Tag"), 0.5)
     ],
 
     # Elbow with radius heel and throat
     "radius elbow": [
-        (tagger.get_label("_umi_radius_inner"), 0.5),
-        (tagger.get_label('_umi_angle'), 0.5),
+        (tagger.get_label("-FabDuct_INNER_R_FIX_Tag"), 0.5),
+        (tagger.get_label('-FabDuct_DEGREE_MV_Tag'), 0.5),
     ],
 
     "radius offset": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     # Round reducer
     "reducer": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     "square bend": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_SIZE_FIX_Tag"), 0.5)
     ],
 
     # Square to round
     "square to ø": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
     "tap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_SIZE_FIX_Tag"), 0.5)
     ],
 
     # TDF end cap
     "tdf end cap": [
-        (tagger.get_label("_umi_size"), 0.5)
+        (tagger.get_label("-FabDuct_SIZE_FIX_Tag"), 0.5)
     ],
 
     # Square/rectangle tee elbow
     "tee": [
-        (tagger.get_label("_umi_extension_bottom"), 0.5),
-        (tagger.get_label("_umi_extension_left"), 0.5),
-        (tagger.get_label("_umi_extension_right"), 0.5)
+        (tagger.get_label("-FabDuct_EXT IN_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_EXT LEFT_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_EXT RIGHT_MV_Tag"), 0.5)
     ],
 
     # Square/retangele to square/rectangle reducer
     "transition": [
-        (tagger.get_label("_umi_offset_testing"), 0.5)
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 }
 
@@ -243,28 +236,35 @@ try:
             continue
 
         tagged_this_element = False
-        already_tagged_this_element = True
+        # Track existing tag families on this element (case-insensitive) to avoid duplicates
+        existing_tag_fams = tagger.get_existing_tag_families(d.element)
 
         for tag, dic_duct_loc in tag_configs:
             if should_skip_tag(d, tag):
                 continue
-            if tagger.already_tagged(d.element, tag.Family.Name):
+            fam_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+            if not fam_name:
+                continue
+
+            # Skip if a tag with this family name is already on the element (in this view)
+            if fam_name in existing_tag_fams:
                 continue
 
             # Tag placement logic
-            tagged_this_element = True
-            already_tagged_this_element = False
-
             if isinstance(d.element, DB.FabricationPart):
                 face_ref, face_pt = tagger.get_face_facing_view(
                     d.element, prefer_point=None)
                 if face_ref is not None and face_pt is not None:
                     tagger.place_tag(face_ref, tag, face_pt)
+                    existing_tag_fams.add(fam_name)
+                    tagged_this_element = True
                     continue
                 bbox = d.element.get_BoundingBox(view)
                 if bbox is not None:
                     center = (bbox.Min + bbox.Max) / 2.0
                     tagger.place_tag(d.element, tag, center)
+                    existing_tag_fams.add(fam_name)
+                    tagged_this_element = True
                     continue
                 continue
             else:
@@ -274,20 +274,26 @@ try:
                     if bbox is not None:
                         center = (bbox.Min + bbox.Max) / 2.0
                         tagger.place_tag(d.element, tag, center)
+                        existing_tag_fams.add(fam_name)
+                        tagged_this_element = True
                         continue
                     continue
                 if hasattr(loc, "Point") and loc.Point is not None:
                     tagger.place_tag(d.element, tag, loc.Point)
+                    existing_tag_fams.add(fam_name)
+                    tagged_this_element = True
                 elif hasattr(loc, "Curve") and loc.Curve is not None:
                     midpoint = loc.Curve.Evaluate(dic_duct_loc, True)
                     tagger.place_tag(d.element, tag, midpoint)
+                    existing_tag_fams.add(fam_name)
+                    tagged_this_element = True
                 else:
                     continue
 
         # Add to appropriate list (only once per element)
         if tagged_this_element:
             needs_tagging.append(d)
-        elif already_tagged_this_element:
+        else:
             already_tagged.append(d)
 
     # Selection and reporting (standardized)

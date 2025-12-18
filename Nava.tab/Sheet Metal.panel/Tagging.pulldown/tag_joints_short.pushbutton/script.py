@@ -68,7 +68,7 @@ for d in ducts:
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("_umi_length")
+tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
 
 # Transaction
 # ==================================================
