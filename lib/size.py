@@ -59,10 +59,16 @@ class Size:
             result['oval_dia'] = result['oval_flat'] = None
             return result
 
-        # Logic for rounds
-        m = re.match(r'(\d+(?:\.\d+)?)\s*[øØ]', token)
+        # Logic for rounds, allowing mixed fractions (e.g., 10 1/8ø)
+        m = re.match(r'(\d+(?:\.\d+)?)(?:\s+(\d+)/(\d+))?\s*[øØ]', token)
         if m:
-            result['diameter'] = float(m.group(1))
+            base = float(m.group(1))
+            if m.group(2) and m.group(3):
+                frac = float(m.group(2)) / float(m.group(3)
+                                                 ) if float(m.group(3)) != 0 else 0.0
+            else:
+                frac = 0.0
+            result['diameter'] = base + frac
             result['width'] = result['height'] = None
             result['oval_dia'] = result['oval_flat'] = None
             return result

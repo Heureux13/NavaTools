@@ -656,7 +656,6 @@ class RevitDuct:
             return ("unknown", str(size_obj.in_size))
 
         start_shape = shape_key_from_size(start_size_obj)
-        start_size_str = str(start_size_obj.in_size)
 
         while to_visit:
             duct = to_visit.pop()
@@ -683,9 +682,116 @@ class RevitDuct:
                         connected_size_obj = Size(str(connected_duct.size))
                         connected_shape = shape_key_from_size(
                             connected_size_obj)
-                        connected_size_str = str(connected_size_obj.in_size)
-                        # Match both shape and size
-                        if connected_shape == start_shape and connected_size_str == start_size_str and connected_duct.id not in visited:
+                        # Match by normalized shape/size only (avoid string formatting mismatches)
+                        if connected_shape == start_shape and connected_duct.id not in visited:
+                            to_visit.append(connected_duct)
+        return list(run)
+
+    @staticmethod
+    def create_duct_run_same_height(start_duct, doc, view, height_tolerance=0.01):
+        """Find all connected ducts/fittings that match shape, size, AND z-axis height.
+
+        The run will stop if:
+        - Size changes
+        - Shape changes
+        - Z-axis height (centerline elevation) changes beyond tolerance
+
+        Allows: X-Y offsetting, turns on X-Y plane
+        Prevents: Vertical (Z-axis) offsetting beyond tolerance
+
+        Args:
+            start_duct: RevitDuct object to start from
+            doc: Revit document
+            view: Revit view
+            height_tolerance: Tolerance in feet for z-axis differences (default 0.01 ft ≈ 0.12 inches)
+
+        Returns:
+            List of RevitDuct objects in the connected run at same height
+        """
+        run = set()
+        to_visit = [start_duct]
+        visited = set()
+        start_size_obj = Size(str(start_duct.size))
+
+        def shape_key_from_size(size_obj):
+            """Create a comparable key from Size using inlet fields only."""
+            shape = size_obj.in_shape()
+            if shape == "round" and size_obj.in_diameter is not None:
+                return ("round", round(size_obj.in_diameter, 2))
+            if shape == "oval" and size_obj.in_oval_dia is not None and size_obj.in_oval_flat is not None:
+                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
+            if shape == "rectangle" and size_obj.in_width is not None and size_obj.in_height is not None:
+                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
+            return ("unknown", str(size_obj.in_size))
+
+        def get_duct_z_coordinate(duct):
+            """Extract Z-coordinate (elevation) from the duct's centerline.
+
+            Prefer the location curve midpoint Z; fall back to inlet origin Z.
+            """
+            # Try centerline midpoint Z
+            try:
+                loc = duct.element.Location
+                if hasattr(loc, 'Curve') and loc.Curve:
+                    c = loc.Curve
+                    p0 = c.GetEndPoint(0)
+                    p1 = c.GetEndPoint(1)
+                    return (p0.Z + p1.Z) / 2.0
+            except Exception:
+                pass
+            # Fallback to inlet origin Z
+            try:
+                inlet_data, outlet_data = duct._inlet_outlet_from_revit_xyz()
+                if inlet_data and 'origin' in inlet_data:
+                    origin = inlet_data['origin']  # XYZ object
+                    return origin.Z
+            except Exception:
+                pass
+            return None
+
+        start_shape = shape_key_from_size(start_size_obj)
+        start_z = get_duct_z_coordinate(start_duct)
+
+        while to_visit:
+            duct = to_visit.pop()
+            if duct.id in visited:
+                continue
+            visited.add(duct.id)
+            run.add(duct)
+            for connector in duct.get_connectors():
+                if not connector.IsConnected:
+                    continue
+                all_refs = list(connector.AllRefs)
+                for ref in all_refs:
+                    if ref and hasattr(ref, 'Owner'):
+                        connected_elem = ref.Owner
+                        # Only process fabrication parts
+                        if not isinstance(connected_elem, FabricationPart):
+                            continue
+                        try:
+                            connected_duct = RevitDuct(
+                                doc, view, connected_elem)
+                        except Exception:
+                            continue
+
+                        # Check if already visited
+                        if connected_duct.id in visited:
+                            continue
+
+                        # Parse connected duct shape and size
+                        connected_size_obj = Size(str(connected_duct.size))
+                        connected_shape = shape_key_from_size(
+                            connected_size_obj)
+
+                        # Check Z-axis height difference
+                        connected_z = get_duct_z_coordinate(connected_duct)
+                        z_difference = abs(
+                            connected_z - start_z) if (connected_z is not None and start_z is not None) else None
+
+                        # Match shape, size, AND z-axis height
+                        if (connected_shape == start_shape and
+                            z_difference is not None and
+                                z_difference <= height_tolerance):
                             to_visit.append(connected_duct)
         return list(run)
 
