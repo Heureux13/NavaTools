@@ -9,17 +9,8 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-
-from System.Collections.Generic import List
-from revit_parameter import RevitParameter
-from revit_element import RevitElement
-from revit_duct import RevitDuct, JointSize, CONNECTOR_THRESHOLDS
-from revit_xyz import RevitXYZ
-from Autodesk.Revit.ApplicationServices import Application
-from Autodesk.Revit.UI import UIDocument
-from pyrevit import revit, forms, script, DB
+from pyrevit import revit, forms, script
 from Autodesk.Revit.DB import *
-import clr
 
 # Button display information
 # =================================================

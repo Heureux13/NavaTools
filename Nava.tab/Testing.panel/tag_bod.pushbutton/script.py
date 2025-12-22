@@ -18,9 +18,9 @@ import math
 
 # Button display information
 # =================================================
-__title__ = "Tag Size"
+__title__ = "Tag BOD"
 __doc__ = """
-Adds size tags to ducts
+Adds BOD tags to ducts
 """
 
 
@@ -55,7 +55,7 @@ runs_to_skip = {
 }
 
 size_tags = {
-    "_umi_size",
+    "_umi_bod",
 }
 
 # Pre-fetch size tag family name for already-tagged checks

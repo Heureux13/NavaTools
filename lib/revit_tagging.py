@@ -117,8 +117,12 @@ class RevitTagging:
                     tag_type_id = itag.GetTypeId()
                     tag_type = self.doc.GetElement(tag_type_id)
                     if tag_type and hasattr(tag_type, 'Family'):
-                        famname = tag_type.Family.Name
-                        if famname == tag_fam_name:
+                        famname = (tag_type.Family.Name or "").strip().lower()
+                        if isinstance(tag_fam_name, str):
+                            tname = tag_fam_name.strip().lower()
+                        else:
+                            tname = str(tag_fam_name).strip().lower()
+                        if famname == tname:
                             return True
             except Exception:
                 continue
