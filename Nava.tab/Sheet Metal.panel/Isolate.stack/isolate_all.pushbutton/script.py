@@ -16,7 +16,7 @@ from System.Collections.Generic import List
 
 # Button info
 # ===================================================
-__title__ = "Isolate All"
+__title__ = "Isolate by MEP"
 __doc__ = """
 Toggle isolation of walls, ducts, pipes, steel beams, and floors.
 Includes linked model components.
@@ -35,15 +35,22 @@ categories_to_isolate = [
     BuiltInCategory.OST_DuctFitting,
     BuiltInCategory.OST_DuctAccessory,
     BuiltInCategory.OST_DuctTerminal,
+    BuiltInCategory.OST_DuctTerminalTags,
+    BuiltInCategory.OST_DuctTags,
     BuiltInCategory.OST_DuctInsulations,
     BuiltInCategory.OST_MechanicalEquipment,
+    BuiltInCategory.OST_MechanicalEquipmentTags,
     BuiltInCategory.OST_FabricationDuctwork,
+    BuiltInCategory.OST_FabricationDuctworkTags,
     BuiltInCategory.OST_FabricationHangers,
+    BuiltInCategory.OST_FabricationHangerTags,
     BuiltInCategory.OST_PipeCurves,
     BuiltInCategory.OST_FlexPipeCurves,
     BuiltInCategory.OST_PipeFitting,
     BuiltInCategory.OST_PipeAccessory,
+    BuiltInCategory.OST_PipeTags,
     BuiltInCategory.OST_PipeInsulations,
+    BuiltInCategory.OST_FabricationPipeworkTags,
     BuiltInCategory.OST_StructuralFraming,
     BuiltInCategory.OST_Floors,
     BuiltInCategory.OST_Ceilings,
@@ -59,7 +66,8 @@ def collect_elements_from_categories(doc, view_id, categories):
     ids = List[ElementId]()
 
     # Element types to keep visible (not isolate)
-    excluded_types = ['SectionMarker', 'ElevationMarker', 'ViewSection', 'Grid', 'ReferencePlane']
+    excluded_types = ['SectionMarker', 'ElevationMarker',
+                      'ViewSection', 'Grid', 'ReferencePlane']
 
     for bic in categories:
         collector = FilteredElementCollector(doc, view_id).OfCategory(
@@ -114,10 +122,12 @@ def is_view_isolated(view):
 with revit.Transaction('Toggle Isolation'):
     if is_view_isolated(active_view):
         # Remove isolation
-        active_view.DisableTemporaryViewMode(TemporaryViewMode.TemporaryIsolate)
+        active_view.DisableTemporaryViewMode(
+            TemporaryViewMode.TemporaryIsolate)
     else:
         # Collect elements from current document only
-        ids = collect_elements_from_categories(doc, active_view.Id, categories_to_isolate)
+        ids = collect_elements_from_categories(
+            doc, active_view.Id, categories_to_isolate)
 
         # Apply isolation if we have elements
         if ids.Count > 0:
