@@ -7,7 +7,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, VisibleInViewFilter
 from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
 from System.Windows.Forms import Form, Label, Button, DialogResult, TextBox, TreeView, TreeNode
@@ -182,14 +182,14 @@ try:
     all_straights = (FilteredElementCollector(doc, view.Id)
                      .OfCategory(BuiltInCategory.OST_DuctCurves)
                      .WhereElementIsNotElementType()
-                     .ToElements()
-                     )
+                     .WherePasses(VisibleInViewFilter(doc, view.Id))
+                     .ToElements())
 
     all_fittings = (FilteredElementCollector(doc, view.Id)
                     .OfCategory(BuiltInCategory.OST_DuctFitting)
                     .WhereElementIsNotElementType()
-                    .ToElements()
-                    )
+                    .WherePasses(VisibleInViewFilter(doc, view.Id))
+                    .ToElements())
 
     # Combines both list into one
     all_duct = list(all_straights) + list(all_fittings)
