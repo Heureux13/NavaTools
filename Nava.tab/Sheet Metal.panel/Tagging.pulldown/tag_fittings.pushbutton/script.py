@@ -140,6 +140,13 @@ duct_families = {
         (tagger.get_label("-FabDuct_DEGREE_MV_Tag"), 0.5),
     ],
 
+    # Square elbows from 5° to 90+°
+    "elbow 90 degree": [
+        (tagger.get_label("-FabDuct_EXT IN_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_EXT OUT_MV_Tag"), 0.5),
+        (tagger.get_label("-FabDuct_DEGREE_MV_Tag"), 0.5),
+    ],
+
     # Round/square/rectangle end cap
     "end cap": [
         (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
@@ -151,6 +158,10 @@ duct_families = {
     ],
 
     "mitred offset": [
+        (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
+    ],
+
+    "cid330 - (radius 2-way offset)": [
         (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
