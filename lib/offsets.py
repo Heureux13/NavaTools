@@ -47,24 +47,30 @@ class Offsets:
         outlet_pt = XYZ(
             outlet_origin.X * 12, outlet_origin.Y * 12, outlet_origin.Z * 12)
 
-        # Inlet orientation (basis if present, else derived)
+        # Determine if duct is rotated (width/height may be swapped)
+        # Check which dimension of the duct aligns with vertical
         if inlet_basis_x and inlet_basis_y:
-            right_in = XYZ(
-                inlet_basis_x.X,
-                inlet_basis_x.Y,
-                inlet_basis_x.Z
-            ).normalize()
-            up_in = XYZ(
-                inlet_basis_y.X,
-                inlet_basis_y.Y,
-                inlet_basis_y.Z
-            ).normalize()
+            bx_z = abs(inlet_basis_x.Z)
+            by_z = abs(inlet_basis_y.Z)
+
+            # If basis_x is more vertical, the duct is rotated 90° (width is vertical)
+            if bx_z > by_z and bx_z > 0.5:
+                # Duct rotated - swap width/height
+                in_w = self.size.in_height if self.size.in_height else 0
+                in_h = self.size.in_width if self.size.in_width else 0
+                out_w = self.size.out_height if self.size.out_height else 0
+                out_h = self.size.out_width if self.size.out_width else 0
+            else:
+                # Normal orientation
+                in_w = self.size.in_width if self.size.in_width else 0
+                in_h = self.size.in_height if self.size.in_height else 0
+                out_w = self.size.out_width if self.size.out_width else 0
+                out_h = self.size.out_height if self.size.out_height else 0
         else:
-            direction = (outlet_pt - inlet_pt).normalize()
-            global_up = XYZ(0, 0, 1) if abs(
-                direction.Z) < 0.9 else XYZ(1, 0, 0)
-            right_in = direction.cross(global_up).normalize()
-            up_in = right_in.cross(direction).normalize()
+            in_w = self.size.in_width if self.size.in_width else 0
+            in_h = self.size.in_height if self.size.in_height else 0
+            out_w = self.size.out_width if self.size.out_width else 0
+            out_h = self.size.out_height if self.size.out_height else 0
 
         # Half-sizes (inches)
         def halves(shape, w, h, d):
@@ -78,16 +84,57 @@ class Offsets:
         in_shape = self.size.in_shape()
         out_shape = self.size.out_shape()
         in_half_w, in_half_h = halves(
-            in_shape, self.size.in_width, self.size.in_height, self.size.in_diameter)
+            in_shape, in_w, in_h, self.size.in_diameter)
         out_half_w, out_half_h = halves(
-            out_shape, self.size.out_width, self.size.out_height, self.size.out_diameter)
+            out_shape, out_w, out_h, self.size.out_diameter)
 
         # Center displacement
         center_vec = outlet_pt - inlet_pt
 
-        # Offsets: center movement projected on right/up, plus size deltas
-        center_h = center_vec.dot(right_in)
-        center_v = center_vec.dot(up_in)
+        # Project onto global axes for consistent measurements
+        # Vertical is always Z-axis (up/down)
+        center_v = center_vec.Z
+
+        # Horizontal: project onto XY plane and decompose into perpendicular directions
+        # We need to measure offset relative to the duct's orientation, not flow direction
+        # Use basis vectors if available to determine duct orientation
+        if inlet_basis_x and inlet_basis_y:
+            # Use actual duct orientation from connectors
+            bx = XYZ(inlet_basis_x.X, inlet_basis_x.Y, inlet_basis_x.Z)
+            by = XYZ(inlet_basis_y.X, inlet_basis_y.Y, inlet_basis_y.Z)
+
+            # Project center_vec onto these basis directions
+            # But map them to vertical/horizontal based on their alignment with global Z
+            bx_z = abs(bx.Z)
+            by_z = abs(by.Z)
+
+            if bx_z > by_z and bx_z > 0.5:
+                # basis_x is vertical (duct rotated 90°)
+                center_h = center_vec.dot(by)
+                center_v = center_vec.dot(bx)
+                # Swap dimensions
+                in_w = self.size.in_height if self.size.in_height else 0
+                in_h = self.size.in_width if self.size.in_width else 0
+                out_w = self.size.out_height if self.size.out_height else 0
+                out_h = self.size.out_width if self.size.out_width else 0
+            else:
+                # Normal: basis_y is vertical (or more vertical)
+                center_h = center_vec.dot(bx)
+                center_v = center_vec.dot(by)
+                in_w = self.size.in_width if self.size.in_width else 0
+                in_h = self.size.in_height if self.size.in_height else 0
+                out_w = self.size.out_width if self.size.out_width else 0
+                out_h = self.size.out_height if self.size.out_height else 0
+        else:
+            # No basis vectors - use global coordinates
+            # Vertical is Z
+            center_v = center_vec.Z
+            # Horizontal magnitude in XY plane
+            center_h = (center_vec.X ** 2 + center_vec.Y ** 2) ** 0.5
+            in_w = self.size.in_width if self.size.in_width else 0
+            in_h = self.size.in_height if self.size.in_height else 0
+            out_w = self.size.out_width if self.size.out_width else 0
+            out_h = self.size.out_height if self.size.out_height else 0
 
         top_val = center_v + (out_half_h - in_half_h)
         bottom_val = center_v - (out_half_h - in_half_h)

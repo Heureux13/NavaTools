@@ -43,7 +43,6 @@ all_fittings = FilteredElementCollector(doc, current_view.Id)\
 
 family_list = {
     'offset',
-    'gored elbow',
     'oval reducer',
     'oval to round',
     'reducer',
@@ -188,6 +187,12 @@ for element in all_fittings:
 
         size_str = size_param.AsString()
         size = Size(size_str)
+
+        # Re-extract inlet/outlet data with size matching
+        inlet_data, outlet_data = xyz_extractor.inlet_outlet_data(size)
+
+        if not inlet_data or not outlet_data:
+            continue
 
         # Calculate offsets with new API
         offsets_calc = Offsets(inlet_data, outlet_data, size)

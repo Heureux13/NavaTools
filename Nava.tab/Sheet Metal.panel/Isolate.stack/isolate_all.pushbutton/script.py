@@ -81,30 +81,19 @@ def collect_elements_from_categories(doc, view_id, categories):
 
 
 def collect_linked_elements(doc, view_id, categories):
-    """Collect linked instances that contain target categories."""
+    """Collect only linked instances that are visible in the current view."""
     ids = List[ElementId]()
     from Autodesk.Revit.DB import RevitLinkInstance
 
-    # Get all linked instance elements
+    # Get linked instances visible in this view only
     linked_instances = FilteredElementCollector(
         doc, view_id).OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType()
 
     for link_inst in linked_instances:
         try:
             if isinstance(link_inst, RevitLinkInstance):
-                linked_doc = link_inst.GetLinkDocument()
-                if linked_doc:
-                    # Check if linked doc has any of our target categories
-                    has_target = False
-                    for bic in categories:
-                        collector = FilteredElementCollector(
-                            linked_doc).OfCategory(bic).WhereElementIsNotElementType()
-                        if collector.GetElementCount() > 0:
-                            has_target = True
-                            break
-                    # If it has target elements, add the linked instance
-                    if has_target:
-                        ids.Add(link_inst.Id)
+                # Add the link instance itself (already filtered to visible in view)
+                ids.Add(link_inst.Id)
         except BaseException:
             pass
     return ids
@@ -125,9 +114,15 @@ with revit.Transaction('Toggle Isolation'):
         active_view.DisableTemporaryViewMode(
             TemporaryViewMode.TemporaryIsolate)
     else:
-        # Collect elements from current document only
+        # Collect elements visible in current view only
         ids = collect_elements_from_categories(
             doc, active_view.Id, categories_to_isolate)
+
+        # Add linked instances that are visible in view
+        linked_ids = collect_linked_elements(
+            doc, active_view.Id, categories_to_isolate)
+        for lid in linked_ids:
+            ids.Add(lid)
 
         # Apply isolation if we have elements
         if ids.Count > 0:

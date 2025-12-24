@@ -183,6 +183,9 @@ else:
             size_str = size_param.AsString()
             size = Size(size_str)
 
+            # Extract XYZ with size matching - re-extract with size info
+            inlet_data, outlet_data = xyz_extractor.inlet_outlet_data(size)
+
             # Calculate offsets with new API
             offsets_calc = Offsets(inlet_data, outlet_data, size)
             fitting = offsets_calc.calculate()
@@ -204,7 +207,8 @@ else:
                                     if p.StorageType == StorageType.Double:
                                         p.Set(fitting[fitting_key])
                                     elif p.StorageType == StorageType.String:
-                                        p.Set(str(round(fitting[fitting_key], 3)))
+                                        p.Set(
+                                            str(round(fitting[fitting_key], 3)))
                                 except Exception:
                                     pass
 
@@ -273,6 +277,25 @@ else:
                 outlet.Y,
                 outlet.Z,
             ))
+
+        # Debug: Show basis vectors
+        output.print_md("## **Basis Vectors (Debug)**")
+        if inlet_data.get('basis_z'):
+            bz = inlet_data['basis_z']
+            output.print_md(
+                "### Inlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
+        if outlet_data.get('basis_z'):
+            bz = outlet_data['basis_z']
+            output.print_md(
+                "### Outlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
+        if inlet_data.get('basis_y'):
+            by = inlet_data['basis_y']
+            output.print_md(
+                "### Inlet Up: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(by.X, by.Y, by.Z))
+        if inlet_data.get('basis_x'):
+            bx = inlet_data['basis_x']
+            output.print_md(
+                "### Inlet Right: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bx.X, bx.Y, bx.Z))
 
         # Offset data
         output.print_md("## Offset data")
