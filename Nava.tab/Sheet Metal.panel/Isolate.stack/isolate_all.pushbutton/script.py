@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit
 from Autodesk.Revit.DB import (BuiltInCategory, FilteredElementCollector, ElementId,
-                               TemporaryViewMode)
+                               TemporaryViewMode, ReferencePlane)
 from System.Collections.Generic import List
 
 # Button info
@@ -54,18 +54,20 @@ categories_to_isolate = [
     BuiltInCategory.OST_Floors,
     BuiltInCategory.OST_Ceilings,
     BuiltInCategory.OST_Viewers,
+    BuiltInCategory.OST_Dimensions,
+    BuiltInCategory.OST_Grids,
 ]
-
 
 # Helpers
 # ==================================================================================================
+
+
 def collect_elements_from_categories(doc, view_id, categories):
     """Collect element IDs from specified categories in current document."""
     ids = List[ElementId]()
 
     # Element types to keep visible (not isolate)
-    excluded_types = ['SectionMarker', 'ElevationMarker',
-                      'ViewSection', 'Grid', 'ReferencePlane']
+    excluded_types = ['SectionMarker', 'ElevationMarker', 'ViewSection']
 
     for bic in categories:
         collector = FilteredElementCollector(doc, view_id).OfCategory(
@@ -75,6 +77,12 @@ def collect_elements_from_categories(doc, view_id, categories):
             element_type = el.GetType().Name
             if element_type not in excluded_types:
                 ids.Add(el.Id)
+
+    # Collect reference planes separately (no BuiltInCategory)
+    ref_plane_collector = FilteredElementCollector(doc, view_id).OfClass(ReferencePlane)
+    for plane in ref_plane_collector:
+        ids.Add(plane.Id)
+
     return ids
 
 

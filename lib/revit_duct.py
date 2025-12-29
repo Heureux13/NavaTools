@@ -641,6 +641,11 @@ class RevitDuct:
         run = set()
         to_visit = [start_duct]
         visited = set()
+        # Preload all fabrication duct parts in the view for fallback proximity checks
+        try:
+            all_ducts_index = {d.id: d for d in RevitDuct.all(doc, view)}
+        except Exception:
+            all_ducts_index = {}
         # Parse starting duct shape and size using Size.in_shape()
         start_size_obj = Size(str(start_duct.size))
 
@@ -655,7 +660,72 @@ class RevitDuct:
                 return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
             return ("unknown", str(size_obj.in_size))
 
+        def shape_equals(a, b, tol=0.01):
+            """Compare two shape keys with tolerance for numeric parts.
+
+            - For ("round", dia): use absolute difference <= tol
+            - For ("oval", dia, flat): both parts within tol
+            - For ("rect", w, h): both parts within tol (order-insensitive)
+            - For ("unknown", s): direct string equality
+            """
+            if not isinstance(a, tuple) or not isinstance(b, tuple):
+                return a == b
+            if a[0] != b[0]:
+                return False
+            kind = a[0]
+            try:
+                if kind == "round":
+                    return abs(float(a[1]) - float(b[1])) <= tol
+                if kind == "oval":
+                    return (abs(float(a[1]) - float(b[1])) <= tol and
+                            abs(float(a[2]) - float(b[2])) <= tol)
+                if kind == "rect":
+                    # Handle orientation-insensitive comparison for rectangle
+                    aw, ah = float(a[1]), float(a[2])
+                    bw, bh = float(b[1]), float(b[2])
+                    direct = (abs(aw - bw) <= tol and abs(ah - bh) <= tol)
+                    swapped = (abs(aw - bh) <= tol and abs(ah - bw) <= tol)
+                    return direct or swapped
+                if kind == "unknown":
+                    return a[1] == b[1]
+            except Exception:
+                return a == b
+            return False
+
         start_shape = shape_key_from_size(start_size_obj)
+
+        def connectors_close(duct_a, duct_b, tol=1e-4):
+            """Fallback: check if any connectors from two ducts are coincident within tolerance (feet)."""
+            try:
+                conns_a = duct_a.get_connectors() or []
+                conns_b = duct_b.get_connectors() or []
+            except Exception:
+                return False
+            for ca in conns_a:
+                oa = None
+                try:
+                    oa = ca.Origin
+                except Exception:
+                    pass
+                if oa is None:
+                    continue
+                for cb in conns_b:
+                    ob = None
+                    try:
+                        ob = cb.Origin
+                    except Exception:
+                        pass
+                    if ob is None:
+                        continue
+                    try:
+                        dx = oa.X - ob.X
+                        dy = oa.Y - ob.Y
+                        dz = oa.Z - ob.Z
+                        if (dx * dx + dy * dy + dz * dz) <= (tol * tol):
+                            return True
+                    except Exception:
+                        continue
+            return False
 
         while to_visit:
             duct = to_visit.pop()
@@ -683,8 +753,22 @@ class RevitDuct:
                         connected_shape = shape_key_from_size(
                             connected_size_obj)
                         # Match by normalized shape/size only (avoid string formatting mismatches)
-                        if connected_shape == start_shape and connected_duct.id not in visited:
+                        if shape_equals(connected_shape, start_shape) and connected_duct.id not in visited:
                             to_visit.append(connected_duct)
+                # Fallback: if no owner references provided by API, try proximity to other parts
+                if all_ducts_index:
+                    for other_id, other_duct in all_ducts_index.items():
+                        if other_id == duct.id or other_id in visited:
+                            continue
+                        # Pre-filter by shape/size to limit work
+                        try:
+                            other_shape = shape_key_from_size(Size(str(other_duct.size)))
+                        except Exception:
+                            continue
+                        if not shape_equals(other_shape, start_shape):
+                            continue
+                        if connectors_close(duct, other_duct):
+                            to_visit.append(other_duct)
         return list(run)
 
     @staticmethod
