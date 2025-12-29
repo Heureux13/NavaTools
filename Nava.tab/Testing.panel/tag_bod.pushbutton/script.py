@@ -51,12 +51,56 @@ straight_joint_families = {
 
 runs_to_skip = {
     "boot tap - wdamper",
-    "boot saddle tap"
+    "boot saddle tap",
 }
 
-size_tags = {
+bod_tag = (
     "_umi_bod",
-}
+    "-FabDuct_BOD_MV_Tag",
+    "_dubduct_bod_md_tag",
+)
+
+
+def _has_tag_type(elem, tag_symbol):
+    """Return True if elem already has a tag of the same type as tag_symbol in this view."""
+    try:
+        if elem is None or tag_symbol is None:
+            return False
+        target_type_id = getattr(tag_symbol, "Id", None)
+        if not target_type_id:
+            return False
+        tags = list(
+            revit.DB.FilteredElementCollector(doc, view.Id)
+            .OfClass(revit.DB.IndependentTag)
+            .ToElements()
+        )
+        for itag in tags:
+            try:
+                tagged_ids = None
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+                if not tagged_ids or elem.Id not in tagged_ids:
+                    continue
+                if itag.GetTypeId() == target_type_id:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        return False
+    return False
+
+
+def _wrap_rd(elem):
+    """Return a RevitDuct wrapper for a fabrication part."""
+    try:
+        if isinstance(elem, RevitDuct):
+            return elem
+        return RevitDuct(doc, view, elem)
+    except Exception:
+        return None
+
 
 # Pre-fetch size tag family name for already-tagged checks
 try:
@@ -66,6 +110,28 @@ try:
 except Exception:
     _size_tag_symbol = None
     _size_tag_fam = ""
+
+# Pick first available BOD tag from priority list
+_active_tag_symbol = None
+_active_tag_name = ""
+_active_tag_fam = ""
+for _tag_name in bod_tag:
+    try:
+        _candidate = tagger.get_label(_tag_name)
+    except Exception:
+        _candidate = None
+    if _candidate:
+        _active_tag_symbol = _candidate
+        _active_tag_name = _tag_name
+        _active_tag_fam = (
+            (_candidate.Family.Name if _candidate and _candidate.Family else "")
+            or getattr(_candidate, "Name", "")
+        ).strip().lower()
+        break
+
+if not _active_tag_symbol:
+    output.print_md("## No BOD tag family found. Tried: {}".format(", ".join(bod_tag)))
+    script.exit()
 
 t = Transaction(doc, "Tag Full Joints")
 t.Start()
@@ -128,14 +194,19 @@ try:
                 d for d in run_straights if d.length and d.length >= 24]
 
             # Separate already-tagged vs untagged for this run
-            def has_size_tag(duct):
+            def has_bod_tag(duct):
                 try:
-                    return tagger.already_tagged(duct.element, _size_tag_fam)
+                    # Prefer exact type-id match to avoid duplicates even after tags move
+                    if _has_tag_type(duct.element, _active_tag_symbol):
+                        return True
+                    if _active_tag_fam:
+                        return tagger.already_tagged(duct.element, _active_tag_fam)
+                    return tagger.already_tagged(duct.element, _active_tag_name)
                 except Exception:
                     return False
 
             already_tagged_run = [
-                d for d in eligible_straights if has_size_tag(d)]
+                d for d in eligible_straights if has_bod_tag(d)]
             untagged_straights = [
                 d for d in eligible_straights if d not in already_tagged_run]
 
@@ -214,7 +285,9 @@ try:
     )
 
     output.print_md("**Size runs: {} runs, {} straights chosen for size tags**".format(
-        size_run_count, len(size_selected_ids)))
+        size_run_count,
+        len(size_selected_ids)
+    ))
 
     # Build tag plan focused on size tags
     tag_plan = {}
@@ -258,22 +331,15 @@ try:
         tag_spacing = 1.0
 
         for assignment in assignments:
-            tags_to_use = size_tags
+            tag_symbol = _active_tag_symbol
+            fam_name = _active_tag_fam or _active_tag_name
             placed = False
             had_existing_for_assignment = False
 
-            for tag_name in tags_to_use:
-                try:
-                    tag_symbol = tagger.get_label(tag_name)
-                    fam_name = (
-                        tag_symbol.Family.Name if tag_symbol and tag_symbol.Family else "").strip().lower()
-                    if not fam_name:
-                        continue
-
-                    if tagger.already_tagged(elem, fam_name):
-                        had_existing_for_assignment = True
-                        continue
-
+            try:
+                if _has_tag_type(elem, tag_symbol) or tagger.already_tagged(elem, fam_name):
+                    had_existing_for_assignment = True
+                else:
                     face_ref, face_pt = tagger.get_face_facing_view(elem)
                     if face_ref is not None and face_pt is not None:
                         offset_pt = face_pt
@@ -351,13 +417,10 @@ try:
                                 pass
                         else:
                             failed_to_tag.append(
-                                (elem, "No valid placement location found"))
+                                (_wrap_rd(elem), "No valid placement location found"))
 
-                    if placed:
-                        break
-
-                except Exception as e:
-                    failed_to_tag.append((elem, str(e)))
+            except Exception as e:
+                failed_to_tag.append((_wrap_rd(elem), str(e)))
 
             if not placed and had_existing_for_assignment:
                 had_existing = True
@@ -370,14 +433,27 @@ try:
                 elem_id, RevitDuct(doc, view, elem)))
         else:
             failed_to_tag.append(
-                (elem, "No tag created and no existing tag found"))
+                (_wrap_rd(elem), "No tag created and no existing tag found"))
     output.print_md("---")
 
     if failed_to_tag:
         output.print_md("## Failed to Tag")
-        for i, (elem, reason) in enumerate(failed_to_tag, start=1):
-            output.print_md("### Index {} | Element ID: {} | Reason: {}".format(
-                i, output.linkify(elem.Id), reason))
+        for i, (rd, reason) in enumerate(failed_to_tag, start=1):
+            try:
+                el = getattr(rd, "element", rd)
+                eid = el.Id if el else None
+                output.print_md("### Index {} | Element ID: {} | Reason: {}".format(
+                    i,
+                    output.linkify(eid) if eid else "<missing>",
+                    reason
+                ))
+
+            except Exception:
+                output.print_md("### Index {} | Reason: {}".format(
+                    i,
+                    reason
+                ))
+
         output.print_md("---")
 
     if needs_tagging:
@@ -390,8 +466,8 @@ try:
                     d.family,
                     d.size,
                     d.length
-                )
-            )
+                ))
+
         output.print_md("---")
 
     if already_tagged:
@@ -404,8 +480,8 @@ try:
                     d.family,
                     d.length,
                     output.linkify(d.element.Id)
-                )
-            )
+                ))
+
         output.print_md("---")
 
     if skipped_unassigned:
@@ -418,8 +494,8 @@ try:
                     d.family,
                     d.length,
                     output.linkify(d.element.Id)
-                )
-            )
+                ))
+
         output.print_md("---")
 
     if skipped_vertical:
@@ -432,34 +508,59 @@ try:
                     d.family,
                     d.length,
                     output.linkify(d.element.Id)
-                )
-            )
+                ))
+
         output.print_md("---")
 
     if needs_tagging:
         newly_ids = [d.element.Id for d in needs_tagging]
         output.print_md("# Newly tagged: {}, {}".format(
-            len(needs_tagging), output.linkify(newly_ids)))
-    # Diagnostic counters for tag set
+            len(needs_tagging),
+            output.linkify(newly_ids)
+        ))
+
     output.print_md(
-        "# Size assigned/placed: {}/{}".format(size_assign_count, size_place_count))
+        "# Size assigned/placed: {}/{}".format(
+            size_assign_count,
+            size_place_count
+        ))
+
     if already_tagged:
         already_ids = [d.element.Id for d in already_tagged]
         output.print_md("# Already tagged: {}, {}".format(
-            len(already_tagged), output.linkify(already_ids)))
+            len(already_tagged),
+            output.linkify(already_ids)
+        ))
+
     if skipped_unassigned:
         skipped_ids = [d.element.Id for d in skipped_unassigned]
         output.print_md("# Skipped (not selected): {}, {}".format(
-            len(skipped_unassigned), output.linkify(skipped_ids)))
+            len(skipped_unassigned),
+            output.linkify(skipped_ids)
+        ))
+
     if skipped_vertical:
         vert_ids = [d.element.Id for d in skipped_vertical]
         output.print_md("# Skipped (vertical): {}, {}".format(
-            len(skipped_vertical), output.linkify(vert_ids)))
+            len(skipped_vertical),
+            output.linkify(vert_ids)
+        ))
+
     all_ducts = needs_tagging + already_tagged + skipped_unassigned + \
-        [d for d, _ in failed_to_tag] + skipped_vertical
-    all_ids = [d.element.Id for d in all_ducts]
+        [d for d, _ in failed_to_tag if _wrap_rd(d)] + skipped_vertical
+
+    all_ids = []
+
+    for d in all_ducts:
+        el = getattr(d, "element", d)
+        if hasattr(el, "Id"):
+            all_ids.append(el.Id)
+
     output.print_md("# Total: {}, {}".format(
-        len(all_ducts), output.linkify(all_ids)))
+        len(all_ducts),
+        output.linkify(all_ids)
+    ))
+
     t.Commit()
 except Exception as e:
     output.print_md("Tag placement error: {}".format(e))

@@ -104,10 +104,21 @@ def classify_offset(fit):
 
     # If left and right are both 0, it's just a vertical offset
     elif abs(left) < tol and abs(right) < tol:
-        if abs(bottom) < tol:
-            return "FOB"
-        elif abs(top) < tol:
-            return "FOT"
+        # Determine FOB/FOT based on center_vertical and edge alignment
+        # FOB: outlet at bottom edge (cv<0 & bottom≈0) OR (cv>0 & top≈0)
+        # FOT: outlet at top edge (cv<0 & top≈0) OR (cv>0 & bottom≈0)
+        if abs(bottom) < tol or abs(top) < tol:
+            # Check relationship between center_vertical and which edge is zero
+            if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
+                return "FOB"
+            elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
+                return "FOT"
+            # Fallback to original logic if cv is near zero
+            elif abs(cv) < tol:
+                return "FOB" if abs(bottom) < tol else "FOT"
+            else:
+                # Default case
+                return "FOB" if abs(bottom) < tol else "FOT"
         elif abs(cv) < tol:
             return "CL"
         else:
@@ -118,11 +129,16 @@ def classify_offset(fit):
 
     # Both vertical and horizontal
     else:
-        # VERTICAL classification
-        if abs(bottom) < tol:
-            vertical = "FOB"
-        elif abs(top) < tol:
-            vertical = "FOT"
+        # Vertical classification with flow-direction correction
+        if abs(bottom) < tol or abs(top) < tol:
+            if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
+                vertical = "FOB"
+            elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
+                vertical = "FOT"
+            elif abs(cv) < tol:
+                vertical = "FOB" if abs(bottom) < tol else "FOT"
+            else:
+                vertical = "FOB" if abs(bottom) < tol else "FOT"
         elif abs(cv) < tol:
             vertical = "CL"
         else:

@@ -14,6 +14,7 @@ from revit_output import print_disclaimer
 from revit_tagging import RevitTagging
 from revit_element import RevitElement
 from revit_duct import RevitDuct
+from revit_xyz import RevitXYZ
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 
@@ -38,7 +39,7 @@ elbow_throat_allowances = {
     's&d': 4,
 }
 
-elbow_tag_excluted = {
+elbow_extension_tags = {
     '-FabDuct_EXT IN_MV_Tag',
     '-FabDuct_EXT OUT_MV_Tag',
     '-FabDuct_EXT LEFT_MV_Tag',
@@ -48,6 +49,11 @@ elbow_tag_excluted = {
 elbow_families = {
     'elbow',
     'tee',
+}
+
+square_elbow_families = {
+    'elbow',
+    'elbow 90 degree',
 }
 
 all_connector_types = {
@@ -66,25 +72,78 @@ family_to_angle_skip = {
 def should_skip_tag(duct, tag):
     fam = (duct.family or '').strip().lower()
     tag_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+
+    # Check if elbow is 45° or 90°
+    is_45_or_90 = False
+    if fam in square_elbow_families:
+        try:
+            ang = duct.angle
+            if ang is not None:
+                # Check exact values and float ranges
+                if ang in [45, 90, 45.0, 90.0]:
+                    is_45_or_90 = True
+                else:
+                    try:
+                        ang_float = abs(float(ang))
+                        if (44.5 <= ang_float <= 45.5) or (89.5 <= ang_float <= 90.5):
+                            is_45_or_90 = True
+                    except (ValueError, TypeError):
+                        pass
+        except Exception:
+            pass
+
+    # For 45/90 square elbows: skip degree tags, but allow extension tags through for now
+    if is_45_or_90 and tag_name == '-fabduct_degree_mv_tag':
+        return True
+
+    # Skip extension tags for elbows with vertical movement (not purely horizontal)
+    if fam in elbow_families and tag_name in {t.strip().lower() for t in elbow_extension_tags}:
+        try:
+            # Check connector Z difference - if any vertical movement, skip extension tag
+            conn_origins = RevitXYZ(duct.element).connector_origins()
+            if conn_origins and len(conn_origins) >= 2:
+                c0, c1 = conn_origins[0], conn_origins[1]
+                dz = abs(c1.Z - c0.Z)
+
+                # Skip extension tags for any elbow with vertical movement (tolerance 0.01 ft for floating point)
+                if dz > 0.01:
+                    return True
+        except Exception as e:
+            output.print_md("DEBUG: Exception checking vertical: {}".format(str(e)))
+            pass
+
     # Skip -FabDuct_DEGREE_MV_Tag for Radius Elbow with angle 45 or 90
     if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
         return True
-    # Skip extension tags for elbows/tees with tdf connector and extension == 6
-    if fam in elbow_families:
-        for connector_types in [duct.connector_0_type, duct.connector_1_type]:
-            if not connector_types:
+
+    # Skip extension tags when extension equals throat allowance (TDF/S&D),
+    # with tolerance and connector type synonyms handled.
+    if fam in elbow_families and tag_name in {t.strip().lower() for t in elbow_extension_tags}:
+        # Normalize connector type names and include potential synonyms
+        connector_types = [duct.connector_0_type, duct.connector_1_type, getattr(duct, 'connector_2_type', None)]
+        for ctype in connector_types:
+            if not ctype:
                 continue
-            connector_type_keys = connector_types.lower().strip()
-            required_ext = elbow_throat_allowances.get(connector_type_keys)
-            if (
-                required_ext is not None
-                and (
-                    duct.extension_top == required_ext
-                    or duct.extension_bottom == required_ext
-                )
-                and tag_name in {t.strip().lower() for t in elbow_tag_excluted}
-            ):
-                return True
+            key = ctype.lower().strip()
+            # Map common variants to base keys
+            if key in {'slip & drive', 'standing s&d'}:
+                key = 's&d'
+
+            required_ext = elbow_throat_allowances.get(key)
+            if required_ext is None:
+                continue
+
+            # Compare against all four extension params with a small tolerance
+            tol = 0.01
+            ext_vals = [
+                duct.extension_top,
+                duct.extension_bottom,
+                getattr(duct, 'extension_left', None),
+                getattr(duct, 'extension_right', None),
+            ]
+            for ev in ext_vals:
+                if isinstance(ev, (int, float)) and abs(ev - required_ext) <= tol:
+                    return True
     return False
 
 

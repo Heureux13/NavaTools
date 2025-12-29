@@ -19,7 +19,6 @@ from System.Collections.Generic import List
 __title__ = "Isolate by MEP"
 __doc__ = """
 Toggle isolation of walls, ducts, pipes, steel beams, and floors.
-Includes linked model components.
 """
 
 # Variables
@@ -57,10 +56,9 @@ categories_to_isolate = [
     BuiltInCategory.OST_Viewers,
 ]
 
-# Main Code
-# =================================================
 
-
+# Helpers
+# ==================================================================================================
 def collect_elements_from_categories(doc, view_id, categories):
     """Collect element IDs from specified categories in current document."""
     ids = List[ElementId]()
@@ -80,25 +78,6 @@ def collect_elements_from_categories(doc, view_id, categories):
     return ids
 
 
-def collect_linked_elements(doc, view_id, categories):
-    """Collect only linked instances that are visible in the current view."""
-    ids = List[ElementId]()
-    from Autodesk.Revit.DB import RevitLinkInstance
-
-    # Get linked instances visible in this view only
-    linked_instances = FilteredElementCollector(
-        doc, view_id).OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType()
-
-    for link_inst in linked_instances:
-        try:
-            if isinstance(link_inst, RevitLinkInstance):
-                # Add the link instance itself (already filtered to visible in view)
-                ids.Add(link_inst.Id)
-        except BaseException:
-            pass
-    return ids
-
-
 def is_view_isolated(view):
     """Check if view currently has isolation enabled."""
     try:
@@ -107,7 +86,8 @@ def is_view_isolated(view):
         return False
 
 
-# Check if isolation is already active
+# Main Code
+# =================================================
 with revit.Transaction('Toggle Isolation'):
     if is_view_isolated(active_view):
         # Remove isolation
@@ -117,12 +97,6 @@ with revit.Transaction('Toggle Isolation'):
         # Collect elements visible in current view only
         ids = collect_elements_from_categories(
             doc, active_view.Id, categories_to_isolate)
-
-        # Add linked instances that are visible in view
-        linked_ids = collect_linked_elements(
-            doc, active_view.Id, categories_to_isolate)
-        for lid in linked_ids:
-            ids.Add(lid)
 
         # Apply isolation if we have elements
         if ids.Count > 0:
