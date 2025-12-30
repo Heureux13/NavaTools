@@ -50,18 +50,28 @@ if not ducts:
 # Filtered results
 # ==================================================
 fil_ducts = []
+skipped_ducts = []
 for d in ducts:
     if d.joint_size != JointSize.SHORT:
         continue
     angle = RevitXYZ(d.element).straight_joint_degree()
-    if isinstance(angle, (int, float)):
-        abs_angle = abs(angle)
-        if current_view_type == "floor":
-            if DuctAngleAllowance.VERTICAL.contains(abs_angle):
-                continue
-        elif current_view_type == "section":
-            if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
-                continue
+    if not isinstance(angle, (int, float)):
+        skipped_ducts.append((d, "angle_not_numeric", angle))
+        continue
+
+    abs_angle = abs(angle)
+    skip_reason = None
+    if current_view_type == "floor":
+        if DuctAngleAllowance.VERTICAL.contains(abs_angle):
+            skip_reason = "vertical_angle_in_floor_view"
+    elif current_view_type == "section":
+        if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
+            skip_reason = "horizontal_angle_in_section_view"
+
+    if skip_reason:
+        skipped_ducts.append((d, skip_reason, abs_angle))
+        continue
+
     fil_ducts.append(d)
 
 # Choose tag
@@ -205,6 +215,18 @@ try:
             output.linkify(element_ids)
         )
     )
+
+    if skipped_ducts:
+        output.print_md("---")
+        output.print_md("# Skipped Ducts: {}".format(len(skipped_ducts)))
+        for d, reason, value in skipped_ducts:
+            output.print_md(
+                "### Reason: {} | Value: {} | Element ID: {}".format(
+                    reason,
+                    value,
+                    output.linkify(d.element.Id)
+                )
+            )
 
     # Final helper print
     print_disclaimer(output)

@@ -53,8 +53,29 @@ tag_parameter = {
 }
 
 
+def should_add_tag_prefix(classification):
+    """Check if classification should have T: prefix.
+
+    Add T: if it contains UP or DN with numbers.
+    Don't add T: for CL, FOB, FOT, FOR, FOL or combinations of these.
+    """
+    import re
+    # Check if it contains UP or DN followed by a number (no space)
+    if re.search(r'\b(UP|DN)\d+', classification):
+        return True
+    return False
+
+
 def classify_offset(fit):
-    """Classify offset values - vertical | horizontal."""
+    """Classify offset values - vertical | horizontal.
+
+    Vertical: FOB, FOT, CL, UP, DN
+    Horizontal: FOL, FOR, CL, IN, OUT
+
+    If top and bottom are both 0, just return horizontal.
+    If left and right are both 0, just return vertical.
+    If both are CL, return just CL.
+    """
     tol = 0.01
 
     cv = fit.get('center_vertical', 0)
@@ -79,7 +100,7 @@ def classify_offset(fit):
                 direction = "OUT" if right > 0 else "IN"
             else:
                 direction = "IN" if left > 0 else "OUT"
-            return "{} {:.0f}".format(direction, magnitude)
+            return "{}{:.0f}".format(direction, magnitude)
 
     # If left and right are both 0, it's just a vertical offset
     elif abs(left) < tol and abs(right) < tol:
@@ -104,7 +125,7 @@ def classify_offset(fit):
             magnitude = max(abs(top), abs(bottom))
             # Flip vertical sense per user: positive center_v => DN
             direction = "DN" if cv > 0 else "UP"
-            return "{} {:.0f}".format(direction, magnitude)
+            return "{}{:.0f}".format(direction, magnitude)
 
     # Both vertical and horizontal
     else:
@@ -144,7 +165,7 @@ def classify_offset(fit):
         if vertical == "CL" and horizontal == "CL":
             return "CL"
 
-        return "{} | {}".format(vertical, horizontal)
+        return "{}|{}".format(vertical, horizontal)
 
 # Main Code
 # ======================================================================
@@ -234,7 +255,33 @@ else:
                     if tag_p and not tag_p.IsReadOnly:
                         try:
                             if tag_p.StorageType == StorageType.String:
-                                tag_p.Set(classification)
+                                current_value = tag_p.AsString()
+
+                                # Add T: prefix if needed
+                                final_classification = classification
+                                if should_add_tag_prefix(classification):
+                                    final_classification = "T:" + classification
+
+                                # If parameter has a value, extract and replace only the numbers
+                                if current_value and current_value.strip():
+                                    import re
+                                    # Extract all numbers from the new classification
+                                    numbers = re.findall(r'\d+', final_classification)
+                                    if numbers:
+                                        # Replace numbers in existing value
+                                        result = current_value
+                                        # Add T: prefix if needed and not already there
+                                        if should_add_tag_prefix(classification) and not result.startswith('T:'):
+                                            result = 'T:' + result
+                                        for number in numbers:
+                                            result = re.sub(r'\d+', number, result, count=1)
+                                        tag_p.Set(result)
+                                    else:
+                                        # No numbers in classification, keep current value
+                                        pass
+                                else:
+                                    # Parameter is empty, write full classification
+                                    tag_p.Set(final_classification)
                         except Exception:
                             pass
 
