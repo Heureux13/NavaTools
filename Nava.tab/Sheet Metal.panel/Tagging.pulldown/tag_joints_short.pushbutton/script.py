@@ -50,28 +50,18 @@ if not ducts:
 # Filtered results
 # ==================================================
 fil_ducts = []
-skipped_ducts = []
 for d in ducts:
     if d.joint_size != JointSize.SHORT:
         continue
     angle = RevitXYZ(d.element).straight_joint_degree()
-    if not isinstance(angle, (int, float)):
-        skipped_ducts.append((d, "angle_not_numeric", angle))
-        continue
-
-    abs_angle = abs(angle)
-    skip_reason = None
-    if current_view_type == "floor":
-        if DuctAngleAllowance.VERTICAL.contains(abs_angle):
-            skip_reason = "vertical_angle_in_floor_view"
-    elif current_view_type == "section":
-        if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
-            skip_reason = "horizontal_angle_in_section_view"
-
-    if skip_reason:
-        skipped_ducts.append((d, skip_reason, abs_angle))
-        continue
-
+    if isinstance(angle, (int, float)):
+        abs_angle = abs(angle)
+        if current_view_type == "floor":
+            if DuctAngleAllowance.VERTICAL.contains(abs_angle):
+                continue
+        elif current_view_type == "section":
+            if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
+                continue
     fil_ducts.append(d)
 
 # Choose tag
@@ -79,15 +69,16 @@ for d in ducts:
 tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
 
 
-def _below_bbox_point(elem, base_point=None, offset_z=-0.5):
-    """Return a point directly below the element bbox (world Z)."""
+def _below_bbox_point(elem, base_point=None, offset_z=0.1):
+    """Return the dead center point of the element bbox."""
     try:
         bbox = elem.get_BoundingBox(view)
         if bbox is None:
             return None
-        bx = base_point.X if base_point else (bbox.Min.X + bbox.Max.X) / 2.0
-        by = base_point.Y if base_point else (bbox.Min.Y + bbox.Max.Y) / 2.0
-        return DB.XYZ(bx, by, bbox.Min.Z + float(offset_z))
+        bx = (bbox.Min.X + bbox.Max.X) / 2.0
+        by = (bbox.Min.Y + bbox.Max.Y) / 2.0
+        bz = (bbox.Min.Z + bbox.Max.Z) / 2.0
+        return DB.XYZ(bx, by, bz)
     except Exception:
         return None
 
@@ -215,18 +206,6 @@ try:
             output.linkify(element_ids)
         )
     )
-
-    if skipped_ducts:
-        output.print_md("---")
-        output.print_md("# Skipped Ducts: {}".format(len(skipped_ducts)))
-        for d, reason, value in skipped_ducts:
-            output.print_md(
-                "### Reason: {} | Value: {} | Element ID: {}".format(
-                    reason,
-                    value,
-                    output.linkify(d.element.Id)
-                )
-            )
 
     # Final helper print
     print_disclaimer(output)

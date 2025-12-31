@@ -3,6 +3,7 @@
 ## Ductwork
 | Parameter | Type |
 |-----------|------|
+| _duct_aspect_ratio | text |
 | _duct_offset_top | number |
 | _duct_offset_bottom | number |
 | _duct_offset_right | number |
