@@ -18,9 +18,7 @@ from pyrevit import revit, script
 # =================================================
 __title__ = "Set Aspect Ratio"
 __doc__ = """
-Sets _duct_aspect_ratio parameter on straight joints based on their size.
-Converts size format (e.g., 12x12) to aspect ratio format (e.g., 1:1).
-Always keeps the ratio relative to 1 (e.g., 1.5:1) rounded to nearest tenth.
+Gives a rounded duct ratio
 """
 
 
@@ -59,11 +57,6 @@ if not all_straights:
 # Helper functions
 # ==================================================
 def calculate_aspect_ratio(size_str):
-    """
-    Calculate aspect ratio from size string (e.g., '12x12' -> '1:1')
-    Returns ratio in format 'X:1' rounded to nearest tenth
-    Always uses the larger dimension as width to ensure ratio >= 1:1
-    """
     try:
         size = Size(size_str)
 
@@ -114,13 +107,15 @@ try:
             # Calculate aspect ratio
             aspect_ratio = calculate_aspect_ratio(size_str)
             if aspect_ratio is None:
-                skipped.append((duct, "Could not calculate ratio from size '{}'".format(size_str)))
+                skipped.append(
+                    (duct, "Could not calculate ratio from size '{}'".format(size_str)))
                 continue
 
             # Set the aspect ratio parameter
             aspect_param = duct.element.LookupParameter("_duct_aspect_ratio")
             if not aspect_param:
-                skipped.append((duct, "_duct_aspect_ratio parameter not found"))
+                skipped.append(
+                    (duct, "_duct_aspect_ratio parameter not found"))
                 continue
 
             aspect_param.Set(aspect_ratio)
@@ -135,8 +130,8 @@ try:
     # ==================================================
     output.print_md("## Aspect Ratio Assignment Results")
     output.print_md("---")
-
     output.print_md("### Successful: {} elements".format(len(successful)))
+
     if successful:
         for duct, size, ratio in successful:
             output.print_md(
@@ -175,7 +170,8 @@ try:
     output.print_md("- **Successful**: {}".format(len(successful)))
     output.print_md("- **Failed**: {}".format(len(failed)))
     output.print_md("- **Skipped**: {}".format(len(skipped)))
-    output.print_md("- **Total Processed**: {}".format(len(successful) + len(failed) + len(skipped)))
+    output.print_md(
+        "- **Total Processed**: {}".format(len(successful) + len(failed) + len(skipped)))
 
 except Exception as e:
     t.RollBack()
