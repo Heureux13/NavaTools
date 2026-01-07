@@ -67,16 +67,46 @@ tag_paramger = {
 
 
 def should_add_tag_prefix(classification):
-    """Check if classification should have T: prefix.
+    """Check if classification contains vertical UP/DN with numbers.
 
-    Add T: if it contains UP or DN with numbers.
-    Don't add T: for CL, FOB, FOT, FOR, FOL or combinations of these.
+    Historically used to decide adding T: prefix. Kept for
+    compatibility, now simply signals when UP/DN digits are present so
+    we can convert to TU/TD format.
     """
     import re
     # Check if it contains UP or DN followed by a number (no space)
-    if re.search(r'\b(UP|DN)\d+', classification):
+    if re.search(r'\b(UP|DN)\s*\d+', classification):
         return True
     return False
+
+
+def convert_to_TU_TD(value):
+    """Convert any 'T:UPn'/'T:DNn' or 'UP n'/'DN n' to 'TUn'/'TDn'.
+
+    - Removes any leading 'T:' marker
+    - Replaces vertical tokens:
+        'UP12' or 'UP 12' -> 'TU12'
+        'DN6'  or 'DN 6'  -> 'TD6'
+    - Leaves other tokens (CL, FOB, FOT, IN, OUT, FOR, FOL) unchanged
+    - Works within combined strings like 'UP12|IN5'
+    """
+    try:
+        import re
+        if value is None:
+            return value
+        s = value.strip()
+        # drop optional leading T:
+        if s.startswith('T:'):
+            s = s[2:]
+        # normalize spaces around vertical tokens and convert, append arrows
+        s = re.sub(r'\bUP\s*(\d+)\b', r'TU\1', s)
+        s = re.sub(r'\bDN\s*(\d+)\b', r'TD\1', s)
+        # ensure arrows for TU/TD exactly once
+        s = re.sub(r'\bTU(\d+)(?:[↑↓])?', r'TU\1↑', s)
+        s = re.sub(r'\bTD(\d+)(?:[↑↓])?', r'TD\1↓', s)
+        return s
+    except Exception:
+        return value
 
 
 def classify_offset(fit):
@@ -100,10 +130,8 @@ def classify_offset(fit):
 
     # If top and bottom are both 0, it's just a horizontal offset
     if abs(top) < tol and abs(bottom) < tol:
-        if abs(left) < tol:
-            return "FOR"
-        elif abs(right) < tol:
-            return "FOL"
+        if abs(left) < tol or abs(right) < tol:
+            return "FOS"
         elif abs(ch) < tol:
             return "CL"
         else:
@@ -145,7 +173,7 @@ def classify_offset(fit):
         # Vertical classification with flow-direction correction
         if abs(bottom) < tol or abs(top) < tol:
             if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
-                vertical = "FOB"
+                vertical = "FOB"a
             elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
                 vertical = "FOT"
             elif abs(cv) < tol:
@@ -161,10 +189,8 @@ def classify_offset(fit):
             vertical = "{} {:.0f}".format(direction, magnitude)
 
         # HORIZONTAL classification
-        if abs(left) < tol:
-            horizontal = "FOR"
-        elif abs(right) < tol:
-            horizontal = "FOL"
+        if abs(left) < tol or abs(right) < tol:
+            horizontal = "FOS"
         elif abs(ch) < tol:
             horizontal = "CL"
         else:
@@ -255,30 +281,25 @@ for element in all_fittings:
                         if tag_p.StorageType == StorageType.String:
                             current_value = tag_p.AsString()
 
-                            # Add T: prefix if needed
-                            final_classification = classification
-                            if should_add_tag_prefix(classification):
-                                final_classification = "T:" + classification
+                            # Convert the new classification to TU/TD scheme
+                            final_classification = convert_to_TU_TD(classification)
 
-                            # If parameter has a value, extract and replace only the numbers
+                            # If parameter has a value, replace only numbers while
+                            # preserving existing format (user may have edited text)
                             if current_value and current_value.strip():
                                 import re
+                                result = current_value
                                 # Extract all numbers from the new classification
-                                numbers = re.findall(r'\d+', final_classification)
+                                numbers = re.findall(r'\d+', final_classification or '')
                                 if numbers:
-                                    # Replace numbers in existing value
-                                    result = current_value
-                                    # Add T: prefix if needed and not already there
-                                    if should_add_tag_prefix(classification) and not result.startswith('T:'):
-                                        result = 'T:' + result
                                     for number in numbers:
                                         result = re.sub(r'\d+', number, result, count=1)
                                     tag_p.Set(result)
                                 else:
-                                    # No numbers in classification, keep current value
-                                    pass
+                                    # No numbers to update, keep current value
+                                    tag_p.Set(current_value)
                             else:
-                                # Parameter is empty, write full classification
+                                # Parameter is empty, write converted classification
                                 tag_p.Set(final_classification)
                     except Exception:
                         pass
@@ -290,7 +311,7 @@ for element in all_fittings:
 for i, (elem, fam, size, fit) in enumerate(processed, start=1):
     cv = fit.get('center_vertical', 0)
     ch = fit.get('center_horizontal', 0)
-    classification = classify_offset(fit)
+    classification = convert_to_TU_TD(classify_offset(fit))
     output.print_md(
         "### No: {:03} | ID: {} | Family: {} | Size: {} | CV: {:.2f}\" | CH: {:.2f}\" | {}".format(
             i,

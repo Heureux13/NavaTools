@@ -15,8 +15,8 @@ from Autodesk.Revit.DB import StorageType
 __title__ = 'Reverse Offset'
 __doc__ = '''
 Reverses the offset direction by:
-- Swapping DN ↔ UP
-- Flipping arrows 180 degrees: → ← ↓ ↑
+- Swapping TU ↔ TD (and UP ↔ DN as legacy)
+- Flipping vertical arrows: ↑ ↔ ↓ (and horizontal → ↔ ← if present)
 - Keeping numbers intact
 '''
 
@@ -27,18 +27,23 @@ output = script.get_output()
 
 
 def reverse_offset_value(value):
-    """Reverse the offset value by swapping DN/UP and flipping arrows."""
+    """Reverse the offset value by swapping TU/TD (and UP/DN) and arrows."""
     if not value:
         return value
 
     result = value
 
-    # Swap DN and UP using a placeholder
+    # Primary: swap TU and TD using placeholders to avoid overlap
+    result = result.replace('TU', '\x00TEMP_TU\x00')
+    result = result.replace('TD', 'TU')
+    result = result.replace('\x00TEMP_TU\x00', 'TD')
+
+    # Legacy: swap DN and UP as well (if any remain)
     result = result.replace('DN', '\x00TEMP_DN\x00')
     result = result.replace('UP', 'DN')
     result = result.replace('\x00TEMP_DN\x00', 'UP')
 
-    # Flip arrows 180 degrees
+    # Flip vertical arrows 180 degrees
     result = result.replace('→', '\x00ARROW_RIGHT\x00')
     result = result.replace('←', '→')
     result = result.replace('\x00ARROW_RIGHT\x00', '←')
@@ -60,7 +65,7 @@ doc = revit.doc
 if not selection:
     output.print_md("# Please select ductwork and try again")
 else:
-    output.print_md("# Reverse Offset")
+    # output.print_md("# Reverse Offset")
 
     updated_count = 0
 
@@ -80,17 +85,17 @@ else:
                             tag_p.Set(reversed_value)
                             updated_count += 1
 
-                            output.print_md(
-                                "### ID: {} | {} → {}".format(
-                                    output.linkify(element.Id),
-                                    current_value,
-                                    reversed_value
-                                ))
+                            # output.print_md(
+                            #     "### ID: {} | {} → {}".format(
+                            #         output.linkify(element.Id),
+                            #         current_value,
+                            #         reversed_value
+                            #     ))
             except Exception as e:
                 output.print_md("ERROR: processing element {} : {}".format(
                     element.Id.Value,
                     str(e)
                 ))
 
-    output.print_md("---")
-    output.print_md("# Summary: {} elements updated".format(updated_count))
+    # output.print_md("---")
+    # output.print_md("# Summary: {} elements updated".format(updated_count))

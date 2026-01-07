@@ -54,16 +54,39 @@ tag_parameter = {
 
 
 def should_add_tag_prefix(classification):
-    """Check if classification should have T: prefix.
+    """Legacy detector for vertical UP/DN with numbers.
 
-    Add T: if it contains UP or DN with numbers.
-    Don't add T: for CL, FOB, FOT, FOR, FOL or combinations of these.
+    Kept for compatibility to detect vertical tokens; we no longer add
+    'T:' but use it to decide TU/TD conversion.
     """
     import re
-    # Check if it contains UP or DN followed by a number (no space)
-    if re.search(r'\b(UP|DN)\d+', classification):
+    if re.search(r'\b(UP|DN)\s*\d+', classification):
         return True
     return False
+
+
+def convert_to_TU_TD(value):
+    """Convert UP/DN tokens to TU/TD with arrows (TU↑ / TD↓).
+
+    - Removes leading 'T:' if present
+    - UP12/UP 12 -> TU12↑
+    - DN6/DN 6 -> TD6↓
+    - Leaves other tokens alone
+    """
+    try:
+        import re
+        if value is None:
+            return value
+        s = value.strip()
+        if s.startswith('T:'):
+            s = s[2:]
+        s = re.sub(r'\bUP\s*(\d+)\b', r'TU\1', s)
+        s = re.sub(r'\bDN\s*(\d+)\b', r'TD\1', s)
+        s = re.sub(r'\bTU(\d+)(?:[↑↓])?', r'TU\1↑', s)
+        s = re.sub(r'\bTD(\d+)(?:[↑↓])?', r'TD\1↓', s)
+        return s
+    except Exception:
+        return value
 
 
 def classify_offset(fit):
@@ -87,10 +110,8 @@ def classify_offset(fit):
 
     # If top and bottom are both 0, it's just a horizontal offset
     if abs(top) < tol and abs(bottom) < tol:
-        if abs(left) < tol:
-            return "FOR"
-        elif abs(right) < tol:
-            return "FOL"
+        if abs(left) < tol or abs(right) < tol:
+            return "FOS"
         elif abs(ch) < tol:
             return "CL"
         else:
@@ -147,10 +168,8 @@ def classify_offset(fit):
             direction = "DN" if cv > 0 else "UP"
             vertical = "{} {:.0f}".format(direction, magnitude)
 
-        if abs(left) < tol:
-            horizontal = "FOR"
-        elif abs(right) < tol:
-            horizontal = "FOL"
+        if abs(left) < tol or abs(right) < tol:
+            horizontal = "FOS"
         elif abs(ch) < tol:
             horizontal = "CL"
         else:
@@ -256,31 +275,18 @@ else:
                         try:
                             if tag_p.StorageType == StorageType.String:
                                 current_value = tag_p.AsString()
-
-                                # Add T: prefix if needed
-                                final_classification = classification
-                                if should_add_tag_prefix(classification):
-                                    final_classification = "T:" + classification
-
-                                # If parameter has a value, extract and replace only the numbers
+                                final_classification = convert_to_TU_TD(classification)
                                 if current_value and current_value.strip():
                                     import re
-                                    # Extract all numbers from the new classification
-                                    numbers = re.findall(r'\d+', final_classification)
+                                    result = current_value
+                                    numbers = re.findall(r'\d+', final_classification or '')
                                     if numbers:
-                                        # Replace numbers in existing value
-                                        result = current_value
-                                        # Add T: prefix if needed and not already there
-                                        if should_add_tag_prefix(classification) and not result.startswith('T:'):
-                                            result = 'T:' + result
                                         for number in numbers:
                                             result = re.sub(r'\d+', number, result, count=1)
                                         tag_p.Set(result)
                                     else:
-                                        # No numbers in classification, keep current value
-                                        pass
+                                        tag_p.Set(current_value)
                                 else:
-                                    # Parameter is empty, write full classification
                                     tag_p.Set(final_classification)
                         except Exception:
                             pass
@@ -297,7 +303,7 @@ else:
         inlet_data, outlet_data = RevitXYZ(elem).inlet_outlet_data()
         inlet = inlet_data['origin']
         outlet = outlet_data['origin']
-        classification = classify_offset(fit)
+        classification = convert_to_TU_TD(classify_offset(fit))
 
         output.print_md("# Element ID: {} | Category {}".format(
             elem.Id.Value,
