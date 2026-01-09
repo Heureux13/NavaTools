@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart
+from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart, IndependentTag, ElementId
 from pyrevit import revit, forms
 import sys
 
@@ -45,7 +45,7 @@ for elem in fab_collector:
             if service_name not in element_by_service:
                 element_by_service[service_name] = []
             element_by_service[service_name].append(elem.Id)
-    except:
+    except BaseException:
         pass
 
 if not services:
@@ -63,19 +63,64 @@ selected_services = forms.SelectFromList.show(
 if not selected_services:
     sys.exit(0)
 
+
+def _id_int(eid):
+    try:
+        return eid.IntegerValue
+    except Exception:
+        try:
+            return eid.Value
+        except Exception:
+            return None
+
+
+def collect_related_tags(doc, view, host_ids):
+    host_set = set()
+    for eid in host_ids:
+        v = _id_int(eid)
+        if v is not None:
+            host_set.add(v)
+
+    tag_ids = []
+    tags = (FilteredElementCollector(doc, view.Id)
+            .OfClass(IndependentTag)
+            .WhereElementIsNotElementType()
+            .ToElements())
+
+    for tag in tags:
+        try:
+            refs = []
+            try:
+                refs = list(tag.GetTaggedLocalElementIds() or [])
+            except Exception:
+                pass
+            if not refs:
+                teid = getattr(tag, 'TaggedElementId', None)
+                if teid and teid != ElementId.InvalidElementId:
+                    refs = [teid]
+            for rid in refs:
+                if _id_int(rid) in host_set:
+                    tag_ids.append(tag.Id)
+                    break
+        except Exception:
+            continue
+    return tag_ids
+
+
 # Collect element IDs for selected services
 with revit.Transaction("Isolate by Fabrication Service"):
     element_ids = []
     for service in selected_services:
         element_ids.extend(element_by_service[service])
 
+    # Include related tags in isolation
+    tag_ids = collect_related_tags(doc, active_view, element_ids)
+    element_ids.extend(tag_ids)
+
     # Apply temporary isolation to view
     if element_ids:
         from System.Collections.Generic import List
-        from Autodesk.Revit.DB import ElementId
         id_list = List[ElementId](element_ids)
         active_view.IsolateElementsTemporary(id_list)
-        # print("Isolated {} elements from {} services".format(
-        #     len(element_ids), len(selected_services)))
     else:
         print("No elements found for selected services")

@@ -173,7 +173,7 @@ def classify_offset(fit):
         # Vertical classification with flow-direction correction
         if abs(bottom) < tol or abs(top) < tol:
             if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
-                vertical = "FOB"a
+                vertical = "FOB"
             elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
                 vertical = "FOT"
             elif abs(cv) < tol:
