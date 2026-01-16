@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart, IndependentTag, ElementId
+from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart, IndependentTag, ElementId, View, ViewType, BuiltInCategory
 from pyrevit import revit, forms
 import sys
 
@@ -116,6 +116,19 @@ with revit.Transaction("Isolate by Fabrication Service"):
     # Include related tags in isolation
     tag_ids = collect_related_tags(doc, active_view, element_ids)
     element_ids.extend(tag_ids)
+
+    # Include annotation elements to keep them visible
+    categories_to_include = [
+        BuiltInCategory.OST_Grids,
+        BuiltInCategory.OST_Dimensions,
+        BuiltInCategory.OST_Viewers,
+    ]
+
+    for bic in categories_to_include:
+        collector = FilteredElementCollector(doc, active_view.Id).OfCategory(
+            bic).WhereElementIsNotElementType()
+        for elem in collector:
+            element_ids.append(elem.Id)
 
     # Apply temporary isolation to view
     if element_ids:
