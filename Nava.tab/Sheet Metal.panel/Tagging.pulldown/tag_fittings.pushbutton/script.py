@@ -113,8 +113,8 @@ def should_skip_tag(duct, tag):
             pass
 
     # Skip -FabDuct_DEGREE_MV_Tag for Radius Elbow with angle 45 or 90
-    if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
-        return True
+    # if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
+    #     return True
 
     # Skip extension tags when extension equals throat allowance (TDF/S&D),
     # with tolerance and connector type synonyms handled.
@@ -169,7 +169,7 @@ duct_families = {
     ],
 
     # Rectangle tap usually on the main trunk.
-    "boot tap": [
+    "rect volume damper": [
         (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
@@ -179,7 +179,7 @@ duct_families = {
     ],
 
     # Round tap usually from main to VAV.
-    "boot saddle tap": [
+    "access panel": [
         (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
@@ -240,8 +240,7 @@ duct_families = {
 
     # Elbow with radius heel and throat
     "radius elbow": [
-        (tagger.get_label("-FabDuct_INNER_R_FIX_Tag"), 0.5),
-        (tagger.get_label('-FabDuct_DEGREE_MV_Tag'), 0.5),
+        (tagger.get_label('-FabDuct_DEGREE_MV_Tag'), 0.5)
     ],
 
     "radius offset": [
