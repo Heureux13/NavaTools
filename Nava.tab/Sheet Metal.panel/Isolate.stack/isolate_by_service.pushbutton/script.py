@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart, IndependentTag, ElementId, View, ViewType, BuiltInCategory
+from Autodesk.Revit.DB import FilteredElementCollector, FabricationPart, IndependentTag, ElementId, View, ViewType, BuiltInCategory, ReferencePlane
 from pyrevit import revit, forms
 import sys
 
@@ -129,6 +129,11 @@ with revit.Transaction("Isolate by Fabrication Service"):
             bic).WhereElementIsNotElementType()
         for elem in collector:
             element_ids.append(elem.Id)
+
+    # Include reference planes
+    ref_plane_collector = FilteredElementCollector(doc, active_view.Id).OfClass(ReferencePlane)
+    for plane in ref_plane_collector:
+        element_ids.append(plane.Id)
 
     # Apply temporary isolation to view
     if element_ids:

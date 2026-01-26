@@ -12,13 +12,6 @@ the copyright holder."""
 from pyrevit import revit, forms, script
 from Autodesk.Revit.DB import *
 
-# Button display information
-# =================================================
-__title__ = "Parameters"
-__doc__ = """
-Shows all available parameters for selected element.
-"""
-
 # Variables
 # ==================================================
 app = __revit__.Application             # type: Application
