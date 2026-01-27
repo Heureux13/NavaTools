@@ -187,8 +187,12 @@ duct_families = {
         (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
+    "access panel": [
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
+    ],
+
     # Offset Radius elbow
-    'drop check': [
+    'drop cheek': [
         (tagger.get_label('-FabDuct_SIZE_FIX_Tag'), 0.5)
     ],
 
@@ -229,6 +233,21 @@ duct_families = {
         (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
     ],
 
+    # Fire damerps that are tyep b
+    "fire damper - type b": [
+        (tagger.get_label("-FabDuct_MARK_Tag"), 0.5)
+    ],
+
+    # Man bars, Security Bars, Burglar Bars
+    "manbars": [
+        (tagger.get_label("-FabDuct_MARK_Tag"), 0.5)
+    ],
+
+    # Man bars, Security Bars, Burglar Bars
+    "canvas": [
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
+    ],
+
     # Offset ogee
     "ogee": [
         (tagger.get_label("-FabDuct_TRAN_MV_Tag"), 0.5)
@@ -267,7 +286,7 @@ duct_families = {
 
     # TDF end cap
     "tdf end cap": [
-        (tagger.get_label("-FabDuct_SIZE_FIX_Tag"), 0.5)
+        (tagger.get_label("-FabDuct_TM_MV_Tag"), 0.5)
     ],
 
     # Square/rectangle tee elbow
