@@ -16,9 +16,9 @@ import re
 
 # Button info
 # ===================================================
-__title__ = "Select & Itemize by Notes"
+__title__ = "Select by Fab Notes"
 __doc__ = """
-Select fabrication duct by Fabrication Notes parameter and group by value
+Select fabrication duct by Fabrication Notes parameter
 """
 
 # Variables
