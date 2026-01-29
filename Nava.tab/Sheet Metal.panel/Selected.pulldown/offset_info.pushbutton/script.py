@@ -31,6 +31,7 @@ output = script.get_output()
 family_list = {
     'offset',
     'gored elbow',
+    'ogee',
     'oval reducer',
     'oval to round',
     'reducer',
