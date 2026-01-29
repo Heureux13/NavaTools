@@ -5,7 +5,6 @@ from Autodesk.Revit.DB import BuiltInCategory, ElementId
 from Autodesk.Revit.UI.Selection import ObjectType
 from pyrevit import revit, script
 from revit_duct import RevitDuct
-from revit_parameter import RevitParameter
 from revit_output import print_disclaimer
 from System.Collections.Generic import List
 
@@ -24,10 +23,11 @@ doc = revit.doc
 view = revit.active_view
 output = script.get_output()
 ducts = RevitDuct.from_selection(uidoc, doc, view)
-rp = RevitParameter(doc, app)
 
 # Helpers
 # ===============================================================
+
+
 def is_non_fab_duct(el):
     cat = el.Category
     if not cat:
@@ -37,6 +37,7 @@ def is_non_fab_duct(el):
         ElementId(BuiltInCategory.OST_DuctFitting),
         ElementId(BuiltInCategory.OST_DuctAccessory),
     )
+
 
 # Main Code
 # ==================================================================
