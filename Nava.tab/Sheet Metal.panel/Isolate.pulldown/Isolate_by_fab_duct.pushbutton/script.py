@@ -21,7 +21,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Fab Duct"
+__title__ = "Isolate by Fab Duct"
 __doc__ = """
 Selects all fabrication duct, and filters them down by parameters to select
 """

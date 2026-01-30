@@ -21,7 +21,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Non-Fab"
+__title__ = "Isolate by Non-Fab"
 __doc__ = """
 Selects all non-fabrication duct, and filters them down by parameters to select
 """
