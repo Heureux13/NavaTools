@@ -63,12 +63,41 @@ output = script.get_output()
 
 tagger = RevitTagging(doc, view)
 
-target_tag_name = "_umi_duct_ITEM_NUMBER"
-tag_symbol = _find_tag_symbol(doc, target_tag_name)
+number_families = {
+    "straigth",
+    "transition",
+    "elbow - 90 degree",
+    "elbow",
+    "drop cheeck",
+    "ogee",
+    "offset",
+    "square to Ø",
+    "end cap",
+    "tdf end cap",
+    'reducer',
+    'conical tee',
+}
+
+
+tag_names = [
+    "-FabDuct_Item Number_Tag",
+    "_umi_duct_ITEM_NUMBER",
+]
+
+tag_symbol = None
+target_tag_name = None
+for candidate in tag_names:
+    tag_symbol = _find_tag_symbol(doc, candidate)
+    if tag_symbol:
+        target_tag_name = candidate
+        break
 
 if not tag_symbol:
     output.print_md(
-        "## Tag '{}' not found in Fabrication Duct Tags.".format(target_tag_name))
+        "## None of these tags were found in Fabrication Duct Tags: {}".format(
+            ", ".join(tag_names)
+        )
+    )
     script.exit()
 
 fab_ducts = (
