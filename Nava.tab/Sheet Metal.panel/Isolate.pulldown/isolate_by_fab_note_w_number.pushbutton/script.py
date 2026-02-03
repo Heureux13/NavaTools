@@ -53,6 +53,13 @@ families_to_skip = {
     "coupling",
 }
 
+# Values to skip in Fabrication Notes
+fab_notes_to_skip = {
+    0,
+    "0",
+    "skip",
+}
+
 # Class
 # =====================================================================
 
@@ -292,7 +299,10 @@ try:
             # Check if value is numeric
             item_str = str(item_val).strip()
             try:
-                float(item_str)
+                num_val = float(item_str)
+                # Skip if item number is 0
+                if num_val == 0:
+                    break
                 item_number_found = True  # Has numeric Item Number
             except ValueError:
                 break  # Item Number exists but not numeric, skip this duct
@@ -311,6 +321,11 @@ try:
             else:
                 # Keep full value with variants (don't strip parenthesis)
                 pval = str(pval).strip()
+
+            # Skip values in the skip list
+            if pval.lower() in fab_notes_to_skip:
+                break
+
             if pval not in param_groups:
                 param_groups[pval] = []
             param_groups[pval].append(d)

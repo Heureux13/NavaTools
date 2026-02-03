@@ -18,9 +18,9 @@ import re
 
 # Button info
 # ===================================================
-__title__ = "Number 1"
+__title__ = "Numbers All w/ Matches"
 __doc__ = """
-Selects/creates a run bases on size of seleted duct.
+Will number all fittings in job with matching numbers if possible
 """
 
 # Variables
@@ -34,14 +34,11 @@ output = script.get_output()
 # Main Code
 # ==================================================
 # NUMBERING ALGORITHM:
-# 1. User selects a fitting (e.g., fitting C with value 15)
-# 2. Check if selected fitting is in number_families and doesn't have skip_value
-# 3. Find the next sequential number in connected fittings:
-#    - Look for connected fitting with value 16 (current + 1)
-#    - From 16, look for connected fitting with value 17
-#    - Continue following the number chain until next number not found
-# 4. Once chain is complete, number remaining unvisited connections sequentially
-# 5. This ensures directional flow without backtracking
+# 1. Scan entire model for all FabricationPart elements
+# 2. Group numberable ducts into connected runs (BFS traversal)
+# 3. Number each run sequentially, respecting signatures for deduplication
+# 4. Allow numbers to spread across runs if identical signatures exist
+# 5. Process stored_families afterwards, matching connected signatures where possible
 
 # Parameters that hold the item number (will be matched case-insensitive)
 number_paramters = {
@@ -215,8 +212,9 @@ def is_numberable(duct):
     family = duct.family
     if not family:
         return False
-    family_lower = family.lower()
-    return family_lower in number_families
+    # Strip whitespace and asterisks from family name
+    family_clean = family.strip().strip('*').lower()
+    return family_clean in number_families
 
 
 def is_traversable(duct):
@@ -224,8 +222,10 @@ def is_traversable(duct):
     family = duct.family
     if not family:
         return False
-    family_lower = family.lower()
-    return family_lower in allow_but_not_number or is_numberable(duct)
+    # Strip whitespace and asterisks from family name
+    family_clean = family.strip().strip('*').lower()
+    return (family_clean in allow_but_not_number or
+            is_numberable(duct))
 
 
 def has_skip_value(duct):
@@ -441,329 +441,379 @@ def find_endpoints(start_duct, doc, view, visited=None):
     return endpoints
 
 
-def find_anchor_number(duct, doc, view, visited=None):
+def find_endpoints(start_duct, doc, view, visited=None):
     """
-    Recursively search backwards through connections to find an existing number.
-    Returns (anchor_number, anchor_duct) or (None, None) if no anchor found.
-    """
-    if visited is None:
-        visited = set()
-
-    visited.add(duct.id)
-
-    # Check if this duct has a number
-    current_number = get_item_number(duct)
-    if current_number is not None and current_number > 0:
-        return (current_number, duct)
-
-    # Get connected fittings and search through them
-    connected = get_connected_fittings(duct, doc, view)
-    for conn in connected:
-        if conn.id in visited:
-            continue
-
-        # Only traverse through valid families
-        if not is_traversable(conn):
-            continue
-
-        # Recursively search
-        anchor_num, anchor_duct = find_anchor_number(conn, doc, view, visited)
-        if anchor_num is not None:
-            return (anchor_num, anchor_duct)
-
-    return (None, None)
-
-
-def number_run_forward(start_duct, start_number, doc, view, visited=None, stored_taps=None, modified_ducts=None, signature_map=None, allow_store_families=False):
-    """
-    Number fittings starting from the connections of start_duct with start_number.
-    Uses signature_map to reuse numbers for matching elements.
-    allow_store_families: If True, store_families can be numbered (used when they are selected)
-    Returns the last number used, list of stored tap fittings, modified ducts, and signature_map.
+    Find all fittings in the run that are true endpoints (only 1 traversable connection total).
+    Returns a list of duct objects that are endpoints.
     """
     if visited is None:
         visited = set()
-    if stored_taps is None:
-        stored_taps = []
-    if modified_ducts is None:
-        modified_ducts = []
-    if signature_map is None:
-        signature_map = {}
 
-    current_number = start_number
+    endpoints = []
+    all_ducts = []
+    to_process = [start_duct]
 
-    # Get connections from the start duct
-    connected = get_connected_fittings(start_duct, doc, view)
-    output.print_md("*Found {} connected fittings*".format(len(connected)))
+    # First, collect all traversable ducts in the run
+    while to_process:
+        duct = to_process.pop(0)
 
-    to_process = [(conn, current_number)
-                  for conn in connected if conn.id not in visited]
+        if duct.id in visited:
+            continue
+        visited.add(duct.id)
+        all_ducts.append(duct)
+
+        # Get all connected fittings
+        connected = get_connected_fittings(duct, doc, view)
+        for conn in connected:
+            if conn.id not in visited and is_traversable(conn):
+                to_process.append(conn)
+
+    # Now find true endpoints (ducts with only 1 traversable connection)
+    for duct in all_ducts:
+        connected = get_connected_fittings(duct, doc, view)
+        traversable_count = sum(1 for c in connected if is_traversable(c))
+
+        if traversable_count == 1:
+            endpoints.append(duct)
+            output.print_md("*Found endpoint: {} (ID: {})*".format(
+                duct.family if duct.family else "Unknown",
+                output.linkify(duct.element.Id)
+            ))
+
+    return endpoints
+
+
+def collect_connected_run(start_duct, doc, view, visited_global=None):
+    """
+    Collect all ducts in a connected run starting from start_duct.
+    Uses BFS to find all connected traversable ducts.
+    Returns list of all ducts in this run.
+    """
+    if visited_global is None:
+        visited_global = set()
+
+    run_ducts = []
+    to_process = [start_duct]
 
     while to_process:
-        duct, num = to_process.pop(0)
+        duct = to_process.pop(0)
+
+        if duct.id in visited_global:
+            continue
+        visited_global.add(duct.id)
+        run_ducts.append(duct)
+
+        # Get all connected fittings
+        connected = get_connected_fittings(duct, doc, view)
+        for conn in connected:
+            if conn.id not in visited_global and is_traversable(conn):
+                to_process.append(conn)
+
+    return run_ducts, visited_global
+
+
+def get_all_numberable_and_traversable(doc, view):
+    """
+    Collect all numberable and traversable ducts from the entire model.
+    Also collect stored families separately for processing at the end.
+    Returns (numberable_ducts, all_traversable_ducts, stored_family_ducts).
+    """
+    collector = FilteredElementCollector(doc, view.Id)
+    all_fab_parts = collector.OfClass(FabricationPart).ToElements()
+
+    numberable_ducts = []
+    traversable_ducts = []
+    stored_family_ducts = []
+
+    for elem in all_fab_parts:
+        try:
+            duct = RevitDuct(doc, view, elem)
+            family = duct.family
+            family_clean = family.strip().strip('*').lower() if family else ""
+
+            if family_clean in store_families:
+                stored_family_ducts.append(duct)
+            elif is_numberable(duct):
+                numberable_ducts.append(duct)
+            if is_traversable(duct):
+                traversable_ducts.append(duct)
+        except Exception:
+            continue
+
+    return numberable_ducts, traversable_ducts, stored_family_ducts
+
+
+def organize_into_runs(all_traversable_ducts, doc, view):
+    """
+    Organize all traversable ducts into connected runs.
+    Returns a list of runs, where each run is a list of ducts.
+    """
+    visited_global = set()
+    runs = []
+
+    for duct in all_traversable_ducts:
+        if duct.id not in visited_global:
+            run_ducts, visited_global = collect_connected_run(
+                duct, doc, view, visited_global)
+            runs.append(run_ducts)
+
+    return runs
+
+
+def get_duplicate_signatures(all_ducts):
+    """
+    Find all signatures that appear more than once.
+    Returns a dict: {signature: [list of ducts with that signature]}
+    """
+    signature_groups = {}
+
+    for duct in all_ducts:
+        if not is_numberable(duct) or has_skip_value(duct):
+            continue
+
+        sig = get_match_signature(duct)
+        if sig not in signature_groups:
+            signature_groups[sig] = []
+        signature_groups[sig].append(duct)
+
+    # Filter to only duplicates (signatures with 2+ ducts)
+    duplicates = {sig: ducts for sig,
+                  ducts in signature_groups.items() if len(ducts) > 1}
+    return duplicates
+
+
+def number_duplicates(all_numberable_ducts, signature_map, current_number):
+    """
+    Find all duplicate signatures and pre-number them by size (largest to smallest).
+    Returns (next_available_number, modified_ducts_list, updated_signature_map).
+    """
+    duplicates = get_duplicate_signatures(all_numberable_ducts)
+    modified_ducts = []
+    next_number = current_number
+
+    if not duplicates:
+        output.print_md("*No duplicates found*")
+        return next_number, modified_ducts, signature_map
+
+    output.print_md(
+        "## Found {} duplicate signatures, numbering by size (largest first)".format(len(duplicates)))
+
+    for sig, duct_list in duplicates.items():
+        # Sort by size - largest first
+        # Size is the second element in signature tuple
+        duct_list_sorted = sorted(duct_list, key=lambda d: str(
+            d.size if hasattr(d, 'size') and d.size else ""), reverse=True)
+
+        output.print_md(
+            "**Signature**: {} | Count: {}".format(sig, len(duct_list_sorted)))
+
+        for idx, duct in enumerate(duct_list_sorted):
+            set_item_number(duct, next_number)
+            modified_ducts.append(duct)
+            signature_map[sig] = next_number
+            output.print_md("  Set {} ({}) to **{}**".format(
+                duct.family if duct.family else "Unknown",
+                duct.size if hasattr(
+                    duct, 'size') and duct.size else "Unknown",
+                next_number
+            ))
+            next_number += 1
+
+        output.print_md("---")
+
+    return next_number, modified_ducts, signature_map
+
+
+def number_run_all_at_once(run_ducts, current_number, doc, view, signature_map=None, modified_ducts=None):
+    """
+    Number all ducts in a single run, starting from current_number.
+    Uses signature_map for deduplication across runs.
+    Returns (last_number_used, modified_count, updated_signature_map, updated_modified_ducts).
+    """
+    if signature_map is None:
+        signature_map = {}
+    if modified_ducts is None:
+        modified_ducts = []
+
+    visited = set()
+    to_process = run_ducts[:]  # Start with all ducts in run
+    max_number_used = current_number - 1
+    modified_in_run = 0
+
+    # Use BFS to number all ducts in run while keeping numbers grouped
+    while to_process:
+        duct = to_process.pop(0)
 
         if duct.id in visited:
             continue
         visited.add(duct.id)
 
-        # Check if this is a store_family (tap)
-        family = duct.family
-        family_lower = family.lower() if family else ""
-
-        output.print_md("*Checking: {} (family: {})*".format(
-            output.linkify(duct.element.Id),
-            family if family else "None"
-        ))
-
-        if family_lower in store_families:
-            if not allow_store_families:
-                stored_taps.append((duct, None))
-                output.print_md("  *Stored tap for later (no value written)*")
-                # Skip during traversal unless it was the selected fitting
-                continue
-            # If allow_store_families is True, fall through to number it
-
-        # Check if we should number this fitting
-        if is_numberable(duct):
-            if has_skip_value(duct):
-                output.print_md("  *Has skip value, writing 'skip'*")
-                # Has skip value - write "skip" to mark it
-                set_item_number(duct, "skip")
-                modified_ducts.append(duct)
-            else:
-                # Check if this element matches any already numbered element
-                duct_signature = get_match_signature(duct)
-
-                if duct_signature in signature_map:
-                    # Match found! Use the same number
-                    matching_number = signature_map[duct_signature]
-                    set_item_number(duct, matching_number)
-                    output.print_md("Set {} to **{}** (ID: {}) *[matched existing]*".format(
-                        family if family else "Unknown",
-                        matching_number,
-                        output.linkify(duct.element.Id)
-                    ))
-                    modified_ducts.append(duct)
-                else:
-                    # New unique element - assign next number and add to map
-                    set_item_number(duct, current_number)
-                    output.print_md("Set {} to **{}** (ID: {})".format(
-                        family if family else "Unknown",
-                        current_number,
-                        output.linkify(duct.element.Id)
-                    ))
-                    modified_ducts.append(duct)
-                    signature_map[duct_signature] = current_number
-                    current_number += 1
-        elif is_traversable(duct):
-            # Don't number but continue traversing
-            output.print_md(
-                "  *Traversable (allow_but_not_number), continuing*")
-            pass
-        else:
-            # Can't traverse through this
-            output.print_md("  *Not numberable or traversable, skipping*")
+        # Skip if not numberable
+        if not is_numberable(duct):
             continue
 
-        # Get next connections
-        next_connected = get_connected_fittings(duct, doc, view)
-        for conn in next_connected:
-            if conn.id not in visited:
-                to_process.append((conn, current_number))
+        # Skip if has skip value
+        if has_skip_value(duct):
+            set_item_number(duct, "skip")
+            modified_ducts.append(duct)
+            modified_in_run += 1
+            output.print_md("  *{} - Skip value*".format(
+                duct.family if duct.family else "Unknown"
+            ))
+            continue
 
-    return current_number - 1, stored_taps, modified_ducts, len(modified_ducts), signature_map
+        # Check signature for matching
+        duct_signature = get_match_signature(duct)
+
+        if duct_signature in signature_map:
+            # Match found - reuse number
+            matching_number = signature_map[duct_signature]
+            set_item_number(duct, matching_number)
+            modified_ducts.append(duct)
+            modified_in_run += 1
+            output.print_md("Set {} to **{}** (ID: {}) *[matched]*".format(
+                duct.family if duct.family else "Unknown",
+                matching_number,
+                output.linkify(duct.element.Id)
+            ))
+        else:
+            # New unique element - assign next number
+            set_item_number(duct, current_number)
+            modified_ducts.append(duct)
+            modified_in_run += 1
+            signature_map[duct_signature] = current_number
+            output.print_md("Set {} to **{}** (ID: {})".format(
+                duct.family if duct.family else "Unknown",
+                current_number,
+                output.linkify(duct.element.Id)
+            ))
+            max_number_used = current_number
+            current_number += 1
+
+    return max_number_used, modified_in_run, signature_map, modified_ducts
 
 
 # Main Script
 # ==================================================
 
-# Get selected fitting
-selected_duct = RevitDuct.from_selection(uidoc, doc, view)
-selected_duct = selected_duct[0] if selected_duct else None
+try:
+    # Collect all ducts from the model
+    output.print_md("## Collecting all ducts from model...")
+    all_numberable, all_traversable, all_stored_families = get_all_numberable_and_traversable(
+        doc, view)
+    output.print_md(
+        "Found **{}** numberable ducts".format(len(all_numberable)))
+    output.print_md(
+        "Found **{}** traversable ducts".format(len(all_traversable)))
+    output.print_md(
+        "Found **{}** stored family ducts".format(len(all_stored_families)))
+    output.print_md("---")
 
-
-# Start of numbering logic
-if selected_duct:
-    # Validate selected fitting - allow store_families when selected
-    selected_family = selected_duct.family
-    selected_family_lower = selected_family.lower() if selected_family else ""
-    is_store_family = selected_family_lower in store_families
-
-    if not is_numberable(selected_duct) and not is_store_family:
-        output.print_md("## Selected fitting '{}' cannot be numbered".format(
-            selected_duct.family if selected_duct.family else "Unknown"
-        ))
-    elif has_skip_value(selected_duct):
-        output.print_md(
-            "## Selected fitting has a skip value and cannot be numbered")
+    if not all_numberable:
+        output.print_md("## No numberable ducts found in model")
     else:
         # Start transaction
-        t = Transaction(doc, "Number Duct Run")
+        t = Transaction(doc, "Number All Ducts")
         t.Start()
 
         try:
-            output.print_md("## Starting numbering process...")
+            output.print_md("## Organizing into connected runs...")
+            runs = organize_into_runs(all_traversable, doc, view)
+            output.print_md("Found **{}** connected runs".format(len(runs)))
             output.print_md("---")
 
-            # Track all modified ducts and signature map
-            modified_ducts = []
+            # First: Number all duplicates by size (largest to smallest)
+            output.print_md("## Step 1: Pre-numbering duplicates by size")
             signature_map = {}
+            all_modified_ducts = []
+            current_number = 1
 
-            # Check if selected fitting is a store_family (needed for both paths)
-            is_selected_store_family = is_store_family
-
-            # Get the current number on selected fitting
-            selected_number = get_item_number(selected_duct)
-
-            if selected_number is not None:
-                # Selected fitting already has a number, follow the chain from here
-                output.print_md(
-                    "Selected fitting has number: **{}**".format(selected_number))
-                output.print_md("---")
-
-                visited = {selected_duct.id}
-                last_duct_in_chain, last_number_in_chain, visited, chain_ducts = follow_number_chain(
-                    selected_duct, doc, view, visited
-                )
-
-                output.print_md(
-                    "*End of existing chain at number: {}*".format(last_number_in_chain))
-                output.print_md("---")
-
-                # Build signature map and renumber duplicates within chain
-                max_number_used = 0
-                for chain_duct in chain_ducts:
-                    chain_sig = get_match_signature(chain_duct)
-                    chain_num = get_item_number(chain_duct)
-
-                    if chain_num is not None and chain_num > 0:
-                        if chain_sig not in signature_map:
-                            # First occurrence of this signature - record it
-                            signature_map[chain_sig] = chain_num
-                            max_number_used = max(max_number_used, chain_num)
-                        else:
-                            # Duplicate signature - renumber to match first occurrence
-                            first_num = signature_map[chain_sig]
-                            if chain_num != first_num:
-                                set_item_number(chain_duct, first_num)
-                                output.print_md("*Renumbered duplicate {} from {} to {}*".format(
-                                    chain_duct.family if chain_duct.family else "Unknown",
-                                    chain_num,
-                                    first_num
-                                ))
-
-                # Add all chain ducts to modified_ducts
-                modified_ducts.extend(chain_ducts)
-
-                start_duct = last_duct_in_chain
-                start_number = max_number_used + 1
-                modified_count = len(chain_ducts)
-                last_number = selected_number
-            else:
-                # Selected fitting has no number, find anchor
-                anchor_number, anchor_duct = find_anchor_number(
-                    selected_duct, doc, view)
-
-                if anchor_number is None or anchor_duct is None:
-                    # No existing number found, start at 1
-                    start_number = 1
-                    output.print_md(
-                        "No existing numbers found, starting at **1**")
-                else:
-                    # Found an anchor, start from next number
-                    start_number = anchor_number + 1
-                    output.print_md("Found anchor number **{}** on {} (ID: {})".format(
-                        anchor_number,
-                        anchor_duct.family if anchor_duct.family else "Unknown",
-                        output.linkify(anchor_duct.element.Id)
-                    ))
-
-                output.print_md("---")
-
-                # Number the selected fitting first and add to signature map
-                set_item_number(selected_duct, start_number)
-                modified_ducts.append(selected_duct)
-                selected_signature = get_match_signature(selected_duct)
-                signature_map[selected_signature] = start_number
-                output.print_md("Set {} to **{}** (ID: {})".format(
-                    selected_duct.family if selected_duct.family else "Unknown",
-                    start_number,
-                    output.linkify(selected_duct.element.Id)
-                ))
-
-                # Continue numbering forward from selected fitting
-                visited = {selected_duct.id}
-                start_duct = selected_duct
-                last_number = start_number
-                modified_count = 1
+            # Number duplicates first
+            dup_next_number, dup_modified, signature_map = number_duplicates(
+                all_numberable, signature_map, current_number)
+            all_modified_ducts.extend(dup_modified)
+            current_number = dup_next_number
 
             output.print_md("---")
+            output.print_md("## Step 2: Numbering runs")
 
-            # Continue numbering forward from last point
-            # Check if we should allow store_families (only if selected fitting was a store_family)
-            allow_stores = is_selected_store_family if 'is_selected_store_family' in locals() else False
-            stored_taps = []
-            last_number, stored_taps, forward_modified, forward_count, signature_map = number_run_forward(
-                start_duct,
-                start_number,
-                doc,
-                view,
-                visited,
-                stored_taps,
-                [],
-                signature_map,
-                allow_stores
-            )
-            modified_ducts.extend(forward_modified)
-            modified_count += forward_count
+            # Now process all runs - duplicates already have numbers assigned
+            for run_idx, run_ducts in enumerate(runs):
+                output.print_md("## Run {} ({} ducts)".format(
+                    run_idx + 1, len(run_ducts)))
 
-            # Store tap fittings for future processing (not numbering them yet)
-            if stored_taps:
+                # Filter to only numberable in this run
+                numberable_in_run = [
+                    d for d in run_ducts if is_numberable(d)]
+
+                if numberable_in_run:
+                    last_num, modified_count, signature_map, all_modified_ducts = number_run_all_at_once(
+                        numberable_in_run,
+                        current_number,
+                        doc,
+                        view,
+                        signature_map,
+                        all_modified_ducts
+                    )
+                    current_number = last_num + 1
+                    output.print_md("*Modified: {} ducts, Next number: {}*".format(
+                        modified_count, current_number))
+                else:
+                    output.print_md("*No numberable ducts in this run*")
+
                 output.print_md("---")
-                output.print_md(
-                    "## Stored {} tap fittings for future processing (not numbered)".format(len(stored_taps)))
-                for tap_duct, tap_num in stored_taps:
-                    output.print_md("*Stored: {} (ID: {})*".format(
-                        tap_duct.family if tap_duct.family else "Unknown",
-                        output.linkify(tap_duct.element.Id)
+
+            # Now handle stored_families
+            output.print_md(
+                "## Processing stored families (boot taps, etc.)...")
+            output.print_md("Found **{}** stored family ducts".format(
+                len(all_stored_families)))
+
+            stored_modified = 0
+            for stored_duct in all_stored_families:
+                # Try to find connected numbered duct to get signature
+                connected = get_connected_fittings(stored_duct, doc, view)
+                numbered_connected = [c for c in connected if get_item_number(
+                    c) is not None]
+
+                if numbered_connected:
+                    # Get signature from connected numbered duct and use its number
+                    ref_duct = numbered_connected[0]
+                    ref_number = get_item_number(ref_duct)
+                    set_item_number(stored_duct, ref_number)
+                    all_modified_ducts.append(stored_duct)
+                    stored_modified += 1
+                    output.print_md("Set {} to **{}** (ID: {}) *[from connected run]*".format(
+                        stored_duct.family if stored_duct.family else "Unknown",
+                        ref_number,
+                        output.linkify(stored_duct.element.Id)
                     ))
+                else:
+                    # No connected numbered duct - assign next sequential
+                    set_item_number(stored_duct, current_number)
+                    all_modified_ducts.append(stored_duct)
+                    stored_modified += 1
+                    current_number += 1
+                    output.print_md("Set {} to **{}** (ID: {}) *[sequential]*".format(
+                        stored_duct.family if stored_duct.family else "Unknown",
+                        get_item_number(stored_duct),
+                        output.linkify(stored_duct.element.Id)
+                    ))
+
+            if all_stored_families:
+                output.print_md("---")
+                output.print_md("*Processed {} stored families*".format(
+                    stored_modified))
 
             output.print_md("---")
             output.print_md(
-                "## Numbering complete! Last number used: **{}** | Total modified: **{}**".format(last_number, modified_count))
-
-            # Model-wide matching disabled - only number the connected run
-            # Uncomment below to re-enable model-wide matching
-            # output.print_md("---")
-            # output.print_md("## Finding matching elements in model...")
-            # matches = find_matching_elements(
-            #     modified_ducts, signature_map, doc, view)
-            #
-            # if matches:
-            #     match_count = 0
-            #     for signature, match_list in matches.items():
-            #         for match_duct, item_num in match_list:
-            #             set_item_number(match_duct, item_num)
-            #             modified_ducts.append(match_duct)
-            #             match_count += 1
-            #             output.print_md("*Matched {} (ID: {}) to number **{}***".format(
-            #                 match_duct.family if match_duct.family else "Unknown",
-            #                 output.linkify(match_duct.element.Id),
-            #                 item_num
-            #             ))
-            #
-            #     modified_count += match_count
-            #     output.print_md("---")
-            #     output.print_md(
-            #         "*Found and numbered {} matching elements*".format(match_count))
-            # else:
-            #     output.print_md("*No matching elements found*")
+                "## Complete! Total modified: **{}** | Final number: **{}**".format(len(all_modified_ducts), current_number - 1))
 
             # Select all modified ducts
-            if modified_ducts:
-                RevitElement.select_many(uidoc, modified_ducts)
+            if all_modified_ducts:
+                RevitElement.select_many(uidoc, all_modified_ducts)
                 output.print_md(
-                    "## Selected {} total modified fittings".format(modified_count))
+                    "## Selected all {} modified fittings".format(len(all_modified_ducts)))
 
             # Commit transaction
             t.Commit()
@@ -774,7 +824,10 @@ if selected_duct:
             import traceback
             output.print_md("```\n{}\n```".format(traceback.format_exc()))
 
-    # Final print statements
-    print_disclaimer(output)
-else:
-    output.print_md("## Select a fitting first")
+except Exception as e:
+    output.print_md("## Error: {}".format(str(e)))
+    import traceback
+    output.print_md("```\n{}\n```".format(traceback.format_exc()))
+
+# Final print statements
+print_disclaimer(output)
