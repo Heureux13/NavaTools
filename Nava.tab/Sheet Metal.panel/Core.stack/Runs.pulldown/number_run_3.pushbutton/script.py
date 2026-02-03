@@ -602,17 +602,22 @@ if selected_duct:
             # Check if selected fitting is a store_family
             is_selected_store_family = is_store_family
 
-            # Simple approach: start at 1 and number sequentially
-            output.print_md("Starting at **1**")
+            # Get the starting number from the selected fitting's parameter
+            start_number = get_item_number(selected_duct)
+            if start_number is None:
+                start_number = 1
+
+            output.print_md("Starting at **{}**".format(start_number))
             output.print_md("---")
 
             visited = {selected_duct.id}
 
-            # Number the selected fitting first
-            set_item_number(selected_duct, 1)
+            # Number the selected fitting first (use the parameter value or 1)
+            set_item_number(selected_duct, start_number)
             modified_ducts.append(selected_duct)
-            output.print_md("Set {} to **1** (ID: {})".format(
-                selected_duct.family if selected_duct.family else "Unknown",
+            output.print_md("Set {} to **{}** (ID: {})".format(
+                selected_duct.family if selected_duct.family else "Unknown", a
+                start_number,
                 output.linkify(selected_duct.element.Id)
             ))
 
@@ -623,7 +628,7 @@ if selected_duct:
             allow_stores = is_selected_store_family if 'is_selected_store_family' in locals() else False
             last_number, stored_taps, forward_modified, forward_count = number_run_forward(
                 selected_duct,
-                2,
+                start_number + 1,
                 doc,
                 view,
                 visited,
