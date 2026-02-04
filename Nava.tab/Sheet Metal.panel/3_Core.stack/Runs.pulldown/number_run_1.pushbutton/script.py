@@ -724,10 +724,8 @@ def number_run_forward(
     return current_number - 1, stored_taps, modified_ducts, len(modified_ducts)
 
 
-
 # Main Script
 # ==================================================
-
 # Get selected fitting
 selected_duct = RevitDuct.from_selection(uidoc, doc, view)
 selected_duct = selected_duct[0] if selected_duct else None
