@@ -170,13 +170,17 @@ try:
         try:
             values = param_values_map.get(fil.element.Id.IntegerValue, {})
             param_str = " | ".join("{}: {}".format(p, values.get(p, "")) for p in sorted(check_parameters))
+            fab_service_param = lookup_parameter_case_insensitive(fil.element, "fabrication service")
+            fab_service = get_param_value(fab_service_param) if fab_service_param else ""
         except Exception:
             param_str = ""
+            fab_service = ""
         output.print_md(
-            '### No: {:03} | ID: {} | {} | Length: {:06.2f}" | Size: {}'.format(
+            '### No: {:03} | ID: {} | {} | Service: {} | Length: {:06.2f}" | Size: {}'.format(
                 i,
                 output.linkify(fil.element.Id),
                 param_str,
+                fab_service,
                 fil.length if fil.length is not None else 0.0,
                 fil.size,
             )

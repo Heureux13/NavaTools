@@ -105,6 +105,7 @@ do_not_tag_families = {
     "fire damper - type cr",
     "smoke fire damper - type cr",
     "smoke fire damper - type csr",
+    "8inch long coupler wdamper",
 }
 
 values_to_skip = {

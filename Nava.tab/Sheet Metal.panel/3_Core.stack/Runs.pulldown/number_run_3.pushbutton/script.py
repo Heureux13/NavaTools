@@ -71,7 +71,7 @@ number_families = {
     "end cap",
     "tdf end cap",
     'reducer',
-    'conical tee',
+    'tee',
 }
 
 # Families not allowed to be numbered but allowed to traverse through
@@ -1041,8 +1041,22 @@ if selected_duct:
             # Select all modified ducts
             if modified_ducts:
                 RevitElement.select_many(uidoc, modified_ducts)
-                output.print_md(
-                    "## Selected {} total modified fittings".format(modified_count))
+
+                # Get start and end item numbers
+                start_num = ""
+                end_num = ""
+                try:
+                    start_num = get_item_number(modified_ducts[0])
+                    end_num = get_item_number(modified_ducts[-1])
+                except Exception:
+                    pass
+
+                output.print_md("# Total elements: {:03}, {}".format(
+                    len(modified_ducts),
+                    output.linkify([d.element.Id for d in modified_ducts])
+                ))
+                if start_num or end_num:
+                    output.print_md("Start: {} | End: {}".format(start_num, end_num))
 
             # Commit transaction
             t.Commit()
