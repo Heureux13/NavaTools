@@ -49,14 +49,32 @@ def get_param_value(param):
         return None
 
 
+def lookup_parameter_case_insensitive(element, param_name):
+    """Case-insensitive parameter lookup"""
+    param_name_lower = param_name.strip().lower()
+    for param in element.Parameters:
+        if param.Definition.Name.strip().lower() == param_name_lower:
+            return param
+    return None
+
+
+skip_values = {
+    'skip',
+    '0',
+}
+
+check_parameters = {
+    # "fabrication notes",
+    "item number",
+}
+
 # Main Code
 # ==================================================
 try:
-    # Collect only fabrication ductwork strictly visible in the active view
+    # Collect fabrication ductwork in the active view
     fab_duct = (FilteredElementCollector(doc, view.Id)
                 .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
                 .WhereElementIsNotElementType()
-                .WherePasses(VisibleInViewFilter(doc, view.Id))
                 .ToElements())
 
     all_duct = list(fab_duct)
@@ -65,33 +83,50 @@ try:
         script.exit()
 
     # Build parameter -> value -> elements map
-    # Key is "Fabrication Notes | Item Number" combination
+    # Key is combination of all checked parameters
     param_groups = {}
+    param_values_map = {}  # Store param values for later display
+
     for d in all_duct:
-        fab_notes = None
-        item_number = None
+        param_values = {}
+        skip_element = False
 
-        fn_param = d.LookupParameter("Fabrication Notes")
-        in_param = d.LookupParameter("Item Number")
-        if fn_param:
-            fab_notes = get_param_value(fn_param)
-        if in_param:
-            item_number = get_param_value(in_param)
+        # Get values for all parameters in check_parameters
+        for param_name in check_parameters:
+            param = lookup_parameter_case_insensitive(d, param_name)
+            value = get_param_value(param) if param else None
 
-        # Skip if either is empty
-        empty_vals = {None, "", "**"}
-        if fab_notes in empty_vals or item_number in empty_vals:
+            # Clean and normalize the value
+            if value is not None:
+                value_str = str(value).strip().lower()
+            else:
+                value_str = None
+
+            param_values[param_name] = value_str
+
+            # Skip if empty or in skip_values
+            empty_vals = {None, "", "**"}
+            if value_str in empty_vals:
+                skip_element = True
+                break
+            if value_str in skip_values:
+                skip_element = True
+                break
+
+        if skip_element:
             continue
 
-        # Group by combination of both parameters
-        composite_key = "{} | {}".format(fab_notes, item_number)
+        # Group by combination of all parameters (use cleaned values)
+        composite_key = " | ".join(str(param_values[p]).strip(
+        ) if param_values[p] else "" for p in sorted(check_parameters))
         if composite_key not in param_groups:
             param_groups[composite_key] = []
         param_groups[composite_key].append(d)
+        param_values_map[d.Id.IntegerValue] = param_values
 
     if not param_groups:
         output.print_md(
-            "## No ducts found with Fabrication Notes and Item Number populated")
+            "## No ducts found with parameters populated: {}".format(", ".join(check_parameters)))
         script.exit()
 
     # Select ducts that have matching combinations (duplicates)
@@ -120,21 +155,28 @@ try:
         except Exception:
             pass
 
+    # Sort by Item Number parameter value
+    def get_sort_key(duct):
+        values = param_values_map.get(duct.element.Id.IntegerValue, {})
+        item_num = values.get("item number", "0")
+        try:
+            return int(item_num) if item_num else 0
+        except ValueError:
+            return 0
+
+    fil_ducts.sort(key=get_sort_key)
+
     for i, fil in enumerate(fil_ducts, start=1):
         try:
-            fn_param = fil.element.LookupParameter("Fabrication Notes")
-            in_param = fil.element.LookupParameter("Item Number")
-            fab_notes = get_param_value(fn_param) if fn_param else ""
-            item_number = get_param_value(in_param) if in_param else ""
+            values = param_values_map.get(fil.element.Id.IntegerValue, {})
+            param_str = " | ".join("{}: {}".format(p, values.get(p, "")) for p in sorted(check_parameters))
         except Exception:
-            fab_notes = ""
-            item_number = ""
+            param_str = ""
         output.print_md(
-            '### No: {:03} | ID: {} | Notes: {} | Item: {} | Length: {:06.2f}" | Size: {}'.format(
+            '### No: {:03} | ID: {} | {} | Length: {:06.2f}" | Size: {}'.format(
                 i,
                 output.linkify(fil.element.Id),
-                fab_notes,
-                item_number,
+                param_str,
                 fil.length if fil.length is not None else 0.0,
                 fil.size,
             )

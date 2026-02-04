@@ -12,6 +12,7 @@ the copyright holder."""
 from revit_duct import RevitDuct
 from revit_element import RevitElement
 from revit_output import print_disclaimer
+from size import Size
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 import re
@@ -85,6 +86,7 @@ allow_but_not_number = {
     'smoke fire damper - type csr',
     'rect volume damper',
     'access door',
+    "straight tap"
 }
 
 # Values that indicate to traverse through but not number
@@ -92,6 +94,11 @@ skip_values = {
     0,
     "skip",
     "n/a",
+}
+
+# Values that indicate to stop the run (do not traverse beyond)
+stop_values = {
+    "stop",
 }
 
 # Families that need to be numbered after their connected run has been numbered
@@ -103,6 +110,57 @@ store_families = {
 
 # Helper Functions
 # ==================================================
+
+
+def round_up_to_nearest_10(number):
+    """Round up to the nearest 10. E.g., 55 -> 60, 60 -> 60, 1 -> 10"""
+    import math
+    return int(math.ceil(number / 10.0) * 10)
+
+
+def _size_signature(size_value):
+    """Create a normalized size signature for matching sizes."""
+    if size_value is None:
+        return None
+
+    size_str = str(size_value).strip()
+    if not size_str:
+        return None
+
+    size_obj = Size(size_str)
+
+    # Round
+    if size_obj.in_diameter is not None:
+        return ("round", round(float(size_obj.in_diameter), 4))
+
+    # Oval
+    if size_obj.in_oval_dia is not None:
+        w = size_obj.in_width
+        h = size_obj.in_height
+        if w is not None and h is not None:
+            return ("oval", round(float(w), 4), round(float(h), 4))
+
+    # Rectangle / square (order-independent)
+    if size_obj.in_width is not None and size_obj.in_height is not None:
+        dims = sorted([round(float(size_obj.in_width), 4), round(float(size_obj.in_height), 4)])
+        return ("rect", tuple(dims))
+
+    return None
+
+
+def is_rectangular_size(size_value):
+    """Check if a size is rectangular (not round or oval)."""
+    sig = _size_signature(size_value)
+    return sig is not None and sig[0] == "rect"
+
+
+def sizes_match(filter_size, conn_size):
+    """Return True if sizes match, ignoring quotes and width/height order."""
+    sig_a = _size_signature(filter_size)
+    sig_b = _size_signature(conn_size)
+    if sig_a is None or sig_b is None:
+        return False
+    return sig_a == sig_b
 
 
 def get_item_number(duct):
@@ -119,7 +177,12 @@ def get_item_number(duct):
             val = param.AsValueString()
 
         if val is not None:
-            # Try to convert to int, if it's a skip value return None
+            # Check if it's a skip value first (case-insensitive)
+            val_lower = str(val).strip().lower()
+            if val_lower in skip_values or val_lower == "skip" or val_lower == "n/a":
+                return None
+
+            # Try to convert to int
             try:
                 num_val = int(val) if isinstance(
                     val, (int, float)) else int(float(val))
@@ -127,9 +190,6 @@ def get_item_number(duct):
                     return None
                 return num_val
             except (ValueError, TypeError):
-                # Check if string value is in skip_values
-                if val in skip_values:
-                    return None
                 # Try to extract number from string
                 match = re.search(r'\d+', str(val))
                 if match:
@@ -204,6 +264,13 @@ def get_connected_fittings(duct, doc, view):
                     continue
                 try:
                     connected_duct = RevitDuct(doc, view, connected_elem)
+                    # Skip if this duct has a stop value
+                    if has_stop_value(connected_duct):
+                        output.print_md("*Stopping at {} (ID: {}) - has 'stop' value*".format(
+                            connected_duct.family if connected_duct.family else "Unknown",
+                            output.linkify(connected_duct.element.Id)
+                        ))
+                        continue
                     connected.append(connected_duct)
                 except Exception:
                     continue
@@ -229,7 +296,15 @@ def is_traversable(duct):
 
 
 def has_skip_value(duct):
-    """Check if duct has a skip value in its number parameter."""
+    """Check if duct has a skip value in its number parameter, or is a round boot tap."""
+    # Check if this is a round boot tap - skip those always
+    family = duct.family
+    family_lower = family.lower() if family else ""
+    if family_lower == "boot tap":
+        sig = _size_signature(duct.size)
+        if sig is not None and sig[0] == "round":
+            return True
+
     # Get all parameters and search case-insensitively
     for param in duct.element.Parameters:
         param_name_lower = param.Definition.Name.strip().lower()
@@ -240,13 +315,36 @@ def has_skip_value(duct):
         if val is None:
             val = param.AsValueString()
 
-        if val in skip_values:
-            return True
-        try:
-            if int(val) in skip_values:
+        if val is not None:
+            # Check as lowercase string
+            val_lower = str(val).strip().lower()
+            if val_lower in skip_values or val_lower == "skip":
                 return True
-        except (ValueError, TypeError):
-            pass
+            # Also check raw value in case it's an integer
+            try:
+                if int(val) in skip_values:
+                    return True
+            except (ValueError, TypeError):
+                pass
+    return False
+
+
+def has_stop_value(duct):
+    """Check if duct has a stop value in its number parameter."""
+    # Get all parameters and search case-insensitively
+    for param in duct.element.Parameters:
+        param_name_lower = param.Definition.Name.strip().lower()
+        if param_name_lower not in number_paramters:
+            continue
+
+        val = param.AsString()
+        if val is None:
+            val = param.AsValueString()
+
+        if val is not None:
+            val_lower = str(val).strip().lower()
+            if val_lower in stop_values:
+                return True
     return False
 
 
@@ -441,6 +539,50 @@ def find_endpoints(start_duct, doc, view, visited=None):
     return endpoints
 
 
+def find_connected_numbered_element(duct, doc, view):
+    """
+    Find a connected element that has a number assigned.
+    For store_families (taps), look for elements connected to size_out (smaller size).
+    Returns (number, duct) or (None, None) if not found.
+    """
+    # Check if this is a store_family
+    family = duct.family
+    family_lower = family.lower() if family else ""
+    is_store = family_lower in store_families
+
+    # Get all connected elements
+    connected = get_connected_fittings(duct, doc, view)
+
+    if is_store and duct.size_out:
+        # For taps, prefer elements matching the smaller size (size_out)
+        output.print_md("  *Looking for element matching size_out: {}*".format(duct.size_out))
+
+        for conn in connected:
+            # Check if connected element's size matches our size_out
+            conn_size = conn.size
+            if conn_size and duct.size_out:
+                if sizes_match(duct.size_out, conn_size):
+                    num = get_item_number(conn)
+                    if num is not None and num > 0:
+                        output.print_md("  *Found numbered element on size_out: {} (number: {})*".format(
+                            conn.family if conn.family else "Unknown",
+                            num
+                        ))
+                        return (num, conn)
+
+    # Fallback or non-store elements: check all connected elements
+    for conn in connected:
+        num = get_item_number(conn)
+        if num is not None and num > 0:
+            output.print_md("  *Found numbered element: {} (number: {})*".format(
+                conn.family if conn.family else "Unknown",
+                num
+            ))
+            return (num, conn)
+
+    return (None, None)
+
+
 def find_anchor_number(duct, doc, view, visited=None):
     """
     Recursively search backwards through connections to find an existing number.
@@ -474,6 +616,130 @@ def find_anchor_number(duct, doc, view, visited=None):
     return (None, None)
 
 
+def number_branch_recursive(
+    start_duct,
+    start_number,
+    doc,
+    view,
+    visited,
+    all_stored_branches,
+    modified_ducts,
+        filter_by_size=None,
+        skip_start_numbering=False):
+    """
+    Number a branch starting from start_duct with start_number.
+    Processes depth-first: if we encounter more store_families, process those sub-branches first.
+    filter_by_size: If provided, only process connected elements matching this size (for filtering branches)
+    Returns the last number used.
+    """
+    current_number = start_number
+
+    # Number the start duct (optional)
+    if not skip_start_numbering:
+        if is_numberable(start_duct) and not has_skip_value(start_duct):
+            set_item_number(start_duct, current_number)
+            modified_ducts.append(start_duct)
+            output.print_md("  Branch: Set {} to **{}** (ID: {})".format(
+                start_duct.family if start_duct.family else "Unknown",
+                current_number,
+                output.linkify(start_duct.element.Id)
+            ))
+            current_number += 1
+
+    visited.add(start_duct.id)
+
+    # Get connected elements and process them
+    to_process = []
+    connected = get_connected_fittings(start_duct, doc, view)
+    apply_size_filter = True
+
+    for conn in connected:
+        if conn.id in visited:
+            continue
+
+        family = conn.family
+        family_lower = family.lower() if family else ""
+
+        # If this is a store_family, always collect as a sub-branch (size may differ)
+        if family_lower in store_families:
+            # Skip round boot taps - never add them to branches
+            if has_skip_value(conn):
+                output.print_md("    *Skipping {} - round boot tap*".format(
+                    family if family else "Unknown"
+                ))
+            else:
+                all_stored_branches.append(conn)
+                output.print_md("    *Found sub-branch: {} (ID: {})*".format(
+                    family if family else "Unknown",
+                    output.linkify(conn.element.Id)
+                ))
+            continue
+
+        # If we're filtering by size, skip non-store elements that don't match
+        # Only apply on the first hop from the tap to choose branch direction
+        if filter_by_size and apply_size_filter:
+            conn_size = conn.size
+            if conn_size:
+                if not sizes_match(filter_by_size, conn_size):
+                    output.print_md("    *Skipping {} - size {} doesn't match filter {}*".format(
+                        conn.family if conn.family else "Unknown",
+                        conn_size,
+                        filter_by_size
+                    ))
+                    continue
+
+        # Only process if numberable or traversable
+        if is_numberable(conn) or is_traversable(conn):
+            to_process.append(conn)
+
+    # After the first hop, do not size-filter deeper traversal
+    apply_size_filter = False
+
+    # Process all connected elements (breadth-first on this level)
+    for duct in to_process:
+        if duct.id in visited:
+            continue
+
+        visited.add(duct.id)
+
+        # Number if numberable
+        if is_numberable(duct) and not has_skip_value(duct):
+            set_item_number(duct, current_number)
+            modified_ducts.append(duct)
+            output.print_md("  Branch: Set {} to **{}** (ID: {})".format(
+                duct.family if duct.family else "Unknown",
+                current_number,
+                output.linkify(duct.element.Id)
+            ))
+            current_number += 1
+
+        # Continue down this path
+        next_connected = get_connected_fittings(duct, doc, view)
+        for next_conn in next_connected:
+            if next_conn.id not in visited:
+                family = next_conn.family
+                family_lower = family.lower() if family else ""
+
+                # If store_family, add as sub-branch (ignore size filter)
+                if family_lower in store_families:
+                    # Skip round boot taps - never add them to branches
+                    if has_skip_value(next_conn):
+                        output.print_md("    *Skipping {} - round boot tap*".format(
+                            family if family else "Unknown"
+                        ))
+                    else:
+                        all_stored_branches.append(next_conn)
+                        output.print_md("    *Found sub-branch: {} (ID: {})*".format(
+                            family if family else "Unknown",
+                            output.linkify(next_conn.element.Id)
+                        ))
+                else:
+                    if is_numberable(next_conn) or is_traversable(next_conn):
+                        to_process.append(next_conn)
+
+    return current_number - 1
+
+
 def number_run_forward(
         start_duct,
         start_number,
@@ -482,11 +748,13 @@ def number_run_forward(
         visited=None,
         stored_taps=None,
         modified_ducts=None,
-        allow_store_families=False):
+        allow_store_families=False,
+        filter_by_size=None):
     """
     Number fittings sequentially starting from start_duct with start_number.
     Simply increments the number for each numberable fitting (no duplicate matching).
     allow_store_families: If True, store_families can be numbered (used when they are selected)
+    filter_by_size: If provided, only process elements with sizes containing this string
     Returns the last number used, list of stored tap fittings, and modified ducts.
     """
     if visited is None:
@@ -500,6 +768,22 @@ def number_run_forward(
 
     # Get connections from the start duct
     connected = get_connected_fittings(start_duct, doc, view)
+
+    # Apply size filter if provided
+    if filter_by_size:
+        output.print_md("*Filtering by size: {}*".format(filter_by_size))
+        filtered_connected = []
+        for conn in connected:
+            conn_size = conn.size_in if conn.size_in else ""
+            if sizes_match(filter_by_size, conn_size):
+                filtered_connected.append(conn)
+            else:
+                output.print_md("  *Skipped {} (size {} doesn't match filter)*".format(
+                    conn.family if conn.family else "Unknown",
+                    conn_size
+                ))
+        connected = filtered_connected
+
     output.print_md("*Found {} connected fittings*".format(len(connected)))
 
     to_process = [(conn, current_number)
@@ -509,7 +793,11 @@ def number_run_forward(
         duct, num = to_process.pop(0)
 
         if duct.id in visited:
+            output.print_md("  *Skipping {} - already visited in this run*".format(
+                duct.family if duct.family else "Unknown"
+            ))
             continue
+
         visited.add(duct.id)
 
         # Check if this is a store_family (tap)
@@ -522,6 +810,13 @@ def number_run_forward(
         ))
 
         if family_lower in store_families:
+            # Skip round boot taps - don't even store them
+            if has_skip_value(duct):
+                output.print_md("  *Skipping {} - has skip value*".format(
+                    family if family else "Unknown"
+                ))
+                continue
+
             if not allow_store_families:
                 stored_taps.append((duct, None))
                 output.print_md("  *Stored tap for later (no value written)*")
@@ -532,10 +827,10 @@ def number_run_forward(
         # Check if we should number this fitting
         if is_numberable(duct):
             if has_skip_value(duct):
-                output.print_md("  *Has skip value, writing 'skip'*")
-                # Has skip value - write "skip" to mark it
-                set_item_number(duct, "skip")
-                modified_ducts.append(duct)
+                output.print_md("  *Skipping {} - has skip value, not modifying*".format(
+                    family if family else "Unknown"
+                ))
+                # Do NOT modify - just skip it completely
             else:
                 # Simply assign the next sequential number
                 set_item_number(duct, current_number)
@@ -616,7 +911,7 @@ if selected_duct:
             set_item_number(selected_duct, start_number)
             modified_ducts.append(selected_duct)
             output.print_md("Set {} to **{}** (ID: {})".format(
-                selected_duct.family if selected_duct.family else "Unknown", a
+                selected_duct.family if selected_duct.family else "Unknown",
                 start_number,
                 output.linkify(selected_duct.element.Id)
             ))
@@ -626,6 +921,14 @@ if selected_duct:
             # Continue numbering forward from selected fitting
             stored_taps = []
             allow_stores = is_selected_store_family if 'is_selected_store_family' in locals() else False
+
+            # If starting from a store_family (tap), filter by size_out
+            filter_size = None
+            if is_selected_store_family and selected_duct.size_out:
+                filter_size = selected_duct.size_out
+                output.print_md(
+                    "*Starting from tap - will only number elements matching size_out: {}*".format(filter_size))
+
             last_number, stored_taps, forward_modified, forward_count = number_run_forward(
                 selected_duct,
                 start_number + 1,
@@ -634,25 +937,106 @@ if selected_duct:
                 visited,
                 stored_taps,
                 [],
-                allow_stores
+                allow_stores,
+                filter_size
             )
             modified_ducts.extend(forward_modified)
             modified_count = 1 + forward_count
 
-            # Store tap fittings for future processing (not numbering them yet)
+            # Process stored branches recursively
             if stored_taps:
                 output.print_md("---")
                 output.print_md(
-                    "## Stored {} tap fittings for future processing (not numbered)".format(len(stored_taps)))
-                for tap_duct, tap_num in stored_taps:
-                    output.print_md("*Stored: {} (ID: {})*".format(
-                        tap_duct.family if tap_duct.family else "Unknown",
-                        output.linkify(tap_duct.element.Id)
+                    "## Processing {} stored branches...".format(len(stored_taps)))
+
+                # Process each stored branch
+                branches_to_process = [tap_duct for tap_duct, _ in stored_taps]
+
+                while branches_to_process:
+                    branch_duct = branches_to_process.pop(0)
+
+                    # Stored taps were marked visited during main run traversal,
+                    # but we still need to process their branches here.
+                    if branch_duct.id in visited and not (
+                        branch_duct.family and branch_duct.family.lower() in store_families
+                    ):
+                        continue
+
+                    # Find connected numbered element to get anchor
+                    anchor_num, anchor_duct = find_connected_numbered_element(branch_duct, doc, view)
+
+                    if anchor_num is None:
+                        output.print_md("*Warning: Could not find anchor for branch {} (ID: {})*".format(
+                            branch_duct.family if branch_duct.family else "Unknown",
+                            output.linkify(branch_duct.element.Id)
+                        ))
+                        continue
+
+                    # Round up to nearest 10 after the last used number (one branch at a time)
+                    base_for_branch = (last_number + 1) if last_number is not None else (anchor_num + 1)
+                    branch_start = round_up_to_nearest_10(base_for_branch)
+
+                    output.print_md("### Branch from {} (anchor: {}, rounded: {})".format(
+                        branch_duct.family if branch_duct.family else "Unknown",
+                        anchor_num,
+                        branch_start
                     ))
+
+                    # For store_families, only process elements matching size_out
+                    filter_size = branch_duct.size_out if branch_duct.family and branch_duct.family.lower() in store_families else None
+                    if filter_size:
+                        output.print_md("  *Filtering branch by size_out: {}*".format(filter_size))
+
+                    # Number this branch and collect any sub-branches (use fresh list for each branch)
+                    sub_branches = []
+
+                    # Check if tap should be skipped (e.g., round boot taps)
+                    if not has_skip_value(branch_duct):
+                        # Set the tap itself to the bucket number (e.g., 100)
+                        set_item_number(branch_duct, branch_start)
+                        modified_ducts.append(branch_duct)
+                        output.print_md("  Branch: Set {} to **{}** (ID: {})".format(
+                            branch_duct.family if branch_duct.family else "Unknown",
+                            branch_start,
+                            output.linkify(branch_duct.element.Id)
+                        ))
+                    else:
+                        output.print_md("  Branch: Skipping {} - has skip value (ID: {})".format(
+                            branch_duct.family if branch_duct.family else "Unknown",
+                            output.linkify(branch_duct.element.Id)
+                        ))
+
+                    # Start numbering connected branch elements at bucket+1 (e.g., 101)
+                    branch_first = branch_start + 1
+                    branch_last = number_branch_recursive(
+                        branch_duct,
+                        branch_first,
+                        doc,
+                        view,
+                        visited,
+                        sub_branches,
+                        modified_ducts,
+                        filter_size,
+                        skip_start_numbering=True
+                    )
+
+                    # Update last number if this branch went higher
+                    if branch_last > last_number:
+                        last_number = branch_last
+
+                    # Add sub-branches to the front of the queue (depth-first)
+                    # This ensures C's sub-branches are processed before D
+                    if sub_branches:
+                        output.print_md("  *Found {} sub-branches - adding to queue*".format(len(sub_branches)))
+                        branches_to_process = sub_branches + branches_to_process
+
+                    output.print_md("  *Branch complete. Last number: {}*".format(branch_last))
+
+                modified_count = len(modified_ducts)
 
             output.print_md("---")
             output.print_md(
-                "## Numbering complete! Last number used: **{}** | Total modified: **{}**".format(last_number, modified_count))
+                "## Numbering complete! Last number used: **{}** | Total modified: **{}**".format(last_number, len(modified_ducts)))
 
             # Select all modified ducts
             if modified_ducts:

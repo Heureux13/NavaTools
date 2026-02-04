@@ -16,15 +16,16 @@ from Autodesk.Revit.DB import (
     FamilySymbol,
     IndependentTag,
     Transaction,
+    StorageType,
 )
 from revit_tagging import RevitTagging
 from revit_duct import RevitDuct
 
 # Button display information
 # =================================================
-__title__ = "Tag Fab Item Number"
+__title__ = "Tag Item Number"
 __doc__ = """
-Tags fabrication duct (straight only) with the _umi_duct_ITEM_NUMBER tag.
+Tags Item Number
 """
 
 # Helpers
@@ -63,6 +64,11 @@ output = script.get_output()
 
 tagger = RevitTagging(doc, view)
 
+tag_names = [
+    "-FabDuct_Item Number_Tag",
+    "_umi_duct_ITEM_NUMBER",
+]
+
 number_families = {
     "straigth",
     "transition",
@@ -78,11 +84,33 @@ number_families = {
     'conical tee',
 }
 
+do_not_tag_families = {
+    "spiral duct",
+    "duct spiral",
+    "flex duct",
+    "duct flexible",
+    "boot tap wdamper",
+    "gored elbow",
+    "boot saddle tap",
+    "coupling",
+    "boot tap - wdamper",
+    "rect volume damper",
+    "access panel",
+    "access door",
+    "manbars",
+    "canvas",
+    "fire damper - type a",
+    "fire damper - type b",
+    "fire damper - type c",
+    "fire damper - type cr",
+    "smoke fire damper - type cr",
+    "smoke fire damper - type csr",
+}
 
-tag_names = [
-    "-FabDuct_Item Number_Tag",
-    "_umi_duct_ITEM_NUMBER",
-]
+values_to_skip = {
+    "0",
+    "skip",
+}
 
 tag_symbol = None
 target_tag_name = None
@@ -107,17 +135,6 @@ fab_ducts = (
     .ToElements()
 )
 
-do_not_tag_families = {
-    "spiral duct",
-    "duct spiral",
-    "flex duct",
-    "duct flexible",
-    "boot tap wdamper",
-    "gored elbow",
-    "boot saddle tap",
-    "coupling",
-    "boot tap - wdamper"
-}
 
 if not fab_ducts:
     output.print_md("## No fabrication ducts found in this view.")
@@ -178,6 +195,24 @@ try:
                 continue
         except Exception:
             continue
+
+        # Skip elements with disallowed item number values
+        try:
+            item_param = elem.LookupParameter("Item Number")
+            if item_param:
+                item_value = item_param.AsString()
+                if item_value is None:
+                    item_value = item_param.AsValueString()
+                if item_value is None:
+                    if item_param.StorageType == StorageType.Integer:
+                        item_value = str(item_param.AsInteger())
+                    elif item_param.StorageType == StorageType.Double:
+                        item_value = str(item_param.AsDouble())
+                item_value = (item_value or "").strip().lower()
+                if item_value in values_to_skip:
+                    continue
+        except Exception:
+            pass
 
         # Check if already tagged with our tag family
         if elem.Id in already_tagged_ids:
