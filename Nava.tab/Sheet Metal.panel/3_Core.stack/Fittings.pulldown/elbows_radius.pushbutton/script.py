@@ -56,8 +56,11 @@ if fil_ducts:
     for i, sel in enumerate(fil_ducts, start=1):
         output.print_md(
             "### No: {:03} | ID: {} | Size: {} | Angle: {} | IR: {}".format(
-                i, output.linkify(
-                    sel.element.Id), sel.size, sel.angle, sel.inner_radius
+                i,
+                output.linkify(sel.element.Id),
+                sel.size,
+                sel.angle,
+                sel.inner_radius
             ))
 
     # Loop for total counts
