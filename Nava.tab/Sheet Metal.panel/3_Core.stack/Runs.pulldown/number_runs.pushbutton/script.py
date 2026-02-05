@@ -19,8 +19,8 @@ import re
 
 # Button info
 # ===================================================
-__title__ = "Numbers Run w/o Matching"
-__doc__ = """
+__title__ = "Numbers Runs"
+__doc__ = """z
 1, 2, 3... n. No matches will be considered.
 """
 

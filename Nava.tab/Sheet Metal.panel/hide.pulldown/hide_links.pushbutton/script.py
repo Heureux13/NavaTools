@@ -15,7 +15,6 @@ from Autodesk.Revit.DB import (
     RevitLinkInstance,
     ElementId,
     BuiltInParameter,
-    TemporaryViewMode,
 )
 from System.Collections.Generic import List
 import sys
@@ -35,86 +34,34 @@ doc = revit.doc
 active_view = doc.ActiveView
 output = script.get_output()
 
-# Store hidden link IDs in view's temporary data
-HIDDEN_KEY = 'NavaTools_HiddenLinks_{}'.format(active_view.Id.IntegerValue)
+NICKNAME_KEY = 'NavaTools_LinkNicknames'
 
 
-def get_hidden_link_ids():
+def get_all_nicknames():
     try:
-        data_file = script.get_document_data_file(doc.PathName or 'unsaved', HIDDEN_KEY)
-        with open(data_file, 'r') as f:
-            data = json.load(f)
-            return set(data.get('hidden_ids', []))
+        data_file = script.get_document_data_file(doc.PathName or 'unsaved', NICKNAME_KEY)
+        if os.path.exists(data_file):
+            with open(data_file, 'r') as f:
+                return json.load(f)
     except Exception:
-        return set()
+        pass
+    return {}
 
 
-def save_hidden_link_ids(hidden_ids):
+def save_all_nicknames(nicknames_dict):
     try:
-        data = {'hidden_ids': list(hidden_ids)}
-        data_file = script.get_document_data_file(doc.PathName or 'unsaved', HIDDEN_KEY)
+        data_file = script.get_document_data_file(doc.PathName or 'unsaved', NICKNAME_KEY)
         with open(data_file, 'w') as f:
-            json.dump(data, f)
+            json.dump(nicknames_dict, f)
     except Exception:
         pass
 
 
-def is_hidden_in_view(view, element_id):
-    # For older Revit APIs without IsTemporaryViewModeActive,
-    # we can't reliably detect temporary hide state.
-    # Check permanent hide only.
-    try:
-        element = doc.GetElement(element_id)
-        if element and element.IsHidden(view):
-            return True
-    except Exception:
-        pass
-    try:
-        if view.IsElementHidden(element_id):
-            return True
-    except Exception:
-        pass
-    try:
-        if element_id in view.GetHiddenElementIds():
-            return True
-    except Exception:
-        pass
-    return False
-
-
-def clear_temporary_hide(view):
-    try:
-        view.DisableTemporaryViewMode(TemporaryViewMode.TemporaryHideIsolate)
-    except Exception:
-        pass
-
-
-def get_link_nickname(link):
-    param = link.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
-    if param and param.HasValue:
-        nickname = param.AsString()
-        if nickname:
-            return nickname.strip()
-    param = link.get_Parameter(BuiltInParameter.ALL_MODEL_MARK)
-    if param and param.HasValue:
-        nickname = param.AsString()
-        if nickname:
-            return nickname.strip()
-    try:
-        link_type = doc.GetElement(link.GetTypeId())
-    except Exception:
-        link_type = None
-    if link_type:
-        param = link_type.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_COMMENTS)
-        if param and param.HasValue:
-            nickname = param.AsString()
-            if nickname:
-                return nickname.strip()
-        param = link_type.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_MARK)
-        if param and param.HasValue:
-            nickname = param.AsString()
-            if nickname:
-                return nickname.strip()
+def get_link_nickname(link, nicknames_dict):
+    # Check custom nicknames first
+    link_id_str = str(link.Id.IntegerValue)
+    if link_id_str in nicknames_dict:
+        return nicknames_dict[link_id_str]
     return None
 
 
@@ -128,59 +75,99 @@ if not links_all:
     output.print_md('**No Revit links found in this model.**')
     sys.exit(0)
 
-links_in_view = links_all
+# Filter to only visible links (collector with view ID gets visible elements)
+links_in_view = list(
+    FilteredElementCollector(doc, active_view.Id)
+    .OfClass(RevitLinkInstance)
+    .WhereElementIsNotElementType()
+)
 
-hidden_link_ids = get_hidden_link_ids()
+nicknames_dict = get_all_nicknames()
 
 display_map = {}
+link_map = {}
 pad_width = max(2, len(str(len(links_in_view))))
 for idx, link in enumerate(links_in_view, start=1):
     idx_label = str(idx).zfill(pad_width)
-    is_hidden = link.Id.IntegerValue in hidden_link_ids
-    status = u'✓ Hidden' if is_hidden else u'Visible'
-    nickname = get_link_nickname(link)
+    nickname = get_link_nickname(link, nicknames_dict)
     if nickname:
-        display_name = u'{}  |  {}  |  {} — {} (Id: {})'.format(
-            status, idx_label, nickname, link.Name, link.Id.IntegerValue
+        display_name = u'{}  |  {} — {} (Id: {})'.format(
+            idx_label, nickname, link.Name, link.Id.IntegerValue
         )
     else:
-        display_name = u'{}  |  {}  |  {} (Id: {})'.format(
-            status, idx_label, link.Name, link.Id.IntegerValue
+        display_name = u'{}  |  {} (Id: {})'.format(
+            idx_label, link.Name, link.Id.IntegerValue
         )
     display_map[display_name] = link.Id
+    link_map[display_name] = link
 
+# Show selection dialog with option to set nicknames
+
+
+class LinkSelectionForm(forms.WPFWindow):
+    def __init__(self):
+        pass
+
+
+# Ask what user wants to do first
+action = forms.CommandSwitchWindow.show(
+    ['Hide Links', 'Rename Links'],
+    message='What would you like to do?'
+)
+
+if not action:
+    sys.exit(0)
+
+if action == 'Rename Links':
+    # Select links to rename
+    selected_names = forms.SelectFromList.show(
+        sorted(display_map.keys()),
+        title='Select Links to Rename',
+        multiselect=True,
+        button_name='Rename Selected'
+    )
+
+    if not selected_names:
+        sys.exit(0)
+
+    # Rename each selected link
+    for name in selected_names:
+        if name in link_map:
+            link = link_map[name]
+            current_nick = get_link_nickname(link, nicknames_dict)
+            new_nick = forms.ask_for_string(
+                prompt='Enter nickname for: {}'.format(link.Name),
+                default=current_nick or '',
+                title='Set Link Nickname'
+            )
+            if new_nick:
+                nicknames_dict[str(link.Id.IntegerValue)] = new_nick
+            elif new_nick == '' and current_nick:
+                # Clear nickname if empty string entered
+                nicknames_dict.pop(str(link.Id.IntegerValue), None)
+    save_all_nicknames(nicknames_dict)
+    sys.exit(0)
+
+# Hide Links workflow
 selected_names = forms.SelectFromList.show(
     sorted(display_map.keys()),
-    title='Select Links to Toggle',
+    title='Select Links to Hide',
     multiselect=True,
-    button_name='Toggle Selected'
+    button_name='Hide Selected'
 )
 
 if not selected_names:
     sys.exit(0)
 
-selected_ids = set(display_map[name] for name in selected_names if name in display_map)
+selected_ids = [display_map[name] for name in selected_names if name in display_map]
 
-# Toggle hidden state for selected links
-for link_id in selected_ids:
-    link_id_int = link_id.IntegerValue
-    if link_id_int in hidden_link_ids:
-        hidden_link_ids.remove(link_id_int)
-    else:
-        hidden_link_ids.add(link_id_int)
-
-# Build final hide list
+# Build hide list with selected links
 ids_to_hide = List[ElementId]()
-for link in links_in_view:
-    if link.Id.IntegerValue in hidden_link_ids:
-        ids_to_hide.Add(link.Id)
+for link_id in selected_ids:
+    ids_to_hide.Add(link_id)
 
-# Save state and apply
-save_hidden_link_ids(hidden_link_ids)
-
-with revit.Transaction('Toggle Link Visibility'):
+with revit.Transaction('Hide Selected Links'):
     try:
-        clear_temporary_hide(active_view)
         if ids_to_hide.Count > 0:
             active_view.HideElementsTemporary(ids_to_hide)
     except Exception:
