@@ -113,8 +113,8 @@ def should_skip_tag(duct, tag):
             pass
 
     # Skip -FabDuct_DEGREE_MV_Tag for Radius Elbow with angle 45 or 90
-    # if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
-    #     return True
+    if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
+        return True
 
     # Skip extension tags when extension equals throat allowance (TDF/S&D),
     # with tolerance and connector type synonyms handled.
