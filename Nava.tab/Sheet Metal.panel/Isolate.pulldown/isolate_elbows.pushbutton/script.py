@@ -16,9 +16,9 @@ from revit_duct import RevitDuct
 
 # Button info
 # ===================================================
-__title__ = "Iso Straights"
+__title__ = "Isolate Elbows"
 __doc__ = """
-Toggle isolation to show only straight duct elements.
+Toggle isolation to show only elbow duct elements.
 """
 
 # Variables
@@ -28,23 +28,22 @@ active_view = revit.active_view
 
 # Helpers
 # ==================================================================================================
-straigth_group = {
-    "Straight",
-    "Round Duct",
-    "Spiral Duct",
-}
+
+group = {"Elbow",
+         "Elbow - 90 Degree",
+         }
 
 
-def collect_straight_ducts(doc, view):
-    """Collect duct element IDs where family equals 'Straight' plus all hangers."""
+def collect_elbow_ducts(doc, view):
+    """Collect duct element IDs where family is Elbow plus all hangers."""
     ids = List[ElementId]()
 
     # Get all fabrication ducts in the view
     ducts = RevitDuct.all(doc, view)
 
-    # Filter to only straights
+    # Filter to only elbows
     for duct in ducts:
-        if duct.family in straigth_group:
+        if duct.family in group:
             ids.Add(duct.element.Id)
 
     # Also collect all hangers
@@ -66,15 +65,15 @@ def is_view_isolated(view):
 
 # Main Code
 # =================================================
-with revit.Transaction('Toggle Isolate Straights'):
+with revit.Transaction('Toggle Isolate Elbows'):
     if is_view_isolated(active_view):
         # Remove isolation
         active_view.DisableTemporaryViewMode(
             TemporaryViewMode.TemporaryIsolate)
     else:
-        # Collect straight ducts visible in current view only
-        ids = collect_straight_ducts(doc, active_view)
+        # Collect elbow ducts visible in current view only
+        ids = collect_elbow_ducts(doc, active_view)
 
-        # Isolate straight ducts if we have elements
+        # Isolate elbow ducts if we have elements
         if ids.Count > 0:
             active_view.IsolateElementsTemporary(ids)

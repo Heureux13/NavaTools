@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit, script
+from pyrevit import revit, script, DB
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     BuiltInParameter,
@@ -17,12 +17,13 @@ from Autodesk.Revit.DB import (
     FamilySymbol,
     IndependentTag,
     Transaction,
+    XYZ,
 )
 from revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
-__title__ = "Tag Air Terminals"
+__title__ = "Tag GRDs"
 __doc__ = """
 Tags all air terminals in the current view with the -UMI_GRD_JN label.
 """
@@ -42,14 +43,38 @@ def _find_tag_symbol(doc, target_name):
         .OfClass(FamilySymbol)
         .ToElements()
     )
+    exact_matches = []
+    contains_matches = []
     for sym in symbols:
         fam = getattr(sym, "Family", None)
         fam_name = fam.Name if fam else ""
         type_name = getattr(sym, "Name", "") or ""
+        fam_norm = fam_name.strip().lower()
+        type_norm = type_name.strip().lower()
         label = (fam_name + " " + type_name).lower()
-        if needle in label:
-            return sym
+        if needle == fam_norm or needle == type_norm:
+            exact_matches.append(sym)
+        elif needle in label:
+            contains_matches.append(sym)
+
+    if exact_matches:
+        return exact_matches[0]
+    if contains_matches:
+        return contains_matches[0]
     return None
+
+
+def _tag_type_matches_target(tag_type, target_name):
+    if not tag_type or not target_name:
+        return False
+    target = target_name.strip().lower()
+    fam = getattr(tag_type, 'Family', None)
+    fam_name = (fam.Name if fam else "").strip().lower()
+    type_name = (getattr(tag_type, 'Name', '') or '').strip().lower()
+    if target == fam_name or target == type_name:
+        return True
+    label = (fam_name + " " + type_name).strip()
+    return target in label
 
 
 # Code
@@ -63,12 +88,164 @@ output = script.get_output()
 
 tagger = RevitTagging(doc, view)
 
-target_tag_name = "-UMI_GRD_JN"
-tag_symbol = _find_tag_symbol(doc, target_tag_name)
+# Tag sets in priority order
+first_tag = [
+    '_umi_grd_cfm',
+]
 
-if not tag_symbol:
-    output.print_md("## Tag '{}' not found in Air Terminal Tags.".format(target_tag_name))
-    script.exit()
+second_tag = [
+    '_umi_grd',
+]
+
+# Parameters to check and their "empty" values
+check_parameter = {
+    'airflow': [0, "0", "0 cfm"],
+    'flow': [0, "0", "0 cfm"],
+    'cfm': [0, "0", "0 cfm"]
+}
+
+order_paramters = {
+    1: '_grd_value',
+    2: 'mark',
+    3: 'type mark',
+}
+
+value_parameters = {
+    '_grd_label',
+}
+
+skip_values = {
+    'skip',
+    'n/a',
+}
+
+second_tag_values = {
+    'second',
+    '2',
+    '_umi_grd'
+}
+
+
+def _has_real_value(element, param_name, empty_values):
+    """Check if a parameter has a non-empty value."""
+    try:
+        param = element.LookupParameter(param_name)
+        if not param:
+            return False
+
+        # Get value based on storage type
+        storage_type = param.StorageType
+        if storage_type == 1:  # Integer
+            val = param.AsInteger()
+        elif storage_type == 2:  # Double
+            val = param.AsDouble()
+        elif storage_type == 3:  # String
+            val = param.AsString()
+        else:
+            val = param.AsValueString()
+
+        # Check if value is not in empty_values list
+        if val not in empty_values:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _get_param_case_insensitive(element, param_name):
+    target = param_name.lower().strip()
+    for param in element.Parameters:
+        try:
+            if param.Definition and param.Definition.Name and param.Definition.Name.lower().strip() == target:
+                return param
+        except Exception:
+            pass
+    return None
+
+
+def _is_empty_parameter_value(param, empty_values):
+    if not param:
+        return False
+
+    empty_norm = {str(v).lower().strip() for v in empty_values}
+    try:
+        storage_type = param.StorageType
+        if storage_type == 1:  # Integer
+            val_int = param.AsInteger()
+            if val_int == 0:
+                return True
+        elif storage_type == 2:  # Double
+            val_dbl = param.AsDouble()
+            if val_dbl is not None and abs(val_dbl) < 1e-9:
+                return True
+
+        val_str = param.AsString()
+        if val_str is None:
+            val_str = param.AsValueString()
+        if val_str is not None:
+            val_norm = val_str.lower().strip()
+            if val_norm in empty_norm:
+                return True
+
+            # Handle formatted strings like "0.00 CFM" by parsing the leading number.
+            try:
+                first_token = val_norm.split()[0].replace(',', '')
+                if float(first_token) == 0.0:
+                    return True
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return False
+
+
+def _find_first_available_tag(doc, tag_names):
+    """Try to find the first available tag from a list of tag names."""
+    for tag_name in tag_names:
+        tag_sym = _find_tag_symbol(doc, tag_name)
+        if tag_sym:
+            return tag_sym, tag_name
+    return None, None
+
+
+def _get_value_from_ordered_params(element, doc, param_order):
+    """Get value from element following the ordered parameter hierarchy.
+    Returns the first non-empty value found, or empty string if none found.
+    Does case-insensitive parameter lookup.
+    """
+    elem_type = doc.GetElement(element.GetTypeId())
+
+    for order, param_name in param_order.items():
+        param_name_lower = param_name.lower().strip()
+
+        # Try instance parameters with case-insensitive lookup
+        for param in element.Parameters:
+            if param.Definition.Name.lower().strip() == param_name_lower:
+                try:
+                    val = param.AsString()
+                    if not val:
+                        val = param.AsValueString()
+                    if val and val.strip():
+                        return val.strip()
+                except Exception:
+                    pass
+
+        # If not found on instance, try type parameters with case-insensitive lookup
+        if elem_type:
+            for param in elem_type.Parameters:
+                if param.Definition.Name.lower().strip() == param_name_lower:
+                    try:
+                        val = param.AsString()
+                        if not val:
+                            val = param.AsValueString()
+                        if val and val.strip():
+                            return val.strip()
+                    except Exception:
+                        pass
+
+    return ""
+
 
 air_terminals = (
     FilteredElementCollector(doc, view.Id)
@@ -78,14 +255,12 @@ air_terminals = (
 )
 
 if not air_terminals:
-    output.print_md("## No air terminals found in this view.")
+    # output.print_md("## No air terminals found in this view.")
     script.exit()
 
 placed = []
 failed = []
 already_tagged = []
-
-fam_name = (tag_symbol.Family.Name if tag_symbol and tag_symbol.Family else "").strip()
 
 # Check how many tags already exist in the view
 existing_tags = list(
@@ -94,121 +269,153 @@ existing_tags = list(
     .ToElements()
 )
 
-# Build a set of element IDs that are already tagged with our tag family
-already_tagged_ids = set()
-fam_name_lower = fam_name.strip().lower()
+# Build a map of element IDs to existing tag instances from our families
+tag_map = {}
+all_tag_names = first_tag + second_tag
 
 for tag in existing_tags:
     try:
-        # Check if this tag is using our family
         tag_type_id = tag.GetTypeId()
         tag_type = doc.GetElement(tag_type_id)
-        if tag_type and hasattr(tag_type, 'Family'):
-            tag_fam_name = (tag_type.Family.Name or "").strip().lower()
-            if tag_fam_name == fam_name_lower:
-                # This tag uses our family, get what it's tagging
-                tagged_ids = tag.GetTaggedLocalElementIds()
-                for tid in tagged_ids:
-                    already_tagged_ids.add(tid)
+        if not tag_type:
+            continue
+
+        is_our_tag = False
+        for tag_name in all_tag_names:
+            if _tag_type_matches_target(tag_type, tag_name):
+                is_our_tag = True
+                break
+
+        if not is_our_tag:
+            continue
+
+        try:
+            tagged_ids = tag.GetTaggedLocalElementIds()
+        except Exception:
+            tagged_ids = []
+
+        for tid in tagged_ids:
+            tid_val = tid.IntegerValue if hasattr(tid, 'IntegerValue') else int(tid)
+            tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
 t = Transaction(doc, "Tag Air Terminals")
 t.Start()
 try:
-    # Update _grd_label parameter for all air terminals before tagging
+    # Update value parameters for all air terminals before tagging
     for elem in air_terminals:
+        # Get value based on ordered parameter hierarchy
+        value_to_write = _get_value_from_ordered_params(elem, doc, order_paramters)
+
+        # Write to all value parameters
+        for param_name in value_parameters:
+            try:
+                param = elem.LookupParameter(param_name)
+                if param:
+                    param.Set(value_to_write)
+            except Exception:
+                pass
+
+        # Get the value that will be written
+        current_value = _get_value_from_ordered_params(elem, doc, order_paramters)
+        current_value_normalized = current_value.lower().strip()
+
+        # Check if value is in skip list
+        if current_value_normalized in {v.lower().strip() for v in skip_values}:
+            failed.append((elem, "Value '{}' is in skip list".format(current_value)))
+            continue
+
+        # Check airflow/cfm parameters to determine which tag to use
+        # If airflow is empty (0, "0", "0 cfm"), use second_tag; otherwise use first_tag
+        use_second = False
+        for param_name, empty_vals in check_parameter.items():
+            param = _get_param_case_insensitive(elem, param_name)
+            if param and _is_empty_parameter_value(param, empty_vals):
+                use_second = True
+                break
+        tag_set = second_tag if use_second else first_tag
+        tag_symbol, tag_name = _find_first_available_tag(doc, tag_set)
+
+        if not tag_symbol:
+            failed.append((elem, "No tag found from {} set".format("second" if use_second else "first")))
+            continue
+
+        # Skip if already tagged with the correct tag; otherwise delete wrong tags
+        elem_id_val = elem.Id.IntegerValue
+        existing_for_elem = tag_map.get(elem_id_val, [])
+        if existing_for_elem:
+            has_correct = False
+            for existing_tag in existing_for_elem:
+                existing_type = doc.GetElement(existing_tag.GetTypeId())
+                if _tag_type_matches_target(existing_type, tag_name):
+                    has_correct = True
+                    break
+            if has_correct:
+                already_tagged.append(elem)
+                continue
+
+            for existing_tag in existing_for_elem:
+                try:
+                    doc.Delete(existing_tag.Id)
+                except Exception:
+                    pass
+
+        # Get location point for tag placement - use element location directly
+        tag_pt = None
         try:
-            # Get instance parameters
-            grd_label_instance_param = elem.LookupParameter("_grd_label_instance")
-            mark_param = elem.LookupParameter("Mark")
-            grd_label_param = elem.LookupParameter("_grd_label")
-
-            # Get type parameters
-            elem_type = doc.GetElement(elem.GetTypeId())
-            grd_label_type_param = elem_type.LookupParameter("_grd_label_type") if elem_type else None
-            type_mark_param = elem_type.LookupParameter("Type Mark") if elem_type else None
-
-            # Determine value to write based on priority
-            value_to_write = ""
-
-            if grd_label_instance_param:
-                val = grd_label_instance_param.AsString()
-                if val and val.strip():
-                    value_to_write = val
-
-            if not value_to_write and mark_param:
-                val = mark_param.AsString()
-                if val and val.strip():
-                    value_to_write = val
-
-            if not value_to_write and grd_label_type_param:
-                val = grd_label_type_param.AsString()
-                if val and val.strip():
-                    value_to_write = val
-
-            if not value_to_write and type_mark_param:
-                val = type_mark_param.AsString()
-                if val and val.strip():
-                    value_to_write = val
-
-            # Always write to _grd_label (even if empty)
-            if grd_label_param:
-                grd_label_param.Set(value_to_write)
+            loc = elem.Location
+            if hasattr(loc, 'Point'):
+                tag_pt = loc.Point
         except Exception:
             pass
 
-    # Now tag all air terminals
-    for elem in air_terminals:
-        # Check if already tagged with our tag family
-        if elem.Id in already_tagged_ids:
-            already_tagged.append(elem)
-            continue
+        if tag_pt is None:
+            # Fallback to bounding box center
+            view = uidoc.ActiveView
+            bbox = elem.get_BoundingBox(view) if view else None
+            if bbox:
+                min_pt = bbox.Min
+                max_pt = bbox.Max
+                tag_pt = XYZ(
+                    (min_pt.X + max_pt.X) / 2.0,
+                    (min_pt.Y + max_pt.Y) / 2.0,
+                    (min_pt.Z + max_pt.Z) / 2.0,
+                )
+            else:
+                failed.append((elem, "Unable to determine tag location"))
+                continue
 
-        # Try a face reference first, then fall back to element center
+        # Place tag using element directly with its location point
         try:
-            face_ref, face_pt = tagger.get_face_facing_view(elem)
-        except Exception:
-            face_ref, face_pt = (None, None)
-
-        placed_one = False
-
-        # Attempt face placement
-        if face_ref is not None and face_pt is not None:
-            try:
-                tagger.place_tag(face_ref, tag_symbol, face_pt)
-                placed.append(elem)
-                placed_one = True
-            except Exception:
-                pass
-
-        # Fallback: place at element center
-        if not placed_one:
-            try:
-                bbox = elem.get_BoundingBox(view)
-                if bbox:
-                    center = (bbox.Min + bbox.Max) / 2.0
-                    tagger.place_tag(elem, tag_symbol, center)
-                    placed.append(elem)
-                    placed_one = True
-            except Exception:
-                pass
-
-        if not placed_one:
-            failed.append((elem, "No valid reference or center placement"))
+            tagger.place_tag(elem, tag_symbol, tag_pt)
+            placed.append(elem)
+        except Exception as e:
+            failed.append((elem, "Tag placement error: {}".format(str(e))))
 
     t.Commit()
 except Exception as e:
-    output.print_md("Tag placement error: {}".format(e))
+    # output.print_md("Tag placement error: {}".format(e))
     t.RollBack()
     raise
 
 # Reporting
 # ==================================================
-output.print_md(
-    "## Summary: placed {}, already tagged {}, failed {}".format(
-        len(placed),
-        len(already_tagged),
-        len(failed),
-    )
-)
+# output.print_md(
+#     "## Summary: placed {}, already tagged {}, failed {}".format(
+#         len(placed),
+#         len(already_tagged),
+#         len(failed),
+#     )
+# )
+
+# if failed:
+#     output.print_md("\n### Failed Elements:")
+#     for idx, (elem, reason) in enumerate(failed, 1):
+#         output.print_md(
+#             "### No: {:03} | ID: {} | Reason: {}".format(
+#                 idx,
+#                 output.linkify(elem.Id),
+#                 reason
+#             )
+#         )

@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Fittings"
+__title__ = "Tag Fittings"
 __doc__ = """
 Tag all fitting with assosiated label
 """

@@ -32,7 +32,7 @@ import os
 
 # Button info
 # ===================================================
-__title__ = "Isolate by Fab w/ Item Number"
+__title__ = "Isolate by Item Number"
 __doc__ = """
 Isolate by Fab Notes with Item Number
 """
@@ -55,7 +55,6 @@ families_to_skip = {
 
 # Values to skip in Fabrication Notes
 fab_notes_to_skip = {
-    0,
     "0",
     "skip",
 }

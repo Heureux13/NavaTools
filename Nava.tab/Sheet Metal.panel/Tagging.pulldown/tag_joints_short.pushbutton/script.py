@@ -18,7 +18,7 @@ from revit_output import print_disclaimer
 
 # Button info
 # ==================================================
-__title__ = "Straight Duct Short"
+__title__ = "Tag Joints Short"
 __doc__ = """
 Tag all short straight duct with length.
 """

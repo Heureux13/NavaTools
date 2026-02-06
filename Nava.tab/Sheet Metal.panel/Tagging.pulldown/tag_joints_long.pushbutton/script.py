@@ -19,7 +19,7 @@ import math
 
 # Button display information
 # =================================================
-__title__ = "Straight Duct Full"
+__title__ = "Tag Joints Full"
 __doc__ = """
 Tags full straight duct connected to fittings with size label
 """
