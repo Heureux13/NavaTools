@@ -49,6 +49,7 @@ elbow_extension_tags = {
 elbow_families = {
     'elbow',
     'tee',
+    'elbow 90 sr - stamped',
 }
 
 square_elbow_families = {
