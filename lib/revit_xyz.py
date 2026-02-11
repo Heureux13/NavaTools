@@ -86,7 +86,10 @@ class RevitXYZ(object):
         seen = set()
 
         for conn in connectors:
-            origin = getattr(conn, 'Origin', None)
+            try:
+                origin = conn.Origin
+            except Exception:
+                continue
             if not origin:
                 continue
 

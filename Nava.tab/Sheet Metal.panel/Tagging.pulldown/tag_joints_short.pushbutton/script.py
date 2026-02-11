@@ -31,6 +31,9 @@ doc = revit.doc  # type: Document
 output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
+DEFAULT_SHORT_THRESHOLD_IN = 56.0
+PROGRESS_EVERY = 500
+BATCH_SIZE = 200
 
 # View determination
 # ==================================================
@@ -47,11 +50,44 @@ ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
+element_families = {
+    'straight': None,
+    'spiral': 12,
+    'spiral duct': 12,
+}
+
+# Choose tag
+# ==================================================
+tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
+
 # Filtered results
 # ==================================================
 fil_ducts = []
 for d in ducts:
-    if d.joint_size != JointSize.SHORT:
+    # Check if family matches allowed families
+    fam = (d.family or "").strip().lower()
+    if fam not in element_families:
+        continue
+
+    # Check minimum length threshold for this family
+    min_length = element_families.get(fam)
+    if min_length is not None:
+        length_val = d.length
+        # Handle different length types (float, int, or string)
+        if length_val is not None:
+            try:
+                if isinstance(length_val, str):
+                    length_val = float(length_val)
+                if isinstance(length_val, (int, float)) and length_val <= min_length:
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+    joint_size = d.joint_size
+    if joint_size == JointSize.INVALID:
+        if d.length is None or d.length > DEFAULT_SHORT_THRESHOLD_IN:
+            continue
+    elif joint_size != JointSize.SHORT:
         continue
     angle = RevitXYZ(d.element).straight_joint_degree()
     if isinstance(angle, (int, float)):
@@ -64,56 +100,6 @@ for d in ducts:
                 continue
     fil_ducts.append(d)
 
-# Choose tag
-# ==================================================
-tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
-
-
-def _below_bbox_point(elem, base_point=None, offset_z=0.1):
-    """Return the dead center point of the element bbox."""
-    try:
-        bbox = elem.get_BoundingBox(view)
-        if bbox is None:
-            return None
-        bx = (bbox.Min.X + bbox.Max.X) / 2.0
-        by = (bbox.Min.Y + bbox.Max.Y) / 2.0
-        bz = (bbox.Min.Z + bbox.Max.Z) / 2.0
-        return DB.XYZ(bx, by, bz)
-    except Exception:
-        return None
-
-
-def _has_tag_type(elem, tag_symbol):
-    """Return True if elem already has a tag of the same type as tag_symbol in this view."""
-    try:
-        if elem is None or tag_symbol is None:
-            return False
-        target_type_id = getattr(tag_symbol, "Id", None)
-        if not target_type_id:
-            return False
-        tags = list(
-            DB.FilteredElementCollector(doc, view.Id)
-            .OfClass(DB.IndependentTag)
-            .ToElements()
-        )
-        for itag in tags:
-            try:
-                tagged_ids = None
-                if hasattr(itag, "GetTaggedLocalElementIds"):
-                    tagged_ids = itag.GetTaggedLocalElementIds() or []
-                elif hasattr(itag, "TaggedLocalElementId"):
-                    tagged_ids = [itag.TaggedLocalElementId]
-                if not tagged_ids or elem.Id not in tagged_ids:
-                    continue
-                if itag.GetTypeId() == target_type_id:
-                    return True
-            except Exception:
-                continue
-    except Exception:
-        return False
-    return False
-
-
 # Transaction
 # ==================================================
 already_tagged = []
@@ -121,91 +107,101 @@ needs_tagging = []
 t = Transaction(doc, "Short Joints Tag")
 t.Start()
 try:
+    # Get tag family name once
+    tag_fam_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+
     # Begins our tagging process
+    tagged_count = 0
+    batch_count = 0
     for d in fil_ducts:
-        is_tagged = _has_tag_type(d.element, tag) or tagger.already_tagged(d.element, tag.Family.Name)
-        if is_tagged:
+        # Get existing tag families for this element
+        existing_tag_fams = tagger.get_existing_tag_families(d.element)
+
+        # Check if already tagged with this tag family
+        if tag_fam_name in existing_tag_fams:
             already_tagged.append(d)
             continue
 
         needs_tagging.append(d)
+        loc = d.element.Location
+        if hasattr(loc, "Point") and loc.Point is not None:
+            tagger.place_tag(d.element, tag, loc.Point)
+            tagged_count += 1
+            batch_count += 1
+            if tagged_count % PROGRESS_EVERY == 0:
+                output.print_md("Tagged {} so far...".format(tagged_count))
+            if batch_count >= BATCH_SIZE:
+                t.Commit()
+                t = Transaction(doc, "Short Joints Tag")
+                t.Start()
+                batch_count = 0
+            continue
+        if hasattr(loc, "Curve") and loc.Curve is not None:
+            curve = loc.Curve
+            midpoint = curve.Evaluate(0.5, True)
+            tagger.place_tag(d.element, tag, midpoint)
+            tagged_count += 1
+            batch_count += 1
+            if tagged_count % PROGRESS_EVERY == 0:
+                output.print_md("Tagged {} so far...".format(tagged_count))
+            if batch_count >= BATCH_SIZE:
+                t.Commit()
+                t = Transaction(doc, "Short Joints Tag")
+                t.Start()
+                batch_count = 0
+            continue
+
         ref, centroid = tagger.get_face_facing_view(d.element)
         if ref is not None and centroid is not None:
-            pt = _below_bbox_point(d.element, centroid) or centroid
-            tagger.place_tag(ref, tag, pt)
-        else:
-            loc = d.element.Location
-            if hasattr(loc, "Point") and loc.Point is not None:
-                pt = _below_bbox_point(d.element, loc.Point) or loc.Point
-                tagger.place_tag(d.element, tag, pt)
-            elif hasattr(loc, "Curve") and loc.Curve is not None:
-                curve = loc.Curve
-                midpoint = curve.Evaluate(0.25, True)
-                pt = _below_bbox_point(d.element, midpoint) or midpoint
-                tagger.place_tag(d.element, tag, pt)
-            else:
-                continue
+            tagger.place_tag(ref, tag, centroid)
+            tagged_count += 1
+            batch_count += 1
+            if tagged_count % PROGRESS_EVERY == 0:
+                output.print_md("Tagged {} so far...".format(tagged_count))
+            if batch_count >= BATCH_SIZE:
+                t.Commit()
+                t = Transaction(doc, "Short Joints Tag")
+                t.Start()
+                batch_count = 0
+            continue
+
+    # Print newly tagged list first
+    if needs_tagging:
+        output.print_md("## Newly Tagged")
+        for i, d in enumerate(needs_tagging, start=1):
+            output.print_md(
+                "### No.{} | ID: {} | Fam: {} | Size: {} | Le: {:06.2f} | Ex: {}".format(
+                    i,
+                    output.linkify(d.element.Id),
+                    d.family,
+                    d.size,
+                    d.length if d.length else 0.0,
+                    d.extension_bottom if d.extension_bottom else 0.0
+                )
+            )
+        output.print_md("---")
 
     # Print already tagged list
     if already_tagged:
-        # output.print_md("# Already Tagged: {}".format(len(already_tagged)))
+        output.print_md("## Already Tagged")
         for i, d in enumerate(already_tagged, start=1):
-            angle = RevitXYZ(d.element).straight_joint_degree()
-            abs_angle = abs(angle)
             output.print_md(
-                "### Index {} | Type: {} | Size: {} | Length: {} | Angle: {:.2f}° | Element ID: {}".format(
+                "### Index {} | Size: {} | Family: {} | Length: {:06.2f} | Element ID: {}".format(
                     i,
-                    d.connector_0_type,
                     d.size,
-                    d.length,
-                    abs_angle,
+                    d.family,
+                    d.length if d.length else 0.0,
                     output.linkify(d.element.Id)
                 )
             )
+        output.print_md("---")
 
-        element_ids = [d.element.Id for d in already_tagged]
-        output.print_md(
-            "# Total elements already tagged {}, {}".format(
-                len(already_tagged),
-                output.linkify(element_ids)
-            )
-        )
-
+    # Summary
+    output.print_md("## Summary")
+    output.print_md("- **Newly Tagged:** {}".format(len(needs_tagging)))
+    output.print_md("- **Already Tagged:** {}".format(len(already_tagged)))
+    output.print_md("- **Total Elements:** {}".format(len(fil_ducts)))
     output.print_md("---")
-
-    if needs_tagging:
-        # output.print_md("# Newly Tagged: {}".format(len(needs_tagging)))
-        for i, d in enumerate(needs_tagging, start=1):
-            angle = RevitXYZ(d.element).straight_joint_degree()
-            abs_angle = abs(angle)
-            output.print_md(
-                "### Index {} | Type: {} | Size: {} | Length: {} | Angle: {:.2f}° | Element ID: {}".format(
-                    i,
-                    d.connector_0_type,
-                    d.size,
-                    d.length,
-                    abs_angle,
-                    output.linkify(d.element.Id)
-                )
-            )
-
-        element_ids = [d.element.Id for d in needs_tagging]
-        output.print_md(
-            "# Total elements tagged {}, {}".format(
-                len(needs_tagging),
-                output.linkify(element_ids)
-            )
-        )
-
-    output.print_md("---")
-
-    element_ids = [d.element.Id for d in fil_ducts]
-    output.print_md(
-        "# Total elements {}, {}".format(
-            len(fil_ducts),
-            output.linkify(element_ids)
-        )
-    )
 
     # Final helper print
     print_disclaimer(output)

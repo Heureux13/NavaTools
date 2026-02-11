@@ -55,6 +55,7 @@ CONNECTOR_THRESHOLDS = {
     ("Spiral Duct", "Raw"): 120.00,
     ("Spiral Pipe", "Raw"): 120.00,
 }
+DEFAULT_SHORT_THRESHOLD_IN = 56.00
 
 # Helpers
 # ==================================================
@@ -569,7 +570,11 @@ class RevitDuct:
             return JointSize.INVALID
 
         threshold = CONNECTOR_THRESHOLDS.get(key)
-        if threshold is None or self.length is None:
+        if threshold is None:
+            if self.length is None:
+                return JointSize.INVALID
+            threshold = DEFAULT_SHORT_THRESHOLD_IN
+        if self.length is None:
             return JointSize.INVALID
 
         # Apply a small tolerance to avoid classifying near-threshold parts as short

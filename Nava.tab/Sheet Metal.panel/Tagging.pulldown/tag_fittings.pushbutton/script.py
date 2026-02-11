@@ -113,9 +113,22 @@ def should_skip_tag(duct, tag):
             output.print_md("DEBUG: Exception checking vertical: {}".format(str(e)))
             pass
 
-    # Skip -FabDuct_DEGREE_MV_Tag for Radius Elbow with angle 45 or 90
+    # For degree tags: tag vertical elbows, skip horizontal elbows
     if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
-        return True
+        try:
+            conn_origins = RevitXYZ(duct.element).connector_origins()
+            if conn_origins and len(conn_origins) >= 2:
+                c0, c1 = conn_origins[0], conn_origins[1]
+                dz = abs(c1.Z - c0.Z)
+                # If dz > 0.01, it's vertical: tag it (do NOT skip)
+                # If dz <= 0.01, it's horizontal: skip tagging
+                if dz <= 0.01:
+                    return True
+        except Exception as e:
+            output.print_md("DEBUG: Exception checking vertical/horizontal: {}".format(str(e)))
+            pass
+        # If vertical, allow tagging (do NOT skip)
+        return False
 
     # Skip extension tags when extension equals throat allowance (TDF/S&D),
     # with tolerance and connector type synonyms handled.
