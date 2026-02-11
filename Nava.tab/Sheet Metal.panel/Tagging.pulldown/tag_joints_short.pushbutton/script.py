@@ -56,6 +56,34 @@ element_families = {
     'spiral duct': 12,
 }
 
+skip_parameters = {
+    'mark': ['skip', 'skip n/a'],
+}
+
+
+def should_skip_by_param(element, param_rules):
+    for param_name, skip_values in param_rules.items():
+        param = element.LookupParameter(param_name)
+        if not param:
+            continue
+        raw_val = None
+        try:
+            raw_val = param.AsString()
+        except Exception:
+            raw_val = None
+        if not raw_val:
+            try:
+                raw_val = param.AsValueString()
+            except Exception:
+                raw_val = None
+        if raw_val is None:
+            continue
+        val = raw_val.strip().lower()
+        if val in {v.strip().lower() for v in skip_values}:
+            return True, param_name, raw_val
+    return False, None, None
+
+
 # Choose tag
 # ==================================================
 tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
@@ -63,10 +91,17 @@ tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
 # Filtered results
 # ==================================================
 fil_ducts = []
+skipped_by_param = []
 for d in ducts:
     # Check if family matches allowed families
     fam = (d.family or "").strip().lower()
     if fam not in element_families:
+        continue
+
+    # Skip when parameter exists and matches skip list
+    skip_param, skip_name, skip_val = should_skip_by_param(d.element, skip_parameters)
+    if skip_param:
+        skipped_by_param.append((d, skip_name, skip_val))
         continue
 
     # Check minimum length threshold for this family
@@ -196,10 +231,28 @@ try:
             )
         output.print_md("---")
 
+    # Print skipped by parameter list
+    if skipped_by_param:
+        output.print_md("## Skipped By Parameter")
+        for i, item in enumerate(skipped_by_param, start=1):
+            d, skip_name, skip_val = item
+            output.print_md(
+                "### Index {} | Param: {} | Value: {} | Family: {} | Length: {:06.2f} | Element ID: {}".format(
+                    i,
+                    skip_name,
+                    skip_val,
+                    d.family,
+                    d.length if d.length else 0.0,
+                    output.linkify(d.element.Id)
+                )
+            )
+        output.print_md("---")
+
     # Summary
     output.print_md("## Summary")
     output.print_md("- **Newly Tagged:** {}".format(len(needs_tagging)))
     output.print_md("- **Already Tagged:** {}".format(len(already_tagged)))
+    output.print_md("- **Skipped By Parameter:** {}".format(len(skipped_by_param)))
     output.print_md("- **Total Elements:** {}".format(len(fil_ducts)))
     output.print_md("---")
 

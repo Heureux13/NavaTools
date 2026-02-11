@@ -69,8 +69,52 @@ family_to_angle_skip = {
     'gored elbow'
 }
 
+skip_parameters = {
+    'mark': ['skip', 'skip n/a'],
+}
+
+
+def should_skip_by_param(duct):
+    for param, skip_values in skip_parameters.items():
+        param_val = getattr(duct, param, None)
+        if not param_val:
+            param_candidates = [param, param.title(), param.upper()]
+            param_val = None
+            for candidate in param_candidates:
+                try:
+                    param_val = RevitElement(doc, view, duct.element).get_param(candidate)
+                except Exception:
+                    param_val = None
+                if param_val is not None:
+                    break
+            if param_val is None:
+                try:
+                    type_element = doc.GetElement(duct.element.GetTypeId())
+                except Exception:
+                    type_element = None
+                if type_element is not None:
+                    for candidate in param_candidates:
+                        try:
+                            param_val = RevitElement(doc, view, type_element).get_param(candidate)
+                        except Exception:
+                            param_val = None
+                        if param_val is not None:
+                            break
+        if param_val is None:
+            continue
+        param_val_str = str(param_val).strip().lower()
+        if not param_val_str:
+            continue
+        for skip_val in skip_values:
+            if param_val_str == skip_val.strip().lower():
+                return True
+    return False
+
 
 def should_skip_tag(duct, tag):
+    if should_skip_by_param(duct):
+        return True
+
     fam = (duct.family or '').strip().lower()
     tag_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
 
@@ -93,9 +137,22 @@ def should_skip_tag(duct, tag):
         except Exception:
             pass
 
-    # For 45/90 square elbows: skip degree tags, but allow extension tags through for now
+    # For 45/90 square elbows: tag if vertical, skip if horizontal (for degree tags)
     if is_45_or_90 and tag_name == '-fabduct_degree_mv_tag':
-        return True
+        try:
+            conn_origins = RevitXYZ(duct.element).connector_origins()
+            if conn_origins and len(conn_origins) >= 2:
+                c0, c1 = conn_origins[0], conn_origins[1]
+                dz = abs(c1.Z - c0.Z)
+                # If dz > 0.01, it's vertical: tag it (do NOT skip)
+                # If dz <= 0.01, it's horizontal: skip tagging
+                if dz <= 0.01:
+                    return True
+        except Exception as e:
+            output.print_md("DEBUG: Exception checking vertical/horizontal (square elbow): {}".format(str(e)))
+            pass
+        # If vertical, allow tagging (do NOT skip)
+        return False
 
     # Skip extension tags for elbows with vertical movement (not purely horizontal)
     if fam in elbow_families and tag_name in {t.strip().lower() for t in elbow_extension_tags}:
@@ -330,11 +387,16 @@ try:
     # Track status for reporting/selection
     needs_tagging = []
     already_tagged = []
+    skipped_by_param = []
 
     for d in dic_ducts:
         key = d.family.strip().lower() if d.family else None
         tag_configs = duct_families.get(key)
         if not tag_configs:
+            continue
+
+        if should_skip_by_param(d):
+            skipped_by_param.append(d)
             continue
 
         tagged_this_element = False
@@ -439,6 +501,20 @@ try:
             )
         output.print_md("---")
 
+    if skipped_by_param:
+        output.print_md("## Skipped by Parameter")
+        for i, d in enumerate(skipped_by_param, start=1):
+            output.print_md(
+                "### Index {} | Size: {} | Family: {} | Length: {:06.2f} | Element ID: {}".format(
+                    i,
+                    d.size,
+                    d.family,
+                    d.length,
+                    output.linkify(d.element.Id)
+                )
+            )
+        output.print_md("---")
+
     if needs_tagging:
         newly_ids = [d.element.Id for d in needs_tagging]
         output.print_md("# Newly tagged: {}, {}".format(
@@ -447,6 +523,10 @@ try:
         already_ids = [d.element.Id for d in already_tagged]
         output.print_md("# Already tagged: {}, {}".format(
             len(already_tagged), output.linkify(already_ids)))
+    if skipped_by_param:
+        skipped_ids = [d.element.Id for d in skipped_by_param]
+        output.print_md("# Skipped by parameter: {}, {}".format(
+            len(skipped_by_param), output.linkify(skipped_ids)))
     all_ids = [d.element.Id for d in dic_ducts]
     output.print_md("# Total: {}, {}".format(
         len(dic_ducts), output.linkify(all_ids)))
