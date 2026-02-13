@@ -14,14 +14,15 @@ from Autodesk.Revit.DB import Transaction
 
 # Button display information
 # =================================================
-__title__ = "Number Skip"
+__title__ = "Skip Tag"
 __doc__ = """
-Sets parameters to 'skip' for selected elements
+Sets parameters to skip selected elements when tagging
 """
 
 # Parameters to set to 'skip'
 parameters_to_skip = {
-    "item number",
+    "_duct_tag_offset",
+    '_duct_tag',
 }
 
 # Code
@@ -45,20 +46,13 @@ try:
         if elem is None:
             continue
 
-        # Iterate through all element parameters
-        for param in elem.Parameters:
+        # Set parameters only if they exist on the element
+        for param_name in normalized_params_to_skip:
             try:
-                param_name = param.Definition.Name
-                normalized_name = param_name.strip().lower()
-
-                # Check if this parameter should be set to skip
-                if normalized_name not in normalized_params_to_skip:
+                param = elem.LookupParameter(param_name)
+                if param is None or param.IsReadOnly:
                     continue
 
-                if param.IsReadOnly:
-                    continue
-
-                # Set the parameter value
                 param.Set("skip")
             except Exception:
                 pass

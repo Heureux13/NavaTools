@@ -71,6 +71,8 @@ family_to_angle_skip = {
 
 skip_parameters = {
     'mark': ['skip', 'skip n/a'],
+    '_duct_tag_offset': ['skip', 'skip n/a'],
+    '_duct_tag': ['skip', 'skip n/a']
 }
 
 
