@@ -389,3 +389,83 @@ class RevitTagging:
                 continue
 
         return fams
+
+    def place_tag_at_center_with_rotation(self, element, tag_label=None, position="center"):
+        """
+        Place a tag along the element and rotate it to match the element's direction.
+        
+        This method:
+        - Places the tag at the specified position along the element's curve (start, center, or end)
+        - Rotates the tag to align with the element's curve direction (e.g., 45° ducts get 45° tags)
+        - Works with any linear element that has a Location.Curve property
+        
+        Args:
+            element: Revit element to tag (e.g., fabrication duct)
+            tag_label: Optional FamilySymbol for the tag type
+            position: Where to place tag along the duct - "start", "center", or "end" (default: "center")
+        
+        Returns:
+            IndependentTag object if successful, None if failed
+        
+        Note: Caller must open a Transaction before calling this method.
+        """
+        import math
+        from Autodesk.Revit.DB import Line, ElementTransformUtils, XYZ
+        
+        try:
+            # Get the curve location
+            loc = element.Location
+            if not loc or not hasattr(loc, "Curve") or not loc.Curve:
+                # Fallback to bounding box center if no curve
+                bbox = element.get_BoundingBox(self.view)
+                if not bbox:
+                    return None
+                center = (bbox.Min + bbox.Max) / 2.0
+                tag = self.place_tag(element, tag_label, center)
+                return tag
+            
+            curve = loc.Curve
+            
+            # Determine position along the curve based on parameter
+            # Use normalized parameters to keep tags within the duct bounds
+            position_lower = position.lower().strip()
+            if position_lower == "start":
+                # Near start (15% along curve to stay within bounds)
+                tag_point = curve.Evaluate(0.15, True)
+            elif position_lower == "end":
+                # Near end (85% along curve to stay within bounds)
+                tag_point = curve.Evaluate(0.85, True)
+            else:  # default to "center"
+                # Middle of the curve
+                tag_point = curve.Evaluate(0.5, True)
+            
+            # Get the curve direction for rotation
+            dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+            
+            # Place tag at the calculated point
+            tag = self.place_tag(element, tag_label, tag_point)
+            
+            if not tag:
+                return None
+            
+            # Rotate tag to match element direction
+            try:
+                # Calculate angle in XY plane (plan view)
+                angle_rad = math.atan2(dir_vec.Y, dir_vec.X)
+                
+                # Create rotation axis at tag head position (vertical line)
+                axis = Line.CreateBound(
+                    tag.TagHeadPosition,
+                    XYZ(tag.TagHeadPosition.X, tag.TagHeadPosition.Y, tag.TagHeadPosition.Z + 1)
+                )
+                
+                # Rotate tag to match duct direction
+                ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
+            except Exception:
+                # Tag placed but rotation failed - still return the tag
+                pass
+            
+            return tag
+            
+        except Exception:
+            return None
