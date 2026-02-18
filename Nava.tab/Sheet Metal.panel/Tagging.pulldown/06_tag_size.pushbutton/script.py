@@ -14,7 +14,6 @@ from revit_output import print_disclaimer
 from revit_tagging import RevitTagging
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from revit_xyz import RevitXYZ
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 
@@ -93,8 +92,6 @@ try:
 
             if tag:
                 placed.append(elem)
-            else:
-                failed.append((elem, "Tag placement returned None"))
 
         except Exception as e:
             failed.append((elem, "Error: {}".format(str(e))))

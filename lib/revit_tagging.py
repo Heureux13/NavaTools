@@ -392,26 +392,26 @@ class RevitTagging:
 
     def place_tag_at_center_with_rotation(self, element, tag_label=None, position="center"):
         """
-        Place a tag along the element and rotate it to match the element's direction.
-        
+        Place a tag along the element and rotate it to match the element's direction in the current view.
+
         This method:
         - Places the tag at the specified position along the element's curve (start, center, or end)
-        - Rotates the tag to align with the element's curve direction (e.g., 45° ducts get 45° tags)
-        - Works with any linear element that has a Location.Curve property
-        
+        - Rotates the tag to align with the element's curve direction as it appears in the view
+        - Works with both plan views (horizontal rotation) and section views (vertical rotation)
+
         Args:
             element: Revit element to tag (e.g., fabrication duct)
             tag_label: Optional FamilySymbol for the tag type
             position: Where to place tag along the duct - "start", "center", or "end" (default: "center")
-        
+
         Returns:
             IndependentTag object if successful, None if failed
-        
+
         Note: Caller must open a Transaction before calling this method.
         """
         import math
         from Autodesk.Revit.DB import Line, ElementTransformUtils, XYZ
-        
+
         try:
             # Get the curve location
             loc = element.Location
@@ -423,9 +423,9 @@ class RevitTagging:
                 center = (bbox.Min + bbox.Max) / 2.0
                 tag = self.place_tag(element, tag_label, center)
                 return tag
-            
+
             curve = loc.Curve
-            
+
             # Determine position along the curve based on parameter
             # Use normalized parameters to keep tags within the duct bounds
             position_lower = position.lower().strip()
@@ -438,34 +438,55 @@ class RevitTagging:
             else:  # default to "center"
                 # Middle of the curve
                 tag_point = curve.Evaluate(0.5, True)
-            
+
             # Get the curve direction for rotation
             dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
-            
+
             # Place tag at the calculated point
             tag = self.place_tag(element, tag_label, tag_point)
-            
+
             if not tag:
                 return None
-            
-            # Rotate tag to match element direction
+
+            # Rotate tag to match element direction as it appears in the current view
             try:
-                # Calculate angle in XY plane (plan view)
-                angle_rad = math.atan2(dir_vec.Y, dir_vec.X)
-                
-                # Create rotation axis at tag head position (vertical line)
-                axis = Line.CreateBound(
-                    tag.TagHeadPosition,
-                    XYZ(tag.TagHeadPosition.X, tag.TagHeadPosition.Y, tag.TagHeadPosition.Z + 1)
-                )
-                
-                # Rotate tag to match duct direction
-                ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
+                # Get view-aware angle using RevitXYZ
+                revit_xyz = RevitXYZ(element)
+                angle_deg = revit_xyz.angle_in_view(self.view)
+
+                if isinstance(angle_deg, (int, float)):
+                    angle_rad = math.radians(angle_deg)
+
+                    # Get view's normal direction (perpendicular to view plane)
+                    # This becomes the rotation axis
+                    try:
+                        view_dir = self.view.ViewDirection
+                    except Exception:
+                        # Fallback to Z-axis if ViewDirection not available
+                        view_dir = XYZ(0, 0, 1)
+
+                    # Normalize view direction
+                    view_dir_len = math.sqrt(view_dir.X * view_dir.X + view_dir.Y *
+                                             view_dir.Y + view_dir.Z * view_dir.Z)
+                    if view_dir_len > 1e-9:
+                        view_dir = XYZ(view_dir.X / view_dir_len, view_dir.Y / view_dir_len, view_dir.Z / view_dir_len)
+                    else:
+                        view_dir = XYZ(0, 0, 1)
+
+                    # Create rotation axis using the view's normal direction
+                    tag_pos = tag.TagHeadPosition
+                    axis = Line.CreateBound(
+                        tag_pos,
+                        XYZ(tag_pos.X + view_dir.X, tag_pos.Y + view_dir.Y, tag_pos.Z + view_dir.Z)
+                    )
+
+                    # Rotate tag to match duct direction as visible in the view
+                    ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
             except Exception:
                 # Tag placed but rotation failed - still return the tag
                 pass
-            
+
             return tag
-            
+
         except Exception:
             return None

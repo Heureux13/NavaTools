@@ -369,3 +369,88 @@ class RevitXYZ(object):
         angle_rad = math.atan2(dz, horizontal_length)
         angle_deg = math.degrees(angle_rad)
         return round(angle_deg, 2)
+
+    def horizontal_angle_xy(self):
+        """Returns the angle in degrees of the duct in the XY plane (plan view rotation).
+
+        This is the angle between the duct's horizontal projection and the X-axis.
+        """
+        inlet, outlet = self.inlet_outlet_points()
+        if not inlet or not outlet:
+            return None
+
+        dx = outlet.X - inlet.X
+        dy = outlet.Y - inlet.Y
+
+        if dx == 0 and dy == 0:
+            return 0.0
+
+        angle_rad = math.atan2(dy, dx)
+        angle_deg = math.degrees(angle_rad)
+        return round(angle_deg, 2)
+
+    def angle_in_view(self, view):
+        """Calculate the duct angle as it appears in the given view.
+
+        Projects the duct direction onto the view plane and returns the rotation
+        angle that would make a tag follow the duct visually in that view.
+
+        Args:
+            view: A Revit View object
+
+        Returns:
+            Angle in degrees, or None if unable to calculate
+        """
+        inlet, outlet = self.inlet_outlet_points()
+        if not inlet or not outlet:
+            return None
+
+        # Get duct direction vector
+        dx = outlet.X - inlet.X
+        dy = outlet.Y - inlet.Y
+        dz = outlet.Z - inlet.Z
+
+        # Get view's coordinate system
+        try:
+            view_dir = view.ViewDirection  # Normal to the view plane
+            view_up = view.UpDirection  # Up direction in the view
+        except Exception:
+            # Fallback: assume standard axes
+            return self.horizontal_angle_xy()
+
+        # Calculate right direction (perpendicular to up in the view plane)
+        # right = view_dir × view_up (cross product)
+        right_x = view_dir.Y * view_up.Z - view_dir.Z * view_up.Y
+        right_y = view_dir.Z * view_up.X - view_dir.X * view_up.Z
+        right_z = view_dir.X * view_up.Y - view_dir.Y * view_up.X
+
+        right_len = math.sqrt(right_x * right_x + right_y * right_y + right_z * right_z)
+        if right_len < 1e-9:
+            return self.horizontal_angle_xy()
+
+        right_x /= right_len
+        right_y /= right_len
+        right_z /= right_len
+
+        # Normalize up direction
+        up_len = math.sqrt(view_up.X * view_up.X + view_up.Y * view_up.Y + view_up.Z * view_up.Z)
+        if up_len < 1e-9:
+            return self.horizontal_angle_xy()
+
+        up_x = view_up.X / up_len
+        up_y = view_up.Y / up_len
+        up_z = view_up.Z / up_len
+
+        # Project duct vector onto view plane
+        # Component along right direction
+        duct_right = dx * right_x + dy * right_y + dz * right_z
+        # Component along up direction
+        duct_up = dx * up_x + dy * up_y + dz * up_z
+
+        # Calculate angle in the view plane
+        if duct_right == 0 and duct_up == 0:
+            return 0.0
+
+        angle_rad = math.atan2(duct_up, duct_right)
+        angle_deg = math.degrees(angle_rad)
+        return round(angle_deg, 2)
