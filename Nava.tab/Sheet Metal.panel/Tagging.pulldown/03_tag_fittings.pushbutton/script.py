@@ -16,7 +16,7 @@ from revit_element import RevitElement
 from revit_duct import RevitDuct
 from revit_xyz import RevitXYZ
 from pyrevit import DB, forms, revit, script
-from Autodesk.Revit.DB import ElementId, Transaction
+from Autodesk.Revit.DB import ElementId, Transaction, FilteredElementCollector, IndependentTag
 
 # Button info
 # ==================================================
@@ -74,6 +74,113 @@ skip_parameters = {
     '_duct_tag_offset': ['skip', 'skip n/a'],
     '_duct_tag': ['skip', 'skip n/a']
 }
+
+parameter_hierarchy_to_check = [
+    'mark',
+    'type mark',
+]
+
+RECT_DAMPER_MARK_TAG = "-FabDuct_MARK_Tag"
+RECT_DAMPER_TYPE_MARK_TAG = "-FabDuct_TM_MV_Tag"
+RECT_DAMPER_SWITCH_FAMILIES = {
+    RECT_DAMPER_MARK_TAG.strip().lower(),
+    RECT_DAMPER_TYPE_MARK_TAG.strip().lower(),
+}
+
+
+def _param_value_from_element_or_type(element, param_name):
+    target = (param_name or '').strip().lower()
+    if not target or element is None:
+        return None
+
+    elem_type = None
+    try:
+        elem_type = doc.GetElement(element.GetTypeId())
+    except Exception:
+        elem_type = None
+
+    for owner in [element, elem_type]:
+        if owner is None:
+            continue
+        try:
+            for p in owner.Parameters:
+                try:
+                    dname = p.Definition.Name if p and p.Definition else None
+                    if not dname or dname.strip().lower() != target:
+                        continue
+                    val = p.AsString()
+                    if val is None:
+                        val = p.AsValueString()
+                    if val is None:
+                        continue
+                    val = str(val).strip()
+                    if val:
+                        return val
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    return None
+
+
+def _rect_volume_damper_tag_choice(duct):
+    mark_param = parameter_hierarchy_to_check[0] if len(parameter_hierarchy_to_check) > 0 else 'mark'
+    type_mark_param = parameter_hierarchy_to_check[1] if len(parameter_hierarchy_to_check) > 1 else 'type mark'
+
+    mark_val = _param_value_from_element_or_type(duct.element, mark_param)
+    if mark_val and mark_val.strip():
+        return tagger.get_label(RECT_DAMPER_MARK_TAG), RECT_DAMPER_MARK_TAG.strip().lower()
+
+    type_mark_val = _param_value_from_element_or_type(duct.element, type_mark_param)
+    if type_mark_val and type_mark_val.strip():
+        return tagger.get_label(RECT_DAMPER_TYPE_MARK_TAG), RECT_DAMPER_TYPE_MARK_TAG.strip().lower()
+
+    # Fallback per requirement: use type-mark tag anyway if both are empty
+    return tagger.get_label(RECT_DAMPER_TYPE_MARK_TAG), RECT_DAMPER_TYPE_MARK_TAG.strip().lower()
+
+
+def _delete_conflicting_tags_for_element(element, keep_family_name_lower, candidate_family_names_lower):
+    try:
+        tags_in_view = (
+            FilteredElementCollector(doc, view.Id)
+            .OfClass(IndependentTag)
+            .ToElements()
+        )
+    except Exception:
+        return
+
+    for t in tags_in_view:
+        try:
+            tagged_ids = t.GetTaggedLocalElementIds()
+        except Exception:
+            tagged_ids = []
+
+        if not tagged_ids:
+            continue
+
+        is_for_element = False
+        for tid in tagged_ids:
+            try:
+                tid_val = tid.Value if hasattr(tid, 'Value') else tid.IntegerValue
+                if tid_val == element.Id.Value:
+                    is_for_element = True
+                    break
+            except Exception:
+                pass
+        if not is_for_element:
+            continue
+
+        try:
+            t_type = doc.GetElement(t.GetTypeId())
+            fam_name = (t_type.Family.Name if t_type and t_type.Family else '').strip().lower()
+        except Exception:
+            fam_name = ''
+
+        if fam_name in candidate_family_names_lower and fam_name != keep_family_name_lower:
+            try:
+                doc.Delete(t.Id)
+            except Exception:
+                pass
 
 
 def should_skip_by_param(duct):
@@ -404,6 +511,17 @@ try:
         tagged_this_element = False
         # Track existing tag families on this element (case-insensitive) to avoid duplicates
         existing_tag_fams = tagger.get_existing_tag_families(d.element)
+
+        if key == 'rect volume damper':
+            chosen_tag, chosen_family_name = _rect_volume_damper_tag_choice(d)
+            if chosen_tag is not None:
+                _delete_conflicting_tags_for_element(
+                    d.element,
+                    chosen_family_name,
+                    RECT_DAMPER_SWITCH_FAMILIES
+                )
+                existing_tag_fams = tagger.get_existing_tag_families(d.element)
+                tag_configs = [(chosen_tag, 0.5)]
 
         for tag, dic_duct_loc in tag_configs:
             if should_skip_tag(d, tag):
