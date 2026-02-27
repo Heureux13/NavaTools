@@ -1,0 +1,15 @@
+title:
+  en_us: Taggging
+layout:
+  - tag_fittings
+  - tag_grds
+  - tag_joints_short
+  - tag_joints_short_all
+  - tag_joints_full
+  - tag_item_numbers
+  - tag_size
+  - tag_bod
+  - tag_length
+  - tag_length_size
+  - tag_bod_length_size
+  
