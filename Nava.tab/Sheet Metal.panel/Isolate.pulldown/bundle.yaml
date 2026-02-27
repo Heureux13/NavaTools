@@ -1,0 +1,16 @@
+title:
+  en_us: Isolate
+layout:
+  - isolate_all
+  - isolate_by_fab_duct
+  - isolate_by_non_fab_duct
+  - isolate_by_service
+  - isolate_by_selection
+  - isolate_by_fab_note
+  - isolate_by_item_number
+  - -----
+  - isolate_mech_equipment
+  - isolate_straights
+  - isolate_vertical_straights
+  - isolate_elbows
+  - isolate_grds
