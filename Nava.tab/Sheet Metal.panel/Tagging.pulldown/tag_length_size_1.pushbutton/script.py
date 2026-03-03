@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag Length / Size"
+__title__ = "Tag Length / Size 1"
 __doc__ = """
 Tag selected elements with Length or Size tags
 """
@@ -37,12 +37,12 @@ tagger = RevitTagging(doc=doc, view=view)
 # Define tags and their positions
 tag_configs = {
     'Length': {
-        'tags': ['_umi_length', '-fabduct_length_mv_tag'],
-        'position': 'end'
+        'tags': ['_umi_length_left', '-fabduct_length_mv_tag'],
+        'position': 'start'
     },
     'Size': {
-        'tags': ['_umi_size', '-fabduct_size_mv_tag'],
-        'position': 'start'
+        'tags': ['_umi_size_right', '-fabduct_size_mv_tag'],
+        'position': 'end'
     }
 }
 

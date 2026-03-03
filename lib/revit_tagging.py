@@ -431,10 +431,10 @@ class RevitTagging:
             position_lower = position.lower().strip()
             if position_lower == "start":
                 # Near start (15% along curve to stay within bounds)
-                tag_point = curve.Evaluate(0.15, True)
+                tag_point = curve.Evaluate(0.00, True)
             elif position_lower == "end":
                 # Near end (85% along curve to stay within bounds)
-                tag_point = curve.Evaluate(0.85, True)
+                tag_point = curve.Evaluate(1.00, True)
             else:  # default to "center"
                 # Middle of the curve
                 tag_point = curve.Evaluate(0.5, True)

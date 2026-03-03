@@ -20,9 +20,9 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag BOD / Length / Size"
+__title__ = "Tag Info 0"
 __doc__ = """
-Tag selected elements with BOD, Length, or Size tags
+Tag selected elements with BOD, Length, and Size tags
 """
 
 # Variables
@@ -36,17 +36,17 @@ tagger = RevitTagging(doc=doc, view=view)
 
 # Define tags and their positions
 tag_configs = {
+    'Length': {
+        'tags': ['_umi_length_right',],
+        'position': 'start'
+    },
     'BOD': {
-        'tags': ['_umi_bod', '-fabduct_bod_mv_tag'],
+        'tags': ['_umi_bod_center',],
         'position': 'center'
     },
-    'Length': {
-        'tags': ['_umi_length', '-fabduct_length_mv_tag'],
-        'position': 'end'
-    },
     'Size': {
-        'tags': ['_umi_size', '-fabduct_size_mv_tag'],
-        'position': 'start'
+        'tags': ['_umi_size_left',],
+        'position': 'end'
     }
 }
 
@@ -78,6 +78,7 @@ try:
                 continue
 
         if not tag_label:
+            output.print_md("**Skipped {}:** no matching tag family found from {}".format(tag_choice, ", ".join(tag_to_use)))
             continue
 
         # Get tag family name for checking if already tagged
@@ -98,7 +99,8 @@ try:
                 )
 
             except Exception as e:
-                pass
+                elem_id = elem.Id.IntegerValue if elem and elem.Id else "Unknown"
+                output.print_md("**Skipped {} tag on element {}:** {}".format(tag_choice, elem_id, e))
 
     t.Commit()
 except Exception as e:

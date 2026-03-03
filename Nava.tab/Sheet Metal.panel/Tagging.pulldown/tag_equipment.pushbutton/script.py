@@ -30,9 +30,7 @@ Tags all mechanical equipment in the current view.
 # Helpers
 # ==================================================
 tags = [
-    "-UMI Mechanical EQ Tag",
-    "UMI Mechanical EQ Tag",
-    "FabDuct_MARK_Tag",
+    "-FabDuct_MARK_Tag",
 ]
 
 

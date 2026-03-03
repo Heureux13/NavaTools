@@ -12,5 +12,9 @@ layout:
   - tag_size
   - tag_bod
   - tag_length
-  - tag_length_size
-  - tag_bod_length_size
+  - tag_length_size_0
+  - tag_lenght_size_1
+  - tag_bod_length_0
+  - tag_bod_length_1
+  - tag_bod_length_size_0
+  - tag_bod_length_size_1
