@@ -20,9 +20,9 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag BOD / Length 0"
+__title__ = "2 Length/Size  0"
 __doc__ = """
-Tag selected elements with BOD, and Length
+Tag selected elements with Length or Size tags
 """
 
 # Variables
@@ -36,14 +36,14 @@ tagger = RevitTagging(doc=doc, view=view)
 
 # Define tags and their positions
 tag_configs = {
-    'BOD': {
-        'tags': ['_umi_bod_right'],
+    'Length': {
+        'tags': ['_umi_length_right', '-fabduct_length_mv_tag'],
         'position': 'start'
     },
-    'Length': {
-        'tags': ['_umi_length_left'],
+    'Size': {
+        'tags': ['_umi_size_left', '-fabduct_size_mv_tag'],
         'position': 'end'
-    },
+    }
 }
 
 # Code
@@ -56,10 +56,10 @@ if not selected_ids:
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
 
-t = Transaction(doc, "Tag Selected Elements - BOD, Length and Size")
+t = Transaction(doc, "Tag Selected Elements - Length and Size")
 t.Start()
 try:
-    # Loop through each tag config (BOD, Length, and Size)
+    # Loop through each tag config (Length and Size)
     for tag_choice, config in tag_configs.items():
         tag_to_use = config['tags']
         location_of_tag = config['position']
@@ -94,8 +94,7 @@ try:
                 )
 
             except Exception as e:
-                elem_id = elem.Id.IntegerValue if elem and elem.Id else "Unknown"
-                output.print_md("**Skipped {} tag on element {}:** {}".format(tag_choice, elem_id, e))
+                pass
 
     t.Commit()
 except Exception as e:

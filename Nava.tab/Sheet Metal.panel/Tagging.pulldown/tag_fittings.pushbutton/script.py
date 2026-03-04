@@ -10,6 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from System.Collections.Generic import List
+import re
 from revit_output import print_disclaimer
 from revit_tagging import RevitTagging
 from revit_element import RevitElement
@@ -34,6 +35,26 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
+missing_tag_labels = set()
+_unsafe_get_label = tagger.get_label
+
+
+def _safe_get_label(name_contains):
+    try:
+        return _unsafe_get_label(name_contains)
+    except LookupError:
+        missing_tag_labels.add(name_contains)
+        return None
+
+
+def _normalize_family_key(name):
+    if not name:
+        return ""
+    return re.sub(r"[^a-z0-9]+", " ", str(name).strip().lower()).strip()
+
+
+tagger.get_label = _safe_get_label
+
 elbow_throat_allowances = {
     'tdf': 6,
     's&d': 4,
@@ -48,6 +69,7 @@ elbow_extension_tags = {
 
 elbow_families = {
     'elbow',
+    'elbow 90 degree',
     'tee',
     'elbow 90 sr - stamped',
 }
@@ -68,6 +90,34 @@ family_to_angle_skip = {
     'radius elbow',
     'gored elbow'
 }
+
+normalized_elbow_families = {_normalize_family_key(x) for x in elbow_families}
+normalized_square_elbow_families = {_normalize_family_key(x) for x in square_elbow_families}
+normalized_family_to_angle_skip = {_normalize_family_key(x) for x in family_to_angle_skip}
+normalized_elbow_extension_tags = {t.strip().lower() for t in elbow_extension_tags}
+
+
+def _tag_pool_text(tag):
+    fam_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+    sym_name = (getattr(tag, "Name", "") or "").strip().lower()
+    return (fam_name + " " + sym_name).strip()
+
+
+def _is_extension_tag(tag):
+    pool = _tag_pool_text(tag)
+    return any(needle in pool for needle in normalized_elbow_extension_tags)
+
+
+def _is_degree_tag(tag):
+    return "-fabduct_degree_mv_tag" in _tag_pool_text(tag)
+
+
+def _is_angle_close(raw_angle, target, tol=0.5):
+    try:
+        return abs(abs(float(raw_angle)) - float(target)) <= float(tol)
+    except Exception:
+        return False
+
 
 skip_parameters = {
     'mark': ['skip', 'skip n/a'],
@@ -224,12 +274,15 @@ def should_skip_tag(duct, tag):
     if should_skip_by_param(duct):
         return True
 
-    fam = (duct.family or '').strip().lower()
-    tag_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+    fam = _normalize_family_key(duct.family)
+
+    # Requirement: do not place degree tags on 90° fittings.
+    if _is_degree_tag(tag) and _is_angle_close(duct.angle, 90.0):
+        return True
 
     # Check if elbow is 45° or 90°
     is_45_or_90 = False
-    if fam in square_elbow_families:
+    if fam in normalized_square_elbow_families:
         try:
             ang = duct.angle
             if ang is not None:
@@ -247,7 +300,7 @@ def should_skip_tag(duct, tag):
             pass
 
     # For 45/90 square elbows: tag if vertical, skip if horizontal (for degree tags)
-    if is_45_or_90 and tag_name == '-fabduct_degree_mv_tag':
+    if is_45_or_90 and _is_degree_tag(tag):
         try:
             conn_origins = RevitXYZ(duct.element).connector_origins()
             if conn_origins and len(conn_origins) >= 2:
@@ -264,7 +317,7 @@ def should_skip_tag(duct, tag):
         return False
 
     # Skip extension tags for elbows with vertical movement (not purely horizontal)
-    if fam in elbow_families and tag_name in {t.strip().lower() for t in elbow_extension_tags}:
+    if fam in normalized_elbow_families and _is_extension_tag(tag):
         try:
             # Check connector Z difference - if any vertical movement, skip extension tag
             conn_origins = RevitXYZ(duct.element).connector_origins()
@@ -280,7 +333,7 @@ def should_skip_tag(duct, tag):
             pass
 
     # For degree tags: tag vertical elbows, skip horizontal elbows
-    if fam in family_to_angle_skip and duct.angle in [45, 90] and tag_name == '-fabduct_degree_mv_tag':
+    if fam in normalized_family_to_angle_skip and duct.angle in [45, 90] and _is_degree_tag(tag):
         try:
             conn_origins = RevitXYZ(duct.element).connector_origins()
             if conn_origins and len(conn_origins) >= 2:
@@ -298,7 +351,7 @@ def should_skip_tag(duct, tag):
 
     # Skip extension tags when extension equals throat allowance (TDF/S&D),
     # with tolerance and connector type synonyms handled.
-    if fam in elbow_families and tag_name in {t.strip().lower() for t in elbow_extension_tags}:
+    if fam in normalized_elbow_families and _is_extension_tag(tag):
         # Normalize connector type names and include potential synonyms
         connector_types = [duct.connector_0_type, duct.connector_1_type, getattr(duct, 'connector_2_type', None)]
         for ctype in connector_types:
@@ -306,7 +359,7 @@ def should_skip_tag(duct, tag):
                 continue
             key = ctype.lower().strip()
             # Map common variants to base keys
-            if key in {'slip & drive', 'standing s&d'}:
+            if key in {'slip & drive', 'standing s&d', 'standing s and d', 's and d'}:
                 key = 's&d'
 
             required_ext = elbow_throat_allowances.get(key)
@@ -482,11 +535,25 @@ duct_families = {
     ],
 }
 
+duct_families = {
+    _normalize_family_key(fam_name): tags
+    for fam_name, tags in duct_families.items()
+}
+
+if missing_tag_labels:
+    output.print_md(
+        "## Missing tag label(s); skipped where unavailable: {}".format(
+            ", ".join(sorted(missing_tag_labels))
+        )
+    )
+
 # Filter ducts
 # ==================================================
 # Ensure d.family is not None before calling strip()
-dic_ducts = [d for d in ducts if d.family and d.family.strip().lower()
-             in duct_families]
+dic_ducts = [
+    d for d in ducts
+    if _normalize_family_key(d.family) in duct_families
+]
 
 # Transaction
 # ==================================================
@@ -499,7 +566,7 @@ try:
     skipped_by_param = []
 
     for d in dic_ducts:
-        key = d.family.strip().lower() if d.family else None
+        key = _normalize_family_key(d.family)
         tag_configs = duct_families.get(key)
         if not tag_configs:
             continue

@@ -20,9 +20,9 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag Info 0"
+__title__ = "2 BOD/Length 0"
 __doc__ = """
-Tag selected elements with BOD, Length, and Size tags
+Tag selected elements with BOD, and Length
 """
 
 # Variables
@@ -36,18 +36,14 @@ tagger = RevitTagging(doc=doc, view=view)
 
 # Define tags and their positions
 tag_configs = {
-    'Length': {
-        'tags': ['_umi_length_right',],
+    'BOD': {
+        'tags': ['_umi_length_right],
         'position': 'start'
     },
-    'BOD': {
-        'tags': ['_umi_bod_center',],
-        'position': 'center'
-    },
-    'Size': {
-        'tags': ['_umi_size_left',],
+    'Length': {
+        'tags': ['_umi_bod_left'],
         'position': 'end'
-    }
+    },
 }
 
 # Code
@@ -78,7 +74,6 @@ try:
                 continue
 
         if not tag_label:
-            output.print_md("**Skipped {}:** no matching tag family found from {}".format(tag_choice, ", ".join(tag_to_use)))
             continue
 
         # Get tag family name for checking if already tagged

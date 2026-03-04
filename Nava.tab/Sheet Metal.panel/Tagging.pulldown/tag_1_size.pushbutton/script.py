@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag size"
+__title__ = "1 size"
 __doc__ = """
 Tags with size tag at start of duct
 """
@@ -38,7 +38,7 @@ tag_to_use = [
     '-fabduct_size_mv_tag',
 ]
 
-location_of_tag = 'start'
+location_of_tag = 'center'
 
 # Code
 # ==================================================

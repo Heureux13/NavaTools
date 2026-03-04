@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag BOD"
+__title__ = "1 BOD"
 __doc__ = """
 Tags with BOD tag at center of duct
 """

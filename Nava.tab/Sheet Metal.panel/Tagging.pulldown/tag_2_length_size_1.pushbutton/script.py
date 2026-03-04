@@ -20,9 +20,9 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag length"
+__title__ = "2 Length/Size 1"
 __doc__ = """
-Tags with length tag at end of duct
+Tag selected elements with Length or Size tags
 """
 
 # Variables
@@ -34,12 +34,17 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
-tag_to_use = [
-    '_umi_length',
-    '-fabduct_length_mv_tag',
-]
-
-location_of_tag = 'end'
+# Define tags and their positions
+tag_configs = {
+    'Length': {
+        'tags': ['_umi_length_left', '-fabduct_length_mv_tag'],
+        'position': 'start'
+    },
+    'Size': {
+        'tags': ['_umi_size_right', '-fabduct_size_mv_tag'],
+        'position': 'end'
+    }
+}
 
 # Code
 # ==================================================
@@ -51,53 +56,45 @@ if not selected_ids:
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
 
-# Find the first available tag from tag_to_use list
-tag_label = None
-for tag_name in tag_to_use:
-    try:
-        tag_label = tagger.get_label(tag_name)
-        break
-    except LookupError:
-        continue
-
-if not tag_label:
-    forms.alert(
-        "None of the specified tags were found:\n{}".format("\n".join(tag_to_use)),
-        exitscript=True
-    )
-
-# Tag selected elements
-placed = []
-failed = []
-already_tagged = []
-
-# Get tag family name for checking if already tagged
-tag_fam_name = tag_label.Family.Name if tag_label and tag_label.Family else ""
-
-t = Transaction(doc, "Tag Selected Elements")
+t = Transaction(doc, "Tag Selected Elements - Length and Size")
 t.Start()
 try:
-    for elem in selected_elements:
-        try:
-            # Check if already tagged with this tag family
-            if tagger.already_tagged(elem, tag_fam_name):
-                already_tagged.append(elem)
+    # Loop through each tag config (Length and Size)
+    for tag_choice, config in tag_configs.items():
+        tag_to_use = config['tags']
+        location_of_tag = config['position']
+
+        # Find the first available tag from tag_to_use list
+        tag_label = None
+        for tag_name in tag_to_use:
+            try:
+                tag_label = tagger.get_label(tag_name)
+                break
+            except LookupError:
                 continue
 
-            # Place tag with rotation
-            tag = tagger.place_tag_at_center_with_rotation(
-                elem,
-                tag_label=tag_label,
-                position=location_of_tag
-            )
+        if not tag_label:
+            continue
 
-            if tag:
-                placed.append(elem)
-            else:
-                failed.append((elem, "Tag placement returned None"))
+        # Get tag family name for checking if already tagged
+        tag_fam_name = tag_label.Family.Name if tag_label and tag_label.Family else ""
 
-        except Exception as e:
-            failed.append((elem, "Error: {}".format(str(e))))
+        # Tag each element with this tag type
+        for elem in selected_elements:
+            try:
+                # Check if already tagged with this tag family
+                if tagger.already_tagged(elem, tag_fam_name):
+                    continue
+
+                # Place tag with rotation
+                tag = tagger.place_tag_at_center_with_rotation(
+                    elem,
+                    tag_label=tag_label,
+                    position=location_of_tag
+                )
+
+            except Exception as e:
+                pass
 
     t.Commit()
 except Exception as e:
