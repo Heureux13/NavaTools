@@ -37,7 +37,7 @@ tagger = RevitTagging(doc=doc, view=view)
 # Define tags and their positions
 tag_configs = {
     'BOD': {
-        'tags': ['_umi_length_right],
+        'tags': ['_umi_length_right'],
         'position': 'start'
     },
     'Length': {

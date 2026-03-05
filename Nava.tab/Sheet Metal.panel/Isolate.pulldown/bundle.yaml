@@ -10,6 +10,7 @@ layout:
   - isolate_by_item_number
   - -----
   - isolate_mech_equipment
+  - isolate_empty_fab_note
   - isolate_straights
   - isolate_vertical_straights
   - isolate_elbows
