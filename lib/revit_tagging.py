@@ -390,6 +390,109 @@ class RevitTagging:
 
         return fams
 
+    def build_existing_tag_family_map(self, elements=None):
+        """
+        Build a cache of existing tag families by tagged element id.
+
+        If `elements` is provided, only tags dependent on those elements are scanned.
+        This avoids collecting every tag in the active view and is much faster for
+        small selections.
+
+        Returns:
+            dict[int, set[str]]: {element_id_int: {family_name_lower, ...}, ...}
+        """
+        result = {}
+
+        if elements:
+            try:
+                tag_filter = DB.ElementClassFilter(DB.IndependentTag)
+            except Exception:
+                tag_filter = None
+
+            for elem in elements:
+                if elem is None or not getattr(elem, "Id", None):
+                    continue
+
+                try:
+                    if tag_filter is not None:
+                        dep_tag_ids = elem.GetDependentElements(tag_filter)
+                    else:
+                        dep_tag_ids = []
+                except Exception:
+                    dep_tag_ids = []
+
+                for tag_id in dep_tag_ids:
+                    itag = self.doc.GetElement(tag_id)
+                    if itag is None:
+                        continue
+
+                    # Keep only tags visible/owned by current view.
+                    try:
+                        owner_view_id = getattr(itag, "OwnerViewId", None)
+                        if owner_view_id and owner_view_id != self.view.Id:
+                            continue
+                    except Exception:
+                        pass
+
+                    try:
+                        tag_type = self.doc.GetElement(itag.GetTypeId())
+                        fam = getattr(tag_type, "Family", None)
+                        fam_name = (fam.Name if fam else "").strip().lower()
+                        if not fam_name:
+                            continue
+
+                        if hasattr(itag, "GetTaggedLocalElementIds"):
+                            tagged_ids = itag.GetTaggedLocalElementIds() or []
+                        elif hasattr(itag, "TaggedLocalElementId"):
+                            tagged_ids = [itag.TaggedLocalElementId]
+                        else:
+                            tagged_ids = []
+
+                        for tid in tagged_ids:
+                            if not tid:
+                                continue
+                            key = tid.IntegerValue if hasattr(tid, "IntegerValue") else int(tid)
+                            if key not in result:
+                                result[key] = set()
+                            result[key].add(fam_name)
+                    except Exception:
+                        continue
+
+            return result
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tag_type = self.doc.GetElement(itag.GetTypeId())
+                fam = getattr(tag_type, "Family", None)
+                fam_name = (fam.Name if fam else "").strip().lower()
+                if not fam_name:
+                    continue
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+                else:
+                    tagged_ids = []
+
+                for tid in tagged_ids:
+                    if not tid:
+                        continue
+                    key = tid.IntegerValue if hasattr(tid, "IntegerValue") else int(tid)
+                    if key not in result:
+                        result[key] = set()
+                    result[key].add(fam_name)
+            except Exception:
+                continue
+
+        return result
+
     def place_tag_at_center_with_rotation(self, element, tag_label=None, position="center"):
         """
         Place a tag along the element and rotate it to match the element's direction in the current view.
@@ -450,38 +553,57 @@ class RevitTagging:
 
             # Rotate tag to match element direction as it appears in the current view
             try:
-                # Get view-aware angle using RevitXYZ
-                revit_xyz = RevitXYZ(element)
-                angle_deg = revit_xyz.angle_in_view(self.view)
+                # Compute view-aware angle directly from curve direction to avoid
+                # expensive connector traversal in RevitXYZ for each placed tag.
+                try:
+                    view_dir = self.view.ViewDirection
+                    view_up = self.view.UpDirection
+                except Exception:
+                    view_dir = XYZ(0, 0, 1)
+                    view_up = XYZ(0, 1, 0)
 
-                if isinstance(angle_deg, (int, float)):
-                    angle_rad = math.radians(angle_deg)
+                # right = view_dir x view_up
+                right_x = view_dir.Y * view_up.Z - view_dir.Z * view_up.Y
+                right_y = view_dir.Z * view_up.X - view_dir.X * view_up.Z
+                right_z = view_dir.X * view_up.Y - view_dir.Y * view_up.X
 
-                    # Get view's normal direction (perpendicular to view plane)
-                    # This becomes the rotation axis
-                    try:
-                        view_dir = self.view.ViewDirection
-                    except Exception:
-                        # Fallback to Z-axis if ViewDirection not available
-                        view_dir = XYZ(0, 0, 1)
+                right_len = math.sqrt(right_x * right_x + right_y * right_y + right_z * right_z)
+                up_len = math.sqrt(view_up.X * view_up.X + view_up.Y * view_up.Y + view_up.Z * view_up.Z)
 
-                    # Normalize view direction
-                    view_dir_len = math.sqrt(view_dir.X * view_dir.X + view_dir.Y *
-                                             view_dir.Y + view_dir.Z * view_dir.Z)
-                    if view_dir_len > 1e-9:
-                        view_dir = XYZ(view_dir.X / view_dir_len, view_dir.Y / view_dir_len, view_dir.Z / view_dir_len)
-                    else:
-                        view_dir = XYZ(0, 0, 1)
+                if right_len > 1e-9 and up_len > 1e-9:
+                    right_x /= right_len
+                    right_y /= right_len
+                    right_z /= right_len
 
-                    # Create rotation axis using the view's normal direction
-                    tag_pos = tag.TagHeadPosition
-                    axis = Line.CreateBound(
-                        tag_pos,
-                        XYZ(tag_pos.X + view_dir.X, tag_pos.Y + view_dir.Y, tag_pos.Z + view_dir.Z)
-                    )
+                    up_x = view_up.X / up_len
+                    up_y = view_up.Y / up_len
+                    up_z = view_up.Z / up_len
 
-                    # Rotate tag to match duct direction as visible in the view
-                    ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
+                    # Project duct direction onto view basis.
+                    duct_right = dir_vec.X * right_x + dir_vec.Y * right_y + dir_vec.Z * right_z
+                    duct_up = dir_vec.X * up_x + dir_vec.Y * up_y + dir_vec.Z * up_z
+
+                    angle_rad = math.atan2(duct_up, duct_right)
+
+                    # Skip effectively zero rotation to reduce API calls.
+                    if abs(angle_rad) > 1e-6:
+                        # Normalize view direction for rotation axis.
+                        view_dir_len = math.sqrt(view_dir.X * view_dir.X + view_dir.Y *
+                                                 view_dir.Y + view_dir.Z * view_dir.Z)
+                        if view_dir_len > 1e-9:
+                            axis_dir = XYZ(
+                                view_dir.X / view_dir_len,
+                                view_dir.Y / view_dir_len,
+                                view_dir.Z / view_dir_len)
+                        else:
+                            axis_dir = XYZ(0, 0, 1)
+
+                        tag_pos = tag.TagHeadPosition
+                        axis = Line.CreateBound(
+                            tag_pos,
+                            XYZ(tag_pos.X + axis_dir.X, tag_pos.Y + axis_dir.Y, tag_pos.Z + axis_dir.Z)
+                        )
+                        ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
             except Exception:
                 # Tag placed but rotation failed - still return the tag
                 pass

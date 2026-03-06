@@ -49,6 +49,7 @@ if not selected_ids:
     forms.alert("No elements selected. Please select elements to tag.", exitscript=True)
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
+existing_tag_map = tagger.build_existing_tag_family_map(selected_elements)
 
 # Find the first available tag from tag_to_use list
 tag_label = None
@@ -72,6 +73,7 @@ already_tagged = []
 
 # Get tag family name for checking if already tagged
 tag_fam_name = tag_label.Family.Name if tag_label and tag_label.Family else ""
+tag_fam_name_norm = tag_fam_name.strip().lower()
 
 t = Transaction(doc, "Tag Selected Elements")
 t.Start()
@@ -79,7 +81,9 @@ try:
     for elem in selected_elements:
         try:
             # Check if already tagged with this tag family
-            if tagger.already_tagged(elem, tag_fam_name):
+            elem_key = elem.Id.IntegerValue if elem and elem.Id else None
+            existing_fams = existing_tag_map.get(elem_key, set()) if elem_key is not None else set()
+            if tag_fam_name_norm and tag_fam_name_norm in existing_fams:
                 already_tagged.append(elem)
                 continue
 
@@ -92,6 +96,10 @@ try:
 
             if tag:
                 placed.append(elem)
+                if elem_key is not None and tag_fam_name_norm:
+                    if elem_key not in existing_tag_map:
+                        existing_tag_map[elem_key] = set()
+                    existing_tag_map[elem_key].add(tag_fam_name_norm)
 
         except Exception as e:
             failed.append((elem, "Error: {}".format(str(e))))
