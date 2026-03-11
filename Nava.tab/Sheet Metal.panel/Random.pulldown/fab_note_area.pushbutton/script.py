@@ -24,7 +24,7 @@ import sys
 # ===================================================
 __title__ = "Add fab note"
 __doc__ = """
-dddddddddddd
+Allows you to add page (A1) to the end of the fab not if in the format of AHU-101 SA, ending in A is the important part.
 """
 
 # Variables
