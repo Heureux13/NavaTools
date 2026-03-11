@@ -95,33 +95,37 @@ for part in fab_parts:
         continue
 
     conn1 = (duct.connector_1_type or "").strip() or "(empty)"
-    conn2 = (duct.connector_2_type or "").strip() or "(empty)"
     family = (duct.family or "").strip() or "(No Family)"
-    service = (duct.service or "").strip() or "(No Service)"
+    size_value = (duct.size or "").strip() or "(No Size)"
     failures.append({
         "id": part.Id,
         "family": family,
-        "service": service,
+        "size": size_value,
         "conn0": conn0,
         "conn1": conn1,
-        "conn2": conn2,
     })
 
 if not failures:
     output.print_md("## All checked taps have allowed Connector0 values.")
     script.exit()
 
-output.print_md("## Taps with Connector0 not in tap_values")
-output.print_md("**Count:** {}".format(len(failures)))
+sorted_failures = sorted(failures, key=lambda x: x["id"].IntegerValue)
 
-for item in sorted(failures, key=lambda x: (x["service"].lower(), x["family"].lower(), x["id"].IntegerValue)):
+output.print_md("## Selected {} non-round taps with Connector0 not in tap_values".format(len(sorted_failures)))
+
+for index, item in enumerate(sorted_failures, 1):
+    output.print_md("")
     output.print_md(
-        "- ID: {} | Family: {} | Service: {} | C0: {} | C1: {} | C2: {}".format(
+        "Index: {:03} | ID: {} | Family: {} | C0: {} | C1: {} | Size: {} ".format(
+            index,
             output.linkify(item["id"]),
             item["family"],
-            item["service"],
             item["conn0"],
             item["conn1"],
-            item["conn2"],
+            item["size"],
         )
     )
+
+element_ids = [item["id"] for item in sorted_failures]
+output.print_md("")
+output.print_md("Total elements {}, {}".format(len(sorted_failures), output.linkify(element_ids)))
