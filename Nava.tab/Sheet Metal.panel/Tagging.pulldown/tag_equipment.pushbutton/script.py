@@ -12,6 +12,7 @@ the copyright holder."""
 from pyrevit import revit, script
 from Autodesk.Revit.DB import (
     BuiltInCategory,
+    ElementId,
     FilteredElementCollector,
     FamilySymbol,
     IndependentTag,
@@ -74,19 +75,6 @@ def _find_tag_symbol(doc, target_name):
     return None
 
 
-def _tag_type_matches_target(tag_type, target_name):
-    if not tag_type or not target_name:
-        return False
-    target = target_name.strip().lower()
-    fam = getattr(tag_type, 'Family', None)
-    fam_name = (fam.Name if fam else "").strip().lower()
-    type_name = (getattr(tag_type, 'Name', '') or '').strip().lower()
-    if target == fam_name or target == type_name:
-        return True
-    label = (fam_name + " " + type_name).strip()
-    return target in label
-
-
 # Code
 # ==================================================
 uidoc = __revit__.ActiveUIDocument
@@ -123,9 +111,6 @@ if not selected_tag_symbol:
     output.print_md("## No tag found from configured tags list: {}".format(", ".join(tags)))
     script.exit()
 
-selected_tag_family = getattr(selected_tag_symbol, "Family", None)
-selected_tag_family_name = selected_tag_family.Name if selected_tag_family else ""
-
 placed = []
 failed = []
 already_tagged = []
@@ -137,34 +122,83 @@ existing_tags = list(
     .ToElements()
 )
 
-# Build a map of element IDs to existing tag instances from our families
+# Build a map of element IDs to any existing tag instances in this view
 tag_map = {}
-all_tag_names = tags
+
+
+def _eid_int(eid):
+    try:
+        return eid.IntegerValue
+    except Exception:
+        try:
+            return int(eid)
+        except Exception:
+            return None
+
+
+def _collect_tagged_local_ids(tag):
+    """Return local element IDs tagged by an IndependentTag (version-safe)."""
+    ids = []
+
+    # Revit 2026+ primary API
+    try:
+        for tid in tag.GetTaggedLocalElementIds() or []:
+            if tid and tid != ElementId.InvalidElementId:
+                ids.append(tid)
+    except Exception:
+        pass
+
+    # Revit 2022-2025 property API
+    try:
+        tid = tag.TaggedLocalElementId
+        if tid and tid != ElementId.InvalidElementId:
+            ids.append(tid)
+    except Exception:
+        pass
+
+    # Some tag types expose LinkElementId-based APIs
+    def _append_from_link_eid(link_eid):
+        if not link_eid:
+            return
+        for attr in ("HostElementId", "LinkedElementId", "ElementId"):
+            try:
+                candidate = getattr(link_eid, attr)
+                if candidate and candidate != ElementId.InvalidElementId:
+                    ids.append(candidate)
+            except Exception:
+                pass
+
+    try:
+        for leid in tag.GetTaggedElementIds() or []:
+            _append_from_link_eid(leid)
+    except Exception:
+        pass
+
+    try:
+        _append_from_link_eid(tag.TaggedElementId)
+    except Exception:
+        pass
+
+    # Deduplicate by int value
+    uniq = []
+    seen = set()
+    for eid in ids:
+        ival = _eid_int(eid)
+        if ival is None or ival in seen:
+            continue
+        seen.add(ival)
+        uniq.append(eid)
+    return uniq
+
 
 for tag in existing_tags:
     try:
-        tag_type_id = tag.GetTypeId()
-        tag_type = doc.GetElement(tag_type_id)
-        if not tag_type:
-            continue
-
-        is_our_tag = False
-        for tag_name in all_tag_names:
-            if _tag_type_matches_target(tag_type, tag_name):
-                is_our_tag = True
-                break
-
-        if not is_our_tag:
-            continue
-
-        try:
-            tagged_ids = tag.GetTaggedLocalElementIds()
-        except Exception:
-            tagged_ids = []
+        tagged_ids = _collect_tagged_local_ids(tag)
 
         for tid in tagged_ids:
-            tid_val = tid.IntegerValue if hasattr(tid, 'IntegerValue') else int(tid)
-            tag_map.setdefault(tid_val, []).append(tag)
+            tid_val = _eid_int(tid)
+            if tid_val is not None:
+                tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
@@ -183,30 +217,12 @@ try:
         tag_symbol = selected_tag_symbol
         tag_name = selected_tag_name
 
-        # Prevent duplicate tags if the button is run multiple times
-        if selected_tag_family_name and tagger.already_tagged(elem, selected_tag_family_name):
-            already_tagged.append(elem)
-            continue
-
-        # Skip if already tagged with the correct tag; otherwise delete wrong tags
+        # Skip if element already has any tag in this view
         elem_id_val = elem.Id.IntegerValue
         existing_for_elem = tag_map.get(elem_id_val, [])
         if existing_for_elem:
-            has_correct = False
-            for existing_tag in existing_for_elem:
-                existing_type = doc.GetElement(existing_tag.GetTypeId())
-                if _tag_type_matches_target(existing_type, tag_name):
-                    has_correct = True
-                    break
-            if has_correct:
-                already_tagged.append(elem)
-                continue
-
-            for existing_tag in existing_for_elem:
-                try:
-                    doc.Delete(existing_tag.Id)
-                except Exception:
-                    pass
+            already_tagged.append(elem)
+            continue
 
         # Get location point for tag placement - use element location directly
         tag_pt = None

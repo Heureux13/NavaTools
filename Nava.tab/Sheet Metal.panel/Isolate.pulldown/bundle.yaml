@@ -14,3 +14,5 @@ layout:
   - isolate_vertical_straights
   - isolate_elbows
   - isolate_grds
+  - ----
+  - isolate_matchlines
