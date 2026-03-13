@@ -1,0 +1,10 @@
+title:
+  en_us: Isolate General
+layout:
+  - isolate_mech_equipment
+  - isolate_straights
+  - isolate_vertical_straights
+  - isolate_elbows
+  - isolate_grds
+  - ----
+  - isolate_matchlines

@@ -2,6 +2,7 @@ title:
   en_us: Sheetmetal
 layout:
   - 3_Core
+  - 3_Isolate
   - -----
   - Random
   - Selected
