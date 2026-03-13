@@ -49,6 +49,7 @@ categories_to_isolate = [
     BuiltInCategory.OST_PipeAccessory,
     BuiltInCategory.OST_PipeTags,
     BuiltInCategory.OST_PipeInsulations,
+    BuiltInCategory.OST_FabricationPipework,
     BuiltInCategory.OST_FabricationPipeworkTags,
     BuiltInCategory.OST_StructuralFraming,
     BuiltInCategory.OST_Floors,

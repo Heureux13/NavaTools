@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit, script
+from pyrevit import revit
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
     BuiltInCategory,
@@ -30,7 +30,6 @@ Hides all fabrication hangers in active view.
 # ==================================================
 doc = revit.doc
 active_view = doc.ActiveView
-output = script.get_output()
 
 # Collect all fabrication hangers in the document
 hangers = list(
@@ -40,7 +39,6 @@ hangers = list(
 )
 
 if not hangers:
-    output.print_md('**No fabrication hangers found in this model.**')
     sys.exit(0)
 
 # Build list of hanger IDs to hide
@@ -55,6 +53,6 @@ with revit.Transaction('Hide All Hangers'):
     try:
         if ids_to_hide.Count > 0:
             active_view.HideElementsTemporary(ids_to_hide)
-            output.print_md('**Hidden {} fabrication hangers.**'.format(len(hangers)))
-    except Exception as e:
-        output.print_md('**This view does not allow temporary hiding: {}**'.format(str(e)))
+
+    except Exception:
+        pass
