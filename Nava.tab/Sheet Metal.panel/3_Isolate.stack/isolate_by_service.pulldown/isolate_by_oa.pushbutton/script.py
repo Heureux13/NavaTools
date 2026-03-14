@@ -17,7 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate OA"
 __doc__ = """
-Title
+Isolate Outside Air
 """
 
 # Variables

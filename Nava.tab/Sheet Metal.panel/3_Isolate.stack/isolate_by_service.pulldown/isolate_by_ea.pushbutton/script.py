@@ -17,7 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate EA"
 __doc__ = """
-Title
+Isolate Exhaust Air
 """
 
 # Variables

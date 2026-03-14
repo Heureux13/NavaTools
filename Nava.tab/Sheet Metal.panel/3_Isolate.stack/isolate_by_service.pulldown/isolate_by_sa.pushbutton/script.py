@@ -15,16 +15,16 @@ import sys
 
 # Button info
 # ===================================================
-__title__ = "Isolate RA"
+__title__ = "Isolate SA"
 __doc__ = """
-Title
+Isolate Supply Air
 """
 
 # Variables
 # ==================================================
 doc = revit.doc
 active_view = doc.ActiveView
-TARGET_SERVICE_CODE = "ra".strip().lower()
+TARGET_SERVICE_CODE = "sa".strip().lower()
 
 
 def get_service_code(service_name):
@@ -140,7 +140,8 @@ with revit.Transaction("Isolate by Fabrication Service"):
             element_ids.append(elem.Id)
 
     # Include reference planes
-    ref_plane_collector = FilteredElementCollector(doc, active_view.Id).OfClass(ReferencePlane)
+    ref_plane_collector = FilteredElementCollector(
+        doc, active_view.Id).OfClass(ReferencePlane)
     for plane in ref_plane_collector:
         element_ids.append(plane.Id)
 

@@ -15,16 +15,16 @@ import sys
 
 # Button info
 # ===================================================
-__title__ = "Isolate EA"
+__title__ = "Isolate RA"
 __doc__ = """
-Title
+Isolate Return Air
 """
 
 # Variables
 # ==================================================
 doc = revit.doc
 active_view = doc.ActiveView
-TARGET_SERVICE_CODE = "ea".strip().lower()
+TARGET_SERVICE_CODE = "ra".strip().lower()
 
 
 def get_service_code(service_name):

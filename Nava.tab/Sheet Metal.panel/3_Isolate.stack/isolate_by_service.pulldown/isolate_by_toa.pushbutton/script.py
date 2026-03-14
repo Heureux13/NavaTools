@@ -140,7 +140,8 @@ with revit.Transaction("Isolate by Fabrication Service"):
             element_ids.append(elem.Id)
 
     # Include reference planes
-    ref_plane_collector = FilteredElementCollector(doc, active_view.Id).OfClass(ReferencePlane)
+    ref_plane_collector = FilteredElementCollector(
+        doc, active_view.Id).OfClass(ReferencePlane)
     for plane in ref_plane_collector:
         element_ids.append(plane.Id)
 
