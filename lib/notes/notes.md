@@ -22,15 +22,6 @@
 | _equi_type | text |
 | _equi_model | text |
 | _equi_make | text |
-| _equi_inlet_sa | text |
-| _equi_inlet_ra | text |
-| _equi_inlet_ea | text |
-| _equi_inlet_oa | text |
-| _equi_outlet_sa | text |
-| _equi_outlet_ra | text |
-| _equi_outlet_ea | text |
-| _equi_outlet_oa | text |
-| _equi_handing_pipe | text |
 
 ## Hangers
 | Parameter | Type |

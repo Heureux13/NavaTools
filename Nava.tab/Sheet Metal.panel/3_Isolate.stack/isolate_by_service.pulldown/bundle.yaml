@@ -1,6 +1,8 @@
 title:
   en_us: Isolate Service
 layout:
+  - isolate_all
+  - ----
   - isolate_by_ea
   - isolate_by_oa
   - isolate_by_ra
@@ -8,5 +10,5 @@ layout:
   - isolate_by_sa
   - isolate_by_ta
   - isolate_by_toa
-  - ---
+  - ----
   - isolate_by_service
