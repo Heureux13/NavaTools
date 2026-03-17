@@ -9,63 +9,33 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit
+from pyrevit import revit, script
 from Autodesk.Revit.DB import (BuiltInCategory, FilteredElementCollector, ElementId,
                                TemporaryViewMode, ReferencePlane)
 from System.Collections.Generic import List
 
 # Button info
 # ===================================================
-__title__ = "Isolate by MEP"
+__title__ = "Workset Mechanical Equipment"
 __doc__ = """
-Toggle isolation of walls, ducts, pipes, steel beams, and floors.
+Toggle isolation and report worksets for MEP elements in the active view.
 """
 
 # Variables
 # ==================================================
 doc = revit.doc
 active_view = doc.ActiveView
+output = script.get_output()
 
 # Categories to isolate
 categories_to_isolate = [
-    BuiltInCategory.OST_Walls,
-    BuiltInCategory.OST_DuctCurves,
-    BuiltInCategory.OST_FlexDuctCurves,
-    BuiltInCategory.OST_DuctFitting,
-    BuiltInCategory.OST_DuctAccessory,
-    BuiltInCategory.OST_DuctTerminal,
-    BuiltInCategory.OST_DuctTerminalTags,
-    BuiltInCategory.OST_DuctTags,
-    BuiltInCategory.OST_DuctInsulations,
     BuiltInCategory.OST_MechanicalEquipment,
     BuiltInCategory.OST_MechanicalEquipmentTags,
-    BuiltInCategory.OST_FabricationDuctwork,
-    BuiltInCategory.OST_FabricationDuctworkTags,
-    BuiltInCategory.OST_FabricationServiceElements,
-    BuiltInCategory.OST_FabricationHangers,
-    BuiltInCategory.OST_FabricationHangerTags,
-    BuiltInCategory.OST_PipeCurves,
-    BuiltInCategory.OST_FlexPipeCurves,
-    BuiltInCategory.OST_PipeFitting,
-    BuiltInCategory.OST_PipeAccessory,
-    BuiltInCategory.OST_PipeTags,
-    BuiltInCategory.OST_PipeInsulations,
-    BuiltInCategory.OST_FabricationPipework,
-    BuiltInCategory.OST_FabricationPipeworkTags,
-    BuiltInCategory.OST_FabricationPipeworkCenterLine,
-    BuiltInCategory.OST_FabricationPipeworkSymbology,
-    BuiltInCategory.OST_FabricationPipeworkRise,
-    BuiltInCategory.OST_FabricationPipeworkDrop,
-    BuiltInCategory.OST_FabricationPipeworkInsulation,
-    BuiltInCategory.OST_FabricationContainment,
-    BuiltInCategory.OST_FabricationContainmentTags,
-    BuiltInCategory.OST_FabricationContainmentCenterLine,
-    BuiltInCategory.OST_FabricationContainmentSymbology,
-    BuiltInCategory.OST_FabricationContainmentRise,
-    BuiltInCategory.OST_FabricationContainmentDrop,
+    BuiltInCategory.OST_Walls,
     BuiltInCategory.OST_StructuralFraming,
     BuiltInCategory.OST_Floors,
     BuiltInCategory.OST_Ceilings,
+    BuiltInCategory.OST_Lines,
     BuiltInCategory.OST_Viewers,
     BuiltInCategory.OST_Dimensions,
     BuiltInCategory.OST_Grids,
@@ -80,19 +50,16 @@ def collect_elements_from_categories(doc, view_id, categories):
     """Collect element IDs from specified categories in current document."""
     ids = List[ElementId]()
 
-    # Element types to keep visible (not isolate)
     excluded_types = ['SectionMarker', 'ElevationMarker', 'ViewSection']
 
     for bic in categories:
         collector = FilteredElementCollector(doc, view_id).OfCategory(
             bic).WhereElementIsNotElementType()
         for el in collector:
-            # Skip annotation elements - keep them visible
             element_type = el.GetType().Name
             if element_type not in excluded_types:
                 ids.Add(el.Id)
 
-    # Collect reference planes separately (no BuiltInCategory)
     ref_plane_collector = FilteredElementCollector(doc, view_id).OfClass(ReferencePlane)
     for plane in ref_plane_collector:
         ids.Add(plane.Id)
@@ -106,6 +73,54 @@ def is_view_isolated(view):
         return len(view.GetIsolatedElementIds()) > 0
     except BaseException:
         return False
+
+
+def get_workset_name(doc, element):
+    """Get the element workset name safely."""
+    try:
+        workset = doc.GetWorksetTable().GetWorkset(element.WorksetId)
+        if workset:
+            return workset.Name
+    except BaseException:
+        pass
+    return 'Unknown Workset'
+
+
+def print_isolated_elements_with_worksets(doc, element_ids):
+    """Print isolated elements with linkified ids and workset names."""
+    if element_ids.Count == 0:
+        return
+
+    grouped_by_workset = {}
+    for elid in element_ids:
+        element = doc.GetElement(elid)
+        if not element:
+            continue
+        workset_name = get_workset_name(doc, element)
+        grouped_by_workset.setdefault(workset_name, []).append(elid)
+
+    output.print_md('### Isolated Elements Grouped by Workset')
+    for workset_name in sorted(grouped_by_workset.keys()):
+        grouped_ids = grouped_by_workset[workset_name]
+        output.print_md('- {} | Count: {} | Select All: {}'.format(
+            workset_name,
+            len(grouped_ids),
+            output.linkify(grouped_ids)
+        ))
+
+    output.print_md('### Isolated Elements and Worksets')
+    for elid in element_ids:
+        element = doc.GetElement(elid)
+        if not element:
+            continue
+
+        workset_name = get_workset_name(doc, element)
+        category_name = element.Category.Name if element.Category else 'No Category'
+        output.print_md('- {} | {} | Workset: {}'.format(
+            output.linkify(elid),
+            category_name,
+            workset_name
+        ))
 
 
 # Main Code
@@ -123,6 +138,7 @@ with revit.Transaction('Toggle Isolation'):
         # Apply isolation if we have elements
         if ids.Count > 0:
             active_view.IsolateElementsTemporary(ids)
+            print_isolated_elements_with_worksets(doc, ids)
         else:
             # Show message if no elements found
             from pyrevit import forms
