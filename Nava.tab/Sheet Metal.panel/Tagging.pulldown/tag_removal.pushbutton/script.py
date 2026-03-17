@@ -13,9 +13,9 @@ from pyrevit import DB, revit, script
 
 # Button info
 # ==================================================
-__title__ = "Detag Selected"
+__title__ = "Remove Annotations"
 __doc__ = """
-Deletes annotation elements that are dependent on the current selection.
+Removes annotations on selected items
 """
 
 # Variables
