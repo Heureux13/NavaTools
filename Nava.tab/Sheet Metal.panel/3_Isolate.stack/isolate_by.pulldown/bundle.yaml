@@ -8,3 +8,4 @@ layout:
   - isolate_by_selection
   - isolate_by_fab_note
   - isolate_by_item_number
+  - isolate_by_room
