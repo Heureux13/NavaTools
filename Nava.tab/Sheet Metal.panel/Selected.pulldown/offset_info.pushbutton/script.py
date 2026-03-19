@@ -12,7 +12,6 @@ from size import Size
 from revit_xyz import RevitXYZ
 from pyrevit import revit, script
 from Autodesk.Revit.DB import StorageType
-import traceback
 
 # Button info
 # ======================================================================
@@ -90,7 +89,7 @@ def convert_to_TU_TD(value):
         return value
 
 
-def classify_offset(fit):
+def classify_offset(fit, inlet_data=None, outlet_data=None, size_obj=None):
     """Classify offset values - vertical | horizontal.
 
     Vertical: FOB, FOT, CL, UP, DN
@@ -99,6 +98,11 @@ def classify_offset(fit):
     If top and bottom are both 0, just return horizontal.
     If left and right are both 0, just return vertical.
     If both are CL, return just CL.
+
+    Args:
+        fit: Dictionary with offset values
+        inlet_data: Optional inlet connector data with basis vectors to normalize orientation
+        outlet_data: Optional outlet connector data for world coordinates
     """
     tol = 0.01
 
@@ -109,78 +113,121 @@ def classify_offset(fit):
     right = fit.get('right', 0)
     left = fit.get('left', 0)
 
-    # If top and bottom are both 0, it's just a horizontal offset
-    if abs(top) < tol and abs(bottom) < tol:
-        if abs(left) < tol or abs(right) < tol:
-            return "FOS"
-        elif abs(ch) < tol:
+    rotated = False
+    vertical_axis_sign = 1
+    flow_sign = 1
+    if inlet_data and inlet_data.get('basis_x') and inlet_data.get('basis_y'):
+        bx = inlet_data['basis_x']
+        by = inlet_data['basis_y']
+        rotated = abs(bx.Z) > abs(by.Z) and abs(bx.Z) > 0.5
+        vertical_axis_sign = 1 if (bx.Z if rotated else by.Z) >= 0 else -1
+    if inlet_data and inlet_data.get('basis_z'):
+        bz = inlet_data['basis_z']
+        if abs(bz.X) >= abs(bz.Y):
+            flow_sign = 1 if bz.X >= 0 else -1
+        else:
+            flow_sign = 1 if bz.Y >= 0 else -1
+
+    def classify_vertical_part():
+        """Classify vertical component from raw fit using axis orientation."""
+        top_aligned = abs(top) < tol
+        bottom_aligned = abs(bottom) < tol
+
+        # Edge-aligned cases
+        if top_aligned and bottom_aligned:
+            if size_obj and size_obj.in_size == size_obj.out_size and abs(ch) >= tol:
+                return "FOT" if vertical_axis_sign > 0 else "FOB"
             return "CL"
+        if top_aligned:
+            return "FOB" if flow_sign > 0 else "FOT"
+        if bottom_aligned:
+            return "FOT" if flow_sign > 0 else "FOB"
+
+        # Neither edge aligned: determine UP/DN
+        if abs(cv) < tol:
+            return "CL"
+
+        # Same-sign non-edge cases are orientation dependent.
+        if top * bottom > 0:
+            sign_source = 0.0
+            if inlet_data and inlet_data.get('basis_y'):
+                sign_source = inlet_data['basis_y'].Z
+            if abs(sign_source) < 0.001:
+                if rotated:
+                    by = inlet_data.get('basis_y') if inlet_data else None
+                    if by and (abs(by.Y) > abs(by.X)):
+                        direction = "UP" if by.Y > 0 else "DN"
+                    elif by:
+                        direction = "UP" if by.X > 0 else "DN"
+                    else:
+                        direction = "UP" if vertical_axis_sign < 0 else "DN"
+                    magnitude = max(abs(top), abs(bottom))
+                    return "{} {:.0f}".format(direction, magnitude)
+                sign_source = float(vertical_axis_sign)
+
+            if sign_source > 0:
+                direction = "UP"
+                magnitude = min(abs(top), abs(bottom))
+            else:
+                direction = "DN"
+                magnitude = max(abs(top), abs(bottom))
+        else:
+            # Mixed-sign edges require flow-aware interpretation.
+            # For one flow direction the near-edge value is the label,
+            # for the opposite flow direction the far-edge value is used.
+            if flow_sign > 0:
+                direction = "DN"
+                magnitude = min(abs(top), abs(bottom))
+            else:
+                direction = "UP"
+                magnitude = max(abs(top), abs(bottom))
+
+        return "{} {:.0f}".format(direction, magnitude)
+
+    def classify_horizontal_part():
+        """Classify horizontal component using rotated/non-rotated rules."""
+        if abs(left) < tol or abs(right) < tol:
+            if size_obj and size_obj.in_size == size_obj.out_size and abs(ch) >= tol:
+                direction = "IN" if (rotated and ch > 0) or (
+                    not rotated and ch < 0) else "OUT"
+                magnitude = max(abs(left), abs(right))
+                return "{}{:.0f}".format(direction, magnitude)
+            return "FOS"
+        if abs(ch) < tol:
+            return "CL"
+
+        if rotated:
+            direction = "IN" if ch > 0 else "OUT"
+        else:
+            direction = "OUT" if ch > 0 else "IN"
+
+        if left * right > 0:
+            if direction == "OUT":
+                magnitude = min(abs(left), abs(right))
+            else:
+                magnitude = max(abs(left), abs(right))
         else:
             magnitude = max(abs(left), abs(right))
-            # Use the dominant edge sign to decide IN/OUT (positive right => OUT)
-            if abs(right) >= abs(left):
-                direction = "OUT" if right > 0 else "IN"
-            else:
-                direction = "IN" if left > 0 else "OUT"
-            return "{}{:.0f}".format(direction, magnitude)
+
+        return "{}{:.0f}".format(direction, magnitude)
+
+    # If top and bottom are both 0, it's just a horizontal offset
+    if abs(top) < tol and abs(bottom) < tol:
+        horizontal = classify_horizontal_part()
+        vertical = classify_vertical_part()
+        if vertical == "CL":
+            return horizontal
+        return "{}|{}".format(vertical, horizontal)
 
     # If left and right are both 0, it's just a vertical offset
     elif abs(left) < tol and abs(right) < tol:
-        # Determine FOB/FOT based on center_vertical and edge alignment
-        # FOB: outlet at bottom edge (cv<0 & bottom≈0) OR (cv>0 & top≈0)
-        # FOT: outlet at top edge (cv<0 & top≈0) OR (cv>0 & bottom≈0)
-        if abs(bottom) < tol or abs(top) < tol:
-            # Check relationship between center_vertical and which edge is zero
-            if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
-                return "FOB"
-            elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
-                return "FOT"
-            # Fallback to original logic if cv is near zero
-            elif abs(cv) < tol:
-                return "FOB" if abs(bottom) < tol else "FOT"
-            else:
-                # Default case
-                return "FOB" if abs(bottom) < tol else "FOT"
-        elif abs(cv) < tol:
-            return "CL"
-        else:
-            magnitude = max(abs(top), abs(bottom))
-            # Flip vertical sense per user: positive center_v => DN
-            direction = "DN" if cv > 0 else "UP"
-            return "{}{:.0f}".format(direction, magnitude)
+        vertical = classify_vertical_part()
+        return vertical
 
     # Both vertical and horizontal
     else:
-        # Vertical classification with flow-direction correction
-        if abs(bottom) < tol or abs(top) < tol:
-            if (cv < -tol and abs(bottom) < tol) or (cv > tol and abs(top) < tol):
-                vertical = "FOB"
-            elif (cv < -tol and abs(top) < tol) or (cv > tol and abs(bottom) < tol):
-                vertical = "FOT"
-            elif abs(cv) < tol:
-                vertical = "FOB" if abs(bottom) < tol else "FOT"
-            else:
-                vertical = "FOB" if abs(bottom) < tol else "FOT"
-        elif abs(cv) < tol:
-            vertical = "CL"
-        else:
-            magnitude = max(abs(top), abs(bottom))
-            # Flip vertical sense per user: positive center_v => DN
-            direction = "DN" if cv > 0 else "UP"
-            vertical = "{} {:.0f}".format(direction, magnitude)
-
-        if abs(left) < tol or abs(right) < tol:
-            horizontal = "FOS"
-        elif abs(ch) < tol:
-            horizontal = "CL"
-        else:
-            magnitude = max(abs(left), abs(right))
-            # Use the dominant edge sign to decide IN/OUT (positive right => OUT)
-            if abs(right) >= abs(left):
-                direction = "OUT" if right > 0 else "IN"
-            else:
-                direction = "IN" if left > 0 else "OUT"
-            horizontal = "{} {:.0f}".format(direction, magnitude)
+        vertical = classify_vertical_part()
+        horizontal = classify_horizontal_part()
 
         if vertical == "CL" and horizontal == "CL":
             return "CL"
@@ -250,10 +297,12 @@ else:
 
             if fitting:
                 # Store for output
-                processed.append((element, family_name, size_str, fitting))
+                processed.append(
+                    (element, family_name, size_str, fitting, inlet_data, outlet_data))
 
                 # Calculate classification
-                classification = classify_offset(fitting)
+                classification = classify_offset(
+                    fitting, inlet_data, outlet_data, size)
 
                 # Write values to parameters
                 with revit.Transaction("Set Offset Parameters"):
@@ -276,14 +325,17 @@ else:
                         try:
                             if tag_p.StorageType == StorageType.String:
                                 current_value = tag_p.AsString()
-                                final_classification = convert_to_TU_TD(classification)
+                                final_classification = convert_to_TU_TD(
+                                    classification)
                                 if current_value and current_value.strip():
                                     import re
                                     result = current_value
-                                    numbers = re.findall(r'\d+', final_classification or '')
+                                    numbers = re.findall(
+                                        r'\d+', final_classification or '')
                                     if numbers:
                                         for number in numbers:
-                                            result = re.sub(r'\d+', number, result, count=1)
+                                            result = re.sub(
+                                                r'\d+', number, result, count=1)
                                         tag_p.Set(result)
                                     else:
                                         tag_p.Set(current_value)
@@ -299,12 +351,12 @@ else:
             ))
 
     # Print detailed results
-    for i, (elem, fam, size_str, fit) in enumerate(processed, start=1):
+    for i, (elem, fam, size_str, fit, inlet_data, outlet_data) in enumerate(processed, start=1):
         size = Size(size_str)
-        inlet_data, outlet_data = RevitXYZ(elem).inlet_outlet_data()
         inlet = inlet_data['origin']
         outlet = outlet_data['origin']
-        classification = convert_to_TU_TD(classify_offset(fit))
+        classification = convert_to_TU_TD(
+            classify_offset(fit, inlet_data, outlet_data, size))
 
         output.print_md("# Element ID: {} | Category {}".format(
             elem.Id.Value,
@@ -385,6 +437,12 @@ else:
                     key,
                     fit[key],
                 ))
+
+        # Add _duct_note parameter
+        note_param = elem.LookupParameter('_duct_note')
+        if note_param:
+            note_value = note_param.AsString()
+            output.print_md("### _duct_note | '{}'".format(note_value))
 
         # Add classification
         output.print_md("## Classification")

@@ -108,6 +108,15 @@ class Offsets:
             bx_z = abs(bx.Z)
             by_z = abs(by.Z)
 
+            # Keep the vertical local axis aligned with world-up.
+            # Without this, some fittings report inverted top/bottom when
+            # connector coordinate systems are reversed.
+            vertical_is_bx = bx_z > by_z and bx_z > 0.5
+            vertical_axis = bx if vertical_is_bx else by
+            if vertical_axis.Z < 0:
+                bx = bx * -1
+                by = by * -1
+
             if bx_z > by_z and bx_z > 0.5:
                 # basis_x is vertical (duct rotated 90°)
                 center_h = center_vec.dot(by)

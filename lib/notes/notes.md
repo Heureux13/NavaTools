@@ -36,3 +36,28 @@
 | Annotation Tag | Duty | Proposed Name |
 |----------------|------|---------------|
 | inner radius | inner radius of radius elbows | -FabDuct_INNER_RADIUS_FIX_Tag |
+
+Devices
+label
+make
+model
+size
+mount
+
+
+Equipment
+
+
+
+
+devices
+GRDs
+LVRs
+Fans
+Units
+
+
+
+_umi_GRD_note_note
+_umi_LVR_note_note
+_umi_
