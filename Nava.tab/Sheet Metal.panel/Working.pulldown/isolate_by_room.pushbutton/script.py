@@ -10,6 +10,7 @@ the copyright holder."""
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
     BuiltInCategory,
+    BuiltInParameter,
     ElementId,
     TextNote,
     TextNoteOptions,
@@ -23,7 +24,7 @@ from System.Collections.Generic import List
 
 # Button info
 # ===================================================
-__title__ = "Isolate by Rooms"
+__title__ = "Add Note Below Room Label"
 __doc__ = """
 Selects all Room Tags in the active view
 """
@@ -34,6 +35,7 @@ app = __revit__.Application
 uidoc = __revit__.ActiveUIDocument
 doc = revit.doc
 view = revit.active_view
+TARGET_TEXT_TYPE_NAME = '1/8" Calibri 2 - Red'
 
 
 # Main Code
@@ -54,13 +56,23 @@ try:
     selected_ids = List[ElementId]([t.Id for t in tags])
     uidoc.Selection.SetElementIds(selected_ids)
 
-    text_types = list(FilteredElementCollector(doc).OfClass(TextNoteType).ToElementIds())
+    text_types = list(FilteredElementCollector(doc).OfClass(TextNoteType).ToElements())
     if not text_types:
         script.exit()
-    text_type_id = text_types[0]
+
+    text_type_id = None
+    for txt_type in text_types:
+        name_param = txt_type.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM)
+        type_name = name_param.AsString() if name_param else None
+        if type_name == TARGET_TEXT_TYPE_NAME:
+            text_type_id = txt_type.Id
+            break
+
+    if text_type_id is None:
+        text_type_id = text_types[0].Id
 
     NOTE_TEXT = "XXX 09'-00\""
-    OFFSET_FT = 0.5
+    OFFSET_FT = 1.0
     up = view.UpDirection
 
     with revit.Transaction("Add Room Tag Notes"):

@@ -131,6 +131,8 @@ with revit.Transaction("Isolate by Fabrication Service"):
         BuiltInCategory.OST_Grids,
         BuiltInCategory.OST_Dimensions,
         BuiltInCategory.OST_Viewers,
+        BuiltInCategory.OST_MechanicalEquipment,
+        BuiltInCategory.OST_MechanicalEquipmentTags,
     ]
 
     for bic in categories_to_include:
