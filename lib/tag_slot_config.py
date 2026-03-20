@@ -12,7 +12,7 @@ SLOT_LENGTH = 'LENGTH'
 SLOT_MARK = 'MARK'
 SLOT_SIZE = 'SIZE'
 SLOT_TRAN = 'TRAN'
-SLOT_MARK_TYPE = 'TYPE_MARK'
+SLOT_TYPE_MARK = 'TYPE_MARK'
 SLOT_WEIGHT = 'WEIGHT'
 
 
@@ -57,8 +57,8 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         "-FabDuct_TRAN_MV_Tag",
         "_umi_OFFSET"
     ],
-    SLOT_MARK_TYPE: [
-        "-FabDuct_TYPE_MARK_MV_Tag",
+    SLOT_TYPE_MARK: [
+        "-FabDuct_TM_MV_Tag",
         "_umi_TYPE_MARK"
     ],
     SLOT_WEIGHT: [
@@ -68,9 +68,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
 }
 
 DEFAULT_SKIP_PARAMETERS = {
-    '_duct_tag':        ['skip', 'skip n/a'],
+    '_duct_tag': ['skip', 'skip n/a'],
     '_duct_tag_offset': ['skip', 'skip n/a'],
-    'mark':             ['skip', 'skip n/a'],
+    'mark': ['skip', 'skip n/a'],
+    'item number': ['skip', 'skip n/a'],
 }
 
 DEFAULT_PARAMETER_HIERARCHY = [

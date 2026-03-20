@@ -65,11 +65,13 @@ try:
     needs_tagging = []
     already_tagged = []
     skipped_by_param = []
+    skipped_no_tag_config = []
 
     for d in dic_ducts:
         key = fittings._norm(d.family)
         tag_configs = duct_families.get(key)
         if not tag_configs:
+            skipped_no_tag_config.append(d)
             continue
 
         if fittings.should_skip_by_param(d):
@@ -169,12 +171,21 @@ if skipped_by_param:
             i, d.size, d.family, d.length, output.linkify(d.element.Id)))
     output.print_md("---")
 
+if skipped_no_tag_config:
+    output.print_md("## Skipped – Tag Family Not Loaded")
+    for i, d in enumerate(skipped_no_tag_config, start=1):
+        output.print_md("### {} | Family: {} | Size: {} | ID: {}".format(
+            i, d.family, d.size, output.linkify(d.element.Id)))
+    output.print_md("---")
+
 output.print_md("# Newly tagged: {}, {}".format(
     len(needs_tagging), output.linkify([d.element.Id for d in needs_tagging])))
 output.print_md("# Already tagged: {}, {}".format(
     len(already_tagged), output.linkify([d.element.Id for d in already_tagged])))
 output.print_md("# Skipped by parameter: {}, {}".format(
     len(skipped_by_param), output.linkify([d.element.Id for d in skipped_by_param])))
+output.print_md("# Skipped (no tag family loaded): {}, {}".format(
+    len(skipped_no_tag_config), output.linkify([d.element.Id for d in skipped_no_tag_config])))
 output.print_md("# Total: {}, {}".format(
     len(dic_ducts), output.linkify([d.element.Id for d in dic_ducts])))
 

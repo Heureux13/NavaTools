@@ -12,6 +12,7 @@ the copyright holder."""
 from revit_element import RevitElement
 from revit_duct import RevitDuct
 from revit_output import print_disclaimer
+from tag_slot_config import DEFAULT_SKIP_PARAMETERS
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -30,9 +31,62 @@ doc = revit.doc  # type: Document
 view = revit.active_view
 output = script.get_output()
 MAX_LENGTH_IN = 12.01
+SKIP_VALUES = {
+    str(v).strip().lower()
+    for values in DEFAULT_SKIP_PARAMETERS.values()
+    for v in (values or [])
+    if v is not None
+}
+
+
+def _get_param_value_from_element_or_type(element, param_name):
+    """Return string parameter value from instance or type, or None."""
+    if element is None or not param_name:
+        return None
+
+    try:
+        p = element.LookupParameter(param_name)
+    except Exception:
+        p = None
+    if p:
+        try:
+            val = p.AsString() or p.AsValueString()
+            if val is not None:
+                return str(val).strip()
+        except Exception:
+            pass
+
+    try:
+        type_el = doc.GetElement(element.GetTypeId())
+    except Exception:
+        type_el = None
+    if type_el:
+        try:
+            p = type_el.LookupParameter(param_name)
+        except Exception:
+            p = None
+        if p:
+            try:
+                val = p.AsString() or p.AsValueString()
+                if val is not None:
+                    return str(val).strip()
+            except Exception:
+                pass
+
+    return None
+
+
+def _should_skip_by_item_number(duct):
+    """Skip when Item Number matches configured skip values."""
+    item_number = _get_param_value_from_element_or_type(
+        duct.element, "Item Number")
+    if not item_number:
+        return False
+    return item_number.strip().lower() in SKIP_VALUES
 
 # Main Code
 # ==================================================
+
 
 # Get all ducts
 ducts = RevitDuct.all(doc, view)
@@ -40,7 +94,9 @@ ducts = RevitDuct.all(doc, view)
 # Filter down to straight ducts shorter than threshold
 fil_ducts = [
     d for d in ducts
-    if (d.family or "").strip().lower() == "straight" and d.length < MAX_LENGTH_IN
+    if (d.family or "").strip().lower() == "straight"
+    and d.length < MAX_LENGTH_IN
+    and not _should_skip_by_item_number(d)
 ]
 
 # Start of select / print loop

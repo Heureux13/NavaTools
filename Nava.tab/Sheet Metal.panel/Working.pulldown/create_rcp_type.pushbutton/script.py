@@ -37,7 +37,7 @@ uidoc = __revit__.ActiveUIDocument
 doc = revit.doc
 view = revit.active_view
 TARGET_TEXT_TYPE_NAME = '1/8" Calibri 2 - Red'
-DUPLICATE_DISTANCE_FT = 0.5  # Tolerance for detecting duplicates
+DUPLICATE_DISTANCE_FT = 2.0  # Tolerance for detecting duplicates (in feet) - more permissive
 
 
 def distance_between_points(pt1, pt2):
@@ -48,18 +48,12 @@ def distance_between_points(pt1, pt2):
     return math.sqrt(dx * dx + dy * dy + dz * dz)
 
 
-def note_exists_nearby(existing_notes, proposed_pt, tolerance_ft):
-    """Check if a text note already exists within tolerance distance of proposed location."""
-    for note in existing_notes:
-        try:
-            note_loc = note.Location
-            if note_loc:
-                note_pt = note_loc.Point
-                dist = distance_between_points(proposed_pt, note_pt)
-                if dist < tolerance_ft:
-                    return True
-        except Exception:
-            pass
+def point_exists_nearby(existing_points, proposed_pt, tolerance_ft):
+    """Check if a point already exists within tolerance distance of proposed location."""
+    for existing_pt in existing_points:
+        dist = distance_between_points(proposed_pt, existing_pt)
+        if dist < tolerance_ft:
+            return True
     return False
 
 
@@ -100,14 +94,48 @@ try:
     OFFSET_FT = 1.0
     up = view.UpDirection
 
-    # Collect existing text notes to avoid duplicates
-    existing_text_notes = list((FilteredElementCollector(doc, view.Id)
-                                .OfClass(TextNote)
-                                .ToElements()))
+    # Collect existing text note positions - try both with and without view filter
+    existing_text_notes_in_view = list((FilteredElementCollector(doc, view.Id)
+                                        .OfClass(TextNote)
+                                        .ToElements()))
+
+    existing_text_notes_all = list((FilteredElementCollector(doc)
+                                    .OfClass(TextNote)
+                                    .ToElements()))
+
+    print("Debug: TextNotes in view: {}, TextNotes in doc: {}".format(
+        len(existing_text_notes_in_view), len(existing_text_notes_all)))
+
+    # Use the full document collection since view-based might be filtering them out
+    existing_text_notes = existing_text_notes_all
+    existing_points = []
+    error_count = 0
+    for i, note in enumerate(existing_text_notes):
+        try:
+            note_loc = note.Location
+            if note_loc:
+                pt = note_loc.Origin
+                if pt:
+                    existing_points.append(pt)
+                else:
+                    if i < 5:
+                        print("Note {} has Location but no Origin".format(i))
+            else:
+                if i < 5:
+                    print("Note {} has no Location".format(i))
+        except Exception as e:
+            error_count += 1
+            if error_count <= 5:
+                print("Error getting note location: {}".format(str(e)))
+
+    print("Extracted {} points from {} notes, {} errors".format(
+        len(existing_points), len(existing_text_notes), error_count))
 
     with revit.Transaction("Add Room Tag Notes"):
         notes_created = 0
         notes_skipped = 0
+        created_points = []
+        debug_count = 0
 
         for tag in tags:
             loc = tag.Location
@@ -120,19 +148,29 @@ try:
                 pt.Z - up.Z * OFFSET_FT,
             )
 
-            # Check if a note already exists at this location
-            if note_exists_nearby(existing_text_notes, note_pt, DUPLICATE_DISTANCE_FT):
+            # Check against both existing notes AND newly created notes
+            is_duplicate = False
+            if point_exists_nearby(existing_points, note_pt, DUPLICATE_DISTANCE_FT):
+                is_duplicate = True
+            if point_exists_nearby(created_points, note_pt, DUPLICATE_DISTANCE_FT):
+                is_duplicate = True
+
+            if is_duplicate:
                 notes_skipped += 1
+                debug_count += 1
+                if debug_count <= 10:  # Print first 10 skips for debugging
+                    print("Skipping duplicate at ({}, {}, {})".format(note_pt.X, note_pt.Y, note_pt.Z))
                 continue
 
             opts = TextNoteOptions(text_type_id)
             opts.HorizontalAlignment = HorizontalTextAlignment.Center
             new_note = TextNote.Create(doc, view.Id, note_pt, NOTE_TEXT, opts)
             if new_note:
-                existing_text_notes.append(new_note)
+                created_points.append(note_pt)
                 notes_created += 1
 
-        print("Created: {}, Skipped (duplicates): {}".format(notes_created, notes_skipped))
+        print("Created: {}, Skipped (duplicates): {}, Existing notes: {}".format(
+            notes_created, notes_skipped, len(existing_points)))
 
 except Exception as e:
     script.exit()
