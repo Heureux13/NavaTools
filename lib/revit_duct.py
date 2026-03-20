@@ -562,14 +562,19 @@ class RevitDuct:
 
     @property
     def joint_size(self):
-        conn0 = (self.connector_0_type or "").strip()
-        conn1 = (self.connector_1_type or "").strip()
-        key = (self.family, conn0)
+        fam = (self.family or "").strip().lower()
+        conn0 = (self.connector_0_type or "").strip().lower()
+        conn1 = (self.connector_1_type or "").strip().lower()
 
         if conn0 != conn1:
             return JointSize.INVALID
 
-        threshold = CONNECTOR_THRESHOLDS.get(key)
+        threshold = None
+        for (k_family, k_conn), k_threshold in CONNECTOR_THRESHOLDS.items():
+            if fam == (k_family or "").strip().lower() and conn0 == (k_conn or "").strip().lower():
+                threshold = k_threshold
+                break
+
         if threshold is None:
             if self.length is None:
                 return JointSize.INVALID
@@ -767,7 +772,8 @@ class RevitDuct:
                             continue
                         # Pre-filter by shape/size to limit work
                         try:
-                            other_shape = shape_key_from_size(Size(str(other_duct.size)))
+                            other_shape = shape_key_from_size(
+                                Size(str(other_duct.size)))
                         except Exception:
                             continue
                         if not shape_equals(other_shape, start_shape):

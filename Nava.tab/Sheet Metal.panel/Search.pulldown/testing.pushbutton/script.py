@@ -15,11 +15,9 @@ from Autodesk.Revit.DB import StorageType
 
 # Button info
 # ======================================================================
-__title__ = 'Offset Data'
+__title__ = 'Testing'
 __doc__ = '''
 Gives raw offset data and writes to parameters
----
-Values are representative of raw vector formulas used in linear mathmatics, seeing (-) and (+) does not mean in/out, it is movement from vector origins
 '''
 
 # Variables

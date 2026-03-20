@@ -61,6 +61,11 @@ skip_parameters = {
     'mark': ['skip', 'skip n/a'],
 }
 
+tag_family_name = [
+    "-FabDuct_LENGTH_FIX_Tag",
+    "_umi_lenght",
+]
+
 
 def should_skip_by_param(element, param_rules):
     for param_name, skip_values in param_rules.items():
@@ -87,7 +92,19 @@ def should_skip_by_param(element, param_rules):
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
+tag = None
+for _name in tag_family_name:
+    try:
+        tag = tagger.get_label(_name)
+        break
+    except LookupError:
+        continue
+if tag is None:
+    forms.alert(
+        "No tag family found. Tried:\n" + "\n".join(tag_family_name) +
+        "\n\nMake sure one of these tag families is loaded in the project.",
+        exitscript=True
+    )
 
 # Filtered results
 # ==================================================
@@ -100,7 +117,8 @@ for d in ducts:
         continue
 
     # Skip when parameter exists and matches skip list
-    skip_param, skip_name, skip_val = should_skip_by_param(d.element, skip_parameters)
+    skip_param, skip_name, skip_val = should_skip_by_param(
+        d.element, skip_parameters)
     if skip_param:
         skipped_by_param.append((d, skip_name, skip_val))
         continue
@@ -135,7 +153,8 @@ t = Transaction(doc, "Short Joints Tag")
 t.Start()
 try:
     # Get tag family name once
-    tag_fam_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+    tag_fam_name = (
+        tag.Family.Name if tag and tag.Family else "").strip().lower()
 
     # Begins our tagging process
     tagged_count = 0
@@ -275,7 +294,8 @@ try:
     output.print_md("## Summary")
     output.print_md("- **Newly Tagged:** {}".format(len(needs_tagging)))
     output.print_md("- **Already Tagged:** {}".format(len(already_tagged)))
-    output.print_md("- **Skipped By Parameter:** {}".format(len(skipped_by_param)))
+    output.print_md(
+        "- **Skipped By Parameter:** {}".format(len(skipped_by_param)))
     output.print_md("- **Total Elements:** {}".format(len(fil_ducts)))
     output.print_md("---")
 

@@ -2,6 +2,20 @@
 import re
 from revit_element import RevitElement
 from revit_xyz import RevitXYZ
+from tag_slot_config import (
+    SLOT_TYPE_MARK as CFG_SLOT_TYPE_MARK,
+    SLOT_SIZE as CFG_SLOT_SIZE,
+    SLOT_EXT_IN as CFG_SLOT_EXT_IN,
+    SLOT_EXT_OUT as CFG_SLOT_EXT_OUT,
+    SLOT_EXT_LEFT as CFG_SLOT_EXT_LEFT,
+    SLOT_EXT_RIGHT as CFG_SLOT_EXT_RIGHT,
+    SLOT_DEGREE as CFG_SLOT_DEGREE,
+    SLOT_TRAN as CFG_SLOT_TRAN,
+    SLOT_MARK as CFG_SLOT_MARK,
+    DEFAULT_TAG_SLOT_CANDIDATES,
+    DEFAULT_SKIP_PARAMETERS,
+    DEFAULT_PARAMETER_HIERARCHY,
+)
 from Autodesk.Revit.DB import FilteredElementCollector, IndependentTag
 
 
@@ -17,34 +31,26 @@ class Fittings:
     # ------------------------------------------------------------------
 
     TAG_SLOT_CANDIDATES = {
-        'TM':        ["-FabDuct_TM_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'SIZE_FIX':  ["-FabDuct_SIZE_FIX_Tag", "_umi_duct_ITEM_NUMBER"],
-        'EXT_IN':    ["-FabDuct_EXT IN_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'EXT_OUT':   ["-FabDuct_EXT OUT_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'EXT_LEFT':  ["-FabDuct_EXT LEFT_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'EXT_RIGHT': ["-FabDuct_EXT RIGHT_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'DEGREE':    ["-FabDuct_DEGREE_MV_Tag", "_umi_duct_ITEM_NUMBER"],
-        'TRAN':      ["-FabDuct_TRAN_MV_Tag", "_umi_offset"],
-        'MARK':      ["-FabDuct_MARK_Tag", "_umi_duct_ITEM_NUMBER"],
+        slot: list(candidates)
+        for slot, candidates in DEFAULT_TAG_SLOT_CANDIDATES.items()
     }
 
-    SLOT_TYPE_MARK = 'TM'
-    SLOT_SIZE_FIX = 'SIZE_FIX'
-    SLOT_EXT_IN = 'EXT_IN'
-    SLOT_EXT_OUT = 'EXT_OUT'
-    SLOT_EXT_LEFT = 'EXT_LEFT'
-    SLOT_EXT_RIGHT = 'EXT_RIGHT'
-    SLOT_DEGREE = 'DEGREE'
-    SLOT_TRAN = 'TRAN'
-    SLOT_MARK = 'MARK'
+    SLOT_TYPE_MARK = CFG_SLOT_TYPE_MARK
+    SLOT_SIZE = CFG_SLOT_SIZE
+    SLOT_EXT_IN = CFG_SLOT_EXT_IN
+    SLOT_EXT_OUT = CFG_SLOT_EXT_OUT
+    SLOT_EXT_LEFT = CFG_SLOT_EXT_LEFT
+    SLOT_EXT_RIGHT = CFG_SLOT_EXT_RIGHT
+    SLOT_DEGREE = CFG_SLOT_DEGREE
+    SLOT_TRAN = CFG_SLOT_TRAN
+    SLOT_MARK = CFG_SLOT_MARK
 
     skip_parameters = {
-        'mark':             ['skip', 'skip n/a'],
-        '_duct_tag_offset': ['skip', 'skip n/a'],
-        '_duct_tag':        ['skip', 'skip n/a'],
+        param: list(values)
+        for param, values in DEFAULT_SKIP_PARAMETERS.items()
     }
 
-    parameter_hierarchy_to_check = ['mark', 'type mark']
+    parameter_hierarchy_to_check = list(DEFAULT_PARAMETER_HIERARCHY)
 
     elbow_throat_allowances = {'tdf': 6, 's&d': 4}
 
@@ -167,10 +173,10 @@ class Fittings:
             "canvas":                         s._tag_cfg(s.SLOT_TYPE_MARK),
             "end cap":                        s._tag_cfg(s.SLOT_TYPE_MARK),
             "tdf end cap":                    s._tag_cfg(s.SLOT_TYPE_MARK),
-            "drop cheek":                     s._tag_cfg(s.SLOT_SIZE_FIX),
-            "radius bend":                    s._tag_cfg(s.SLOT_SIZE_FIX),
-            "square bend":                    s._tag_cfg(s.SLOT_SIZE_FIX),
-            "tap":                            s._tag_cfg(s.SLOT_SIZE_FIX),
+            "drop cheek":                     s._tag_cfg(s.SLOT_SIZE),
+            "radius bend":                    s._tag_cfg(s.SLOT_SIZE),
+            "square bend":                    s._tag_cfg(s.SLOT_SIZE),
+            "tap":                            s._tag_cfg(s.SLOT_SIZE),
             "elbow":                          s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
             "elbow 90 degree":                s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
             "gored elbow":                    s._tag_cfg(s.SLOT_DEGREE),
@@ -190,7 +196,7 @@ class Fittings:
         return {self._norm(k): v for k, v in family_cfg.items()}
 
     def _build_rect_damper_switch_families(self):
-        """All candidate tag family names for the rect damper MARK/TM swap logic."""
+        """All candidate tag family names for the rect damper MARK/TYPE_MARK swap logic."""
         return {
             name.strip().lower()
             for slot in (self.SLOT_MARK, self.SLOT_TYPE_MARK)
@@ -366,7 +372,7 @@ class Fittings:
         return None
 
     def _rect_volume_damper_tag_choice(self, duct):
-        """Return (tag, label_lower) — MARK tag if the element has a mark, else TM tag."""
+        """Return (tag, label_lower) — MARK tag if the element has a mark, else TYPE_MARK tag."""
         mark_param = self.parameter_hierarchy_to_check[0] if self.parameter_hierarchy_to_check else 'mark'
         type_mark_param = self.parameter_hierarchy_to_check[1] if len(
             self.parameter_hierarchy_to_check) > 1 else 'type mark'

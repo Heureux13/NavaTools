@@ -50,15 +50,24 @@ ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
+
+# Cutoff lengths for no tags, if shorter than magic number, then dont tag
 element_families = {
     'straight': None,
-    'spiral': 12,
-    'spiral duct': 12,
+    'spiral': 6,
+    'spiral duct': 6,
 }
 
+# Named parameters = Value that skips tagging if matches
 skip_parameters = {
     'mark': ['skip', 'skip n/a'],
 }
+
+
+tag_family_name = [
+    "-FabDuct_LENGTH_FIX_Tag",
+    "_umi_length",
+]
 
 
 def should_skip_by_param(element, param_rules):
@@ -86,7 +95,19 @@ def should_skip_by_param(element, param_rules):
 
 # Choose tag
 # ==================================================
-tag = tagger.get_label("-FabDuct_LENGTH_FIX_Tag")
+tag = None
+for _name in tag_family_name:
+    try:
+        tag = tagger.get_label(_name)
+        break
+    except LookupError:
+        continue
+if tag is None:
+    forms.alert(
+        "No tag family found. Tried:\n" + "\n".join(tag_family_name) +
+        "\n\nMake sure one of these tag families is loaded in the project.",
+        exitscript=True
+    )
 
 # Filtered results
 # ==================================================
@@ -99,7 +120,8 @@ for d in ducts:
         continue
 
     # Skip when parameter exists and matches skip list
-    skip_param, skip_name, skip_val = should_skip_by_param(d.element, skip_parameters)
+    skip_param, skip_name, skip_val = should_skip_by_param(
+        d.element, skip_parameters)
     if skip_param:
         skipped_by_param.append((d, skip_name, skip_val))
         continue
@@ -118,12 +140,18 @@ for d in ducts:
             except (ValueError, TypeError):
                 pass
 
-    joint_size = d.joint_size
-    if joint_size == JointSize.INVALID:
-        if d.length is None or d.length > DEFAULT_SHORT_THRESHOLD_IN:
+    # Spiral parts should be considered short up to 10'-0" regardless of
+    # connector metadata quality; this avoids false negatives in joint_size.
+    if fam in ('spiral', 'spiral duct'):
+        if d.length is None or d.length > 120.0:
             continue
-    elif joint_size != JointSize.SHORT:
-        continue
+    else:
+        joint_size = d.joint_size
+        if joint_size == JointSize.INVALID:
+            if d.length is None or d.length > DEFAULT_SHORT_THRESHOLD_IN:
+                continue
+        elif joint_size != JointSize.SHORT:
+            continue
     angle = RevitXYZ(d.element).straight_joint_degree()
     if isinstance(angle, (int, float)):
         abs_angle = abs(angle)
@@ -138,12 +166,14 @@ for d in ducts:
 # Transaction
 # ==================================================
 already_tagged = []
-needs_tagging = []
+newly_tagged = []
+could_not_place = []
 t = Transaction(doc, "Short Joints Tag")
 t.Start()
 try:
     # Get tag family name once
-    tag_fam_name = (tag.Family.Name if tag and tag.Family else "").strip().lower()
+    tag_fam_name = (
+        tag.Family.Name if tag and tag.Family else "").strip().lower()
 
     # Begins our tagging process
     tagged_count = 0
@@ -157,10 +187,10 @@ try:
             already_tagged.append(d)
             continue
 
-        needs_tagging.append(d)
         loc = d.element.Location
         if hasattr(loc, "Point") and loc.Point is not None:
             tagger.place_tag(d.element, tag, loc.Point)
+            newly_tagged.append(d)
             tagged_count += 1
             batch_count += 1
             if tagged_count % PROGRESS_EVERY == 0:
@@ -175,6 +205,7 @@ try:
             curve = loc.Curve
             midpoint = curve.Evaluate(0.5, True)
             tagger.place_tag(d.element, tag, midpoint)
+            newly_tagged.append(d)
             tagged_count += 1
             batch_count += 1
             if tagged_count % PROGRESS_EVERY == 0:
@@ -189,6 +220,7 @@ try:
         ref, centroid = tagger.get_face_facing_view(d.element)
         if ref is not None and centroid is not None:
             tagger.place_tag(ref, tag, centroid)
+            newly_tagged.append(d)
             tagged_count += 1
             batch_count += 1
             if tagged_count % PROGRESS_EVERY == 0:
@@ -200,10 +232,12 @@ try:
                 batch_count = 0
             continue
 
+        could_not_place.append(d)
+
     # Print newly tagged list first
-    if needs_tagging:
+    if newly_tagged:
         output.print_md("## Newly Tagged")
-        for i, d in enumerate(needs_tagging, start=1):
+        for i, d in enumerate(newly_tagged, start=1):
             output.print_md(
                 "### No.{} | ID: {} | Fam: {} | Size: {} | Le: {:06.2f} | Ex: {}".format(
                     i,
@@ -212,6 +246,19 @@ try:
                     d.size,
                     d.length if d.length else 0.0,
                     d.extension_bottom if d.extension_bottom else 0.0
+                )
+            )
+        output.print_md("---")
+
+    if could_not_place:
+        output.print_md("## Could Not Place Tag")
+        for i, d in enumerate(could_not_place, start=1):
+            output.print_md(
+                "### Index {} | Family: {} | Length: {:06.2f} | Element ID: {}".format(
+                    i,
+                    d.family,
+                    d.length if d.length else 0.0,
+                    output.linkify(d.element.Id)
                 )
             )
         output.print_md("---")
@@ -250,9 +297,12 @@ try:
 
     # Summary
     output.print_md("## Summary")
-    output.print_md("- **Newly Tagged:** {}".format(len(needs_tagging)))
+    output.print_md("- **Newly Tagged:** {}".format(len(newly_tagged)))
     output.print_md("- **Already Tagged:** {}".format(len(already_tagged)))
-    output.print_md("- **Skipped By Parameter:** {}".format(len(skipped_by_param)))
+    output.print_md(
+        "- **Skipped By Parameter:** {}".format(len(skipped_by_param)))
+    output.print_md(
+        "- **Could Not Place Tag:** {}".format(len(could_not_place)))
     output.print_md("- **Total Elements:** {}".format(len(fil_ducts)))
     output.print_md("---")
 
