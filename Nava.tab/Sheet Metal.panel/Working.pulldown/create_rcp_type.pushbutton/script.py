@@ -20,6 +20,7 @@ from Autodesk.Revit.DB import (
 )
 from pyrevit import revit, script
 from System.Collections.Generic import List
+import math
 
 
 # Button info
@@ -36,6 +37,30 @@ uidoc = __revit__.ActiveUIDocument
 doc = revit.doc
 view = revit.active_view
 TARGET_TEXT_TYPE_NAME = '1/8" Calibri 2 - Red'
+DUPLICATE_DISTANCE_FT = 0.5  # Tolerance for detecting duplicates
+
+
+def distance_between_points(pt1, pt2):
+    """Calculate 3D distance between two XYZ points."""
+    dx = pt1.X - pt2.X
+    dy = pt1.Y - pt2.Y
+    dz = pt1.Z - pt2.Z
+    return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+
+def note_exists_nearby(existing_notes, proposed_pt, tolerance_ft):
+    """Check if a text note already exists within tolerance distance of proposed location."""
+    for note in existing_notes:
+        try:
+            note_loc = note.Location
+            if note_loc:
+                note_pt = note_loc.Point
+                dist = distance_between_points(proposed_pt, note_pt)
+                if dist < tolerance_ft:
+                    return True
+        except Exception:
+            pass
+    return False
 
 
 # Main Code
@@ -75,7 +100,15 @@ try:
     OFFSET_FT = 1.0
     up = view.UpDirection
 
+    # Collect existing text notes to avoid duplicates
+    existing_text_notes = list((FilteredElementCollector(doc, view.Id)
+                                .OfClass(TextNote)
+                                .ToElements()))
+
     with revit.Transaction("Add Room Tag Notes"):
+        notes_created = 0
+        notes_skipped = 0
+
         for tag in tags:
             loc = tag.Location
             if loc is None:
@@ -86,9 +119,20 @@ try:
                 pt.Y - up.Y * OFFSET_FT,
                 pt.Z - up.Z * OFFSET_FT,
             )
+
+            # Check if a note already exists at this location
+            if note_exists_nearby(existing_text_notes, note_pt, DUPLICATE_DISTANCE_FT):
+                notes_skipped += 1
+                continue
+
             opts = TextNoteOptions(text_type_id)
             opts.HorizontalAlignment = HorizontalTextAlignment.Center
-            TextNote.Create(doc, view.Id, note_pt, NOTE_TEXT, opts)
+            new_note = TextNote.Create(doc, view.Id, note_pt, NOTE_TEXT, opts)
+            if new_note:
+                existing_text_notes.append(new_note)
+                notes_created += 1
+
+        print("Created: {}, Skipped (duplicates): {}".format(notes_created, notes_skipped))
 
 except Exception as e:
     script.exit()
