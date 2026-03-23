@@ -7,9 +7,10 @@ layout:
   - -----
   - 3_Check
   - -----
+  - 3_Tagging
+  - -----
   - Random
   - Selected
-  - Tagging
   - Isolate
   - Hide
   - Working
