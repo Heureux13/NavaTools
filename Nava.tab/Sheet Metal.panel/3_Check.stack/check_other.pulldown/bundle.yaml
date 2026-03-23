@@ -1,0 +1,7 @@
+title:
+  en_us: Check Other
+layout:
+  - check_grd
+  - check_mech_equipment_workset
+  - check_number
+  - check_reference
