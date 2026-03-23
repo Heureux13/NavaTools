@@ -18,7 +18,7 @@ from Autodesk.Revit.DB import *
 
 # Button info
 # ===================================================
-__title__ = "Short"
+__title__ = 'Under 12"'
 __doc__ = """
 Selects straight duct that is shorter than 12".
 """
