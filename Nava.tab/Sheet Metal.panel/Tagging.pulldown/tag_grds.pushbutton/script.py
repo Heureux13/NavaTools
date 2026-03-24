@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
@@ -270,7 +270,7 @@ existing_tags = list(
 )
 
 # Build a map of element IDs to existing tag instances from our families
-tag_map = {}
+tagging.tag_map = {}
 all_tag_names = first_tag + second_tag
 
 for tag in existing_tags:
@@ -295,8 +295,9 @@ for tag in existing_tags:
             tagged_ids = []
 
         for tid in tagged_ids:
-            tid_val = tid.IntegerValue if hasattr(tid, 'IntegerValue') else int(tid)
-            tag_map.setdefault(tid_val, []).append(tag)
+            tid_val = tid.IntegerValue if hasattr(
+                tid, 'IntegerValue') else int(tid)
+            tagging.tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
@@ -306,7 +307,8 @@ try:
     # Update value parameters for all air terminals before tagging
     for elem in air_terminals:
         # Get value based on ordered parameter hierarchy
-        value_to_write = _get_value_from_ordered_params(elem, doc, order_paramters)
+        value_to_write = _get_value_from_ordered_params(
+            elem, doc, order_paramters)
 
         # Write to all value parameters
         for param_name in value_parameters:
@@ -318,12 +320,14 @@ try:
                 pass
 
         # Get the value that will be written
-        current_value = _get_value_from_ordered_params(elem, doc, order_paramters)
+        current_value = _get_value_from_ordered_params(
+            elem, doc, order_paramters)
         current_value_normalized = current_value.lower().strip()
 
         # Check if value is in skip list
         if current_value_normalized in {v.lower().strip() for v in skip_values}:
-            failed.append((elem, "Value '{}' is in skip list".format(current_value)))
+            failed.append(
+                (elem, "Value '{}' is in skip list".format(current_value)))
             continue
 
         # Check airflow/cfm parameters to determine which tag to use
@@ -338,12 +342,13 @@ try:
         tag_symbol, tag_name = _find_first_available_tag(doc, tag_set)
 
         if not tag_symbol:
-            failed.append((elem, "No tag found from {} set".format("second" if use_second else "first")))
+            failed.append((elem, "No tag found from {} set".format(
+                "second" if use_second else "first")))
             continue
 
         # Skip if already tagged with the correct tag; otherwise delete wrong tags
         elem_id_val = elem.Id.IntegerValue
-        existing_for_elem = tag_map.get(elem_id_val, [])
+        existing_for_elem = tagging.tag_map.get(elem_id_val, [])
         if existing_for_elem:
             has_correct = False
             for existing_tag in existing_for_elem:

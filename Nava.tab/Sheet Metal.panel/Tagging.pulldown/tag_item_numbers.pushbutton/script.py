@@ -18,7 +18,7 @@ from Autodesk.Revit.DB import (
     Transaction,
     StorageType,
 )
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 from revit_duct import RevitDuct
 
 # Button display information

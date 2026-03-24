@@ -3,14 +3,23 @@
 """Shared tag slot configuration used by fitting and joint tagging scripts."""
 
 SLOT_BOD = 'BOD'
+SLOT_BOD_CENTER = 'BOD_CENTER'
+SLOT_BOD_LEFT = 'BOD_LEFT'
+SLOT_BOD_RIGHT = 'BOD_RIGHT'
 SLOT_DEGREE = 'DEGREE'
 SLOT_EXT_IN = 'EXT_IN'
 SLOT_EXT_LEFT = 'EXT_LEFT'
 SLOT_EXT_OUT = 'EXT_OUT'
 SLOT_EXT_RIGHT = 'EXT_RIGHT'
 SLOT_LENGTH = 'LENGTH'
+SLOT_LENGTH_CENTER = 'LENGTH_CENTER'
+SLOT_LENGTH_LEFT = 'LENGTH_LEFT'
+SLOT_LENGTH_RIGHT = 'LENGTH_RIGHT'
 SLOT_MARK = 'MARK'
 SLOT_SIZE = 'SIZE'
+SLOT_SIZE_CENTER = 'SIZE_CENTER'
+SLOT_SIZE_LEFT = 'SIZE_LEFT'
+SLOT_SIZE_RIGHT = 'SIZE_RIGHT'
 SLOT_TRAN = 'TRAN'
 SLOT_TYPE_MARK = 'TYPE_MARK'
 SLOT_WEIGHT = 'WEIGHT'
@@ -20,6 +29,15 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_BOD: [
         "-FabDuct_BOD_Tag",
         "_umi_BOD"
+    ],
+    SLOT_BOD_CENTER: [
+        "_umi_BOD_CENTER"
+    ],
+    SLOT_BOD_LEFT: [
+        "_umi_BOD_LEFT"
+    ],
+    SLOT_BOD_RIGHT: [
+        "_umi_BOD_RIGHT"
     ],
     SLOT_DEGREE: [
         "-FabDuct_DEGREE_MV_Tag",
@@ -44,6 +62,34 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_LENGTH: [
         "-FabDuct_LENGTH_Tag",
         "_umi_LENGTH"
+    ],
+    SLOT_LENGTH_CENTER: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH_CENTER"
+    ],
+    SLOT_LENGTH_LEFT: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH_LEFT"
+    ],
+    SLOT_LENGTH: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH"
+    ],
+    SLOT_LENGTH: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH"
+    ],
+    SLOT_LENGTH_CENTER: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH_CENTER"
+    ],
+    SLOT_LENGTH_LEFT: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH_LEFT"
+    ],
+    SLOT_LENGTH_RIGHT: [
+        "-FabDuct_LENGTH_Tag",
+        "_umi_LENGTH_RIGHT"
     ],
     SLOT_MARK: [
         "-FabDuct_MARK_Tag",

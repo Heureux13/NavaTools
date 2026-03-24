@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
@@ -110,8 +110,10 @@ for param_name in grd_label_param:
 
     output.print_md("\n### {}".format(param_name))
     for value in sorted(value_counts.keys()):
-        links = ", ".join(output.linkify(eid) for eid in value_ids.get(value, []))
-        output.print_md("- **{}**: {} | IDs: {}".format(value, value_counts[value], links))
+        links = ", ".join(output.linkify(eid)
+                          for eid in value_ids.get(value, []))
+        output.print_md("- **{}**: {} | IDs: {}".format(value,
+                        value_counts[value], links))
 
 output.print_md("\n**Total Air Terminals:** {}".format(len(air_terminals)))
 
@@ -140,4 +142,5 @@ for service_value in sorted(service_label_counts.keys()):
             output.linkify(eid)
             for eid in service_label_ids.get(service_value, {}).get(label_value, [])
         )
-        output.print_md("- **{}**: {} | IDs: {}".format(label_value, count, links))
+        output.print_md(
+            "- **{}**: {} | IDs: {}".format(label_value, count, links))

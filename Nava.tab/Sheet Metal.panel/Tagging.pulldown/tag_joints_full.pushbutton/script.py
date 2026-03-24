@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 from Autodesk.Revit.DB import Transaction, ElementTransformUtils, XYZ, Line
 from revit_duct import (
     RevitDuct,
@@ -18,7 +18,7 @@ from revit_duct import (
     DEFAULT_SHORT_THRESHOLD_IN,
 )
 from revit_xyz import RevitXYZ
-from tag_slot_config import (
+from tagging.tag_map import (
     DEFAULT_TAG_SLOT_CANDIDATES,
     STRAIGHT_JOINT_FAMILIES,
     DEFAULT_JOINT_TAG_SLOTS,
@@ -648,7 +648,8 @@ try:
         straight_wraps_by_id[elem_id].element
         for elem_id in sorted(slot_assignments.keys())
     ]
-    existing_tag_map = tagger.build_existing_tag_family_map(target_elems)
+    existing_tagging.tag_map = tagger.build_existing_tag_family_map(
+        target_elems)
 
     resolved_slot_specs = {}
     required_slots = []
@@ -701,7 +702,7 @@ try:
     for elem_id in sorted(slot_assignments.keys()):
         elem_wrap = straight_wraps_by_id[elem_id]
         elem = elem_wrap.element
-        existing_tag_fams = set(existing_tag_map.get(elem_id, set()))
+        existing_tag_fams = set(existing_tagging.tag_map.get(elem_id, set()))
         slot_names = slot_assignments.get(elem_id, [])
 
         tagged_this_element, any_tag_failed, last_error = place_tags_for_slots(
