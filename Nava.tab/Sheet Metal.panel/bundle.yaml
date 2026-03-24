@@ -5,10 +5,12 @@ layout:
   - -----
   - 3_Isolate
   - -----
+  - 3_Check
+  - -----
+  - 3_Tagging
+  - -----
   - Random
   - Selected
-  - Tagging
   - Isolate
   - Hide
-  - Check
   - Working

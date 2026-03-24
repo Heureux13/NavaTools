@@ -104,11 +104,10 @@ check_parameter = {
     'cfm': [0, "0", "0 cfm"]
 }
 
-order_paramters = {
-    1: '_grd_value',
-    2: 'mark',
-    3: 'type mark',
-}
+order_paramters = [
+    'mark',
+    'type mark',
+]
 
 value_parameters = {
     '_grd_label',
@@ -216,7 +215,7 @@ def _get_value_from_ordered_params(element, doc, param_order):
     """
     elem_type = doc.GetElement(element.GetTypeId())
 
-    for order, param_name in param_order.items():
+    for param_name in param_order:
         param_name_lower = param_name.lower().strip()
 
         # Try instance parameters with case-insensitive lookup
