@@ -1,0 +1,6 @@
+title:
+  en_us: Testing
+layout:
+  - room_tag_list
+  - skip_grd_duct
+  - scope

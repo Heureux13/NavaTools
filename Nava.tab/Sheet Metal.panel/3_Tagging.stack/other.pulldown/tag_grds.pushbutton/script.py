@@ -113,7 +113,9 @@ value_parameters = {
     '_grd_label',
 }
 
-skip_values = {
+skip_parameter_name = '_grd_label'
+
+skip_parameter_values = {
     'skip',
     'n/a',
 }
@@ -121,7 +123,7 @@ skip_values = {
 second_tag_values = {
     'second',
     '2',
-    '_umi_grd'
+    '_umi_grd',
 }
 
 
@@ -197,6 +199,18 @@ def _is_empty_parameter_value(param, empty_values):
         pass
 
     return False
+
+
+def _get_parameter_text(param):
+    if not param:
+        return ""
+    try:
+        val = param.AsString()
+        if not val:
+            val = param.AsValueString()
+        return val.strip() if val else ""
+    except Exception:
+        return ""
 
 
 def _find_first_available_tag(doc, tag_names):
@@ -302,28 +316,39 @@ for tag in existing_tags:
 t = Transaction(doc, "Tag Air Terminals")
 t.Start()
 try:
-    # Update value parameters for all air terminals before tagging
+    skip_values_normalized = {v.lower().strip() for v in skip_parameter_values}
+
+    # Update/tag air terminals
     for elem in air_terminals:
+        # Check configured skip parameter/value pair
+        skip_param = _get_param_case_insensitive(elem, skip_parameter_name)
+        skip_value = _get_parameter_text(skip_param)
+        skip_value_normalized = skip_value.lower().strip()
+
+        if skip_value_normalized in skip_values_normalized:
+            failed.append((
+                elem,
+                "Parameter '{}' has skip value '{}'".format(skip_parameter_name, skip_value)
+            ))
+            continue
+
         # Get value based on ordered parameter hierarchy
         value_to_write = _get_value_from_ordered_params(elem, doc, order_paramters)
 
-        # Write to all value parameters
+        # Write only when target value parameter is currently empty.
         for param_name in value_parameters:
             try:
-                param = elem.LookupParameter(param_name)
-                if param:
-                    param.Set(value_to_write)
+                param = _get_param_case_insensitive(elem, param_name)
+                if not param:
+                    continue
+
+                current_value = _get_parameter_text(param)
+                if current_value:
+                    continue
+
+                param.Set(value_to_write)
             except Exception:
                 pass
-
-        # Get the value that will be written
-        current_value = _get_value_from_ordered_params(elem, doc, order_paramters)
-        current_value_normalized = current_value.lower().strip()
-
-        # Check if value is in skip list
-        if current_value_normalized in {v.lower().strip() for v in skip_values}:
-            failed.append((elem, "Value '{}' is in skip list".format(current_value)))
-            continue
 
         # Check airflow/cfm parameters to determine which tag to use
         # If airflow is empty (0, "0", "0 cfm"), use second_tag; otherwise use first_tag
