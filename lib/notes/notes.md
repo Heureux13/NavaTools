@@ -23,6 +23,16 @@
 | _equi_model | text |
 | _equi_make | text |
 
+## Air Terminals
+| Parameter | Type |
+|-----------|------|
+| _hang_weight_support | number |
+
+## Hangers
+| Parameter | Type |
+|-----------|------|
+| _hang_weight_support | number |
+
 ## Hangers
 | Parameter | Type |
 |-----------|------|
