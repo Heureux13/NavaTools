@@ -12,7 +12,7 @@ the copyright holder."""
 from revit_element import RevitElement
 from revit_duct import RevitDuct
 from revit_output import print_disclaimer
-from tag_slot_config import DEFAULT_SKIP_PARAMETERS
+from tagging.tag_map import DEFAULT_SKIP_PARAMETERS
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -104,7 +104,8 @@ if fil_ducts:
 
     # Select filtered dcuts
     RevitElement.select_many(uidoc, fil_ducts)
-    output.print_md('# Selected {} straight ducts shorter than {}"'.format(len(fil_ducts), int(MAX_LENGTH_IN)))
+    output.print_md('# Selected {} straight ducts shorter than {}"'.format(
+        len(fil_ducts), int(MAX_LENGTH_IN)))
     output.print_md("---")
 
     # Individutal duct and selected properties
@@ -130,4 +131,5 @@ if fil_ducts:
     # Final print statements
     print_disclaimer(output)
 else:
-    output.print_md('## No straight ducts shorter than {}" selected'.format(int(MAX_LENGTH_IN)))
+    output.print_md(
+        '## No straight ducts shorter than {}" selected'.format(int(MAX_LENGTH_IN)))

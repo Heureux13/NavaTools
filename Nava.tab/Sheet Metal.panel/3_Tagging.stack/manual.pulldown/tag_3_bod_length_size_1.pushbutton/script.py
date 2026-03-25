@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from System.Collections.Generic import List
 from revit_output import print_disclaimer
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 from revit_element import RevitElement
 from revit_duct import RevitDuct
 from revit_xyz import RevitXYZ
@@ -56,11 +56,13 @@ tag_configs = {
 # Get selected elements
 selected_ids = uidoc.Selection.GetElementIds()
 if not selected_ids:
-    forms.alert("No elements selected. Please select elements to tag.", exitscript=True)
+    forms.alert(
+        "No elements selected. Please select elements to tag.", exitscript=True)
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
 # Build a one-pass cache of existing tags in this view to avoid repeated full scans.
-existing_tag_map = tagger.build_existing_tag_family_map(selected_elements)
+existing_tagging.tag_map = tagger.build_existing_tag_family_map(
+    selected_elements)
 
 t = Transaction(doc, "Tag Selected Elements - BOD, Length and Size")
 t.Start()
@@ -80,7 +82,8 @@ try:
                 continue
 
         if not tag_label:
-            output.print_md("**Skipped {}:** no matching tag family found from {}".format(tag_choice, ", ".join(tag_to_use)))
+            output.print_md(
+                "**Skipped {}:** no matching tag family found from {}".format(tag_choice, ", ".join(tag_to_use)))
             continue
 
         # Get tag family name for checking if already tagged
@@ -92,7 +95,8 @@ try:
             try:
                 # Check if already tagged with this tag family
                 elem_key = elem.Id.IntegerValue if elem and elem.Id else None
-                existing_fams = existing_tag_map.get(elem_key, set()) if elem_key is not None else set()
+                existing_fams = existing_tagging.tag_map.get(
+                    elem_key, set()) if elem_key is not None else set()
                 if tag_fam_name_norm and tag_fam_name_norm in existing_fams:
                     continue
 
@@ -103,13 +107,14 @@ try:
                     position=location_of_tag
                 )
                 if tag and elem_key is not None and tag_fam_name_norm:
-                    if elem_key not in existing_tag_map:
-                        existing_tag_map[elem_key] = set()
-                    existing_tag_map[elem_key].add(tag_fam_name_norm)
+                    if elem_key not in existing_tagging.tag_map:
+                        existing_tagging.tag_map[elem_key] = set()
+                    existing_tagging.tag_map[elem_key].add(tag_fam_name_norm)
 
             except Exception as e:
                 elem_id = elem.Id.IntegerValue if elem and elem.Id else "Unknown"
-                output.print_md("**Skipped {} tag on element {}:** {}".format(tag_choice, elem_id, e))
+                output.print_md(
+                    "**Skipped {} tag on element {}:** {}".format(tag_choice, elem_id, e))
 
     t.Commit()
 except Exception as e:

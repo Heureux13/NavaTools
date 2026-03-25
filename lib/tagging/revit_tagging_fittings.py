@@ -2,7 +2,7 @@
 import re
 from revit_element import RevitElement
 from revit_xyz import RevitXYZ
-from tag_slot_config import (
+from tagging.tag_map import (
     SLOT_TYPE_MARK as CFG_SLOT_TYPE_MARK,
     SLOT_SIZE as CFG_SLOT_SIZE,
     SLOT_EXT_IN as CFG_SLOT_EXT_IN,

@@ -13,7 +13,7 @@ from Autodesk.Revit.DB import Transaction
 from pyrevit import revit, forms, DB, script
 from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
 from revit_xyz import RevitXYZ
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 from revit_output import print_disclaimer
 
 # Button info

@@ -19,7 +19,7 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
-from revit_tagging import RevitTagging
+from tagging.revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
@@ -108,7 +108,8 @@ if not equipment_elements:
 
 selected_tag_symbol, selected_tag_name = _find_first_available_tag(doc, tags)
 if not selected_tag_symbol:
-    output.print_md("## No tag found from configured tags list: {}".format(", ".join(tags)))
+    output.print_md(
+        "## No tag found from configured tags list: {}".format(", ".join(tags)))
     script.exit()
 
 placed = []
@@ -123,7 +124,7 @@ existing_tags = list(
 )
 
 # Build a map of element IDs to any existing tag instances in this view
-tag_map = {}
+tagging.tag_map = {}
 
 
 def _eid_int(eid):
@@ -198,7 +199,7 @@ for tag in existing_tags:
         for tid in tagged_ids:
             tid_val = _eid_int(tid)
             if tid_val is not None:
-                tag_map.setdefault(tid_val, []).append(tag)
+                tagging.tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
@@ -219,7 +220,7 @@ try:
 
         # Skip if element already has any tag in this view
         elem_id_val = elem.Id.IntegerValue
-        existing_for_elem = tag_map.get(elem_id_val, [])
+        existing_for_elem = tagging.tag_map.get(elem_id_val, [])
         if existing_for_elem:
             already_tagged.append(elem)
             continue
