@@ -112,10 +112,10 @@ try:
                 continue
 
             # Set the aspect ratio parameter
-            aspect_param = duct.element.LookupParameter("_duct_aspect_ratio")
+            aspect_param = duct.element.LookupParameter("_aspect_ratio")
             if not aspect_param:
                 skipped.append(
-                    (duct, "_duct_aspect_ratio parameter not found"))
+                    (duct, "_aspect_ratio parameter not found"))
                 continue
 
             aspect_param.Set(aspect_ratio)

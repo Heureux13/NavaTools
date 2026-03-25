@@ -52,16 +52,16 @@ family_list = {
 }
 
 parameters = {
-    '_duct_offset_center_h': 'center_horizontal',
-    '_duct_offset_center_v': 'center_vertical',
-    '_duct_offset_top': 'top',
-    '_duct_offset_bottom': 'bottom',
-    '_duct_offset_right': 'right',
-    '_duct_offset_left': 'left',
+    '_offset_center_h': 'center_horizontal',
+    '_offset_center_v': 'center_vertical',
+    '_offset_top': 'top',
+    '_offset_bottom': 'bottom',
+    '_offset_right': 'right',
+    '_offset_left': 'left',
 }
 
 tag_paramger = {
-    '_duct_tag_offset'
+    '_offset'
 }
 
 
@@ -322,7 +322,7 @@ for element in all_fittings:
                                 pass
 
                 # Write classification to tag offset parameter
-                tag_p = element.LookupParameter('_duct_tag_offset')
+                tag_p = element.LookupParameter('_offset')
                 if tag_p and not tag_p.IsReadOnly:
                     try:
                         if tag_p.StorageType == StorageType.String:

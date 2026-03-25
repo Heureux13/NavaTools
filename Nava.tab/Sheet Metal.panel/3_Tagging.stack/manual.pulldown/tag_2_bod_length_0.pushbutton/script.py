@@ -56,8 +56,7 @@ if not selected_ids:
         "No elements selected. Please select elements to tag.", exitscript=True)
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
-existing_tagging.tag_map = tagger.build_existing_tag_family_map(
-    selected_elements)
+existing_tag_map = tagger.build_existing_tag_family_map(selected_elements)
 
 t = Transaction(doc, "Tag Selected Elements - BOD, Length and Size")
 t.Start()
@@ -88,7 +87,7 @@ try:
             try:
                 # Check if already tagged with this tag family
                 elem_key = elem.Id.IntegerValue if elem and elem.Id else None
-                existing_fams = existing_tagging.tag_map.get(
+                existing_fams = existing_tag_map.get(
                     elem_key, set()) if elem_key is not None else set()
                 if tag_fam_name_norm and tag_fam_name_norm in existing_fams:
                     continue
@@ -100,9 +99,9 @@ try:
                     position=location_of_tag
                 )
                 if tag and elem_key is not None and tag_fam_name_norm:
-                    if elem_key not in existing_tagging.tag_map:
-                        existing_tagging.tag_map[elem_key] = set()
-                    existing_tagging.tag_map[elem_key].add(tag_fam_name_norm)
+                    if elem_key not in existing_tag_map:
+                        existing_tag_map[elem_key] = set()
+                    existing_tag_map[elem_key].add(tag_fam_name_norm)
 
             except Exception as e:
                 elem_id = elem.Id.IntegerValue if elem and elem.Id else "Unknown"

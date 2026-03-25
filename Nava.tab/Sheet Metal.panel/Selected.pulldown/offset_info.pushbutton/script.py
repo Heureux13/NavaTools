@@ -26,6 +26,7 @@ Values are representative of raw vector formulas used in linear mathmatics, seei
 # ======================================================================
 
 output = script.get_output()
+PRINT_OUTPUT = False
 
 family_list = {
     'offset',
@@ -40,16 +41,16 @@ family_list = {
 }
 
 parameters = {
-    '_duct_offset_center_h': 'center_horizontal',
-    '_duct_offset_center_v': 'center_vertical',
-    '_duct_offset_top': 'top',
-    '_duct_offset_bottom': 'bottom',
-    '_duct_offset_right': 'right',
-    '_duct_offset_left': 'left',
+    '_offset_center_h': 'center_horizontal',
+    '_offset_center_v': 'center_vertical',
+    '_offset_top': 'top',
+    '_offset_bottom': 'bottom',
+    '_offset_right': 'right',
+    '_offset_left': 'left',
 }
 
 tag_parameter = {
-    '_duct_tag_offset'
+    '_offset'
 }
 
 
@@ -243,14 +244,16 @@ selection = revit.get_selection()
 doc = revit.doc
 
 if not selection:
-    output.print_md(
-        "# Please select offset fittings and try again"
-    )
+    if PRINT_OUTPUT:
+        output.print_md(
+            "# Please select offset fittings and try again"
+        )
 
 else:
-    output.print_md(
-        "# Offset Information"
-    )
+    if PRINT_OUTPUT:
+        output.print_md(
+            "# Offset Information"
+        )
 
     processed = []
     matched_count = 0
@@ -320,7 +323,7 @@ else:
                                     pass
 
                     # Write classification to tag offset parameter
-                    tag_p = element.LookupParameter('_duct_tag_offset')
+                    tag_p = element.LookupParameter('_offset')
                     if tag_p and not tag_p.IsReadOnly:
                         try:
                             if tag_p.StorageType == StorageType.String:
@@ -345,110 +348,112 @@ else:
                             pass
 
         except Exception as e:
-            output.print_md("ERROR: processing element {} : {}".format(
-                element.Id.Value,
-                str(e)
-            ))
-
-    # Print detailed results
-    for i, (elem, fam, size_str, fit, inlet_data, outlet_data) in enumerate(processed, start=1):
-        size = Size(size_str)
-        inlet = inlet_data['origin']
-        outlet = outlet_data['origin']
-        classification = convert_to_TU_TD(
-            classify_offset(fit, inlet_data, outlet_data, size))
-
-        output.print_md("# Element ID: {} | Category {}".format(
-            elem.Id.Value,
-            elem.Category.Name))
-
-        # General fitting information
-        output.print_md(
-            "### Size: {} | Inlet: {} | Outlet {}".format(
-                size.size,
-                size.in_size,
-                size.out_size,
-            ))
-        output.print_md(
-            "### Inlet: {} | Shape: {} | W:{} H:{} D:{}".format(
-                size.in_size,
-                size.in_shape(),
-                size.in_width,
-                size.in_height,
-                size.in_diameter,
-            ))
-        output.print_md(
-            "### Outlet: {} | Shape: {} | W:{} H:{} D:{}".format(
-                size.out_size,
-                size.out_shape(),
-                size.out_width,
-                size.out_height,
-                size.out_diameter,
-            ))
-
-        # Coordinate
-        output.print_md("## **Coordinates**")
-        output.print_md(
-            "### Inlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
-                inlet.X,
-                inlet.Y,
-                inlet.Z,
-            ))
-        output.print_md(
-            "### Outlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
-                outlet.X,
-                outlet.Y,
-                outlet.Z,
-            ))
-
-        # Debug: Show basis vectors
-        output.print_md("## **Basis Vectors (Debug)**")
-        if inlet_data.get('basis_z'):
-            bz = inlet_data['basis_z']
-            output.print_md(
-                "### Inlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
-        if outlet_data.get('basis_z'):
-            bz = outlet_data['basis_z']
-            output.print_md(
-                "### Outlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
-        if inlet_data.get('basis_y'):
-            by = inlet_data['basis_y']
-            output.print_md(
-                "### Inlet Up: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(by.X, by.Y, by.Z))
-        if inlet_data.get('basis_x'):
-            bx = inlet_data['basis_x']
-            output.print_md(
-                "### Inlet Right: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bx.X, bx.Y, bx.Z))
-
-        # Offset data
-        output.print_md("## Offset data")
-        order = [
-            "center_vertical",
-            "center_horizontal",
-            "top",
-            "bottom",
-            "right",
-            "left",
-        ]
-
-        for key in order:
-            if key in fit:
-                output.print_md("### {} | '{:.3f}'".format(
-                    key,
-                    fit[key],
+            if PRINT_OUTPUT:
+                output.print_md("ERROR: processing element {} : {}".format(
+                    element.Id.Value,
+                    str(e)
                 ))
 
-        # Add _duct_note parameter
-        note_param = elem.LookupParameter('_duct_note')
-        if note_param:
-            note_value = note_param.AsString()
-            output.print_md("### _duct_note | '{}'".format(note_value))
+    # Print detailed results
+    if PRINT_OUTPUT:
+        for i, (elem, fam, size_str, fit, inlet_data, outlet_data) in enumerate(processed, start=1):
+            size = Size(size_str)
+            inlet = inlet_data['origin']
+            outlet = outlet_data['origin']
+            classification = convert_to_TU_TD(
+                classify_offset(fit, inlet_data, outlet_data, size))
 
-        # Add classification
-        output.print_md("## Classification")
-        output.print_md("### {}".format(classification))
+            output.print_md("# Element ID: {} | Category {}".format(
+                elem.Id.Value,
+                elem.Category.Name))
 
-    output.print_md("---")
-    output.print_md(
-        "# Summary: {} offset fittings processed, {} parameters updated".format(
-            matched_count, len(processed)))
+            # General fitting information
+            output.print_md(
+                "### Size: {} | Inlet: {} | Outlet {}".format(
+                    size.size,
+                    size.in_size,
+                    size.out_size,
+                ))
+            output.print_md(
+                "### Inlet: {} | Shape: {} | W:{} H:{} D:{}".format(
+                    size.in_size,
+                    size.in_shape(),
+                    size.in_width,
+                    size.in_height,
+                    size.in_diameter,
+                ))
+            output.print_md(
+                "### Outlet: {} | Shape: {} | W:{} H:{} D:{}".format(
+                    size.out_size,
+                    size.out_shape(),
+                    size.out_width,
+                    size.out_height,
+                    size.out_diameter,
+                ))
+
+            # Coordinate
+            output.print_md("## **Coordinates**")
+            output.print_md(
+                "### Inlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
+                    inlet.X,
+                    inlet.Y,
+                    inlet.Z,
+                ))
+            output.print_md(
+                "### Outlet: X: {:.3f}', Y: {:.3f}', Z: {:.3f}'".format(
+                    outlet.X,
+                    outlet.Y,
+                    outlet.Z,
+                ))
+
+            # Debug: Show basis vectors
+            output.print_md("## **Basis Vectors (Debug)**")
+            if inlet_data.get('basis_z'):
+                bz = inlet_data['basis_z']
+                output.print_md(
+                    "### Inlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
+            if outlet_data.get('basis_z'):
+                bz = outlet_data['basis_z']
+                output.print_md(
+                    "### Outlet Flow: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bz.X, bz.Y, bz.Z))
+            if inlet_data.get('basis_y'):
+                by = inlet_data['basis_y']
+                output.print_md(
+                    "### Inlet Up: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(by.X, by.Y, by.Z))
+            if inlet_data.get('basis_x'):
+                bx = inlet_data['basis_x']
+                output.print_md(
+                    "### Inlet Right: X: {:.3f}, Y: {:.3f}, Z: {:.3f}".format(bx.X, bx.Y, bx.Z))
+
+            # Offset data
+            output.print_md("## Offset data")
+            order = [
+                "center_vertical",
+                "center_horizontal",
+                "top",
+                "bottom",
+                "right",
+                "left",
+            ]
+
+            for key in order:
+                if key in fit:
+                    output.print_md("### {} | '{:.3f}'".format(
+                        key,
+                        fit[key],
+                    ))
+
+            # Add _duct_note parameter
+            note_param = elem.LookupParameter('_duct_note')
+            if note_param:
+                note_value = note_param.AsString()
+                output.print_md("### _duct_note | '{}'".format(note_value))
+
+            # Add classification
+            output.print_md("## Classification")
+            output.print_md("### {}".format(classification))
+
+        output.print_md("---")
+        output.print_md(
+            "# Summary: {} offset fittings processed, {} parameters updated".format(
+                matched_count, len(processed)))

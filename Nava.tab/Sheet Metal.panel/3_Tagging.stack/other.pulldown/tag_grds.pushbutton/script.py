@@ -19,13 +19,16 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
-from tagging.revit_tagging import RevitTagging
+try:
+    from tagging.revit_tagging import RevitTagging
+except ImportError:
+    from revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
 __title__ = "Tag GRDs"
 __doc__ = """
-Tags all air terminals in the current view with the -UMI_GRD_JN label.
+Tags all air terminals in the current view
 """
 
 # Helpers
@@ -110,18 +113,14 @@ order_paramters = [
 ]
 
 value_parameters = {
-    '_grd_label',
+    '_label',
 }
 
-skip_values = {
+skip_parameter_name = '_skip'
+
+skip_parameter_values = {
     'skip',
     'n/a',
-}
-
-second_tag_values = {
-    'second',
-    '2',
-    '_umi_grd'
 }
 
 
@@ -199,6 +198,18 @@ def _is_empty_parameter_value(param, empty_values):
     return False
 
 
+def _get_parameter_text(param):
+    if not param:
+        return ""
+    try:
+        val = param.AsString()
+        if not val:
+            val = param.AsValueString()
+        return val.strip() if val else ""
+    except Exception:
+        return ""
+
+
 def _find_first_available_tag(doc, tag_names):
     """Try to find the first available tag from a list of tag names."""
     for tag_name in tag_names:
@@ -269,7 +280,7 @@ existing_tags = list(
 )
 
 # Build a map of element IDs to existing tag instances from our families
-tagging.tag_map = {}
+tag_map = {}
 all_tag_names = first_tag + second_tag
 
 for tag in existing_tags:
@@ -294,40 +305,47 @@ for tag in existing_tags:
             tagged_ids = []
 
         for tid in tagged_ids:
-            tid_val = tid.IntegerValue if hasattr(
-                tid, 'IntegerValue') else int(tid)
-            tagging.tag_map.setdefault(tid_val, []).append(tag)
+            tid_val = tid.IntegerValue if hasattr(tid, 'IntegerValue') else int(tid)
+            tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
 t = Transaction(doc, "Tag Air Terminals")
 t.Start()
 try:
-    # Update value parameters for all air terminals before tagging
-    for elem in air_terminals:
-        # Get value based on ordered parameter hierarchy
-        value_to_write = _get_value_from_ordered_params(
-            elem, doc, order_paramters)
+    skip_values_normalized = {v.lower().strip() for v in skip_parameter_values}
 
-        # Write to all value parameters
+    # Update/tag air terminals
+    for elem in air_terminals:
+        # Check configured skip parameter/value pair
+        skip_param = _get_param_case_insensitive(elem, skip_parameter_name)
+        skip_value = _get_parameter_text(skip_param)
+        skip_value_normalized = skip_value.lower().strip()
+
+        if skip_value_normalized in skip_values_normalized:
+            failed.append((
+                elem,
+                "Parameter '{}' has skip value '{}'".format(skip_parameter_name, skip_value)
+            ))
+            continue
+
+        # Get value based on ordered parameter hierarchy
+        value_to_write = _get_value_from_ordered_params(elem, doc, order_paramters)
+
+        # Write only when target value parameter is currently empty.
         for param_name in value_parameters:
             try:
-                param = elem.LookupParameter(param_name)
-                if param:
-                    param.Set(value_to_write)
+                param = _get_param_case_insensitive(elem, param_name)
+                if not param:
+                    continue
+
+                current_value = _get_parameter_text(param)
+                if current_value:
+                    continue
+
+                param.Set(value_to_write)
             except Exception:
                 pass
-
-        # Get the value that will be written
-        current_value = _get_value_from_ordered_params(
-            elem, doc, order_paramters)
-        current_value_normalized = current_value.lower().strip()
-
-        # Check if value is in skip list
-        if current_value_normalized in {v.lower().strip() for v in skip_values}:
-            failed.append(
-                (elem, "Value '{}' is in skip list".format(current_value)))
-            continue
 
         # Check airflow/cfm parameters to determine which tag to use
         # If airflow is empty (0, "0", "0 cfm"), use second_tag; otherwise use first_tag
@@ -341,13 +359,12 @@ try:
         tag_symbol, tag_name = _find_first_available_tag(doc, tag_set)
 
         if not tag_symbol:
-            failed.append((elem, "No tag found from {} set".format(
-                "second" if use_second else "first")))
+            failed.append((elem, "No tag found from {} set".format("second" if use_second else "first")))
             continue
 
         # Skip if already tagged with the correct tag; otherwise delete wrong tags
         elem_id_val = elem.Id.IntegerValue
-        existing_for_elem = tagging.tag_map.get(elem_id_val, [])
+        existing_for_elem = tag_map.get(elem_id_val, [])
         if existing_for_elem:
             has_correct = False
             for existing_tag in existing_for_elem:

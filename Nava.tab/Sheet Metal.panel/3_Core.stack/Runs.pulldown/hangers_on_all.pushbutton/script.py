@@ -31,11 +31,11 @@ view = revit.active_view
 output = script.get_output()
 
 hanger_parameters = [
-    '_hang_weight_supporting',
+    '_weight_supporting',
 ]
 
 duct_parameters = [
-    '_duct_weight_run',
+    '_weight_run',
 ]
 
 # Main Code

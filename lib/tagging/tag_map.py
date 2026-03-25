@@ -114,10 +114,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
 }
 
 DEFAULT_SKIP_PARAMETERS = {
-    '_duct_tag': ['skip', 'skip n/a'],
-    '_duct_tag_offset': ['skip', 'skip n/a'],
-    'mark': ['skip', 'skip n/a'],
-    'item number': ['skip', 'skip n/a'],
+    '_skip': ['skip'],
 }
 
 DEFAULT_PARAMETER_HIERARCHY = [
