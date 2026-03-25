@@ -21,8 +21,7 @@ Sets parameters to skip selected elements when tagging
 
 # Parameters to set to 'skip'
 parameters_to_skip = {
-    "_duct_tag_offset",
-    '_duct_tag',
+    "_skip"
 }
 
 # Code

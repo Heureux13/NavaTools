@@ -8,4 +8,5 @@ layout:
   - flex
   - tees_round
   - tees_square
+  - offsets
   - set_offset

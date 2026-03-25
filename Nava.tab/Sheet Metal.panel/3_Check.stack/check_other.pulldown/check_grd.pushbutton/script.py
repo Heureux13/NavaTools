@@ -31,7 +31,7 @@ Prints out quantity and labels of GRDs in the current view.
 # Parameters to check for GRDs
 # ==================================================
 grd_label_param = [
-    '_grd_label',
+    '_label',
 ]
 
 # Possible system abbreviation parameter names (checked in order)
@@ -118,7 +118,7 @@ for param_name in grd_label_param:
 output.print_md("\n**Total Air Terminals:** {}".format(len(air_terminals)))
 
 # Service breakdown: service -> label counts
-label_param = grd_label_param[0] if grd_label_param else '_grd_label'
+label_param = grd_label_param[0] if grd_label_param else '_label'
 service_label_counts = {}
 service_label_ids = {}
 for elem in air_terminals:

@@ -32,13 +32,13 @@ output = script.get_output()
 
 # Ordered preference: custom param first, then Revit built-in Mark, then lowercase fallback
 hanger_parameters = [
-    '_hang_weight_supporting',
+    '_weight_supporting',
     'Mark',
     'mark',
 ]
 
 duct_parameters = [
-    '_duct_weight_run',
+    '_weight_run',
     'Mark',
     'mark',
 ]

@@ -25,7 +25,7 @@ from Autodesk.Revit.DB import (
 __title__ = "Number GRDs"
 __doc__ = """
 Numbers all air terminals in the current view by level and scope box.
-Writes numbers to the _grd_# parameter in format like 2A001.
+Writes numbers to the _# parameter in format like 2A001.
 """
 
 # Helpers
@@ -265,7 +265,7 @@ output = script.get_output()
 
 # Numbering configuration
 # ==================================================
-number_parameter = '_grd_#'
+number_parameter = '_#'
 number_padding = 4
 # Manual scope override (leave empty to read from view scope box)
 # Set this if your view doesn't have a scope box assigned

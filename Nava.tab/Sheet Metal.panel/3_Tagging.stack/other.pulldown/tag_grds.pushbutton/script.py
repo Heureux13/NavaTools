@@ -19,13 +19,16 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
-from revit_tagging import RevitTagging
+try:
+    from tagging.revit_tagging import RevitTagging
+except ImportError:
+    from revit_tagging import RevitTagging
 
 # Button display information
 # =================================================
 __title__ = "Tag GRDs"
 __doc__ = """
-Tags all air terminals in the current view with the -UMI_GRD_JN label.
+Tags all air terminals in the current view
 """
 
 # Helpers
@@ -110,20 +113,14 @@ order_paramters = [
 ]
 
 value_parameters = {
-    '_grd_label',
+    '_label',
 }
 
-skip_parameter_name = '_grd_label'
+skip_parameter_name = '_skip'
 
 skip_parameter_values = {
     'skip',
     'n/a',
-}
-
-second_tag_values = {
-    'second',
-    '2',
-    '_umi_grd',
 }
 
 

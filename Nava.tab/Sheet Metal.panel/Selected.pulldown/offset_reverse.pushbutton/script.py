@@ -72,8 +72,8 @@ else:
     with revit.Transaction("Reverse Offset"):
         for element in selection:
             try:
-                # Get the _duct_tag_offset parameter
-                tag_p = element.LookupParameter('_duct_tag_offset')
+                # Get the _offset parameter
+                tag_p = element.LookupParameter('_offset')
 
                 if tag_p and not tag_p.IsReadOnly:
                     if tag_p.StorageType == StorageType.String:
