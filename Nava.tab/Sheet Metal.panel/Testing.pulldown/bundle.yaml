@@ -4,3 +4,5 @@ layout:
   - room_tag_list
   - skip_grd_duct
   - scope
+  - create_sheet
+  - schedule
