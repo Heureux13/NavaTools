@@ -23,7 +23,7 @@ from revit_duct import RevitDuct
 
 # Button display information
 # =================================================
-__title__ = "Tag Item Number All"
+__title__ = "Tag Item Number"
 __doc__ = """
 Tags Item Number
 """
@@ -62,8 +62,15 @@ doc = revit.doc
 view = revit.active_view
 output = script.get_output()
 
-families_to_tag = {
-    "straight",
+tagger = RevitTagging(doc, view)
+
+tag_names = [
+    "-FabDuct_Item Number_Tag",
+    "_umi_duct_ITEM_NUMBER",
+]
+
+number_families = {
+    "straigth",
     "transition",
     "elbow - 90 degree",
     "elbow",
@@ -77,12 +84,29 @@ families_to_tag = {
     'conical tee',
 }
 
-tagger = RevitTagging(doc, view)
-
-tag_names = [
-    "-FabDuct_Item Number_Tag",
-    "_umi_duct_ITEM_NUMBER",
-]
+do_not_tag_families = {
+    "spiral duct",
+    "duct spiral",
+    "flex duct",
+    "duct flexible",
+    "boot tap wdamper",
+    "gored elbow",
+    "boot saddle tap",
+    "coupling",
+    "boot tap - wdamper",
+    "rect volume damper",
+    "access panel",
+    "access door",
+    "manbars",
+    "canvas",
+    "fire damper - type a",
+    "fire damper - type b",
+    "fire damper - type c",
+    "fire damper - type cr",
+    "smoke fire damper - type cr",
+    "smoke fire damper - type csr",
+    "8inch long coupler wdamper",
+}
 
 values_to_skip = {
     "0",
@@ -120,7 +144,6 @@ if not fab_ducts:
 placed = []
 failed = []
 already_tagged = []
-removed = []
 
 fam_name = (
     tag_symbol.Family.Name if tag_symbol and tag_symbol.Family else "").strip()
@@ -132,22 +155,22 @@ existing_tags = list(
     .ToElements()
 )
 
-# Build a map of element ID -> list of tag IDs using our tag family
+# Build a set of element IDs that are already tagged with our tag family
 already_tagged_ids = set()
-elem_to_tag_ids = {}
 fam_name_lower = fam_name.strip().lower()
 
 for tag in existing_tags:
     try:
+        # Check if this tag is using our family
         tag_type_id = tag.GetTypeId()
         tag_type = doc.GetElement(tag_type_id)
         if tag_type and hasattr(tag_type, 'Family'):
             tag_fam_name = (tag_type.Family.Name or "").strip().lower()
             if tag_fam_name == fam_name_lower:
+                # This tag uses our family, get what it's tagging
                 tagged_ids = tag.GetTaggedLocalElementIds()
                 for tid in tagged_ids:
                     already_tagged_ids.add(tid)
-                    elem_to_tag_ids.setdefault(tid, []).append(tag.Id)
     except BaseException:
         pass
 
@@ -156,40 +179,39 @@ t.Start()
 try:
     # Tag fabrication ducts (exclude certain families)
     for elem in fab_ducts:
-        # Only tag elements whose family is in families_to_tag
         try:
+            # Get family name
             fam_param = elem.LookupParameter("Family")
             if not fam_param:
                 continue
-            fam_value = (fam_param.AsValueString() or "").strip().lower()
-            if not any(f in fam_value for f in families_to_tag):
+
+            fam_value = fam_param.AsValueString()
+            if not fam_value:
+                continue
+
+            fam_lower = fam_value.strip().lower()
+
+            # Skip families in the do_not_tag list
+            if any(skip_fam in fam_lower for skip_fam in do_not_tag_families):
                 continue
         except Exception:
             continue
 
-        # Skip elements with empty or disallowed item number values
+        # Skip elements with disallowed item number values
         try:
             item_param = elem.LookupParameter("Item Number")
-            if not item_param:
-                continue
-            item_value = item_param.AsString()
-            if item_value is None:
-                item_value = item_param.AsValueString()
-            if item_value is None:
-                if item_param.StorageType == StorageType.Integer:
-                    item_value = str(item_param.AsInteger())
-                elif item_param.StorageType == StorageType.Double:
-                    item_value = str(item_param.AsDouble())
-            item_value = (item_value or "").strip().lower()
-            if not item_value or item_value in values_to_skip:
-                # Remove any existing tags for this element
-                for tag_id in elem_to_tag_ids.get(elem.Id, []):
-                    try:
-                        doc.Delete(tag_id)
-                        removed.append(elem)
-                    except Exception:
-                        pass
-                continue
+            if item_param:
+                item_value = item_param.AsString()
+                if item_value is None:
+                    item_value = item_param.AsValueString()
+                if item_value is None:
+                    if item_param.StorageType == StorageType.Integer:
+                        item_value = str(item_param.AsInteger())
+                    elif item_param.StorageType == StorageType.Double:
+                        item_value = str(item_param.AsDouble())
+                item_value = (item_value or "").strip().lower()
+                if item_value in values_to_skip:
+                    continue
         except Exception:
             pass
 
@@ -251,10 +273,9 @@ except Exception as e:
 # Reporting
 # ==================================================
 output.print_md(
-    "## Summary: placed {}, already tagged {}, removed {}, failed {}".format(
+    "## Summary: placed {}, already tagged {}, failed {}".format(
         len(placed),
         len(already_tagged),
-        len(removed),
         len(failed),
     )
 )
