@@ -53,6 +53,81 @@ def _find_tag_symbol(doc, target_name):
     return None
 
 
+def _eid_int(eid):
+    """Normalize ElementId and LinkElementId-like objects to an integer value."""
+    if eid is None:
+        return None
+
+    host_id = getattr(eid, "HostElementId", None)
+    if host_id is not None:
+        eid = host_id
+
+    for attr in ("Value", "IntegerValue"):
+        try:
+            value = getattr(eid, attr)
+            if value is not None:
+                return int(value)
+        except Exception:
+            pass
+
+    try:
+        return int(eid)
+    except Exception:
+        return None
+
+
+def _collect_tagged_local_ids(tag):
+    """Return tagged element ids for an IndependentTag across Revit versions."""
+    ids = []
+
+    try:
+        for tid in tag.GetTaggedLocalElementIds() or []:
+            ids.append(tid)
+    except Exception:
+        pass
+
+    try:
+        tid = tag.TaggedLocalElementId
+        if tid is not None:
+            ids.append(tid)
+    except Exception:
+        pass
+
+    try:
+        for tid in tag.GetTaggedElementIds() or []:
+            ids.append(tid)
+    except Exception:
+        pass
+
+    try:
+        tid = tag.TaggedElementId
+        if tid is not None:
+            ids.append(tid)
+    except Exception:
+        pass
+
+    unique_ids = []
+    seen = set()
+    for tid in ids:
+        tid_int = _eid_int(tid)
+        if tid_int is None or tid_int in seen:
+            continue
+        seen.add(tid_int)
+        unique_ids.append(tid)
+    return unique_ids
+
+
+def _get_tag_family_name(doc, tag):
+    """Return the lowercase family name for a tag instance."""
+    try:
+        tag_type = doc.GetElement(tag.GetTypeId())
+        if tag_type and hasattr(tag_type, "Family") and tag_type.Family:
+            return (tag_type.Family.Name or "").strip().lower()
+    except Exception:
+        pass
+    return ""
+
+
 # Code
 # ==================================================
 uidoc = __revit__.ActiveUIDocument
@@ -64,6 +139,7 @@ output = script.get_output()
 
 families_to_tag = {
     "straight",
+    "canvas",
     "boot tap",
     "transition",
     "elbow - 90 degree",
@@ -95,11 +171,16 @@ values_to_skip_norm = {v.strip().lower() for v in values_to_skip if v}
 
 tag_symbol = None
 target_tag_name = None
+candidate_tag_family_names = set()
 for candidate in tag_names:
-    tag_symbol = _find_tag_symbol(doc, candidate)
-    if tag_symbol:
+    matched_symbol = _find_tag_symbol(doc, candidate)
+    if matched_symbol and matched_symbol.Family:
+        candidate_tag_family_names.add(
+            (matched_symbol.Family.Name or "").strip().lower()
+        )
+    if matched_symbol and not tag_symbol:
+        tag_symbol = matched_symbol
         target_tag_name = candidate
-        break
 
 if not tag_symbol:
     output.print_md(
@@ -138,20 +219,24 @@ existing_tags = list(
 
 # Build a map of element ID -> list of tag IDs using our tag family
 already_tagged_ids = set()
-elem_to_tag_ids = {}
+elem_to_tags = {}
 fam_name_lower = fam_name.strip().lower()
 
 for tag in existing_tags:
     try:
-        tag_type_id = tag.GetTypeId()
-        tag_type = doc.GetElement(tag_type_id)
-        if tag_type and hasattr(tag_type, 'Family'):
-            tag_fam_name = (tag_type.Family.Name or "").strip().lower()
+        tag_fam_name = _get_tag_family_name(doc, tag)
+        if tag_fam_name not in candidate_tag_family_names:
+            continue
+
+        tagged_ids = _collect_tagged_local_ids(tag)
+        for tid in tagged_ids:
+            tid_int = _eid_int(tid)
+            if tid_int is None:
+                continue
+
             if tag_fam_name == fam_name_lower:
-                tagged_ids = tag.GetTaggedLocalElementIds()
-                for tid in tagged_ids:
-                    already_tagged_ids.add(tid)
-                    elem_to_tag_ids.setdefault(tid, []).append(tag.Id)
+                already_tagged_ids.add(tid_int)
+            elem_to_tags.setdefault(tid_int, []).append(tag)
     except BaseException:
         pass
 
@@ -187,9 +272,9 @@ try:
             item_value = (item_value or "").strip().lower()
             if not item_value or item_value in values_to_skip_norm:
                 # Remove any existing tags for this element
-                for tag_id in elem_to_tag_ids.get(elem.Id, []):
+                for existing_tag in elem_to_tags.get(elem.Id.IntegerValue, []):
                     try:
-                        doc.Delete(tag_id)
+                        doc.Delete(existing_tag.Id)
                         removed.append(elem)
                     except Exception:
                         pass
@@ -197,8 +282,22 @@ try:
         except Exception:
             pass
 
-        # Check if already tagged with our tag family
-        if elem.Id in already_tagged_ids:
+        existing_for_elem = list(elem_to_tags.get(elem.Id.IntegerValue, []))
+        kept_existing_tag = None
+        for existing_tag in existing_for_elem:
+            tag_family_name = _get_tag_family_name(doc, existing_tag)
+            if tag_family_name == fam_name_lower and kept_existing_tag is None:
+                kept_existing_tag = existing_tag
+                continue
+
+            try:
+                doc.Delete(existing_tag.Id)
+                removed.append(elem)
+            except Exception:
+                pass
+
+        # Check if already tagged with our tag family after pruning duplicates/conflicts
+        if kept_existing_tag is not None or elem.Id.IntegerValue in already_tagged_ids:
             already_tagged.append(elem)
             continue
 
