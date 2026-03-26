@@ -7,11 +7,8 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-import clr
-
-clr.AddReference("System.Windows.Forms")
-
-from System.Windows.Forms import Button, DialogResult, Form, Label, TextBox, TreeNode, TreeView
+from pyrevit import revit, script
+from Autodesk.Revit.UI import TaskDialog
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     BuiltInParameter,
@@ -19,8 +16,10 @@ from Autodesk.Revit.DB import (
     View,
     ViewDuplicateOption,
 )
-from Autodesk.Revit.UI import TaskDialog
-from pyrevit import revit, script
+from System.Windows.Forms import Button, DialogResult, Form, Label, TextBox, TreeNode, TreeView
+import clr
+
+clr.AddReference("System.Windows.Forms")
 
 
 # Button info
