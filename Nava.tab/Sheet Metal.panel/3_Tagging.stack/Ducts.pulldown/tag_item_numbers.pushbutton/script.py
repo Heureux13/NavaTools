@@ -64,6 +64,7 @@ output = script.get_output()
 
 families_to_tag = {
     "straight",
+    "boot tap",
     "transition",
     "elbow - 90 degree",
     "elbow",
