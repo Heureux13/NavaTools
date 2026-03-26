@@ -89,6 +89,9 @@ values_to_skip = {
     "skip",
 }
 
+families_to_tag_norm = {v.strip().lower() for v in families_to_tag if v}
+values_to_skip_norm = {v.strip().lower() for v in values_to_skip if v}
+
 tag_symbol = None
 target_tag_name = None
 for candidate in tag_names:
@@ -162,7 +165,7 @@ try:
             if not fam_param:
                 continue
             fam_value = (fam_param.AsValueString() or "").strip().lower()
-            if not any(f in fam_value for f in families_to_tag):
+            if not any(f in fam_value for f in families_to_tag_norm):
                 continue
         except Exception:
             continue
@@ -181,7 +184,7 @@ try:
                 elif item_param.StorageType == StorageType.Double:
                     item_value = str(item_param.AsDouble())
             item_value = (item_value or "").strip().lower()
-            if not item_value or item_value in values_to_skip:
+            if not item_value or item_value in values_to_skip_norm:
                 # Remove any existing tags for this element
                 for tag_id in elem_to_tag_ids.get(elem.Id, []):
                     try:
