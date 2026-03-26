@@ -7,27 +7,20 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-import System
+import clr
+
+clr.AddReference("System.Windows.Forms")
+
+from System.Windows.Forms import Button, DialogResult, Form, Label, TextBox, TreeNode, TreeView
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     BuiltInParameter,
-    ElementId,
     FilteredElementCollector,
     View,
     ViewDuplicateOption,
 )
 from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
-import clr
-clr.AddReference("System.Windows.Forms")
-
-Button = System.Windows.Forms.Button
-DialogResult = System.Windows.Forms.DialogResult
-Form = System.Windows.Forms.Form
-Label = System.Windows.Forms.Label
-TextBox = System.Windows.Forms.TextBox
-TreeNode = System.Windows.Forms.TreeNode
-TreeView = System.Windows.Forms.TreeView
 
 
 # Button info
@@ -37,11 +30,19 @@ __doc__ = '''
 Create views from selected scope boxes
 '''
 
+
 # Variables
 # ======================================================================
 doc = revit.doc
 source_view = revit.active_view
 output = script.get_output()
+
+
+def get_element_id_value(element_id):
+    try:
+        return element_id.Value
+    except Exception:
+        return element_id.IntegerValue
 
 
 class ScopeBoxPickerForm(Form):
@@ -51,7 +52,8 @@ class ScopeBoxPickerForm(Form):
         self.Width = 560
         self.Height = 670
 
-        self.scope_boxes = sorted(scope_boxes, key=lambda sb: sb.Name.lower())
+        self.scope_boxes = sorted(
+            scope_boxes, key=lambda scope_box: scope_box.Name.lower())
         self.checked_scope_ids = set()
 
         label = Label()
@@ -115,15 +117,17 @@ class ScopeBoxPickerForm(Form):
 
     def _build_tree(self, filter_text=None):
         self.tree_view.Nodes.Clear()
-        check_ids = self.checked_scope_ids
+        checked_ids = self.checked_scope_ids
 
         for scope_box in self.scope_boxes:
             name = scope_box.Name
             if filter_text and filter_text not in name.lower():
                 continue
+
+            scope_id_value = get_element_id_value(scope_box.Id)
             node = TreeNode(name)
-            node.Tag = scope_box.Id.IntegerValue
-            node.Checked = scope_box.Id.IntegerValue in check_ids
+            node.Tag = scope_id_value
+            node.Checked = scope_id_value in checked_ids
             self.tree_view.Nodes.Add(node)
 
     def _on_filter_changed(self, sender, args):
@@ -134,6 +138,7 @@ class ScopeBoxPickerForm(Form):
         scope_id = args.Node.Tag
         if scope_id is None:
             return
+
         if args.Node.Checked:
             self.checked_scope_ids.add(scope_id)
         else:
@@ -141,7 +146,7 @@ class ScopeBoxPickerForm(Form):
 
     def _on_select_all(self, sender, args):
         for scope_box in self.scope_boxes:
-            self.checked_scope_ids.add(scope_box.Id.IntegerValue)
+            self.checked_scope_ids.add(get_element_id_value(scope_box.Id))
         self._build_tree((self.search_box.Text or "").strip().lower() or None)
 
     def _on_clear(self, sender, args):
@@ -164,13 +169,13 @@ def get_unique_view_name(base_name, existing_names):
         existing_names.add(base_name)
         return base_name
 
-    idx = 2
+    index = 2
     while True:
-        candidate = "{} ({})".format(base_name, idx)
+        candidate = "{} ({})".format(base_name, index)
         if candidate not in existing_names:
             existing_names.add(candidate)
             return candidate
-        idx += 1
+        index += 1
 
 
 def collect_scope_boxes(document):
@@ -194,7 +199,8 @@ if not source_view:
     script.exit()
 
 if not isinstance(source_view, View) or source_view.IsTemplate:
-    TaskDialog.Show("Create Views", "Active view is not a valid non-template view.")
+    TaskDialog.Show(
+        "Create Views", "Active view is not a valid non-template view.")
     script.exit()
 
 if not can_duplicate_as_dependent(source_view):
@@ -220,13 +226,13 @@ if not selected_id_values:
     script.exit()
 
 selected_scope_boxes = [
-    scope_box for scope_box in sorted(all_scope_boxes, key=lambda sb: sb.Name.lower())
-    if scope_box.Id.IntegerValue in selected_id_values
+    scope_box for scope_box in sorted(all_scope_boxes, key=lambda scope_box: scope_box.Name.lower())
+    if get_element_id_value(scope_box.Id) in selected_id_values
 ]
 
 existing_names = {
-    v.Name for v in FilteredElementCollector(doc).OfClass(View).ToElements()
-    if getattr(v, "Name", None)
+    view.Name for view in FilteredElementCollector(doc).OfClass(View).ToElements()
+    if getattr(view, "Name", None)
 }
 
 created = []
@@ -237,13 +243,15 @@ with revit.Transaction("Create Scope Box Views"):
         try:
             dup_view = duplicate_view_as_dependent(source_view)
 
-            scope_param = dup_view.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)
+            scope_param = dup_view.get_Parameter(
+                BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)
             if not scope_param or scope_param.IsReadOnly:
                 doc.Delete(dup_view.Id)
-                failed.append("{} (cannot set scope box)".format(scope_box.Name))
+                failed.append(
+                    "{} (cannot set scope box)".format(scope_box.Name))
                 continue
 
-            scope_param.Set(ElementId(scope_box.Id.IntegerValue))
+            scope_param.Set(scope_box.Id)
 
             proposed_name = "{} - {}".format(source_view.Name, scope_box.Name)
             unique_name = get_unique_view_name(proposed_name, existing_names)
@@ -255,13 +263,14 @@ with revit.Transaction("Create Scope Box Views"):
 if created:
     output.print_md("# Created {} view(s)".format(len(created)))
     for new_view, scope_name in created:
-        output.print_md("- {} -> {}".format(scope_name, output.linkify(new_view.Id)))
+        output.print_md("- {} -> {}".format(scope_name,
+                        output.linkify(new_view.Id)))
 
 if failed:
     output.print_md("---")
     output.print_md("## Could not create {} view(s)".format(len(failed)))
-    for msg in failed:
-        output.print_md("- {}".format(msg))
+    for message in failed:
+        output.print_md("- {}".format(message))
 
 TaskDialog.Show(
     "Create Views",
