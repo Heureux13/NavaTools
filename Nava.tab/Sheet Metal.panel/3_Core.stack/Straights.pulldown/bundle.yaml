@@ -5,6 +5,7 @@ layout:
  - long
  - short
  - short_horizontal
+ - sleeve_duct
  - odd
  - unconnected
  - undersize

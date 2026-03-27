@@ -14,7 +14,7 @@ from revit_output import print_disclaimer
 from tagging.revit_tagging import RevitTagging
 from revit_element import RevitElement
 from revit_duct import RevitDuct
-from tagging.tagging.revit_tagging_fittings import Fittings
+from tagging.revit_tagging_fittings import Fittings
 from pyrevit import DB, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 

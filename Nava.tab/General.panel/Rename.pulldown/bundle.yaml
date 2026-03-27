@@ -3,4 +3,5 @@ title:
 layout:
   - rename_families
   - rename_sheets
+  - rename_sheet_number
   - rename_views
