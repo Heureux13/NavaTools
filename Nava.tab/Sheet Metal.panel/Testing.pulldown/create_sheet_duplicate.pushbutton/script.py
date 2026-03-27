@@ -8,6 +8,7 @@ the copyright holder."""
 # ======================================================================
 
 from pyrevit import forms, revit, script
+import re
 from System.Collections.Generic import List
 from Autodesk.Revit.DB import (
     BuiltInCategory,
@@ -113,20 +114,30 @@ def get_sheet_titleblock_instance(document, sheet):
     return tbs[0]
 
 
-def copy_titleblock_instance_parameters(source_tb, target_tb):
-    if source_tb is None or target_tb is None:
+def copy_writable_parameters(source_element, target_element, skip_param_names=None):
+    if source_element is None or target_element is None:
         return
 
-    source_params = list(source_tb.Parameters)
-    for src_param in source_params:
+    skip_names = set()
+    if skip_param_names:
+        for name in skip_param_names:
+            try:
+                skip_names.add((name or '').strip().lower())
+            except Exception:
+                pass
+
+    for src_param in list(source_element.Parameters):
         try:
             if src_param is None or not src_param.HasValue:
                 continue
             definition = src_param.Definition
             if definition is None:
                 continue
+            dname = (definition.Name or '').strip().lower()
+            if dname in skip_names:
+                continue
 
-            dst_param = target_tb.LookupParameter(definition.Name)
+            dst_param = target_element.LookupParameter(definition.Name)
             if dst_param is None or dst_param.IsReadOnly:
                 continue
             if dst_param.StorageType != src_param.StorageType:
@@ -143,6 +154,10 @@ def copy_titleblock_instance_parameters(source_tb, target_tb):
                 dst_param.Set(src_param.AsElementId())
         except Exception:
             continue
+
+
+def copy_titleblock_instance_parameters(source_tb, target_tb):
+    copy_writable_parameters(source_tb, target_tb)
 
 
 def collect_selected_views(document, active_uidoc):
@@ -328,6 +343,112 @@ def get_scope_box_suffix(document, view):
         return suffix
     except Exception:
         return None
+
+
+def _set_param_value(element, param_name, value):
+    if element is None:
+        return False
+    try:
+        param = element.LookupParameter(param_name)
+        if param is None or param.IsReadOnly:
+            return False
+
+        if param.StorageType == StorageType.String:
+            param.Set(str(value))
+            return True
+
+        if param.StorageType == StorageType.Integer:
+            if isinstance(value, bool):
+                param.Set(1 if value else 0)
+                return True
+            if isinstance(value, int):
+                param.Set(value)
+                return True
+            return False
+
+        if param.StorageType == StorageType.Double and isinstance(value, (int, float)):
+            param.Set(float(value))
+            return True
+
+        return False
+    except Exception:
+        return False
+
+
+def _set_matching_area_flag(element, area_code):
+    if element is None:
+        return
+
+    normalized_target = area_code.upper().replace('-', '')
+    area_flag_names = []
+
+    for param in list(element.Parameters):
+        try:
+            if param is None or param.Definition is None:
+                continue
+            pname = param.Definition.Name or ''
+            if not pname.startswith('Area '):
+                continue
+            if pname in ('Area', 'Area #'):
+                continue
+
+            candidate_suffix = pname[5:].strip().upper().replace('-', '')
+            if not candidate_suffix:
+                continue
+
+            area_flag_names.append((pname, candidate_suffix))
+        except Exception:
+            continue
+
+    # Reset all area flags first so only one area stays checked.
+    for pname, _ in area_flag_names:
+        _set_param_value(element, pname, False)
+
+    # Primary match: exact area code (e.g. Area C)
+    for pname, candidate_suffix in area_flag_names:
+        if candidate_suffix == normalized_target:
+            _set_param_value(element, pname, True)
+            return
+
+    # Fallback: first flag starting with area code (e.g. Area C1)
+    for pname, candidate_suffix in area_flag_names:
+        if candidate_suffix.startswith(normalized_target):
+            _set_param_value(element, pname, True)
+            return
+
+
+def split_scope_suffix(scope_suffix):
+    cleaned = ''.join(ch for ch in (scope_suffix or '').upper() if ch.isalnum())
+    area_code = ''.join(ch for ch in cleaned if ch.isalpha())
+    area_number = ''.join(ch for ch in cleaned if ch.isdigit())
+
+    if not area_code:
+        area_code = cleaned
+
+    return area_code, area_number
+
+
+def split_area_from_sheet_name(sheet_name):
+    # Expected suffix format: "... Area C2" or "... Area C 2"
+    raw = (sheet_name or '').upper().strip()
+    match = re.search(r'AREA\s+([A-Z]+)\s*([0-9]+)\s*$', raw)
+    if not match:
+        return None, None
+    return match.group(1), match.group(2)
+
+
+def apply_area_parameters(sheet, titleblock_instance, scope_suffix, source_sheet_name):
+    area_code, area_number = split_area_from_sheet_name(source_sheet_name)
+    if not area_code:
+        area_code, area_number = split_scope_suffix(scope_suffix)
+
+    for element in (sheet, titleblock_instance):
+        _set_param_value(element, 'Area', area_code)
+        _set_param_value(element, 'Area #', area_number)
+        _set_param_value(element, 'Ref Sheet', '0')
+        _set_param_value(element, 'Ref Sheet Trade', 'M')
+        _set_param_value(element, 'Trade', 'MD')
+        _set_matching_area_flag(element, area_code)
 
 
 def build_reference_viewport_index(document, sheets):
@@ -556,15 +677,28 @@ with revit.Transaction('Create Sheets'):
             source_titleblock_symbol_id = get_sheet_titleblock_symbol_id(doc, source_sheet)
             sheet = ViewSheet.Create(doc, source_titleblock_symbol_id)
 
-            sheet.SheetNumber = get_unique_scope_sheet_number(
+            target_sheet_number = get_unique_scope_sheet_number(
                 sheet_prefix, scope_suffix, existing_sheet_numbers)
-            sheet.Name = target_view.Name
+            if not target_sheet_number:
+                target_sheet_number = get_unique_scope_sheet_number(
+                    sheet_prefix, source_sheet.SheetNumber, existing_sheet_numbers)
+            sheet.SheetNumber = target_sheet_number
+            sheet.Name = source_sheet.Name
+
+            copy_writable_parameters(
+                source_sheet,
+                sheet,
+                skip_param_names=['Sheet Number', 'Sheet Name']
+            )
 
             source_tb = get_sheet_titleblock_instance(doc, source_sheet)
             target_tb = get_sheet_titleblock_instance(doc, sheet)
             copy_titleblock_instance_parameters(source_tb, target_tb)
 
             copy_reference_sheet_content(doc, source_sheet, sheet)
+
+            # Ensure prefix-based numbering always wins after any copy operations.
+            sheet.SheetNumber = target_sheet_number
 
             set_view_template_if_requested(target_view, target_view_template_id)
 
