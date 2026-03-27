@@ -20,6 +20,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
+from tagging.tag_map import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK
 
 # Button display information
 # =================================================
@@ -30,8 +31,13 @@ Tags all mechanical equipment in the current view.
 
 # Helpers
 # ==================================================
-tags = [
-    "-FabDuct_MARK_Tag",
+tags = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK]
+
+
+# Tag categories compatible with OST_MechanicalEquipment
+_EQUIPMENT_TAG_CATEGORIES = [
+    BuiltInCategory.OST_MechanicalEquipmentTags,
+    BuiltInCategory.OST_MultiCategoryTags,
 ]
 
 
@@ -40,11 +46,7 @@ def _find_tag_symbol(doc, target_name):
     if not target_name:
         return None
     needle = target_name.strip().lower()
-    categories = [
-        BuiltInCategory.OST_MechanicalEquipmentTags,
-        BuiltInCategory.OST_MultiCategoryTags,
-        BuiltInCategory.OST_FabricationDuctworkTags,
-    ]
+    categories = _EQUIPMENT_TAG_CATEGORIES
 
     symbols = []
     for bic in categories:
@@ -87,11 +89,24 @@ tagger = RevitTagging(doc, view)
 
 
 def _find_first_available_tag(doc, tag_names):
-    """Try to find the first available tag from a list of tag names."""
+    """Try to find the first available tag from a list of tag names.
+    Falls back to any loaded equipment or multi-category tag."""
     for tag_name in tag_names:
         tag_sym = _find_tag_symbol(doc, tag_name)
         if tag_sym:
             return tag_sym, tag_name
+    # Fallback: use any available equipment-compatible tag
+    for bic in _EQUIPMENT_TAG_CATEGORIES:
+        syms = list(
+            FilteredElementCollector(doc)
+            .OfCategory(bic)
+            .OfClass(FamilySymbol)
+            .ToElements()
+        )
+        if syms:
+            fam = getattr(syms[0], "Family", None)
+            fallback_name = fam.Name if fam else getattr(syms[0], "Name", "")
+            return syms[0], fallback_name
     return None, None
 
 
@@ -123,8 +138,8 @@ existing_tags = list(
     .ToElements()
 )
 
-# Build a map of element IDs to any existing tag instances in this view
-tagging.tag_map = {}
+# Build a map of element IDs to any existing MARK tag instances in this view
+existing_tag_map = {}
 
 
 def _eid_int(eid):
@@ -194,12 +209,20 @@ def _collect_tagged_local_ids(tag):
 
 for tag in existing_tags:
     try:
+        # Only count tags whose type matches the selected MARK symbol
+        try:
+            tag_type_id = tag.GetTypeId()
+        except Exception:
+            tag_type_id = None
+        if tag_type_id is None or tag_type_id != selected_tag_symbol.Id:
+            continue
+
         tagged_ids = _collect_tagged_local_ids(tag)
 
         for tid in tagged_ids:
             tid_val = _eid_int(tid)
             if tid_val is not None:
-                tagging.tag_map.setdefault(tid_val, []).append(tag)
+                existing_tag_map.setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
@@ -218,9 +241,9 @@ try:
         tag_symbol = selected_tag_symbol
         tag_name = selected_tag_name
 
-        # Skip if element already has any tag in this view
+        # Skip if element already has a MARK tag in this view
         elem_id_val = elem.Id.IntegerValue
-        existing_for_elem = tagging.tag_map.get(elem_id_val, [])
+        existing_for_elem = existing_tag_map.get(elem_id_val, [])
         if existing_for_elem:
             already_tagged.append(elem)
             continue
