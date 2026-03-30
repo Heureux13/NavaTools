@@ -52,7 +52,7 @@ class Fittings:
 
     parameter_hierarchy_to_check = list(DEFAULT_PARAMETER_HIERARCHY)
 
-    elbow_throat_allowances = {'tdf': 6, 's&d': 4}
+    elbow_throat_allowances = {'tdf': 6, 's&d': 6}
 
     elbow_extension_tags = {
         '-FabDuct_EXT IN_MV_Tag',
@@ -163,35 +163,35 @@ class Fittings:
         """Return normalized family-name -> [(tag, position)] map."""
         s = self
         family_cfg = {
-            "8inch long coupler wdamper":     s._tag_cfg(s.SLOT_TYPE_MARK),
-            "conical tap - wdamper":          s._tag_cfg(s.SLOT_TYPE_MARK),
+            "8inch long coupler wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "conical tap - wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
             # tag choice resolved at runtime
-            "rect volume damper":             s._tag_cfg(s.SLOT_TYPE_MARK),
-            "boot tap - wdamper":             s._tag_cfg(s.SLOT_TYPE_MARK),
-            "access panel":                   s._tag_cfg(s.SLOT_TYPE_MARK),
-            "cap":                            s._tag_cfg(s.SLOT_TYPE_MARK),
-            "canvas":                         s._tag_cfg(s.SLOT_TYPE_MARK),
-            "end cap":                        s._tag_cfg(s.SLOT_TYPE_MARK),
-            "tdf end cap":                    s._tag_cfg(s.SLOT_TYPE_MARK),
-            "drop cheek":                     s._tag_cfg(s.SLOT_SIZE),
-            "radius bend":                    s._tag_cfg(s.SLOT_SIZE),
-            "square bend":                    s._tag_cfg(s.SLOT_SIZE),
-            "tap":                            s._tag_cfg(s.SLOT_SIZE),
-            "elbow":                          s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
-            "elbow 90 degree":                s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
-            "gored elbow":                    s._tag_cfg(s.SLOT_DEGREE),
-            "radius elbow":                   s._tag_cfg(s.SLOT_DEGREE),
-            "tee":                            s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
-            "mitred offset":                  s._tag_cfg(s.SLOT_TRAN),
+            "rect volume damper": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "boot tap - wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "access panel": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "cap": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "canvas": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "end cap": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "tdf end cap": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "drop cheek": s._tag_cfg(s.SLOT_SIZE),
+            "radius bend": s._tag_cfg(s.SLOT_SIZE),
+            "square bend": s._tag_cfg(s.SLOT_SIZE),
+            "tap": s._tag_cfg(s.SLOT_SIZE),
+            "elbow": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
+            "elbow 90 degree": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
+            "gored elbow": s._tag_cfg(s.SLOT_DEGREE),
+            "radius elbow": s._tag_cfg(s.SLOT_DEGREE),
+            "tee": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
+            "mitred offset": s._tag_cfg(s.SLOT_TRAN),
             "cid330 - (radius 2-way offset)": s._tag_cfg(s.SLOT_TRAN),
-            "offset":                         s._tag_cfg(s.SLOT_TRAN),
-            "ogee":                           s._tag_cfg(s.SLOT_TRAN),
-            "radius offset":                  s._tag_cfg(s.SLOT_TRAN),
-            "reducer":                        s._tag_cfg(s.SLOT_TRAN),
-            "square to ø":                    s._tag_cfg(s.SLOT_TRAN),
-            "transition":                     s._tag_cfg(s.SLOT_TRAN),
-            "fire damper - type b":           s._tag_cfg(s.SLOT_MARK),
-            "manbars":                        s._tag_cfg(s.SLOT_MARK),
+            "offset": s._tag_cfg(s.SLOT_TRAN),
+            "ogee": s._tag_cfg(s.SLOT_TRAN),
+            "radius offset": s._tag_cfg(s.SLOT_TRAN),
+            "reducer": s._tag_cfg(s.SLOT_TRAN),
+            "square to ø": s._tag_cfg(s.SLOT_TRAN),
+            "transition": s._tag_cfg(s.SLOT_TRAN),
+            "fire damper - type b": s._tag_cfg(s.SLOT_MARK),
+            "manbars": s._tag_cfg(s.SLOT_MARK),
         }
         return {self._norm(k): v for k, v in family_cfg.items()}
 
