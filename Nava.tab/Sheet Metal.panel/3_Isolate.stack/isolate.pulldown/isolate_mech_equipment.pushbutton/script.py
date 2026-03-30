@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit
 from Autodesk.Revit.DB import (BuiltInCategory, FilteredElementCollector, ElementId,
-                               TemporaryViewMode, ReferencePlane)
+                               TemporaryViewMode, ReferencePlane, FamilyInstance)
 from System.Collections.Generic import List
 
 # Button info
@@ -65,6 +65,15 @@ def collect_elements_from_categories(doc, view_id, categories):
     ref_plane_collector = FilteredElementCollector(doc, view_id).OfClass(ReferencePlane)
     for plane in ref_plane_collector:
         ids.Add(plane.Id)
+
+    # Collect FREE FLOATING CLEARANCE family instances by family name
+    family_collector = FilteredElementCollector(doc, view_id).OfClass(FamilyInstance)
+    for el in family_collector:
+        try:
+            if el.Symbol.Family.Name == 'FREE FLOATING CLEARANCE':
+                ids.Add(el.Id)
+        except Exception:
+            pass
 
     return ids
 
