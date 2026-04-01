@@ -1,0 +1,10 @@
+title:
+  en_us: Tag Other
+layout:
+  - tag_equipment
+  - ----
+  - tag_fire_dampers
+  - tag_grds
+  - tag_man_bars
+  - ----
+  - tag_removal
