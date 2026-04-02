@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag Sleeves 0"
+__title__ = "Tag Sleeves 1"
 __doc__ = """
 Tag all sleeve ducts in active view with BOD/Size tags
 """
@@ -37,11 +37,11 @@ tagger = RevitTagging(doc=doc, view=view)
 # Define tags and their positions
 tag_configs = {
     'Length': {
-        'tags': ['_umi_size_right', '-fabduct_length_mv_tag'],
+        'tags': ['_umi_size_left', '-fabduct_length_mv_tag'],
         'position': 'start'
     },
     'Size': {
-        'tags': ['_umi_bod_left', '-fabduct_size_mv_tag'],
+        'tags': ['_umi_bod_right', '-fabduct_size_mv_tag'],
         'position': 'end'
     }
 }
@@ -135,6 +135,6 @@ try:
 
     t.Commit()
 except Exception as e:
-    output.print_md("**Transaction error:** {}".format(e))
+    output.print_md("Tag placement error: {}".format(e))
     t.RollBack()
-    script.exit()
+    raise
