@@ -28,9 +28,9 @@ except ImportError:
 
 # Button info
 # ======================================================================
-__title__ = 'Compute Sleeve Value'
+__title__ = 'Tag Pen Sleeves'
 __doc__ = '''
-Numbers fabrication duct sleeves in the active view.
+Will calculte the size for sleeves, number them, and tag them. so long as they have the _type paramter value of "sleeve"
 '''
 
 # Variables
