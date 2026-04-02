@@ -1,8 +1,7 @@
 layout:
-  - Update
-  - Reload
-  - Sync
-  - ----
   - 3_main
+  - ----
+  - Syncs
+  - ----
   - Parameters
   - Pick

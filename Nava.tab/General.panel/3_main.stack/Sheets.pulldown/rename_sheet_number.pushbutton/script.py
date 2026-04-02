@@ -6,7 +6,9 @@ from Autodesk.Revit.ApplicationServices import Application
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.DB import *
-__title__ = "Rename Sheet #s"
+
+
+__title__ = "Rename Sheet #"
 __doc__ = """
 ****************************************************************
 Description:
