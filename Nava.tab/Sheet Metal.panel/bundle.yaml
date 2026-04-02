@@ -1,7 +1,8 @@
 title:
   en_us: Sheetmetal
 layout:
-  - 3_Core
+  - 3_Core_0
+  - 3_core_1
   - -----
   - 3_Isolate
   - -----
