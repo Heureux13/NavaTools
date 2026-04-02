@@ -2,6 +2,7 @@ title:
   en_us: Tag Other
 layout:
   - tag_equipment
+  - tag_equipment_pad
   - ----
   - tag_fire_dampers
   - tag_grds
