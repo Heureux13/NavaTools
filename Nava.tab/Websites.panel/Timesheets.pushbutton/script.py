@@ -7,7 +7,7 @@ the copyright holder."""
 
 import webbrowser
 
-__title__ = "Sharepoint"
+__title__ = "Timesheet"
 __doc__ = """
 Takes you to the United Mechanical sharepoint.
 """
