@@ -99,6 +99,15 @@ active_view = revit.active_view
 output = script.get_output()
 
 
+# Source-header aliases per schedule column.
+# Priority is left-to-right; the first existing source header is used.
+# Add or remove entries over time as your CSV exports evolve.
+SOURCE_HEADER_ALIASES = {
+    'cfm': ['cfm', 'sa cfm', 'ra cfm'],
+    'v/ph': ['v - ph'],
+}
+
+
 class DataOption(object):
     def __init__(self, name, rows):
         self.name = name
@@ -321,21 +330,15 @@ def collect_schedules(document):
         try:
             if schedule.IsTemplate:
                 continue
+            if schedule.Name.startswith('<'):
+                continue
         except Exception:
             pass
 
         try:
             definition = schedule.Definition
-            detail_parts = []
-            if definition.IsKeySchedule:
-                detail_parts.append('Key Schedule')
-            else:
-                detail_parts.append('Schedule')
-            if is_body_editable(schedule):
-                detail_parts.append('Editable')
-            else:
-                detail_parts.append('Read Only')
-            schedules.append(ScheduleOption(schedule, ' | '.join(detail_parts)))
+            detail = 'Key Schedule' if definition.IsKeySchedule else 'Schedule'
+            schedules.append(ScheduleOption(schedule, detail))
         except Exception:
             pass
     return sorted(schedules, key=lambda option: option.display_name.lower())
@@ -358,27 +361,38 @@ def is_body_editable(schedule):
     return False
 
 
-def pick_schedule(document, current_view):
+def pick_schedules(document, current_view):
     if isinstance(current_view, ViewSchedule):
-        return current_view
+        return [current_view]
 
     schedules = collect_schedules(document)
     if not schedules:
-        return None
+        return []
 
     selected = forms.SelectFromList.show(
         schedules,
         name_attr='display_name',
-        multiselect=False,
-        title='Select Schedule to Populate'
+        multiselect=True,
+        title='Select Schedules to Populate'
     )
     if not selected:
-        return None
-    return selected.schedule
+        return []
+    return [opt.schedule for opt in selected]
 
 
 def normalize_header(text):
     return clean_cell_value(text).strip().lower()
+
+
+def get_candidate_source_keys(schedule_header_key):
+    """Return prioritized source-header keys for one schedule header key."""
+    candidates = [schedule_header_key]
+    alias_values = SOURCE_HEADER_ALIASES.get(schedule_header_key, [])
+    for alias in alias_values:
+        alias_key = normalize_header(alias)
+        if alias_key and alias_key not in candidates:
+            candidates.append(alias_key)
+    return candidates
 
 
 def get_schedule_headers(schedule):
@@ -400,9 +414,15 @@ def build_column_map(schedule_headers, source_headers):
     mapped_columns = []
     missing_headers = []
     for schedule_col_index, schedule_header in enumerate(schedule_headers):
-        key = normalize_header(schedule_header)
-        if key in source_lookup:
-            mapped_columns.append((schedule_col_index, source_lookup[key], schedule_header))
+        schedule_key = normalize_header(schedule_header)
+        source_col_index = None
+        for candidate_key in get_candidate_source_keys(schedule_key):
+            if candidate_key in source_lookup:
+                source_col_index = source_lookup[candidate_key]
+                break
+
+        if source_col_index is not None:
+            mapped_columns.append((schedule_col_index, source_col_index, schedule_header))
         else:
             missing_headers.append(schedule_header)
 
@@ -528,6 +548,17 @@ def collect_source_label_samples(data_rows, label_source_col, max_count):
     return samples
 
 
+def parse_number(value_text):
+    """Strip formatting (commas, spaces, unit suffixes) and return a float."""
+    cleaned = value_text.replace(',', '').strip()
+    # drop trailing non-numeric characters (e.g. " CFM", " fpm")
+    i = len(cleaned)
+    while i > 0 and not (cleaned[i - 1].isdigit() or cleaned[i - 1] == '.'):
+        i -= 1
+    cleaned = cleaned[:i].strip()
+    return float(cleaned)
+
+
 def set_element_parameter(element, field, value_text):
     _, param = get_param_target_and_param(element, field.ParameterId, get_field_lookup_names(field))
     if param is None or param.IsReadOnly:
@@ -537,9 +568,9 @@ def set_element_parameter(element, field, value_text):
         if storage == StorageType.String:
             param.Set(value_text)
         elif storage == StorageType.Integer:
-            param.Set(int(value_text)) if value_text else param.Set(0)
+            param.Set(int(parse_number(value_text))) if value_text else param.Set(0)
         elif storage == StorageType.Double:
-            param.Set(float(value_text)) if value_text else param.Set(0.0)
+            param.Set(parse_number(value_text)) if value_text else param.Set(0.0)
         else:
             return False
         return True
@@ -569,7 +600,10 @@ def update_schedule_rows_by_label(schedule, data_rows, mapped_columns, label_sch
 
     updated = 0
     empty_label = 0
-    unmatched = 0
+    unmatched_source_labels = []
+    matched_details = []   # list of (label, [col_names_with_empty_value])
+    matched_keys = set()
+
     for row_values in data_rows:
         label = row_values[label_source_col] if label_source_col < len(row_values) else ''
         label = clean_cell_value(label)
@@ -578,18 +612,51 @@ def update_schedule_rows_by_label(schedule, data_rows, mapped_columns, label_sch
             continue
         element = element_map.get(label.lower())
         if element is None:
-            unmatched += 1
+            unmatched_source_labels.append(label)
             continue
-        for schedule_col_index, source_col_index, _ in mapped_columns:
+        empty_cols = []
+        for schedule_col_index, source_col_index, col_header in mapped_columns:
             if schedule_col_index == label_schedule_col:
                 continue
             field = field_map.get(schedule_col_index)
             if field is None:
                 continue
             cell_text = row_values[source_col_index] if source_col_index < len(row_values) else ''
+            if not cell_text:
+                empty_cols.append(col_header)
             set_element_parameter(element, field, cell_text)
+        matched_keys.add(label.lower())
+        matched_details.append((label, empty_cols))
         updated += 1
-    return updated, empty_label, unmatched, element_map
+
+    unmatched_schedule_labels = sorted(
+        k for k in element_map.keys() if k not in matched_keys
+    )
+
+    # Clear stale values for schedule labels that no longer exist in source.
+    cleared_missing_labels = 0
+    for missing_key in unmatched_schedule_labels:
+        element = element_map.get(missing_key)
+        if element is None:
+            continue
+        for schedule_col_index, source_col_index, col_header in mapped_columns:
+            if schedule_col_index == label_schedule_col:
+                continue
+            field = field_map.get(schedule_col_index)
+            if field is None:
+                continue
+            set_element_parameter(element, field, '')
+        cleared_missing_labels += 1
+
+    return (
+        updated,
+        empty_label,
+        unmatched_source_labels,
+        element_map,
+        matched_details,
+        unmatched_schedule_labels,
+        cleared_missing_labels,
+    )
 
 
 def get_import_rows(table_rows):
@@ -618,72 +685,91 @@ if not table_rows:
     output.print_md('No data found in the selected file.')
     script.exit()
 
-schedule = pick_schedule(doc, active_view)
-if schedule is None:
+selected_schedules = pick_schedules(doc, active_view)
+if not selected_schedules:
     script.exit()
 
 source_headers, data_rows = get_import_rows(table_rows)
-schedule_headers = get_schedule_headers(schedule)
 
-if not schedule_headers:
-    output.print_md('Could not read the schedule column headers.')
-    script.exit()
-
-mapped_columns, missing_headers = build_column_map(schedule_headers, source_headers)
-if not mapped_columns:
-    output.print_md('**No source columns match the schedule headers.**')
-    output.print_md('**Schedule headers:** {}'.format(', '.join(['`{}`'.format(h) for h in schedule_headers])))
-    output.print_md('**Excel headers:** {}'.format(', '.join(['`{}`'.format(h) for h in source_headers])))
-    script.exit()
-
-label_schedule_col = None
-for sched_col, src_col, header_name in mapped_columns:
-    if normalize_header(header_name) == 'label':
-        label_schedule_col = sched_col
-        break
-
-label_source_col = get_source_header_index(source_headers, 'Label')
-
-if label_schedule_col is None or label_source_col is None:
-    output.print_md('No Label column found in both schedule and source headers - cannot match rows by Label.')
-    output.print_md('**Mapped columns:** {}'.format(', '.join([item[2] for item in mapped_columns])))
-    output.print_md('**Source headers:** {}'.format(', '.join(source_headers)))
-    script.exit()
-
-updated_count = 0
-empty_label_count = 0
-unmatched_count = 0
-schedule_label_count = 0
-source_label_samples = []
-schedule_label_samples = []
-
-with revit.Transaction('Populate Schedule From Excel'):
-    label_field = get_schedule_field_map(schedule).get(label_schedule_col)
-    if label_field is not None:
-        output.print_md('- Label lookup names used: {}'.format(', '.join(get_field_lookup_names(label_field))))
-    updated_count, empty_label_count, unmatched_count, schedule_label_map = update_schedule_rows_by_label(
-        schedule, data_rows, mapped_columns, label_schedule_col, label_source_col)
-    schedule.RefreshData()
-
-schedule_label_count = len(schedule_label_map)
-source_label_samples = collect_source_label_samples(data_rows, label_source_col, 10)
-schedule_label_samples = sorted(schedule_label_map.keys())[:10]
-
-output.print_md('# Updated schedule')
-output.print_md('- Schedule: {}'.format(output.linkify(schedule.Id)))
+output.print_md('# Populate Schedule From Excel')
 output.print_md('- Source: {}'.format(file_path))
 output.print_md('- Worksheet: {}'.format(worksheet_name))
-output.print_md('- Rows updated: {}'.format(updated_count))
-output.print_md('- Source rows with empty Label: {}'.format(empty_label_count))
-output.print_md('- Source rows with Label but no schedule match: {}'.format(unmatched_count))
-output.print_md('- Excel rows with no matching label: {}'.format(empty_label_count + unmatched_count))
-output.print_md('- Unique schedule labels detected: {}'.format(schedule_label_count))
-output.print_md('- Label source column: {}'.format(source_headers[label_source_col]))
-output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
-if source_label_samples:
-    output.print_md('- Sample source Label values: {}'.format(', '.join(source_label_samples)))
-if schedule_label_samples:
-    output.print_md('- Sample schedule Label values: {}'.format(', '.join(schedule_label_samples)))
+output.print_md('- Schedules selected: {}'.format(len(selected_schedules)))
 
-if missing_headers:
-    output.print_md('- Schedule columns not in Excel: {}'.format(', '.join(missing_headers)))
+for schedule in selected_schedules:
+    output.print_md('---')
+    output.print_md('## {}'.format(schedule.Name))
+
+    schedule_headers = get_schedule_headers(schedule)
+    if not schedule_headers:
+        output.print_md('Could not read schedule column headers — skipped.')
+        continue
+
+    mapped_columns, missing_headers = build_column_map(schedule_headers, source_headers)
+    if not mapped_columns:
+        output.print_md('**No source columns match the schedule headers — skipped.**')
+        output.print_md('- Schedule headers: {}'.format(', '.join(['`{}`'.format(h) for h in schedule_headers])))
+        output.print_md('- Excel headers: {}'.format(', '.join(['`{}`'.format(h) for h in source_headers])))
+        continue
+
+    label_schedule_col = None
+    for sched_col, src_col, header_name in mapped_columns:
+        if normalize_header(header_name) == 'label':
+            label_schedule_col = sched_col
+            break
+
+    label_source_col = get_source_header_index(source_headers, 'Label')
+
+    if label_schedule_col is None or label_source_col is None:
+        output.print_md('No Label column found in both schedule and source — skipped.')
+        output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
+        output.print_md('- Source headers: {}'.format(', '.join(source_headers)))
+        continue
+
+    updated_count = 0
+    empty_label_count = 0
+    unmatched_source_labels = []
+    schedule_label_map = {}
+    matched_details = []
+    unmatched_schedule_labels = []
+    cleared_missing_labels = 0
+
+    with revit.Transaction('Populate Schedule: {}'.format(schedule.Name)):
+        label_field = get_schedule_field_map(schedule).get(label_schedule_col)
+        updated_count, empty_label_count, unmatched_source_labels, schedule_label_map, matched_details, unmatched_schedule_labels, cleared_missing_labels = update_schedule_rows_by_label(
+            schedule, data_rows, mapped_columns, label_schedule_col, label_source_col)
+        schedule.RefreshData()
+
+    output.print_md('- Schedule: {}'.format(output.linkify(schedule.Id)))
+    output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
+    if missing_headers:
+        output.print_md('- Schedule columns not in source: {}'.format(', '.join(missing_headers)))
+    output.print_md('- Rows updated: {} / {}'.format(updated_count, len(schedule_label_map)))
+    output.print_md('- Missing schedule labels cleared: {}'.format(cleared_missing_labels))
+
+    # Matched rows table
+    if matched_details:
+        data_cols = [h for _, _, h in mapped_columns if normalize_header(h) != 'label']
+        header_row = '| Label | ' + ' | '.join(data_cols) + ' |'
+        sep_row = '|---|' + '|'.join(['---'] * len(data_cols)) + '|'
+        output.print_md(header_row)
+        output.print_md(sep_row)
+        for lbl, empty_cols in sorted(matched_details, key=lambda x: x[0].lower()):
+            cells = []
+            for col in data_cols:
+                cells.append('*(empty)*' if col in empty_cols else 'OK')
+            output.print_md('| {} | '.format(lbl) + ' | '.join(cells) + ' |')
+
+    # Schedule labels with no CSV match
+    if unmatched_schedule_labels:
+        output.print_md('\n**Schedule labels with no CSV match ({}):** {}'.format(
+            len(unmatched_schedule_labels),
+            ', '.join(unmatched_schedule_labels)
+        ))
+
+    # Source labels that didn't match any schedule element
+    if unmatched_source_labels:
+        output.print_md('\n**Source labels not in schedule ({}):** {}'.format(
+            len(unmatched_source_labels),
+            ', '.join(sorted(set(unmatched_source_labels)))
+        ))

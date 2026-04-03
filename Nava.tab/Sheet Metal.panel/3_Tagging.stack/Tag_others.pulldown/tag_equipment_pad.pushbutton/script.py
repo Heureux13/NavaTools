@@ -35,6 +35,7 @@ view = revit.active_view
 tagger = RevitTagging(doc, view)
 
 TAG_NAME = '_umi_equi_pad'
+WRITE_TO_PARAMETER = '_pad'
 TARGET_CATEGORY = BuiltInCategory.OST_MechanicalEquipment
 
 
@@ -196,9 +197,9 @@ def _pad_make_value_from_height(elem):
 
 
 def _sync_make_from_height(elem):
-    make_param = elem.LookupParameter('_make')
+    make_param = elem.LookupParameter(WRITE_TO_PARAMETER)
     if not make_param or make_param.IsReadOnly:
-        return False, 'Missing or read-only _make'
+        return False, 'Missing or read-only {}'.format(WRITE_TO_PARAMETER)
 
     make_value = _pad_make_value_from_height(elem)
     if not make_value:
@@ -280,7 +281,8 @@ output.print_md(
 )
 
 output.print_md(
-    '## _make Sync: updated {}, issues {}'.format(
+    '## {} Sync: updated {}, issues {}'.format(
+        WRITE_TO_PARAMETER,
         len(make_updated),
         len(make_failed),
     )
@@ -292,6 +294,6 @@ if failed:
         output.print_md('- ID {}: {}'.format(output.linkify(elem.Id), reason))
 
 if make_failed:
-    output.print_md('### _make Sync Issues')
+    output.print_md('### {} Sync Issues'.format(WRITE_TO_PARAMETER))
     for elem, reason in make_failed:
         output.print_md('- ID {}: {}'.format(output.linkify(elem.Id), reason))

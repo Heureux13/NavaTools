@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
-from tagging.tag_map import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK
+from tagging.tag_map import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK, SLOT_MARK_NOTE
 
 # Button display information
 # =================================================
@@ -31,7 +31,12 @@ Tags all mechanical equipment in the current view.
 
 # Helpers
 # ==================================================
-tags = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK]
+tags_mark = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK]
+tags_mark_note = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK_NOTE]
+
+MARK = SLOT_MARK
+MARK_NOTE = SLOT_MARK_NOTE
+TRIGGER_PARAM = '_note'
 
 
 # Tag categories compatible with OST_MechanicalEquipment
@@ -121,15 +126,27 @@ if not equipment_elements:
     # output.print_md("## No mechanical equipment found in this view.")
     script.exit()
 
-selected_tag_symbol, selected_tag_name = _find_first_available_tag(doc, tags)
-if not selected_tag_symbol:
+selected_mark_symbol, selected_mark_name = _find_first_available_tag(doc, tags_mark)
+if not selected_mark_symbol:
     output.print_md(
-        "## No tag found from configured tags list: {}".format(", ".join(tags)))
+        "## No MARK tag found from configured tags list: {}".format(", ".join(tags_mark)))
     script.exit()
+
+selected_mark_note_symbol = None
+selected_mark_note_name = None
+for tag_name in tags_mark_note:
+    tag_sym = _find_tag_symbol(doc, tag_name)
+    if tag_sym:
+        selected_mark_note_symbol = tag_sym
+        selected_mark_note_name = tag_name
+        break
 
 placed = []
 failed = []
 already_tagged = []
+placed_mark = []
+placed_mark_note = []
+removed_conflicting = []
 
 # Check how many tags already exist in the view
 existing_tags = list(
@@ -138,8 +155,17 @@ existing_tags = list(
     .ToElements()
 )
 
-# Build a map of element IDs to any existing MARK tag instances in this view
-existing_tag_map = {}
+# Build maps of element IDs keyed by tracked tag type id.
+existing_tag_maps = {}
+
+tracked_tag_type_ids = {selected_mark_symbol.Id.IntegerValue}
+if selected_mark_note_symbol:
+    tracked_tag_type_ids.add(selected_mark_note_symbol.Id.IntegerValue)
+
+mark_type_id_val = selected_mark_symbol.Id.IntegerValue
+mark_note_type_id_val = (
+    selected_mark_note_symbol.Id.IntegerValue if selected_mark_note_symbol else None
+)
 
 
 def _eid_int(eid):
@@ -209,20 +235,34 @@ def _collect_tagged_local_ids(tag):
 
 for tag in existing_tags:
     try:
-        # Only count tags whose type matches the selected MARK symbol
+        # Only count tags whose type matches selected MARK / MARK_COMMENT symbols.
         try:
             tag_type_id = tag.GetTypeId()
         except Exception:
             tag_type_id = None
-        if tag_type_id is None or tag_type_id != selected_tag_symbol.Id:
+        tag_type_id_val = _eid_int(tag_type_id)
+        if tag_type_id is None or tag_type_id_val not in tracked_tag_type_ids:
             continue
 
-        tagged_ids = _collect_tagged_local_ids(tag)
-
-        for tid in tagged_ids:
-            tid_val = _eid_int(tid)
-            if tid_val is not None:
-                existing_tag_map.setdefault(tid_val, []).append(tag)
+        # Use integer -1 check (IronPython-safe) instead of ElementId object comparison.
+        elem_id_int = None
+        try:
+            v = _eid_int(tag.TaggedLocalElementId)
+            if v is not None and v != -1:
+                elem_id_int = v
+        except Exception:
+            pass
+        if elem_id_int is None:
+            try:
+                for tid in (tag.GetTaggedLocalElementIds() or []):
+                    v = _eid_int(tid)
+                    if v is not None and v != -1:
+                        elem_id_int = v
+                        break
+            except Exception:
+                pass
+        if elem_id_int is not None:
+            existing_tag_maps.setdefault(tag_type_id_val, {}).setdefault(elem_id_int, []).append(tag)
     except BaseException:
         pass
 
@@ -238,15 +278,34 @@ try:
             failed.append((elem, "Unable to validate category"))
             continue
 
-        tag_symbol = selected_tag_symbol
-        tag_name = selected_tag_name
+        comments_value = ""
+        try:
+            comments_param = elem.LookupParameter(TRIGGER_PARAM)
+            if comments_param:
+                comments_value = (comments_param.AsString() or comments_param.AsValueString() or "").strip()
+        except Exception:
+            comments_value = ""
 
-        # Skip if element already has a MARK tag in this view
+        if comments_value and selected_mark_note_symbol:
+            tag_symbol = selected_mark_note_symbol
+            tag_name = selected_mark_note_name
+        else:
+            tag_symbol = selected_mark_symbol
+            tag_name = selected_mark_name
+
+        # Skip if element already has the chosen tag type in this view.
         elem_id_val = elem.Id.IntegerValue
-        existing_for_elem = existing_tag_map.get(elem_id_val, [])
+        chosen_type_id_val = _eid_int(tag_symbol.Id)
+        existing_for_elem = existing_tag_maps.get(chosen_type_id_val, {}).get(elem_id_val, [])
         if existing_for_elem:
             already_tagged.append(elem)
             continue
+
+        opposite_type_id_val = None
+        if chosen_type_id_val == mark_type_id_val and mark_note_type_id_val is not None:
+            opposite_type_id_val = mark_note_type_id_val
+        elif chosen_type_id_val == mark_note_type_id_val:
+            opposite_type_id_val = mark_type_id_val
 
         # Get location point for tag placement - use element location directly
         tag_pt = None
@@ -275,10 +334,55 @@ try:
 
         # Place tag using element directly with its location point
         try:
-            tagger.place_tag(elem, tag_symbol, tag_pt)
+            new_tag = tagger.place_tag(elem, tag_symbol, tag_pt)
             placed.append(elem)
+            existing_tag_maps.setdefault(chosen_type_id_val, {}).setdefault(elem_id_val, []).append(new_tag)
+
+            # If we switched tag types, remove the old opposite tag(s) on this element.
+            if opposite_type_id_val is not None:
+                old_tags = list(
+                    existing_tag_maps.get(opposite_type_id_val, {}).get(elem_id_val, [])
+                )
+                # Fallback: direct scan in case pre-built map missed any.
+                if not old_tags:
+                    for et in existing_tags:
+                        try:
+                            if _eid_int(et.GetTypeId()) != opposite_type_id_val:
+                                continue
+                            et_elem = None
+                            try:
+                                v = _eid_int(et.TaggedLocalElementId)
+                                if v is not None and v != -1:
+                                    et_elem = v
+                            except Exception:
+                                pass
+                            if et_elem is None:
+                                try:
+                                    for tid in (et.GetTaggedLocalElementIds() or []):
+                                        v = _eid_int(tid)
+                                        if v is not None and v != -1:
+                                            et_elem = v
+                                            break
+                                except Exception:
+                                    pass
+                            if et_elem == elem_id_val:
+                                old_tags.append(et)
+                        except Exception:
+                            pass
+                for old_tag in old_tags:
+                    try:
+                        doc.Delete(old_tag.Id)
+                        removed_conflicting.append(old_tag)
+                    except Exception:
+                        pass
+                existing_tag_maps.setdefault(opposite_type_id_val, {})[elem_id_val] = []
+
+            if tag_symbol.Id == selected_mark_symbol.Id:
+                placed_mark.append(elem)
+            elif selected_mark_note_symbol and tag_symbol.Id == selected_mark_note_symbol.Id:
+                placed_mark_note.append(elem)
         except Exception as e:
-            failed.append((elem, "Tag placement error: {}".format(str(e))))
+            failed.append((elem, "Tag placement error [{}]: {}".format(tag_name, str(e))))
 
     t.Commit()
 except Exception as e:
@@ -291,6 +395,19 @@ output.print_md(
         len(placed),
         len(already_tagged),
         len(failed),
+    )
+)
+
+output.print_md(
+    "## Placed by type: MARK {}, MARK_NOTE {}".format(
+        len(placed_mark),
+        len(placed_mark_note),
+    )
+)
+
+output.print_md(
+    "## Replaced old opposite tags: {}".format(
+        len(removed_conflicting),
     )
 )
 
