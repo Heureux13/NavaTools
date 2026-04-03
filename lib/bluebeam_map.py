@@ -174,12 +174,12 @@ COLUMN_MAP = {
     },
     'Sleeve': {
         'aliases': ['_sleeve'],
-        'storage_type': 'String',
+        'storage_type': 'Double',
         'description': 'Sleeve/penetration information'
     },
     'K': {
         'aliases': ['_k'],
-        'storage_type': 'String',
+        'storage_type': 'Double',
         'description': 'Insulation or utility flag'
     },
     'Material': {

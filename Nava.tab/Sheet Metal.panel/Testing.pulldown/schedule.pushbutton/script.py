@@ -8,12 +8,26 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+from bluebeam_map import COLUMN_MAP
 from Autodesk.Revit.DB import FilteredElementCollector, SectionType, ViewSchedule, StorageType
 from pyrevit import forms, revit, script
 from System.Windows.Forms import DialogResult, OpenFileDialog
 import os
+import sys
 
 import clr
+
+try:
+    from Autodesk.Revit.DB import UnitUtils, UnitTypeId, SpecTypeId
+except Exception:
+    UnitUtils = None
+    UnitTypeId = None
+    SpecTypeId = None
+
+# Import Bluebeam column mapping
+lib_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'lib')
+if lib_path not in sys.path:
+    sys.path.insert(0, lib_path)
 
 clr.AddReference('System.Windows.Forms')
 
@@ -99,13 +113,13 @@ active_view = revit.active_view
 output = script.get_output()
 
 
-# Source-header aliases per schedule column.
-# Priority is left-to-right; the first existing source header is used.
-# Add or remove entries over time as your CSV exports evolve.
-SOURCE_HEADER_ALIASES = {
-    'cfm': ['cfm', 'sa cfm', 'ra cfm'],
-    'v/ph': ['v - ph'],
-}
+# Build SOURCE_HEADER_ALIASES from COLUMN_MAP
+# Maps Revit parameter names to Bluebeam CSV column names
+SOURCE_HEADER_ALIASES = {}
+for bluebeam_col, config in COLUMN_MAP.items():
+    if config['aliases']:
+        revit_param = config['aliases'][0].lstrip('_')  # Strip leading underscore
+        SOURCE_HEADER_ALIASES[revit_param] = [bluebeam_col.lower().replace(' ', '_'), bluebeam_col.lower()]
 
 
 class DataOption(object):
@@ -522,17 +536,26 @@ def build_element_label_map(schedule, label_field):
     label_param_id = label_field.ParameterId
     fallback_names = get_field_lookup_names(label_field)
     element_map = {}
+    total_elements = 0
+    elements_with_labels = 0
+
     for element in FilteredElementCollector(doc, schedule.Id).WhereElementIsNotElementType():
+        total_elements += 1
         try:
             _, param = get_param_target_and_param(element, label_param_id, fallback_names)
             if param is not None:
                 label = clean_cell_value(param.AsString() or param.AsValueString())
                 if label:
+                    elements_with_labels += 1
                     key = label.lower()
                     if key not in element_map:
                         element_map[key] = element
         except Exception:
             pass
+
+    # Debug: store collection stats for reporting
+    element_map['_debug_total_elements'] = total_elements
+    element_map['_debug_elements_with_labels'] = elements_with_labels
     return element_map
 
 
@@ -559,6 +582,43 @@ def parse_number(value_text):
     return float(cleaned)
 
 
+def is_length_parameter(param):
+    """Return True when parameter spec is Length."""
+    try:
+        definition = param.Definition
+        if definition is None:
+            return False
+
+        try:
+            data_type = definition.GetDataType()
+            if SpecTypeId is not None and data_type == SpecTypeId.Length:
+                return True
+        except Exception:
+            pass
+
+        # Legacy fallback for older Revit APIs.
+        try:
+            return str(definition.ParameterType) == 'Length'
+        except Exception:
+            return False
+    except Exception:
+        return False
+
+
+def to_internal_double_value(param, numeric_value):
+    """Convert incoming inches to Revit internal units (feet) for Length params."""
+    if not is_length_parameter(param):
+        return numeric_value
+
+    if UnitUtils is not None and UnitTypeId is not None:
+        try:
+            return UnitUtils.ConvertToInternalUnits(numeric_value, UnitTypeId.Inches)
+        except Exception:
+            pass
+
+    return numeric_value / 12.0
+
+
 def set_element_parameter(element, field, value_text):
     _, param = get_param_target_and_param(element, field.ParameterId, get_field_lookup_names(field))
     if param is None or param.IsReadOnly:
@@ -570,7 +630,11 @@ def set_element_parameter(element, field, value_text):
         elif storage == StorageType.Integer:
             param.Set(int(parse_number(value_text))) if value_text else param.Set(0)
         elif storage == StorageType.Double:
-            param.Set(parse_number(value_text)) if value_text else param.Set(0.0)
+            if value_text:
+                numeric_value = parse_number(value_text)
+                param.Set(to_internal_double_value(param, numeric_value))
+            else:
+                param.Set(0.0)
         else:
             return False
         return True
@@ -742,6 +806,12 @@ for schedule in selected_schedules:
 
     output.print_md('- Schedule: {}'.format(output.linkify(schedule.Id)))
     output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
+
+    # Extract debug stats from element_map
+    debug_total = schedule_label_map.pop('_debug_total_elements', 0)
+    debug_with_labels = schedule_label_map.pop('_debug_elements_with_labels', 0)
+    output.print_md('- Schedule elements collected: {} (with readable Label: {})'.format(debug_total, debug_with_labels))
+
     if missing_headers:
         output.print_md('- Schedule columns not in source: {}'.format(', '.join(missing_headers)))
     output.print_md('- Rows updated: {} / {}'.format(updated_count, len(schedule_label_map)))
