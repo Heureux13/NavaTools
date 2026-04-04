@@ -1,4 +1,4 @@
 layout:
- - Check_straights
- - Check_fittings
- - Check_other
+ - check_straights
+ - check_fittings
+ - check_other
