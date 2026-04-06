@@ -18,6 +18,7 @@ from Autodesk.Revit.DB import (
 )
 from tagging.revit_tagging import RevitTagging
 from tagging.revit_tagging_fittings import Fittings
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -27,7 +28,7 @@ Tags fire damper sleeve fabrication ductwork in the current view with MARK label
 """
 
 
-TYPE_PARAM_NAME = "_type"
+TYPE_PARAM_NAME = PYT_VALUE_SLEEVE
 TYPE_PARAM_VALUE = "sleeve"
 FIRE_DAMPER_TOKEN = "fire damper"
 FIRE_DAMPER_PARAM_NAMES = (

@@ -20,7 +20,8 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
-from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK, SLOT_MARK_NOTE
+from tagging.tag_config import *
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -36,7 +37,7 @@ tags_mark_note = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK_NOTE]
 
 MARK = SLOT_MARK
 MARK_NOTE = SLOT_MARK_NOTE
-TRIGGER_PARAM = '_note'
+TRIGGER_PARAM = PYT_NOTE_0
 
 
 # Tag categories compatible with OST_MechanicalEquipment

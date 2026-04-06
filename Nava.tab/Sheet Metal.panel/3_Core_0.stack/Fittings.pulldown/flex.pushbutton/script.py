@@ -12,6 +12,7 @@ from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
 from System.Collections.Generic import List
+from config.parameters_registry import *
 
 
 # Button info
@@ -42,7 +43,7 @@ flex_ducts = FilteredElementCollector(doc, view.Id)\
 filtered_flex_ducts = []
 
 for d in flex_ducts:
-    length_value = d.LookupParameter("Length")
+    length_value = d.LookupParameter(RVT_LENGTH)
     length = length_value.AsDouble() if length_value else 0
     if length > max_lenght:
         filtered_flex_ducts.append(d)
@@ -52,7 +53,7 @@ if filtered_flex_ducts:
     uidoc.Selection.SetElementIds(List[ElementId](flex_ids))
 
     for i, d in enumerate(filtered_flex_ducts, start=1):
-        length_value = d.LookupParameter("Length")
+        length_value = d.LookupParameter(RVT_LENGTH)
         length = length_value.AsDouble() if length_value else 0
         output.print_md(
             '### No: {:03} | ID: {} | Length {:05.2f}"'.format(

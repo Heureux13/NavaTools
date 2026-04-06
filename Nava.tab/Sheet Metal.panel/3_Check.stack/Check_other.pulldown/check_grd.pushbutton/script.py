@@ -20,6 +20,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -31,13 +32,13 @@ Prints out quantity and labels of GRDs in the current view.
 # Parameters to check for GRDs
 # ==================================================
 grd_label_param = [
-    '_label',
+    BBM_LABEL,
 ]
 
 # Possible system abbreviation parameter names (checked in order)
 service_param_names = [
-    'system abbreviation',
-    'system abbr',
+    RVT_SYSTEM_ABBREVIATION,
+    NDBS_SERVICE_ABBREVIATION,
 ]
 
 

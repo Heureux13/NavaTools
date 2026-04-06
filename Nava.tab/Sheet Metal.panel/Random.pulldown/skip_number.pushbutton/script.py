@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit, forms
 from Autodesk.Revit.DB import Transaction
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -21,7 +22,7 @@ Sets parameters to 'skip' for selected elements
 
 # Parameters to set to 'skip'
 parameters_to_skip = {
-    "item number",
+    PYT_SKIP_NUMBER
 }
 
 # Code

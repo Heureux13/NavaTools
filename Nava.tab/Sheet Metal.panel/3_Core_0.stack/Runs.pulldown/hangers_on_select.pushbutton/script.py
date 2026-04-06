@@ -13,6 +13,7 @@ from revit.revit_element import RevitElement
 from ducts.revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
+from config.parameters_registry import *
 
 # Button info
 # ===================================================
@@ -29,13 +30,11 @@ view = revit.active_view
 output = script.get_output()
 
 hanger_parameters = {
-    '_umi_duct_supporting_weight',
-    'mark',
+    PYT_WEIGHT_SUPPORT,
 }
 
 duct_parameters = {
-    '_umi_duc_run_weight',
-    'mark'
+    PYT_WEIGHT_RUN,
 }
 
 
@@ -150,10 +149,4 @@ else:
     lbs_per_ft = (total_weight / total_length_ft) if total_length_ft else 0.0
     output.print_md("# Selected Ducts Information")
     output.print_md("## Qty: {} | Size: {} | Length: {:06.2f} ft | Weight: {:06.2f} lbs | Weight/ft: {:06.2f} lbs/ft | {}".format(
-        len(selected_ducts),
-        duct_size,
-        total_length_ft,
-        total_weight,
-        lbs_per_ft,
-        output.linkify(duct_element_ids)
-    ))
+        len(selected_ducts), duct_size, total_length_ft, total_weight, lbs_per_ft, output.linkify(duct_element_ids)))

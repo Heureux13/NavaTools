@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from config.parameters_registry import *
+
 """Shared tag slot configuration used by fitting and joint tagging scripts."""
 
 # fmt: off
@@ -131,12 +133,14 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
 }
 
 DEFAULT_SKIP_PARAMETERS = {
-    '_skip': ['skip'],
+    PYT_SKIP_NUMBER: ['skip'],
+    PYT_SKIP_TAG: ['skip'],
 }
 
 DEFAULT_PARAMETER_HIERARCHY = [
-    'mark',
-    'type mark',
+    RVT_TYPE_MARK,
+    RVT_MARK,
+    BBM_LABEL,
 ]
 
 STRAIGHT_JOINT_FAMILIES = {

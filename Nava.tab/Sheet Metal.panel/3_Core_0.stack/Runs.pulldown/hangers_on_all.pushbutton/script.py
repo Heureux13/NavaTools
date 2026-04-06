@@ -15,6 +15,7 @@ from runs.revit_runs import RevitRuns
 from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
+from config.parameters_registry import *
 
 # Button info
 # ===================================================
@@ -32,11 +33,11 @@ view = revit.active_view
 output = script.get_output()
 
 hanger_parameters = [
-    '_weight_supporting',
+    PYT_WEIGHT_SUPPORT,
 ]
 
 duct_parameters = [
-    '_weight_run',
+    PYT_WEIGHT_RUN,
 ]
 
 # Main Code

@@ -15,12 +15,13 @@ from constants.print_outputs import print_disclaimer
 from geometry.size import Size
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
+from config.parameters_registry import *
 import re
 
 # Button info
 # ===================================================
 __title__ = "Numbers Runs"
-__doc__ = """z
+__doc__ = """
 1, 2, 3... n. No matches will be considered.
 """
 
@@ -46,15 +47,15 @@ output = script.get_output()
 
 # Parameters that hold the item number (will be matched case-insensitive)
 number_paramters = {
-    'item number',
-    '_umi_item_number',
+    RVT_ITEM_NUMBER,
+    PYT_NUMBER_FABRICATION,
 }
 
 match_paramters = {
-    'family',
-    'size',
-    'length',
-    'angle',
+    RVT_FAMILY,
+    RVT_SIZE,
+    RVT_LENGTH,
+    RVT_ANGLE,
 }
 
 # Families allowed to be numbered

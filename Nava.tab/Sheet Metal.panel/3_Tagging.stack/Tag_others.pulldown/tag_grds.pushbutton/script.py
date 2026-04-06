@@ -19,6 +19,8 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
+from config.parameters_registry import *
+
 try:
     from tagging.revit_tagging import RevitTagging
 except ImportError:
@@ -102,21 +104,20 @@ second_tag = [
 
 # Parameters to check and their "empty" values
 check_parameter = {
-    'airflow': [0, "0", "0 cfm"],
-    'flow': [0, "0", "0 cfm"],
-    'cfm': [0, "0", "0 cfm"]
+    RVT_AIRFLOW: [0, "0", "0 cfm"],
+    RVT_FLOW: [0, "0", "0 cfm"],
 }
 
 order_paramters = [
-    'mark',
-    'type mark',
+    RVT_MARK,
+    RVT_TYPE_MARK,
 ]
 
 value_parameters = {
-    '_label',
+    BBM_LABEL,
 }
 
-skip_parameter_name = '_skip'
+skip_parameter_name = PYT_SKIP_TAG
 
 skip_parameter_values = {
     'skip',

@@ -18,6 +18,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging  # type: ignore[reportMissingImports]
+from config.parameters_registry import *
 
 # Button info
 # ======================================================================
@@ -35,7 +36,7 @@ view = revit.active_view
 tagger = RevitTagging(doc, view)
 
 TAG_NAME = '_umi_equi_pad'
-WRITE_TO_PARAMETER = '_pad'
+WRITE_TO_PARAMETER = PYT_HEIGHT_PAD
 TARGET_CATEGORY = BuiltInCategory.OST_MechanicalEquipment
 
 

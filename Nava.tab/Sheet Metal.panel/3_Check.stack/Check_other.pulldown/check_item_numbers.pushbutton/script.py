@@ -11,6 +11,7 @@ from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, Element
 from pyrevit import revit, script
 from System.Collections.Generic import List
 from ducts.revit_duct import RevitDuct
+from config.parameters_registry import *
 
 
 # Button info
@@ -70,8 +71,7 @@ skip_values = {
 }
 
 check_parameters = {
-    # "fabrication notes",
-    "item number",
+    RVT_ITEM_NUMBER,
 }
 
 # Main Code

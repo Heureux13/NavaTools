@@ -12,6 +12,7 @@ from geometry.size import Size
 from ducts.revit_xyz import RevitXYZ
 from pyrevit import revit, script
 from Autodesk.Revit.DB import StorageType
+from config.parameters_registry import *
 
 # Button info
 # ======================================================================
@@ -41,16 +42,16 @@ family_list = {
 }
 
 parameters = {
-    '_offset_center_h': 'center_horizontal',
-    '_offset_center_v': 'center_vertical',
-    '_offset_top': 'top',
-    '_offset_bottom': 'bottom',
-    '_offset_right': 'right',
-    '_offset_left': 'left',
+    PYT_OFFSET_CENTER_H: 'center_horizontal',
+    PYT_OFFSET_CENTER_V: 'center_vertical',
+    PYT_OFFSET_TOP: 'top',
+    PYT_OFFSET_BOTTOM: 'bottom',
+    PYT_OFFSET_RIGHT: 'right',
+    PYT_OFFSET_LEFT: 'left',
 }
 
-tag_parameter = {
-    '_offset'
+tag_paramger = {
+    PYT_OFFSET_VALUE
 }
 
 

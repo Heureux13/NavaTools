@@ -11,6 +11,7 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit, forms
 from Autodesk.Revit.DB import Transaction
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -21,9 +22,9 @@ Sets `_type` to `sleeve` on selected elements
 
 # Parameters to set
 parameters_to_set = {
-    "_type"
+    PYT_VALUE_SLEEVE
 }
-value_to_set = "sleeve"
+set_value = "sleeve"
 
 # Code
 # ==================================================
@@ -50,7 +51,7 @@ try:
                 if param is None or param.IsReadOnly:
                     continue
 
-                param.Set(value_to_set)
+                param.Set(set_value)
             except Exception:
                 pass
 

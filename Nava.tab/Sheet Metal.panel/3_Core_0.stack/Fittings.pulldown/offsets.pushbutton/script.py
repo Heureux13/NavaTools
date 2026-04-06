@@ -10,6 +10,7 @@ the copyright holder."""
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, VisibleInViewFilter
 from pyrevit import revit, forms, script
 from System.Collections.Generic import List
+from config.parameters_registry import *
 
 # Button info
 # ===================================================
@@ -68,7 +69,7 @@ uidoc.Selection.SetElementIds(id_list)
 for i, elem in enumerate(matched_elements, start=1):
     family_type = doc.GetElement(elem.GetTypeId())
     family_name = family_type.FamilyName if family_type else "Unknown"
-    offset_param = elem.LookupParameter("_offset")
+    offset_param = elem.LookupParameter(PYT_OFFSET_VALUE)
     offset_str = "-"
     if offset_param:
         offset_str = offset_param.AsString() or offset_param.AsValueString() or "-"

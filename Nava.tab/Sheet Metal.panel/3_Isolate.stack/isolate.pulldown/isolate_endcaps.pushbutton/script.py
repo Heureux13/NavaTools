@@ -29,9 +29,10 @@ active_view = revit.active_view
 # Helpers
 # ==================================================================================================
 
-group = {"Elbow",
-         "Elbow - 90 Degree",
-         }
+group = {
+    "Elbow",
+    "Elbow - 90 Degree",
+}
 
 
 def collect_elbow_ducts(doc, view):

@@ -17,6 +17,7 @@ from Autodesk.Revit.DB import (
     Transaction,
     XYZ,
 )
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -151,7 +152,7 @@ output = script.get_output()
 
 # Numbering configuration
 # ==================================================
-number_parameter = '_#'
+number_parameter = PYT_NUMBER
 number_padding = 4
 
 air_terminals = (

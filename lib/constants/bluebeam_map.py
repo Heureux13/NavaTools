@@ -16,6 +16,101 @@ Maps Bluebeam CSV column names to:
   - Expected parameter storage type: 'String', 'Integer', or 'Double'
 """
 
+# Explicit alias constants (stable for IronPython import and linting)
+BBM_AUTHOR = '_author'
+BBM_CLASS = '_class'
+BBM_SUBCLASS = '_subclass'
+BBM_SUBJECT = '_subject'
+BBM_LAYER = '_layer'
+BBM_CHECK = '_check'
+BBM_COLOR = '_color'
+BBM_NUMBER = '_number'
+BBM_OG_LABEL = '_og_label'
+BBM_LABEL = '_label'
+BBM_PAGE_LABEL = '_page_label'
+BBM_SPACE = '_space'
+BBM_QTY = '_qty'
+BBM_MAKE = '_make'
+BBM_MODEL = '_model'
+BBM_SIZE = '_size'
+BBM_NECK = '_neck'
+BBM_FACE = '_face'
+BBM_MOUNT = '_mount'
+BBM_CEILING = '_ceiling'
+BBM_TYPE = '_type'
+BBM_DAMPER = '_damper'
+BBM_SLOT = '_slot'
+BBM_HAND = '_hand'
+BBM_VPH = '_v_ph'
+BBM_DUTY = '_duty'
+BBM_SA_CFM = '_sa_cfm'
+BBM_EA_CFM = '_ea_cfm'
+BBM_CFM = '_cfm'
+BBM_GPM = '_gpm'
+BBM_HP = '_hp'
+BBM_KW = '_kw'
+BBM_SLEEVE = '_sleeve'
+BBM_K = '_k'
+BBM_MATERIAL = '_material'
+BBM_PAINT = '_paint'
+BBM_NOTES = '_notes'
+BBM_LOCK = '_lock'
+BBM_STATUS = '_status'
+BBM_PHASE = '_phase'
+BBM_SECTION = '_section'
+BBM_SYSTEM = '_system'
+BBM_UNIT = '_unit'
+BBM_FAN = '_fan'
+BBM_DEVICE = '_device'
+BBM_VAV = '_vav'
+BBM_PAGE_INDEX = '_page_index'
+BBM_COMMENTS = '_comments'
+BBM_TRADE = '_trade'
+
+
+def _bbm_alias_for(column_name):
+    """Create default Revit parameter alias from Bluebeam header."""
+    text = column_name.strip().lower()
+    # keep only alnum and underscores, convert separators to underscore
+    sanitized = []
+    for ch in text:
+        if ch.isalnum():
+            sanitized.append(ch)
+        else:
+            sanitized.append('_')
+    alias = ''.join(sanitized)
+    while '__' in alias:
+        alias = alias.replace('__', '_')
+    alias = alias.strip('_')
+    return '_{}'.format(alias) if alias else '_value'
+
+
+_BLUEBEAM_COLUMNS = [
+    'Author', 'Class', 'Subclass', 'Subject', 'Layer', 'Check', 'Color', '#',
+    'OG Label', 'Label', 'Page Label', 'Space', 'Qty', 'Make', 'Model', 'Size',
+    'Neck', 'Face', 'Mount', 'Ceiling', 'Type', 'Damper', 'Slot', 'Hand',
+    'V - Ph', 'Duty', 'SA CFM', 'EA CFM', 'CFM', 'GPM', 'HP', 'Kw', 'Sleeve',
+    'K', 'Material', 'Paint', 'Notes', 'Lock', 'Status', 'Phase', 'Section',
+    'System', 'Unit', 'Fan', 'Device', 'VAV', 'Page Index', 'Comments', 'Trade'
+]
+
+
+for _col in _BLUEBEAM_COLUMNS:
+    const_name = 'BBM_' + ''.join(
+        ch if ch.isalnum() else '_' for ch in _col.upper()
+    ).strip('_')
+    while '__' in const_name:
+        const_name = const_name.replace('__', '_')
+    if const_name not in globals():
+        globals()[const_name] = _bbm_alias_for(_col)
+
+# Backward-compat constant names used by COLUMN_MAP.
+# Auto-generation does not produce these exact legacy tokens.
+if 'BBM_NUMBER' not in globals():
+    BBM_NUMBER = _bbm_alias_for('#')
+if 'BBM_VPH' not in globals():
+    BBM_VPH = _bbm_alias_for('V - Ph')
+
 
 # Column name mapping: Revit schedule header -> (aliases, storage_type)
 # Order matches CSV column order: Author,Class,Subclass,Subject,Layer,Check,Color,#,OG Label,Label,...
@@ -269,6 +364,5 @@ COLUMN_MAP = {
 
 # Legacy alias dict for backward compatibility with schedule column name mapping
 SOURCE_HEADER_ALIASES = {
-    'cfm': ['cfm', 'sa cfm', 'ra cfm'],
     'v/ph': ['v - ph'],
 }

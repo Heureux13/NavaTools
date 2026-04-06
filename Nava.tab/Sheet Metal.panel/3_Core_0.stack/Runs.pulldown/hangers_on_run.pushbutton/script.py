@@ -15,6 +15,7 @@ from runs.revit_runs import RevitRuns
 from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
+from config.parameters_registry import *
 
 # Button info
 # ===================================================
@@ -33,15 +34,13 @@ output = script.get_output()
 
 # Ordered preference: custom param first, then Revit built-in Mark, then lowercase fallback
 hanger_parameters = [
-    '_weight_supporting',
-    'Mark',
-    'mark',
+    PYT_WEIGHT_SUPPORT,
+    RVT_MARK,
 ]
 
 duct_parameters = [
-    '_weight_run',
-    'Mark',
-    'mark',
+    PYT_WEIGHT_RUN,
+    RVT_MARK,
 ]
 
 # Main Code

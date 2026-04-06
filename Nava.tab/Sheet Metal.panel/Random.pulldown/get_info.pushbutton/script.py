@@ -12,6 +12,7 @@ the copyright holder."""
 from pyrevit import revit, forms, script
 from Autodesk.Revit.DB import *
 from ducts.revit_xyz import RevitXYZ
+from config.parameters_registry import *
 
 # Button display information
 # =================================================
@@ -29,18 +30,18 @@ view = revit.active_view
 output = script.get_output()
 
 show_parameters = {
-    'size',
-    'item number',
-    'specification',
-    'insulation specification',
-    'fabrication service',
-    'mark',
-    'type  mark',
-    'angle',
-    'reference level',
-    'upper end top elevation',
-    'middle elevation',
-    'lower end bottom elevation',
+    RVT_SIZE,
+    RVT_ITEM_NUMBER,
+    RVT_SPECIFICATION,
+    RVT_INSULATION_SPECIFICATION,
+    RVT_FABRICATION_SERVICE,
+    RVT_MARK,
+    RVT_TYPE_MARK,
+    RVT_ANGLE,
+    RVT_REFERENCE_LEVEL,
+    RVT_UPPER_END_TOP_ELEVATION,
+    RVT_MIDDLE_ELEVATION,
+    RVT_LOWER_END_BOTTOM_ELEVATION,
 }
 
 # Convert show_parameters to lowercase and strip for comparison
@@ -135,7 +136,7 @@ for elid in selected_ids:
         ) if el.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM) else "N/A"
         output.print_md(
             "**Family**: {} | **Type**: {}".format(family, elem_type))
-    except:
+    except BaseException:
         pass
 
     # Get connected elements via connectors
