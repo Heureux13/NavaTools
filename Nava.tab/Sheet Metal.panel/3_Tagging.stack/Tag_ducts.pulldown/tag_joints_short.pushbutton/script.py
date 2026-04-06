@@ -11,10 +11,10 @@ the copyright holder."""
 # ==================================================
 from Autodesk.Revit.DB import Transaction
 from pyrevit import revit, forms, DB, script
-from revit_duct import RevitDuct, JointSize, DuctAngleAllowance
-from revit_xyz import RevitXYZ
+from ducts.revit_duct import RevitDuct, JointSize, DuctAngleAllowance
+from ducts.revit_xyz import RevitXYZ
 from tagging.revit_tagging import RevitTagging
-from revit_output import print_disclaimer
+from constants.print_outputs import print_disclaimer
 
 # Button info
 # ==================================================

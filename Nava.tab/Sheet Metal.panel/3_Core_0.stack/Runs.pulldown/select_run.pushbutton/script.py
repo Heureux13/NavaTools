@@ -9,9 +9,10 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_element import RevitElement
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from revit.revit_element import RevitElement
+from ducts.revit_duct import RevitDuct
+from runs.revit_runs import RevitRuns
+from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -44,7 +45,7 @@ selected_duct = selected_duct[0] if selected_duct else None
 # Start of select / print loop
 if selected_duct:
     # Selets duct that is connected to the selected duct based on size
-    run = RevitDuct.create_duct_run(selected_duct, doc, view)
+    run = RevitRuns.create_duct_run(selected_duct, doc, view)
     RevitElement.select_many(uidoc, run)
 
     for i, sel in enumerate(run, start=1):

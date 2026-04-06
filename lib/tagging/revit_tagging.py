@@ -20,7 +20,7 @@ from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
 from enum import Enum
-from revit_xyz import RevitXYZ
+from ducts.revit_xyz import RevitXYZ
 import re
 
 # Variables
@@ -451,7 +451,8 @@ class RevitTagging:
                         for tid in tagged_ids:
                             if not tid:
                                 continue
-                            key = tid.IntegerValue if hasattr(tid, "IntegerValue") else int(tid)
+                            key = tid.IntegerValue if hasattr(
+                                tid, "IntegerValue") else int(tid)
                             if key not in result:
                                 result[key] = set()
                             result[key].add(fam_name)
@@ -484,7 +485,8 @@ class RevitTagging:
                 for tid in tagged_ids:
                     if not tid:
                         continue
-                    key = tid.IntegerValue if hasattr(tid, "IntegerValue") else int(tid)
+                    key = tid.IntegerValue if hasattr(
+                        tid, "IntegerValue") else int(tid)
                     if key not in result:
                         result[key] = set()
                     result[key].add(fam_name)
@@ -567,8 +569,10 @@ class RevitTagging:
                 right_y = view_dir.Z * view_up.X - view_dir.X * view_up.Z
                 right_z = view_dir.X * view_up.Y - view_dir.Y * view_up.X
 
-                right_len = math.sqrt(right_x * right_x + right_y * right_y + right_z * right_z)
-                up_len = math.sqrt(view_up.X * view_up.X + view_up.Y * view_up.Y + view_up.Z * view_up.Z)
+                right_len = math.sqrt(
+                    right_x * right_x + right_y * right_y + right_z * right_z)
+                up_len = math.sqrt(view_up.X * view_up.X +
+                                   view_up.Y * view_up.Y + view_up.Z * view_up.Z)
 
                 if right_len > 1e-9 and up_len > 1e-9:
                     right_x /= right_len
@@ -601,9 +605,11 @@ class RevitTagging:
                         tag_pos = tag.TagHeadPosition
                         axis = Line.CreateBound(
                             tag_pos,
-                            XYZ(tag_pos.X + axis_dir.X, tag_pos.Y + axis_dir.Y, tag_pos.Z + axis_dir.Z)
+                            XYZ(tag_pos.X + axis_dir.X, tag_pos.Y +
+                                axis_dir.Y, tag_pos.Z + axis_dir.Z)
                         )
-                        ElementTransformUtils.RotateElement(self.doc, tag.Id, axis, angle_rad)
+                        ElementTransformUtils.RotateElement(
+                            self.doc, tag.Id, axis, angle_rad)
             except Exception:
                 # Tag placed but rotation failed - still return the tag
                 pass

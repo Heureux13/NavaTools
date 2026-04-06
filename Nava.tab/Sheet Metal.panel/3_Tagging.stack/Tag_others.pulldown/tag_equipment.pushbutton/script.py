@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
-from tagging.tag_map import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK, SLOT_MARK_NOTE
+from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_MARK, SLOT_MARK_NOTE
 
 # Button display information
 # =================================================

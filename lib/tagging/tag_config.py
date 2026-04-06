@@ -2,28 +2,57 @@
 
 """Shared tag slot configuration used by fitting and joint tagging scripts."""
 
-SLOT_BOD = 'BOD'
-SLOT_BOD_CENTER = 'BOD_CENTER'
-SLOT_BOD_LEFT = 'BOD_LEFT'
-SLOT_BOD_RIGHT = 'BOD_RIGHT'
-SLOT_DEGREE = 'DEGREE'
-SLOT_EXT_IN = 'EXT_IN'
-SLOT_EXT_LEFT = 'EXT_LEFT'
-SLOT_EXT_OUT = 'EXT_OUT'
-SLOT_EXT_RIGHT = 'EXT_RIGHT'
-SLOT_LENGTH = 'LENGTH'
-SLOT_LENGTH_CENTER = 'LENGTH_CENTER'
-SLOT_LENGTH_LEFT = 'LENGTH_LEFT'
-SLOT_LENGTH_RIGHT = 'LENGTH_RIGHT'
-SLOT_MARK = 'MARK'
-SLOT_MARK_NOTE = 'MARK_NOTE'
-SLOT_SIZE = 'SIZE'
-SLOT_SIZE_CENTER = 'SIZE_CENTER'
-SLOT_SIZE_LEFT = 'SIZE_LEFT'
-SLOT_SIZE_RIGHT = 'SIZE_RIGHT'
-SLOT_TRAN = 'TRAN'
-SLOT_TYPE_MARK = 'TYPE_MARK'
-SLOT_WEIGHT = 'WEIGHT'
+# fmt: off
+# autopep8: off
+SLOT_BOD                    = 'BOD'
+SLOT_BOD_CENTER             = 'BOD_CENTER'
+SLOT_BOD_LEFT               = 'BOD_LEFT'
+SLOT_BOD_RIGHT              = 'BOD_RIGHT'
+SLOT_DEGREE                 = 'DEGREE'
+SLOT_EXT_IN                 = 'EXT_IN'
+SLOT_EXT_LEFT               = 'EXT_LEFT'
+SLOT_EXT_OUT                = 'EXT_OUT'
+SLOT_EXT_RIGHT              = 'EXT_RIGHT'
+SLOT_LENGTH                 = 'LENGTH'
+SLOT_LENGTH_CENTER          = 'LENGTH_CENTER'
+SLOT_LENGTH_LEFT            = 'LENGTH_LEFT'
+SLOT_LENGTH_RIGHT           = 'LENGTH_RIGHT'
+SLOT_MARK                   = 'MARK'
+SLOT_MARK_NOTE              = 'MARK_NOTE'
+SLOT_SIZE                   = 'SIZE'
+SLOT_SIZE_CENTER            = 'SIZE_CENTER'
+SLOT_SIZE_LEFT              = 'SIZE_LEFT'
+SLOT_SIZE_RIGHT             = 'SIZE_RIGHT'
+SLOT_TRAN                   = 'TRAN'
+SLOT_TYPE_MARK              = 'TYPE_MARK'
+SLOT_WEIGHT                 = 'WEIGHT'
+# fmt: on
+# autopep8: on
+
+SLOT_ALL = (
+    SLOT_BOD,
+    SLOT_BOD_CENTER,
+    SLOT_BOD_LEFT,
+    SLOT_BOD_RIGHT,
+    SLOT_DEGREE,
+    SLOT_EXT_IN,
+    SLOT_EXT_LEFT,
+    SLOT_EXT_OUT,
+    SLOT_EXT_RIGHT,
+    SLOT_LENGTH,
+    SLOT_LENGTH_CENTER,
+    SLOT_LENGTH_LEFT,
+    SLOT_LENGTH_RIGHT,
+    SLOT_MARK,
+    SLOT_MARK_NOTE,
+    SLOT_SIZE,
+    SLOT_SIZE_CENTER,
+    SLOT_SIZE_LEFT,
+    SLOT_SIZE_RIGHT,
+    SLOT_TRAN,
+    SLOT_TYPE_MARK,
+    SLOT_WEIGHT
+)
 
 
 DEFAULT_TAG_SLOT_CANDIDATES = {
@@ -59,22 +88,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_EXT_RIGHT: [
         "-FabDuct_EXT RIGHT_MV_Tag",
         "_umi_EXTENSION_RIGHT"
-    ],
-    SLOT_LENGTH: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH"
-    ],
-    SLOT_LENGTH_CENTER: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_CENTER"
-    ],
-    SLOT_LENGTH_LEFT: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_LEFT"
-    ],
-    SLOT_LENGTH: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH"
     ],
     SLOT_LENGTH: [
         "-FabDuct_LENGTH_Tag",

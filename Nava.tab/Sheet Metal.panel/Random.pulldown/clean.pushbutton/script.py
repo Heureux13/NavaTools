@@ -4,8 +4,8 @@
 from Autodesk.Revit.DB import BuiltInCategory, ElementId
 from Autodesk.Revit.UI.Selection import ObjectType
 from pyrevit import revit, script
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from ducts.revit_duct import RevitDuct
+from constants.print_outputs import print_disclaimer
 from System.Collections.Generic import List
 
 # Button display information

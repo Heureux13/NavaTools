@@ -10,8 +10,8 @@ the copyright holder."""
 # Imports
 # ==================================================
 from pyrevit import revit, script
-from revit_output import print_disclaimer
-from revit_duct import RevitDuct
+from constants.print_outputs import print_disclaimer
+from ducts.revit_duct import RevitDuct
 
 __title__ = "Length Total"
 __doc__ = """

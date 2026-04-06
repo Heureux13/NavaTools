@@ -9,10 +9,10 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_duct import RevitDuct
-from revit_element import RevitElement
-from revit_output import print_disclaimer
-from size import Size
+from ducts.revit_duct import RevitDuct
+from revit.revit_element import RevitElement
+from constants.print_outputs import print_disclaimer
+from geometry.size import Size
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 import re
@@ -142,7 +142,8 @@ def _size_signature(size_value):
 
     # Rectangle / square (order-independent)
     if size_obj.in_width is not None and size_obj.in_height is not None:
-        dims = sorted([round(float(size_obj.in_width), 4), round(float(size_obj.in_height), 4)])
+        dims = sorted([round(float(size_obj.in_width), 4),
+                      round(float(size_obj.in_height), 4)])
         return ("rect", tuple(dims))
 
     return None
@@ -792,15 +793,18 @@ if selected_duct:
                     ):
                         continue
 
-                    anchor_num, anchor_duct = find_connected_numbered_element(branch_duct, doc, view)
+                    anchor_num, anchor_duct = find_connected_numbered_element(
+                        branch_duct, doc, view)
 
                     if anchor_num is None:
                         continue
 
-                    base_for_branch = (last_number + 1) if last_number is not None else (anchor_num + 1)
+                    base_for_branch = (
+                        last_number + 1) if last_number is not None else (anchor_num + 1)
                     branch_start = round_up_to_nearest_10(base_for_branch)
 
-                    filter_size = branch_duct.size_out if branch_duct.family and branch_duct.family.lower() in store_families else None
+                    filter_size = branch_duct.size_out if branch_duct.family and branch_duct.family.lower(
+                    ) in store_families else None
 
                     sub_branches = []
 
@@ -838,7 +842,8 @@ if selected_duct:
                     start_num = get_item_number(modified_ducts[0])
                     end_num = get_item_number(modified_ducts[-1])
                     if start_num or end_num:
-                        output.print_md("Start: {} | End: {}".format(start_num, end_num))
+                        output.print_md(
+                            "Start: {} | End: {}".format(start_num, end_num))
                 except Exception:
                     pass
 

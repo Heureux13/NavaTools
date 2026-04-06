@@ -9,7 +9,8 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_duct import RevitDuct
+from ducts.revit_duct import RevitDuct
+from runs.revit_runs import RevitRuns
 from pyrevit import revit, script
 from System.Collections.Generic import List
 from Autodesk.Revit.DB import ElementId
@@ -41,7 +42,7 @@ else:
 
     for selected_duct in selected_ducts:
         # Get the run at same height
-        run = RevitDuct.create_duct_run_same_height(selected_duct, doc, view)
+        run = RevitRuns.create_duct_run_same_height(selected_duct, doc, view)
 
         # Add all elements from the run to selection set
         for duct in run:

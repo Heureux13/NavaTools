@@ -3,5 +3,5 @@ title:
 layout:
   - check_grd
   - check_mech_equipment_workset
-  - check_number
+  - check_item_numbers
   - check_reference_level

@@ -8,9 +8,9 @@ the copyright holder."""
 # ======================================================================
 
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory
-from offsets import Offsets
-from size import Size
-from revit_xyz import RevitXYZ
+from geometry.offsets import Offsets
+from geometry.size import Size
+from ducts.revit_xyz import RevitXYZ
 from pyrevit import revit, script
 from Autodesk.Revit.DB import StorageType
 

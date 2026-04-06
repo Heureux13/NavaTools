@@ -9,7 +9,7 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_element import RevitElement
+from revit.revit_element import RevitElement
 from pyrevit import revit, script
 from Autodesk.Revit.DB import (
     BuiltInCategory,
@@ -55,7 +55,8 @@ def _iter_connectors(element):
     if mep_model is not None:
         mep_connector_manager = getattr(mep_model, "ConnectorManager", None)
         if mep_connector_manager is not None:
-            connector_sets.append(getattr(mep_connector_manager, "Connectors", None))
+            connector_sets.append(
+                getattr(mep_connector_manager, "Connectors", None))
 
     get_connectors = getattr(element, "GetConnectors", None)
     if callable(get_connectors):
@@ -231,7 +232,8 @@ for grd in grds:
 
 target_ducts = list(target_ducts_by_id.values())
 if not target_ducts:
-    output.print_md("## Selected {} GRDs, but no connected non-work-tap ductwork was found.".format(len(grds)))
+    output.print_md(
+        "## Selected {} GRDs, but no connected non-work-tap ductwork was found.".format(len(grds)))
     script.exit()
 
 # 3) Set Item Number = "skip".
@@ -253,8 +255,10 @@ with revit.Transaction('Set Item Number to skip for GRD-connected ductwork'):
             readonly_or_invalid.append(duct.Id)
 
 output.print_md("## Selected {} GRDs in active view.".format(len(grds)))
-output.print_md("## Connected non-work-tap ductwork found: {}".format(len(target_ducts)))
-output.print_md("## Connected ducts skipped for non-vertical orientation: {}".format(non_vertical_count))
+output.print_md(
+    "## Connected non-work-tap ductwork found: {}".format(len(target_ducts)))
+output.print_md(
+    "## Connected ducts skipped for non-vertical orientation: {}".format(non_vertical_count))
 output.print_md("## Item Number set to skip: {}".format(len(updated)))
 
 if already:
@@ -262,4 +266,5 @@ if already:
 if missing:
     output.print_md("Missing Item Number parameter: {}".format(len(missing)))
 if readonly_or_invalid:
-    output.print_md("Read-only/non-string/failed to set: {}".format(len(readonly_or_invalid)))
+    output.print_md(
+        "Read-only/non-string/failed to set: {}".format(len(readonly_or_invalid)))

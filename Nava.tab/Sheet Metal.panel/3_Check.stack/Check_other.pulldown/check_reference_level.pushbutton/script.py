@@ -8,7 +8,6 @@ the copyright holder."""
 # ======================================================================
 
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, CategoryType
-from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
 from System.Collections.Generic import List
 from System.Windows.Forms import Form, Label, Button, DialogResult, CheckedListBox
@@ -35,6 +34,12 @@ output = script.get_output()
 # ========================================================================
 
 
+def element_id_value(eid):
+    if eid is None:
+        return None
+    return eid.IntegerValue if hasattr(eid, "IntegerValue") else eid.Value
+
+
 def lookup_parameter_case_insensitive(element, param_name):
     """Case-insensitive parameter lookup"""
     param_name_lower = param_name.strip().lower()
@@ -50,7 +55,7 @@ def get_level_name_from_param(param):
 
     try:
         level_id = param.AsElementId()
-        if level_id and level_id.IntegerValue > 0:
+        if level_id and element_id_value(level_id) > 0:
             level = doc.GetElement(level_id)
             if level and hasattr(level, "Name"):
                 return level.Name
@@ -83,7 +88,7 @@ def get_reference_level_name(element):
 
     try:
         level_id = element.LevelId
-        if level_id and level_id.IntegerValue > 0:
+        if level_id and element_id_value(level_id) > 0:
             level = doc.GetElement(level_id)
             if level and hasattr(level, "Name"):
                 return level.Name
@@ -133,7 +138,8 @@ class LevelPickerForm(Form):
         self.level_list.CheckOnClick = True
         self.Controls.Add(self.level_list)
 
-        sorted_levels = sorted(level_groups.keys(), key=lambda x: str(x).lower())
+        sorted_levels = sorted(level_groups.keys(),
+                               key=lambda x: str(x).lower())
         for level_name in sorted_levels:
             count = len(level_groups[level_name])
             display = "{} ({})".format(level_name, count)
@@ -185,11 +191,11 @@ try:
             continue
         if category.CategoryType != CategoryType.Model:
             continue
-        if category.Id.IntegerValue in mep_category_ids:
+        if element_id_value(category.Id) in mep_category_ids:
             mep_elements.append(element)
 
     if not mep_elements:
-        TaskDialog.Show("No MEP Elements", "No MEP elements found in current view.")
+        output.print_md("## No MEP elements found in current view.")
         script.exit()
 
     level_groups = {}
@@ -207,7 +213,7 @@ try:
 
     selected_levels = form.get_selected_levels()
     if not selected_levels:
-        TaskDialog.Show("No Levels Selected", "Please select at least one reference level.")
+        output.print_md("## Please select at least one reference level.")
         script.exit()
 
     selected_elements = []
@@ -215,7 +221,7 @@ try:
         selected_elements.extend(level_groups.get(level_name, []))
 
     if not selected_elements:
-        TaskDialog.Show("No Elements", "No elements found for selected reference levels.")
+        output.print_md("## No elements found for selected reference levels.")
         script.exit()
 
     selected_ids = List[ElementId]()
@@ -224,9 +230,11 @@ try:
     uidoc.Selection.SetElementIds(selected_ids)
 
     output.print_md("## Reference Level Filter")
-    output.print_md("- Selected levels: {} of {}".format(len(selected_levels), len(level_groups)))
+    output.print_md(
+        "- Selected levels: {} of {}".format(len(selected_levels), len(level_groups)))
     for level_name in sorted(selected_levels, key=lambda x: str(x).lower()):
-        output.print_md("  - {} ({})".format(level_name, len(level_groups.get(level_name, []))))
+        output.print_md("  - {} ({})".format(level_name,
+                        len(level_groups.get(level_name, []))))
 
     element_ids = [element.Id for element in selected_elements]
     output.print_md("---")
@@ -238,4 +246,4 @@ try:
     )
 
 except Exception as e:
-    TaskDialog.Show("Error", "Script failed: {}".format(str(e)))
+    output.print_md("## Error: {}".format(str(e)))

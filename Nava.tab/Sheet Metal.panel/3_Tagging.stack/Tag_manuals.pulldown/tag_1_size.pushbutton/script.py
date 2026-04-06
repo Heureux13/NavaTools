@@ -10,10 +10,10 @@ the copyright holder."""
 # Imports
 # ==================================================
 from System.Collections.Generic import List
-from revit_output import print_disclaimer
+from constants.print_outputs import print_disclaimer
 from tagging.revit_tagging import RevitTagging
-from revit_element import RevitElement
-from revit_duct import RevitDuct
+from revit.revit_element import RevitElement
+from ducts.revit_duct import RevitDuct
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 

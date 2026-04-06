@@ -9,7 +9,7 @@ the copyright holder."""
 
 
 from pyrevit import revit, script
-from revit_xyz import RevitXYZ
+from ducts.revit_xyz import RevitXYZ
 
 
 # Button info

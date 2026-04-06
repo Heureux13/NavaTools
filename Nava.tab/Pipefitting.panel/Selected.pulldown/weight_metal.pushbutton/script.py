@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from pyrevit import revit, script
-from revit_output import print_disclaimer
+from constants.print_outputs import print_disclaimer
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     BuiltInParameter,

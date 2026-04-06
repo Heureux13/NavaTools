@@ -10,14 +10,14 @@ the copyright holder."""
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, VisibleInViewFilter
 from pyrevit import revit, script
 from System.Collections.Generic import List
-from revit_duct import RevitDuct
+from ducts.revit_duct import RevitDuct
 
 
 # Button info
 # ===================================================
-__title__ = "Check Fab Numbers"
+__title__ = "Check Item Numbers"
 __doc__ = """
-Select ducts where Fabrication Notes and Item Number match
+Gives a list of all duct with the same item number.
 """
 
 # Variables
@@ -29,6 +29,12 @@ output = script.get_output()
 
 # Helpers
 # ========================================================================
+
+
+def element_id_value(eid):
+    if eid is None:
+        return None
+    return eid.IntegerValue if hasattr(eid, "IntegerValue") else eid.Value
 
 
 def get_param_value(param):
@@ -44,7 +50,7 @@ def get_param_value(param):
         if param.StorageType == 2:  # Integer
             return param.AsInteger()
         if param.StorageType == 3:  # ElementId
-            return param.AsElementId().IntegerValue
+            return element_id_value(param.AsElementId())
     except Exception:
         return None
 
@@ -122,7 +128,7 @@ try:
         if composite_key not in param_groups:
             param_groups[composite_key] = []
         param_groups[composite_key].append(d)
-        param_values_map[d.Id.IntegerValue] = param_values
+        param_values_map[element_id_value(d.Id)] = param_values
 
     if not param_groups:
         output.print_md(
@@ -157,7 +163,7 @@ try:
 
     # Sort by Item Number parameter value
     def get_sort_key(duct):
-        values = param_values_map.get(duct.element.Id.IntegerValue, {})
+        values = param_values_map.get(element_id_value(duct.element.Id), {})
         item_num = values.get("item number", "0")
         try:
             return int(item_num) if item_num else 0
@@ -168,10 +174,13 @@ try:
 
     for i, fil in enumerate(fil_ducts, start=1):
         try:
-            values = param_values_map.get(fil.element.Id.IntegerValue, {})
-            param_str = " | ".join("{}: {}".format(p, values.get(p, "")) for p in sorted(check_parameters))
-            fab_service_param = lookup_parameter_case_insensitive(fil.element, "fabrication service")
-            fab_service = get_param_value(fab_service_param) if fab_service_param else ""
+            values = param_values_map.get(element_id_value(fil.element.Id), {})
+            param_str = " | ".join("{}: {}".format(p, values.get(p, ""))
+                                   for p in sorted(check_parameters))
+            fab_service_param = lookup_parameter_case_insensitive(
+                fil.element, "fabrication service")
+            fab_service = get_param_value(
+                fab_service_param) if fab_service_param else ""
         except Exception:
             param_str = ""
             fab_service = ""

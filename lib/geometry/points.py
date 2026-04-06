@@ -10,7 +10,7 @@ the copyright holder.
 # Imports
 # =========================================================================
 import math
-from xyz import XYZ
+from geometry.xyz import XYZ
 
 # Class
 # =========================================================================

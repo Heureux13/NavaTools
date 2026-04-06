@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
-from revit_element import RevitElement
-from revit_xyz import RevitXYZ
-from tagging.tag_map import (
+from revit.revit_element import RevitElement
+from ducts.revit_xyz import RevitXYZ
+from tagging.tag_config import (
     SLOT_TYPE_MARK as CFG_SLOT_TYPE_MARK,
     SLOT_SIZE as CFG_SLOT_SIZE,
     SLOT_EXT_IN as CFG_SLOT_EXT_IN,

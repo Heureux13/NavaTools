@@ -7,8 +7,8 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from ducts.revit_duct import RevitDuct
+from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
 from System.Collections.Generic import List

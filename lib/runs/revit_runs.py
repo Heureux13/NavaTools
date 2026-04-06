@@ -9,10 +9,10 @@ the copyright holder.
 
 # Standard library
 # =========================================================
-from revit_xyz import RevitXYZ
-from revit_duct import RevitDuct
-from size import Size
-from offsets import Offsets
+from ducts.revit_xyz import RevitXYZ
+from ducts.revit_duct import RevitDuct
+from geometry.size import Size
+from geometry.offsets import Offsets
 from Autodesk.Revit.DB import (
     ElementId,
     FilteredElementCollector,
@@ -42,7 +42,7 @@ view = revit.active_view
 output = script.get_output()
 
 
-class RrevitRuns(object):
+class RevitRuns(object):
     """Run utilities wrapped as instance helpers."""
 
     def __init__(
@@ -95,7 +95,8 @@ class RrevitRuns(object):
 
         # Rectangle / square (order-independent)
         if size_obj.in_width is not None and size_obj.in_height is not None:
-            dims = sorted([round(float(size_obj.in_width), 4), round(float(size_obj.in_height), 4)])
+            dims = sorted([round(float(size_obj.in_width), 4),
+                          round(float(size_obj.in_height), 4)])
             return ("rect", tuple(dims))
 
         return None
@@ -130,7 +131,8 @@ class RrevitRuns(object):
                     return None
 
                 try:
-                    num_val = int(val) if isinstance(val, (int, float)) else int(float(val))
+                    num_val = int(val) if isinstance(
+                        val, (int, float)) else int(float(val))
                     if num_val in self.skip_values:
                         return None
                     return num_val
@@ -339,7 +341,8 @@ class RrevitRuns(object):
                 if c.id not in visited and self.is_traversable(c)
             ]
 
-            next_duct = self.find_duct_with_number(unvisited_traversable, next_number)
+            next_duct = self.find_duct_with_number(
+                unvisited_traversable, next_number)
 
             if next_duct is None:
                 break
@@ -380,7 +383,8 @@ class RrevitRuns(object):
 
         for duct in all_ducts:
             connected = self.get_connected_fittings(duct, doc, view)
-            traversable_count = sum(1 for c in connected if self.is_traversable(c))
+            traversable_count = sum(
+                1 for c in connected if self.is_traversable(c))
 
             if traversable_count == 1:
                 endpoints.append(duct)
@@ -442,7 +446,8 @@ class RrevitRuns(object):
             if not self.is_traversable(conn):
                 continue
 
-            anchor_num, anchor_duct = self.find_anchor_number(conn, visited, doc, view)
+            anchor_num, anchor_duct = self.find_anchor_number(
+                conn, visited, doc, view)
             if anchor_num is not None:
                 return (anchor_num, anchor_duct)
 
@@ -474,7 +479,8 @@ class RrevitRuns(object):
         if not skip_start_numbering:
             if self.is_numberable(start_duct) and not self.has_skip_value(start_duct):
                 if previous_numbers is not None:
-                    previous_numbers[start_duct.id] = self.get_item_number(start_duct)
+                    previous_numbers[start_duct.id] = self.get_item_number(
+                        start_duct)
                 if self.set_item_number(start_duct, current_number):
                     modified_ducts.append(start_duct)
                     current_number += 1
@@ -623,3 +629,253 @@ class RrevitRuns(object):
                     to_process.append((conn, current_number))
 
         return current_number - 1, stored_taps, modified_ducts, len(modified_ducts)
+
+    @staticmethod
+    def create_duct_run(start_duct, doc, view):
+        """Find all connected ducts/fittings that match both shape and size of the starting duct."""
+        run = set()
+        to_visit = [start_duct]
+        visited = set()
+
+        # Preload all fabrication duct parts in the view for fallback proximity checks
+        try:
+            all_ducts_index = {d.id: d for d in RevitDuct.all(doc, view)}
+        except Exception:
+            all_ducts_index = {}
+
+        # Parse starting duct shape and size using Size.in_shape()
+        start_size_obj = Size(str(start_duct.size))
+
+        def shape_key_from_size(size_obj):
+            """Create a comparable key from Size using inlet fields only."""
+            shape = size_obj.in_shape()
+            if shape == "round" and size_obj.in_diameter is not None:
+                return ("round", round(size_obj.in_diameter, 2))
+            if shape == "oval" and size_obj.in_oval_dia is not None and size_obj.in_oval_flat is not None:
+                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
+            if shape == "rectangle" and size_obj.in_width is not None and size_obj.in_height is not None:
+                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
+            return ("unknown", str(size_obj.in_size))
+
+        def shape_equals(a, b, tol=0.01):
+            """Compare two shape keys with tolerance for numeric parts."""
+            if not isinstance(a, tuple) or not isinstance(b, tuple):
+                return a == b
+            if a[0] != b[0]:
+                return False
+            kind = a[0]
+            try:
+                if kind == "round":
+                    return abs(float(a[1]) - float(b[1])) <= tol
+                if kind == "oval":
+                    return (abs(float(a[1]) - float(b[1])) <= tol and
+                            abs(float(a[2]) - float(b[2])) <= tol)
+                if kind == "rect":
+                    # Handle orientation-insensitive comparison for rectangle
+                    aw, ah = float(a[1]), float(a[2])
+                    bw, bh = float(b[1]), float(b[2])
+                    direct = (abs(aw - bw) <= tol and abs(ah - bh) <= tol)
+                    swapped = (abs(aw - bh) <= tol and abs(ah - bw) <= tol)
+                    return direct or swapped
+                if kind == "unknown":
+                    return a[1] == b[1]
+            except Exception:
+                return a == b
+            return False
+
+        start_shape = shape_key_from_size(start_size_obj)
+
+        def connectors_close(duct_a, duct_b, tol=1e-4):
+            """Fallback: check if any connectors from two ducts are coincident within tolerance (feet)."""
+            try:
+                conns_a = duct_a.get_connectors() or []
+                conns_b = duct_b.get_connectors() or []
+            except Exception:
+                return False
+            for ca in conns_a:
+                oa = None
+                try:
+                    oa = ca.Origin
+                except Exception:
+                    pass
+                if oa is None:
+                    continue
+                for cb in conns_b:
+                    ob = None
+                    try:
+                        ob = cb.Origin
+                    except Exception:
+                        pass
+                    if ob is None:
+                        continue
+                    try:
+                        dx = oa.X - ob.X
+                        dy = oa.Y - ob.Y
+                        dz = oa.Z - ob.Z
+                        if (dx * dx + dy * dy + dz * dz) <= (tol * tol):
+                            return True
+                    except Exception:
+                        continue
+            return False
+
+        while to_visit:
+            duct = to_visit.pop()
+            if duct.id in visited:
+                continue
+            visited.add(duct.id)
+            run.add(duct)
+            for connector in duct.get_connectors():
+                if not connector.IsConnected:
+                    continue
+                all_refs = list(connector.AllRefs)
+                for ref in all_refs:
+                    if ref and hasattr(ref, 'Owner'):
+                        connected_elem = ref.Owner
+                        # Only process fabrication parts
+                        if not isinstance(connected_elem, FabricationPart):
+                            continue
+                        try:
+                            connected_duct = RevitDuct(
+                                doc, view, connected_elem)
+                        except Exception:
+                            continue
+                        # Parse connected duct shape and size via Size.in_shape()
+                        connected_size_obj = Size(str(connected_duct.size))
+                        connected_shape = shape_key_from_size(
+                            connected_size_obj)
+                        # Match by normalized shape/size only (avoid string formatting mismatches)
+                        if shape_equals(connected_shape, start_shape) and connected_duct.id not in visited:
+                            to_visit.append(connected_duct)
+                # Fallback: if no owner references provided by API, try proximity to other parts
+                if all_ducts_index:
+                    for other_id, other_duct in all_ducts_index.items():
+                        if other_id == duct.id or other_id in visited:
+                            continue
+                        # Pre-filter by shape/size to limit work
+                        try:
+                            other_shape = shape_key_from_size(
+                                Size(str(other_duct.size)))
+                        except Exception:
+                            continue
+                        if not shape_equals(other_shape, start_shape):
+                            continue
+                        if connectors_close(duct, other_duct):
+                            to_visit.append(other_duct)
+        return list(run)
+
+    @staticmethod
+    def create_duct_run_same_height(start_duct, doc, view, height_tolerance=0.01):
+        """Find all connected ducts/fittings that match shape, size, and z-axis height."""
+        run = set()
+        to_visit = [start_duct]
+        visited = set()
+        start_size_obj = Size(str(start_duct.size))
+
+        def shape_key_from_size(size_obj):
+            """Create a comparable key from Size using inlet fields only."""
+            shape = size_obj.in_shape()
+            if shape == "round" and size_obj.in_diameter is not None:
+                return ("round", round(size_obj.in_diameter, 2))
+            if shape == "oval" and size_obj.in_oval_dia is not None and size_obj.in_oval_flat is not None:
+                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
+            if shape == "rectangle" and size_obj.in_width is not None and size_obj.in_height is not None:
+                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
+            return ("unknown", str(size_obj.in_size))
+
+        def get_duct_z_coordinate(duct):
+            """Extract Z-coordinate (elevation) from centerline, fallback to inlet origin."""
+            # Try centerline midpoint Z
+            try:
+                loc = duct.element.Location
+                if hasattr(loc, 'Curve') and loc.Curve:
+                    c = loc.Curve
+                    p0 = c.GetEndPoint(0)
+                    p1 = c.GetEndPoint(1)
+                    return (p0.Z + p1.Z) / 2.0
+            except Exception:
+                pass
+
+            # Fallback to inlet origin Z
+            try:
+                inlet_data, outlet_data = duct._inlet_outlet_from_revit_xyz()
+                if inlet_data and 'origin' in inlet_data:
+                    origin = inlet_data['origin']
+                    return origin.Z
+            except Exception:
+                pass
+            return None
+
+        start_shape = shape_key_from_size(start_size_obj)
+        start_z = get_duct_z_coordinate(start_duct)
+
+        while to_visit:
+            duct = to_visit.pop()
+            if duct.id in visited:
+                continue
+            visited.add(duct.id)
+            run.add(duct)
+            for connector in duct.get_connectors():
+                if not connector.IsConnected:
+                    continue
+                all_refs = list(connector.AllRefs)
+                for ref in all_refs:
+                    if ref and hasattr(ref, 'Owner'):
+                        connected_elem = ref.Owner
+                        # Only process fabrication parts
+                        if not isinstance(connected_elem, FabricationPart):
+                            continue
+                        try:
+                            connected_duct = RevitDuct(
+                                doc, view, connected_elem)
+                        except Exception:
+                            continue
+
+                        # Check if already visited
+                        if connected_duct.id in visited:
+                            continue
+
+                        # Parse connected duct shape and size
+                        connected_size_obj = Size(str(connected_duct.size))
+                        connected_shape = shape_key_from_size(
+                            connected_size_obj)
+
+                        # Check Z-axis height difference
+                        connected_z = get_duct_z_coordinate(connected_duct)
+                        z_difference = abs(
+                            connected_z - start_z) if (connected_z is not None and start_z is not None) else None
+
+                        # Match shape, size, and z-axis height
+                        if (connected_shape == start_shape and
+                            z_difference is not None and
+                                z_difference <= height_tolerance):
+                            to_visit.append(connected_duct)
+        return list(run)
+
+    @staticmethod
+    def parse_length_string(length_str):
+        """Convert a Revit length string to inches (float)."""
+        if not length_str or not isinstance(length_str, str):
+            return 0.0
+
+        # Pattern: feet, inches, optional fraction
+        pattern = r"(\d+)'\s*-\s*(\d+)?(?:\s+(\d+)/(\d+))?\s*\""
+        cleaned = length_str.replace("’", "'").replace(
+            "”", '"').replace("″", '"')
+        match = re.match(pattern, cleaned)
+        if not match:
+            # Try to parse as a simple float
+            try:
+                return float(length_str)
+            except Exception:
+                return 0.0
+        feet = int(match.group(1)) if match.group(1) else 0
+        inches = int(match.group(2)) if match.group(2) else 0
+        num = int(match.group(3)) if match.group(3) else 0
+        denom = int(match.group(4)) if match.group(4) else 1
+        fraction = float(num) / float(denom) if denom else 0
+        total_inches = feet * 12 + inches + fraction
+        return total_inches
+
+
+# Backward compatibility for older imports/usages.
+RrevitRuns = RevitRuns

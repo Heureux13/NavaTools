@@ -12,8 +12,8 @@ from Autodesk.Revit.UI import TaskDialog
 from pyrevit import revit, script
 from System.Windows.Forms import Form, Label, Button, DialogResult, TextBox, TreeView, TreeNode
 from System.Collections.Generic import List
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from ducts.revit_duct import RevitDuct
+from constants.print_outputs import print_disclaimer
 import clr
 import re
 clr.AddReference("System.Windows.Forms")

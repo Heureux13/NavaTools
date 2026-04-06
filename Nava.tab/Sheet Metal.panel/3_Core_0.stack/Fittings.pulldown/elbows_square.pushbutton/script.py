@@ -9,9 +9,9 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_element import RevitElement
-from revit_duct import RevitDuct, script
-from revit_output import print_disclaimer
+from revit.revit_element import RevitElement
+from ducts.revit_duct import RevitDuct, script
+from constants.print_outputs import print_disclaimer
 from pyrevit import revit
 from Autodesk.Revit.DB import *
 

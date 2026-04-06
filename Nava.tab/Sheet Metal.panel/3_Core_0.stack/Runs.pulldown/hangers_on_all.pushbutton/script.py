@@ -9,9 +9,10 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_element import RevitElement
-from revit_duct import RevitDuct
-from revit_output import print_disclaimer
+from revit.revit_element import RevitElement
+from ducts.revit_duct import RevitDuct
+from runs.revit_runs import RevitRuns
+from constants.print_outputs import print_disclaimer
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -108,7 +109,7 @@ while pending_hanger_ids:
     run_number += 1
 
     # Build run from the host duct
-    run = RevitDuct.create_duct_run(host_duct, doc, view)
+    run = RevitRuns.create_duct_run(host_duct, doc, view)
     RevitElement.select_many(uidoc, run)
     run_total_length = sum(d.length or 0 for d in run)
     run_total_weight = sum(d.weight or 0 for d in run)
@@ -243,7 +244,7 @@ while remaining_ducts:
     host_duct = remaining_ducts.pop(0)
 
     # Build run from this unassigned duct
-    run = RevitDuct.create_duct_run(host_duct, doc, view)
+    run = RevitRuns.create_duct_run(host_duct, doc, view)
     run_number += 1
 
     run_total_weight = sum(d.weight or 0 for d in run)

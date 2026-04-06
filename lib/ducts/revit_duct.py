@@ -9,9 +9,9 @@ the copyright holder.
 
 # Standard library
 # =========================================================
-from revit_xyz import RevitXYZ
-from size import Size
-from offsets import Offsets
+from ducts.revit_xyz import RevitXYZ
+from geometry.size import Size
+from geometry.offsets import Offsets
 from Autodesk.Revit.DB import (
     ElementId,
     FilteredElementCollector,
@@ -25,6 +25,13 @@ import re
 import logging
 import math
 from enum import Enum
+from ducts.connector_thresholds import (
+    CONNECTOR_THRESHOLDS,
+    DEFAULT_SHORT_THRESHOLD_IN,
+    JointSize,
+)
+
+from config.parameters_registry import *
 
 # Thrid Party
 from pyrevit import DB, revit, script
@@ -42,20 +49,6 @@ output = script.get_output()
 
 # Logging
 log = logging.getLogger("RevitDuct")
-
-# Define Constants
-CONNECTOR_THRESHOLDS = {
-    ("Straight", "TDC"): 56.00,
-    ("Straight", "TDF"): 56.00,
-    ("Straight", "Standing S&D"): 59.00,
-    ("Straight", "Slip & Drive"): 59.00,
-    ("Straight", "S&D"): 59.00,
-    ("Tube", "AccuFlange"): 120.00,
-    ("Tube", "GRC_Swage-Female"): 120.00,
-    ("Spiral Duct", "Raw"): 120.00,
-    ("Spiral Pipe", "Raw"): 120.00,
-}
-DEFAULT_SHORT_THRESHOLD_IN = 56.00
 
 # Helpers
 # ==================================================
@@ -104,15 +97,6 @@ class MaterialDensity(Enum):
     @property
     def descrs(self):
         return self.value[2]
-
-
-# Joint Size Class
-# ====================================================
-class JointSize(Enum):
-    SHORT = "short"
-    FULL = "full"
-    LONG = "long"
-    INVALID = "invalid"
 
 
 # Duct Angle Allowance
@@ -209,7 +193,7 @@ class RevitDuct:
 
     @property
     def size(self):
-        return self._get_param("Size")
+        return self._get_param(RVT_SIZE)
 
     @property
     def offset_top(self):
@@ -274,17 +258,17 @@ class RevitDuct:
     @property
     def centerline_length(self):
         return self._get_param(
-            "NaviateDBS_CenterlineLength", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def length(self):
         result_0 = self._get_param(
-            "Length", unit=UnitTypeId.Inches, as_type="double")
+            RVT_LENGTH, unit=UnitTypeId.Inches, as_type="double")
         if result_0 is not None:
             return result_0
 
         result_1 = self._get_param(
-            "NaviateDBS_CenterlineLength", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
         if result_1 is not None:
             return result_1
 
@@ -316,7 +300,7 @@ class RevitDuct:
                 return size_obj.in_diameter
 
         return self._get_param(
-            "Main Primary Diameter", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_PRIMARY_DIAMETER, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def diameter_out(self):
@@ -327,7 +311,7 @@ class RevitDuct:
                 return size_obj.out_diameter
 
         return self._get_param(
-            "Main Secondary Diameter", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_SECONDARY_DIAMETER, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def height_in(self):
@@ -338,7 +322,7 @@ class RevitDuct:
                 return size_obj.in_height
 
         return self._get_param(
-            "Main Primary Depth", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_PRIMARY_DEPTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def width_in(self):
@@ -349,7 +333,7 @@ class RevitDuct:
                 return size_obj.in_width
 
         return self._get_param(
-            "Main Primary Width", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_PRIMARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def width_out(self):
@@ -360,7 +344,7 @@ class RevitDuct:
                 return size_obj.out_width
 
         return self._get_param(
-            "Main Secondary Width", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_SECONDARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def height_out(self):
@@ -371,22 +355,22 @@ class RevitDuct:
                 return size_obj.out_height
 
         return self._get_param(
-            "Main Secondary Depth", unit=UnitTypeId.Inches, as_type="double")
+            RVT_MAIN_SECONDARY_DEPTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     # Ex: TDF, S&D
     def connector_0_type(self):
-        return self._get_param("NaviateDBS_Connector0_EndCondition")
+        return self._get_param(NDBS_CONNECTOR0_END_CONDITION)
 
     @property
     # Ex: TDF, S&D
     def connector_1_type(self):
-        return self._get_param("NaviateDBS_Connector1_EndCondition")
+        return self._get_param(NDBS_CONNECTOR1_END_CONDITION)
 
     @property
     # Ex: TDF, S&D
     def connector_2_type(self):
-        return self._get_param("NaviateDBS_Connector2_EndCondition")
+        return self._get_param(NDBS_CONNECTOR2_END_CONDITION)
 
     @property
     def connector_0(self):
@@ -411,34 +395,34 @@ class RevitDuct:
     @property
     def extension_top(self):
         return self._get_param(
-            "NaviateDBS_D_Top Extension", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_D_TOP_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_bottom(self):
         return self._get_param(
-            "NaviateDBS_D_Bottom Extension", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_D_BOTTOM_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_right(self):
         return self._get_param(
-            "NaviateDBS_D_Right Extension", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_D_RIGHT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_left(self):
         return self._get_param(
-            "NaviateDBS_D_Left Extension", unit=UnitTypeId.Inches, as_type="double")
+            NDBS_D_LEFT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def duty(self):
-        return self._get_param("System Abbreviation")
+        return self._get_param(RVT_SYSTEM_ABBREVIATION)
 
     @property
     def family(self):
-        fam = self._get_param("Family")
+        fam = self._get_param(RVT_FAMILY)
         if fam:
             return fam
 
-        fam = self._get_param("NaviateDBS_Family")
+        fam = self._get_param(NDBS_FAMILY)
         if fam:
             return fam
 
@@ -446,15 +430,15 @@ class RevitDuct:
 
     @property
     def is_double_wall(self):
-        return self._get_param("NaviateDBS_HasDoubleWall")
+        return self._get_param(NDBS_HAS_DOUBLE_WALL)
 
     @property
     def has_insulation(self):
-        return self._get_param("NaviateDBS_HasInsulation")
+        return self._get_param(NDBS_HAS_INSULATION)
 
     @property
     def insulation_type(self):
-        raw = self._get_param("Insulation Specification")
+        raw = self._get_param(RVT_INSULATION_SPECIFICATION)
         if not raw or not isinstance(raw, str):
             return MaterialDensity.LINER
 
@@ -471,7 +455,7 @@ class RevitDuct:
 
     @property
     def insulation_thickness(self):
-        raw = self._get_param("Insulation Specification")
+        raw = self._get_param(RVT_INSULATION_SPECIFICATION)
         if not raw:
             # Use logger instead of print to avoid polluting pyRevit output
             log.debug(
@@ -529,29 +513,24 @@ class RevitDuct:
     @property
     def weight(self):
         return self._get_param(
-            "Weight", unit=UnitTypeId.PoundsMass, as_type="double")
+            RVT_WEIGHT, unit=UnitTypeId.PoundsMass, as_type="double")
 
     @property
     def service(self):
-        return self._get_param("NaviateDBS_ServiceName")
+        return self._get_param(NDBS_SERVICE_NAME)
 
     @property
     def inner_radius(self):
-        return self._get_param("NaviateDBS_D_Inner Radius")
-
-    @property
-    def area(self):
-        return self._get_param(
-            "NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+        return self._get_param(NDBS_D_INNER_RADIUS)
 
     @property
     def metal_area(self):
         return self._get_param(
-            "NaviateDBS_SheetMetalArea", unit=UnitTypeId.SquareFeet, as_type="double")
+            NDBS_SHEET_METAL_AREA, unit=UnitTypeId.SquareFeet, as_type="double")
 
     @property
     def angle(self):
-        raw = self._get_param("Angle")
+        raw = self._get_param(RVT_ANGLE)
         if raw:
             cleaned = raw.replace(u"\xb0", "")
             try:
@@ -605,11 +584,6 @@ class RevitDuct:
         return len(cls.all(doc, view))
 
     @classmethod
-    def by_system_type(cls, doc, view, system_type_name):
-        return [d for d in cls.all(doc, view) if d.element.LookupParameter(
-            "System Type").AsString() == system_type_name]
-
-    @classmethod
     def from_selection(cls, uidoc, doc, view=None):
         sel_ids = uidoc.Selection.GetElementIds()
         if not sel_ids:
@@ -642,277 +616,3 @@ class RevitDuct:
                 if ref_conn.Owner.Id != self.element.Id:
                     connected_elements.append(ref_conn.Owner)
         return connected_elements
-
-        return run
-
-    @staticmethod
-    def create_duct_run(start_duct, doc, view):
-        """Find all connected ducts/fittings that match both shape and size of the starting duct."""
-        run = set()
-        to_visit = [start_duct]
-        visited = set()
-        # Preload all fabrication duct parts in the view for fallback proximity checks
-        try:
-            all_ducts_index = {d.id: d for d in RevitDuct.all(doc, view)}
-        except Exception:
-            all_ducts_index = {}
-        # Parse starting duct shape and size using Size.in_shape()
-        start_size_obj = Size(str(start_duct.size))
-
-        def shape_key_from_size(size_obj):
-            """Create a comparable key from Size using inlet fields only."""
-            shape = size_obj.in_shape()
-            if shape == "round" and size_obj.in_diameter is not None:
-                return ("round", round(size_obj.in_diameter, 2))
-            if shape == "oval" and size_obj.in_oval_dia is not None and size_obj.in_oval_flat is not None:
-                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
-            if shape == "rectangle" and size_obj.in_width is not None and size_obj.in_height is not None:
-                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
-            return ("unknown", str(size_obj.in_size))
-
-        def shape_equals(a, b, tol=0.01):
-            """Compare two shape keys with tolerance for numeric parts.
-
-            - For ("round", dia): use absolute difference <= tol
-            - For ("oval", dia, flat): both parts within tol
-            - For ("rect", w, h): both parts within tol (order-insensitive)
-            - For ("unknown", s): direct string equality
-            """
-            if not isinstance(a, tuple) or not isinstance(b, tuple):
-                return a == b
-            if a[0] != b[0]:
-                return False
-            kind = a[0]
-            try:
-                if kind == "round":
-                    return abs(float(a[1]) - float(b[1])) <= tol
-                if kind == "oval":
-                    return (abs(float(a[1]) - float(b[1])) <= tol and
-                            abs(float(a[2]) - float(b[2])) <= tol)
-                if kind == "rect":
-                    # Handle orientation-insensitive comparison for rectangle
-                    aw, ah = float(a[1]), float(a[2])
-                    bw, bh = float(b[1]), float(b[2])
-                    direct = (abs(aw - bw) <= tol and abs(ah - bh) <= tol)
-                    swapped = (abs(aw - bh) <= tol and abs(ah - bw) <= tol)
-                    return direct or swapped
-                if kind == "unknown":
-                    return a[1] == b[1]
-            except Exception:
-                return a == b
-            return False
-
-        start_shape = shape_key_from_size(start_size_obj)
-
-        def connectors_close(duct_a, duct_b, tol=1e-4):
-            """Fallback: check if any connectors from two ducts are coincident within tolerance (feet)."""
-            try:
-                conns_a = duct_a.get_connectors() or []
-                conns_b = duct_b.get_connectors() or []
-            except Exception:
-                return False
-            for ca in conns_a:
-                oa = None
-                try:
-                    oa = ca.Origin
-                except Exception:
-                    pass
-                if oa is None:
-                    continue
-                for cb in conns_b:
-                    ob = None
-                    try:
-                        ob = cb.Origin
-                    except Exception:
-                        pass
-                    if ob is None:
-                        continue
-                    try:
-                        dx = oa.X - ob.X
-                        dy = oa.Y - ob.Y
-                        dz = oa.Z - ob.Z
-                        if (dx * dx + dy * dy + dz * dz) <= (tol * tol):
-                            return True
-                    except Exception:
-                        continue
-            return False
-
-        while to_visit:
-            duct = to_visit.pop()
-            if duct.id in visited:
-                continue
-            visited.add(duct.id)
-            run.add(duct)
-            for connector in duct.get_connectors():
-                if not connector.IsConnected:
-                    continue
-                all_refs = list(connector.AllRefs)
-                for ref in all_refs:
-                    if ref and hasattr(ref, 'Owner'):
-                        connected_elem = ref.Owner
-                        # Only process fabrication parts
-                        if not isinstance(connected_elem, FabricationPart):
-                            continue
-                        try:
-                            connected_duct = RevitDuct(
-                                doc, view, connected_elem)
-                        except Exception:
-                            continue
-                        # Parse connected duct shape and size via Size.in_shape()
-                        connected_size_obj = Size(str(connected_duct.size))
-                        connected_shape = shape_key_from_size(
-                            connected_size_obj)
-                        # Match by normalized shape/size only (avoid string formatting mismatches)
-                        if shape_equals(connected_shape, start_shape) and connected_duct.id not in visited:
-                            to_visit.append(connected_duct)
-                # Fallback: if no owner references provided by API, try proximity to other parts
-                if all_ducts_index:
-                    for other_id, other_duct in all_ducts_index.items():
-                        if other_id == duct.id or other_id in visited:
-                            continue
-                        # Pre-filter by shape/size to limit work
-                        try:
-                            other_shape = shape_key_from_size(
-                                Size(str(other_duct.size)))
-                        except Exception:
-                            continue
-                        if not shape_equals(other_shape, start_shape):
-                            continue
-                        if connectors_close(duct, other_duct):
-                            to_visit.append(other_duct)
-        return list(run)
-
-    @staticmethod
-    def create_duct_run_same_height(start_duct, doc, view, height_tolerance=0.01):
-        """Find all connected ducts/fittings that match shape, size, AND z-axis height.
-
-        The run will stop if:
-        - Size changes
-        - Shape changes
-        - Z-axis height (centerline elevation) changes beyond tolerance
-
-        Allows: X-Y offsetting, turns on X-Y plane
-        Prevents: Vertical (Z-axis) offsetting beyond tolerance
-
-        Args:
-            start_duct: RevitDuct object to start from
-            doc: Revit document
-            view: Revit view
-            height_tolerance: Tolerance in feet for z-axis differences (default 0.01 ft ≈ 0.12 inches)
-
-        Returns:
-            List of RevitDuct objects in the connected run at same height
-        """
-        run = set()
-        to_visit = [start_duct]
-        visited = set()
-        start_size_obj = Size(str(start_duct.size))
-
-        def shape_key_from_size(size_obj):
-            """Create a comparable key from Size using inlet fields only."""
-            shape = size_obj.in_shape()
-            if shape == "round" and size_obj.in_diameter is not None:
-                return ("round", round(size_obj.in_diameter, 2))
-            if shape == "oval" and size_obj.in_oval_dia is not None and size_obj.in_oval_flat is not None:
-                return ("oval", round(size_obj.in_oval_dia, 2), round(size_obj.in_oval_flat, 2))
-            if shape == "rectangle" and size_obj.in_width is not None and size_obj.in_height is not None:
-                return ("rect", round(size_obj.in_width, 2), round(size_obj.in_height, 2))
-            return ("unknown", str(size_obj.in_size))
-
-        def get_duct_z_coordinate(duct):
-            """Extract Z-coordinate (elevation) from the duct's centerline.
-
-            Prefer the location curve midpoint Z; fall back to inlet origin Z.
-            """
-            # Try centerline midpoint Z
-            try:
-                loc = duct.element.Location
-                if hasattr(loc, 'Curve') and loc.Curve:
-                    c = loc.Curve
-                    p0 = c.GetEndPoint(0)
-                    p1 = c.GetEndPoint(1)
-                    return (p0.Z + p1.Z) / 2.0
-            except Exception:
-                pass
-            # Fallback to inlet origin Z
-            try:
-                inlet_data, outlet_data = duct._inlet_outlet_from_revit_xyz()
-                if inlet_data and 'origin' in inlet_data:
-                    origin = inlet_data['origin']  # XYZ object
-                    return origin.Z
-            except Exception:
-                pass
-            return None
-
-        start_shape = shape_key_from_size(start_size_obj)
-        start_z = get_duct_z_coordinate(start_duct)
-
-        while to_visit:
-            duct = to_visit.pop()
-            if duct.id in visited:
-                continue
-            visited.add(duct.id)
-            run.add(duct)
-            for connector in duct.get_connectors():
-                if not connector.IsConnected:
-                    continue
-                all_refs = list(connector.AllRefs)
-                for ref in all_refs:
-                    if ref and hasattr(ref, 'Owner'):
-                        connected_elem = ref.Owner
-                        # Only process fabrication parts
-                        if not isinstance(connected_elem, FabricationPart):
-                            continue
-                        try:
-                            connected_duct = RevitDuct(
-                                doc, view, connected_elem)
-                        except Exception:
-                            continue
-
-                        # Check if already visited
-                        if connected_duct.id in visited:
-                            continue
-
-                        # Parse connected duct shape and size
-                        connected_size_obj = Size(str(connected_duct.size))
-                        connected_shape = shape_key_from_size(
-                            connected_size_obj)
-
-                        # Check Z-axis height difference
-                        connected_z = get_duct_z_coordinate(connected_duct)
-                        z_difference = abs(
-                            connected_z - start_z) if (connected_z is not None and start_z is not None) else None
-
-                        # Match shape, size, AND z-axis height
-                        if (connected_shape == start_shape and
-                            z_difference is not None and
-                                z_difference <= height_tolerance):
-                            to_visit.append(connected_duct)
-        return list(run)
-
-    @staticmethod
-    def parse_length_string(length_str):
-        """
-        Convert a Revit length string (e.g., "4' - 8\"", "2' - 4 23/32\"") to inches (float).
-        Returns 0.0 if parsing fails.
-        """
-        if not length_str or not isinstance(length_str, str):
-            return 0.0
-        # Pattern: feet, inches, optional fraction
-        pattern = r"(\d+)'\s*-\s*(\d+)?(?:\s+(\d+)/(\d+))?\s*\""
-        cleaned = length_str.replace("’", "'").replace(
-            "”", '"').replace("″", '"')
-        match = re.match(pattern, cleaned)
-        if not match:
-            # Try to parse as a simple float
-            try:
-                return float(length_str)
-            except Exception:
-                return 0.0
-        feet = int(match.group(1)) if match.group(1) else 0
-        inches = int(match.group(2)) if match.group(2) else 0
-        num = int(match.group(3)) if match.group(3) else 0
-        denom = int(match.group(4)) if match.group(4) else 1
-        fraction = float(num) / float(denom) if denom else 0
-        total_inches = feet * 12 + inches + fraction
-        return total_inches

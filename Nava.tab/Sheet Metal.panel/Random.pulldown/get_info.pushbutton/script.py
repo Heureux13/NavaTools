@@ -11,7 +11,7 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit, forms, script
 from Autodesk.Revit.DB import *
-from revit_xyz import RevitXYZ
+from ducts.revit_xyz import RevitXYZ
 
 # Button display information
 # =================================================

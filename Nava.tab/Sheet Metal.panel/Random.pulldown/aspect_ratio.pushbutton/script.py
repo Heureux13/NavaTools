@@ -9,8 +9,8 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_duct import RevitDuct
-from size import Size
+from ducts.revit_duct import RevitDuct
+from geometry.size import Size
 from Autodesk.Revit.DB import Transaction
 from pyrevit import revit, script
 

@@ -12,8 +12,8 @@ the copyright holder."""
 from pyrevit import revit
 from Autodesk.Revit.DB import TemporaryViewMode, ElementId, BuiltInCategory, FilteredElementCollector
 from System.Collections.Generic import List
-from revit_duct import RevitDuct
-from revit_xyz import RevitXYZ
+from ducts.revit_duct import RevitDuct
+from ducts.revit_xyz import RevitXYZ
 
 # Button info
 # ===================================================

@@ -9,7 +9,7 @@ the copyright holder.
 
 # Standard library
 # =========================================================
-from revit_xyz import RevitXYZ
+from ducts.revit_xyz import RevitXYZ
 from Autodesk.Revit.DB import (
     ElementId,
     FilteredElementCollector,
@@ -539,37 +539,3 @@ class RevitOffset:
             return u'{}"→'.format(int(round(offset)))
 
         return None
-
-    def get_connected_elements(self, connector_index=0):
-        """Gets all elements connected to the selected element"""
-        connector = self.get_connector(connector_index)
-        connected_elements = []
-
-        if connector and connector.IsConnected:
-            for ref_conn in connector.AllRefs:
-                if ref_conn.Owner.Id != self.element.Id:
-                    connected_elements.append(ref_conn.Owner)
-        return connected_elements
-
-    def trace_run(start_duct, seen_ids, allowed_duct):
-        """Recursively follow connections to build a complete run"""
-        run = []  # Store ducts in this run
-        stack = [start_duct]  # Ducts to process
-
-        while stack:
-            current = stack.pop()
-            if current.Id.IntegerValue in seen_ids:
-                continue
-
-            run.append(current)
-            seen_ids.add(current.Id.IntegerValue)
-
-            # Follow all connections
-            for connector_index in [0, 1, 2]:
-                connected = current.get_connected_elements(connector_index)
-                for elem in connected:
-                    duct = RevitDuct(doc, view, elem)
-                    if duct.family and duct.family.strip().lower() in allowed_duct:
-                        stack.append(elem)
-
-        return run

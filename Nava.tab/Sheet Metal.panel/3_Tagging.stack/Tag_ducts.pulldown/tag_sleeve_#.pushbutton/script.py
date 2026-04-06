@@ -24,7 +24,7 @@ import re
 try:
     from tagging.revit_tagging import RevitTagging  # type: ignore[reportMissingImports]
 except ImportError:
-    from lib.tagging.revit_tagging import RevitTagging
+    from tagging.revit_tagging import RevitTagging
 
 # Button info
 # ======================================================================

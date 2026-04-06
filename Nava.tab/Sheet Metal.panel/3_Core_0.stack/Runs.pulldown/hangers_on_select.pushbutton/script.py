@@ -9,8 +9,8 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from revit_element import RevitElement
-from revit_duct import RevitDuct
+from revit.revit_element import RevitElement
+from ducts.revit_duct import RevitDuct
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 

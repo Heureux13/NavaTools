@@ -11,8 +11,8 @@ the copyright holder."""
 # ==================================================
 from pyrevit import revit, script
 from Autodesk.Revit.DB import BuiltInCategory, FabricationPart, FilteredElementCollector
-from revit_duct import RevitDuct
-from size import Size
+from ducts.revit_duct import RevitDuct
+from geometry.size import Size
 
 # Button display information
 # =================================================
@@ -33,7 +33,8 @@ tap_families = [
     "straight tap",
 ]
 
-target_families = set((x or "").strip().lower() for x in tap_families if (x or "").strip())
+target_families = set((x or "").strip().lower()
+                      for x in tap_families if (x or "").strip())
 
 
 def _normalize(value):
@@ -76,7 +77,8 @@ if not fab_parts:
 
 allowed_conn0_values = set(_normalize(x) for x in tap_values if _normalize(x))
 if not allowed_conn0_values:
-    output.print_md("## tap_values is empty. Add at least one allowed Connector0 value.")
+    output.print_md(
+        "## tap_values is empty. Add at least one allowed Connector0 value.")
     script.exit()
 
 failures = []
@@ -109,9 +111,14 @@ if not failures:
     output.print_md("## All checked taps have allowed Connector0 values.")
     script.exit()
 
-sorted_failures = sorted(failures, key=lambda x: x["id"].IntegerValue)
+sorted_failures = sorted(
+    failures,
+    key=lambda x: x["id"].IntegerValue if hasattr(
+        x["id"], "IntegerValue") else x["id"].Value,
+)
 
-output.print_md("## Selected {} non-round taps with Connector0 not in tap_values".format(len(sorted_failures)))
+output.print_md(
+    "## Selected {} non-round taps with Connector0 not in tap_values".format(len(sorted_failures)))
 
 for index, item in enumerate(sorted_failures, 1):
     output.print_md("")
@@ -128,4 +135,5 @@ for index, item in enumerate(sorted_failures, 1):
 
 element_ids = [item["id"] for item in sorted_failures]
 output.print_md("")
-output.print_md("Total elements {}, {}".format(len(sorted_failures), output.linkify(element_ids)))
+output.print_md("Total elements {}, {}".format(
+    len(sorted_failures), output.linkify(element_ids)))

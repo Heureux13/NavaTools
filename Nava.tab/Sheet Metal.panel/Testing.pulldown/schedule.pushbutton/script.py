@@ -8,7 +8,7 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from bluebeam_map import COLUMN_MAP
+from constants.bluebeam_map import COLUMN_MAP
 from Autodesk.Revit.DB import FilteredElementCollector, SectionType, ViewSchedule, StorageType
 from pyrevit import forms, revit, script
 from System.Windows.Forms import DialogResult, OpenFileDialog

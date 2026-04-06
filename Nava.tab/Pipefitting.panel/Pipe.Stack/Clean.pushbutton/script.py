@@ -4,9 +4,9 @@
 from Autodesk.Revit.DB import BuiltInCategory, ElementId
 from Autodesk.Revit.UI.Selection import ObjectType
 from pyrevit import revit, script
-from revit_duct import RevitDuct
+from ducts.revit_duct import RevitDuct
 from revit_parameter import RevitParameter
-from revit_output import print_disclaimer
+from constants.print_outputs import print_disclaimer
 from System.Collections.Generic import List
 
 # Button display information
@@ -28,6 +28,8 @@ rp = RevitParameter(doc, app)
 
 # Helpers
 # ===============================================================
+
+
 def is_non_fab_pipe(el):
     cat = el.Category
     if not cat:
@@ -37,6 +39,7 @@ def is_non_fab_pipe(el):
         ElementId(BuiltInCategory.OST_PipeFitting),
         ElementId(BuiltInCategory.OST_PipeAccessory),
     )
+
 
 # Main Code
 # ==================================================================
