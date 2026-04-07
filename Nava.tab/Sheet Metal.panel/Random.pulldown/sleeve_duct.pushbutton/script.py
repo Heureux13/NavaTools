@@ -22,7 +22,7 @@ Sets `_type` to `sleeve` on selected elements
 
 # Parameters to set
 parameters_to_set = {
-    PYT_VALUE_SLEEVE
+    PYT_SLEEVE_VALUE
 }
 set_value = "sleeve"
 

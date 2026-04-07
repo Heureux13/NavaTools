@@ -28,7 +28,7 @@ Tags fire damper sleeve fabrication ductwork in the current view with MARK label
 """
 
 
-TYPE_PARAM_NAME = PYT_VALUE_SLEEVE
+TYPE_PARAM_NAME = PYT_SLEEVE_VALUE
 TYPE_PARAM_VALUE = "sleeve"
 FIRE_DAMPER_TOKEN = "fire damper"
 FIRE_DAMPER_PARAM_NAMES = (

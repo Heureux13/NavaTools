@@ -10,6 +10,7 @@ the copyright holder."""
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, VisibleInViewFilter
 from pyrevit import revit, forms, script
 from System.Collections.Generic import List
+from config.parameters_registry import *
 
 # Button info
 # ===================================================
@@ -57,7 +58,7 @@ for d in all_duct:
     if family_name not in FAMILY_LIST:
         continue
 
-    offset_param = d.LookupParameter("_offset")
+    offset_param = d.LookupParameter(PYT_OFFSET_VALUE) or d.LookupParameter(LEGACY_OFFSET)
     offset_str = ""
     if offset_param:
         offset_str = offset_param.AsString() or offset_param.AsValueString() or ""

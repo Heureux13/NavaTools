@@ -8,6 +8,7 @@ the copyright holder."""
 # ======================================================================
 
 from pyrevit import revit, script
+from config.parameters_registry import *
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     ElementId,
@@ -56,17 +57,17 @@ if view is None:
 
 output = script.get_output()
 
-TYPE_PARAM = '_type'
-NUMBER_PARAM = '_#'
+TYPE_PARAM = PYT_SLEEVE_VALUE
+NUMBER_PARAM = PYT_NUMBER_SLEEVE
 SLEEVE_VALUE = 'sleeve'
-TAG_PARAM = '_umi_sleeve_#'
+TAG_PARAM = PYT_NUMBER_SLEEVE
 ANNOTATION_TAG_CANDIDATES = ['_umi_sleeve_#']
-SIZE = 'NaviateDBS_Size'
-CONNECTOR = 'NaviateDBS_Connector0_EndCondition'
-WRAP = 'Insulation Thickness'
-FAMILY = 'NaviateDBS_Family'
+SIZE = RVT_SIZE
+CONNECTOR = NDBS_CONNECTOR0_END_CONDITION
+WRAP = RVT_INSULATION_SPECIFICATION
+FAMILY = NDBS_FAMILY
 DEFAULT_CLEARANCE = 1
-SLEEVE_OPENING = '_opening'
+SLEEVE_OPENING = PYT_SLEEVE_OPENING
 
 CONNECTOR_RULES = {
     'tdf': {
@@ -91,6 +92,8 @@ DEFAULT_CONNECTOR_RULE = {
     'connector_add': 0.0,
     'use_wrap': True,
 }
+
+MAX_WRAP_INCHES = 24.0
 
 
 def _normalize_text(value):
@@ -374,7 +377,8 @@ def _build_sleeve_opening_value(element):
     rule = NORMALIZED_CONNECTOR_RULES.get(connector_key, DEFAULT_CONNECTOR_RULE)
 
     wrap_value = _get_param_number(element, WRAP, length_double_to_inches=True)
-    if wrap_value is None:
+    # Some fabrication models return sentinel values for missing insulation.
+    if wrap_value is None or wrap_value < 0.0 or wrap_value > MAX_WRAP_INCHES:
         wrap_value = 0.0
 
     total_add = float(DEFAULT_CLEARANCE) + float(rule['connector_add'])
@@ -469,7 +473,7 @@ if not sleeves:
     output.print_md('Fabrication ductwork checked: {}'.format(len(all_ducts)))
     if missing_type:
         output.print_md(
-            'Elements missing `_type`: {}'.format(len(missing_type)))
+            'Elements missing `{}`: {}'.format(TYPE_PARAM, len(missing_type)))
     script.exit()
 
 sleeves.sort(key=_element_id_value)
@@ -611,13 +615,13 @@ with revit.Transaction('Number sleeve elements'):
 output.print_md('## Sleeve numbering complete.')
 output.print_md('Fabrication ductwork checked: {}'.format(len(all_ducts)))
 output.print_md('Sleeves found: {}'.format(len(sleeves)))
-output.print_md('Already numbered in `_#` (kept): {}'.format(len(already_numbered)))
-output.print_md('Newly numbered in `_#`: {}'.format(len(numbered)))
+output.print_md('Already numbered in `{}` (kept): {}'.format(NUMBER_PARAM, len(already_numbered)))
+output.print_md('Newly numbered in `{}`: {}'.format(NUMBER_PARAM, len(numbered)))
 if has_tag_param:
-    output.print_md('Annotated in `_umi_sleeve_#`: {}'.format(len(tagged)))
+    output.print_md('Annotated in `{}`: {}'.format(TAG_PARAM, len(tagged)))
 else:
-    output.print_md('Parameter `_umi_sleeve_#` not found on sleeves; skipped parameter write.')
-output.print_md('Updated `_opening`: {}'.format(len(opening_updated)))
+    output.print_md('Parameter `{}` not found on sleeves; skipped parameter write.'.format(TAG_PARAM))
+output.print_md('Updated `{}`: {}'.format(SLEEVE_OPENING, len(opening_updated)))
 if annotation_tag_symbol is None:
     output.print_md(
         'No loaded annotation tag found for: {}'.format(', '.join(ANNOTATION_TAG_CANDIDATES))
@@ -634,17 +638,17 @@ else:
         output.print_md('Failed to place annotation tag: {}'.format(len(annotations_failed)))
 
 if missing_type:
-    output.print_md('Elements missing `_type`: {}'.format(len(missing_type)))
+    output.print_md('Elements missing `{}`: {}'.format(TYPE_PARAM, len(missing_type)))
 if failed:
-    output.print_md('Failed to write `_#`: {}'.format(len(failed)))
+    output.print_md('Failed to write `{}`: {}'.format(NUMBER_PARAM, len(failed)))
 if has_tag_param and tag_failed:
-    output.print_md('Failed to write `_umi_sleeve_#`: {}'.format(len(tag_failed)))
+    output.print_md('Failed to write `{}`: {}'.format(TAG_PARAM, len(tag_failed)))
 if has_tag_param and tag_param_missing:
-    output.print_md('Missing parameter `_umi_sleeve_#`: {}'.format(len(tag_param_missing)))
+    output.print_md('Missing parameter `{}`: {}'.format(TAG_PARAM, len(tag_param_missing)))
 if has_tag_param and tag_param_readonly:
-    output.print_md('Read-only parameter `_umi_sleeve_#`: {}'.format(len(tag_param_readonly)))
+    output.print_md('Read-only parameter `{}`: {}'.format(TAG_PARAM, len(tag_param_readonly)))
 if opening_failed:
-    output.print_md('Failed to write `_opening`: {}'.format(len(opening_failed)))
+    output.print_md('Failed to write `{}`: {}'.format(SLEEVE_OPENING, len(opening_failed)))
 if opening_no_value:
     output.print_md('No computed opening value: {}'.format(len(opening_no_value)))
 if size_parse_failed:
@@ -652,6 +656,6 @@ if size_parse_failed:
     size_failed_ids = [e.Id for e in size_parse_failed]
     output.print_md('Size parse failed elements: {}'.format(output.linkify(size_failed_ids)))
 if opening_param_missing:
-    output.print_md('Missing parameter `_opening`: {}'.format(len(opening_param_missing)))
+    output.print_md('Missing parameter `{}`: {}'.format(SLEEVE_OPENING, len(opening_param_missing)))
 if opening_param_readonly:
-    output.print_md('Read-only parameter `_opening`: {}'.format(len(opening_param_readonly)))
+    output.print_md('Read-only parameter `{}`: {}'.format(SLEEVE_OPENING, len(opening_param_readonly)))

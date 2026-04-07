@@ -323,14 +323,14 @@ else:
                                 except Exception:
                                     pass
 
-                    # Write classification to tag offset parameter
-                    tag_p = element.LookupParameter('_offset')
+                    # Write classification to modern parameter first; fallback to legacy.
+                    final_classification = convert_to_TU_TD(classification)
+                    tag_p = (element.LookupParameter(PYT_OFFSET_VALUE) or
+                             element.LookupParameter(LEGACY_OFFSET))
                     if tag_p and not tag_p.IsReadOnly:
                         try:
                             if tag_p.StorageType == StorageType.String:
                                 current_value = tag_p.AsString()
-                                final_classification = convert_to_TU_TD(
-                                    classification)
                                 if current_value and current_value.strip():
                                     import re
                                     result = current_value

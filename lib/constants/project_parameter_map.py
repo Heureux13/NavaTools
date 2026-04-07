@@ -9,7 +9,7 @@ the copyright holder.
 
 # fmt: off
 # autopep8: off
-segments_and_fittings = {
+bluebeam = {
 '_UMI_BBM_Author',
 '_UMI_BBM_Ceiling',
 '_UMI_BBM_CFMEA',
@@ -65,7 +65,7 @@ segments_and_fittings = {
 
 # fmt: off
 # autopep8: off
-construction = {
+python = {
 '_UMI_PYT_AspectRatio',
 '_UMI_PYT_CFM',
 '_UMI_PYT_HeightPad',
@@ -76,6 +76,8 @@ construction = {
 '_UMI_PYT_Note3',
 '_UMI_PYT_Note4',
 '_UMI_PYT_Number',
+'_UMI_PYT_NumberFabrication',
+'_UMI_PYT_NumberSleeve',
 '_UMI_PYT_OffsetBottom',
 '_UMI_PYT_OffsetCenterH',
 '_UMI_PYT_OffsetCenterV',
@@ -86,7 +88,8 @@ construction = {
 '_UMI_PYT_SkipNumber',
 '_UMI_PYT_SkipTag',
 '_UMI_PYT_Sleeve',
-'_UMI_PYT_ValueSleeve',
+'_UMI_PYT_SleeveOpening',
+'_UMI_PYT_SleeveValue',
 '_UMI_PYT_WeightRun',
 '_UMI_PYT_WeightSupport',
 }

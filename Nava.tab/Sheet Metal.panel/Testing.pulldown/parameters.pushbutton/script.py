@@ -32,6 +32,12 @@ SCRIPT_DIR = os.path.dirname(__file__)
 PARAMETER_MAP_PATH = None
 LIB_DIR = None
 
+dictionary = {
+    'python': "Construction",
+    'bluebeam': "Data"
+}
+
+
 search_dir = SCRIPT_DIR
 while True:
     candidate = os.path.join(
@@ -70,14 +76,10 @@ def _normalize_parameter_names(raw_values):
 def _collect_mapped_parameter_entries():
     entries = []
 
-    seg_fit_values = getattr(project_parameter_map,
-                             'segments_and_fittings', set())
-    for name in _normalize_parameter_names(seg_fit_values):
-        entries.append((name, 'Segments and Fittings'))
-
-    construction_values = getattr(project_parameter_map, 'construction', set())
-    for name in _normalize_parameter_names(construction_values):
-        entries.append((name, 'Construction'))
+    for set_name, group_name in dictionary.items():
+        values = getattr(project_parameter_map, set_name, set())
+        for name in _normalize_parameter_names(values):
+            entries.append((name, group_name))
 
     return entries
 
@@ -112,7 +114,6 @@ def _find_shared_definition(shared_file, param_name):
 def _get_group_id_by_label(group_name):
     db = __import__('Autodesk.Revit.DB', fromlist=['*'])
     target = group_name.strip().lower()
-    tokens = [t for t in target.replace('&', 'and').split(' ') if t]
 
     # Revit 2022+ path: discover built-in groups and match by UI label.
     if hasattr(db, 'ParameterUtils') and hasattr(db, 'LabelUtils'):
@@ -129,19 +130,16 @@ def _get_group_id_by_label(group_name):
                 normalized = label.strip().lower()
                 if normalized == target:
                     return group_id, label
-
-                if all(token in normalized for token in tokens):
-                    return group_id, label
         except Exception:
             pass
 
     # Fallback guesses for environments where label enumeration is unavailable.
     if hasattr(db, 'GroupTypeId'):
-        fallback_map = {
-            'segments and fittings': ('Fabrication', 'SegmentsAndFittings'),
-            'construction': ('Construction',),
-        }
-        for attr_name in fallback_map.get(target, ()):
+        def _to_camel(name):
+            return ''.join(word.capitalize() for word in name.replace('&', 'and').split())
+
+        fallback_candidates = [_to_camel(g) for g in dictionary.values() if g.strip().lower() == target]
+        for attr_name in fallback_candidates:
             if hasattr(db.GroupTypeId, attr_name):
                 return getattr(db.GroupTypeId, attr_name), attr_name
 
@@ -201,7 +199,7 @@ if not parameter_entries:
     script.exit()
 
 group_resolution = {}
-for group_name in ('Segments and Fittings', 'Construction'):
+for group_name in set(dictionary.values()):
     group_id, group_label = _get_group_id_by_label(group_name)
     group_resolution[group_name] = (group_id, group_label)
 
@@ -213,7 +211,7 @@ results = {
 }
 
 output.print_md('### Parameter group resolution')
-for group_name in ('Segments and Fittings', 'Construction'):
+for group_name in set(dictionary.values()):
     group_id, group_label = group_resolution[group_name]
     if group_id is None:
         output.print_md(
