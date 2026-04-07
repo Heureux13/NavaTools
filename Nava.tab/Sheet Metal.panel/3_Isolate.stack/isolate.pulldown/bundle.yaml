@@ -1,6 +1,8 @@
 title:
-  en_us: Isolate General
+  en_us: Isolate
 layout:
+  - isolate_all
+  - ----
   - isolate_mech_equipment
   - isolate_straights
   - isolate_vertical_straights

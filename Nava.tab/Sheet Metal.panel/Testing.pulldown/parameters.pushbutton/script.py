@@ -7,6 +7,14 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+# Button info
+# ======================================================================
+__title__ = 'Create Project Parameters'
+__doc__ = '''
+Create project parameters from shared parameters using the project parameter map.
+Map sections determine both which parameter names are processed and parameter group assignment.
+'''
+
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     Transaction,
@@ -26,7 +34,8 @@ LIB_DIR = None
 
 search_dir = SCRIPT_DIR
 while True:
-    candidate = os.path.join(search_dir, 'lib', 'constants', 'project_parameter_map.py')
+    candidate = os.path.join(
+        search_dir, 'lib', 'constants', 'project_parameter_map.py')
     if os.path.exists(candidate):
         PARAMETER_MAP_PATH = candidate
         LIB_DIR = os.path.join(search_dir, 'lib')
@@ -46,15 +55,8 @@ if not PARAMETER_MAP_PATH or not LIB_DIR:
 if LIB_DIR not in sys.path:
     sys.path.append(LIB_DIR)
 
-project_parameter_map = __import__('constants.project_parameter_map', fromlist=['*'])
-
-# Button info
-# ======================================================================
-__title__ = 'Create BBM/PYT Project Params'
-__doc__ = '''
-Create project parameters from shared parameters using the project parameter map.
-Map sections determine both which parameter names are processed and parameter group assignment.
-'''
+project_parameter_map = __import__(
+    'constants.project_parameter_map', fromlist=['*'])
 
 
 def _normalize_parameter_names(raw_values):
@@ -68,7 +70,8 @@ def _normalize_parameter_names(raw_values):
 def _collect_mapped_parameter_entries():
     entries = []
 
-    seg_fit_values = getattr(project_parameter_map, 'segments_and_fittings', set())
+    seg_fit_values = getattr(project_parameter_map,
+                             'segments_and_fittings', set())
     for name in _normalize_parameter_names(seg_fit_values):
         entries.append((name, 'Segments and Fittings'))
 
@@ -151,7 +154,8 @@ def _bind_instance_parameter(definition, category_set, group_id):
     # Revit API overloads differ by version; prefer the simplest compatible call.
     if group_id is not None:
         try:
-            inserted = doc.ParameterBindings.Insert(definition, binding, group_id)
+            inserted = doc.ParameterBindings.Insert(
+                definition, binding, group_id)
         except TypeError:
             inserted = doc.ParameterBindings.Insert(definition, binding)
     else:
@@ -160,7 +164,8 @@ def _bind_instance_parameter(definition, category_set, group_id):
     if not inserted:
         if group_id is not None:
             try:
-                inserted = doc.ParameterBindings.ReInsert(definition, binding, group_id)
+                inserted = doc.ParameterBindings.ReInsert(
+                    definition, binding, group_id)
             except TypeError:
                 inserted = doc.ParameterBindings.ReInsert(definition, binding)
         else:
@@ -172,13 +177,15 @@ def _bind_instance_parameter(definition, category_set, group_id):
 shared_file = app.OpenSharedParameterFile()
 if not shared_file:
     output.print_md('## Error')
-    output.print_md('- No shared parameter file is configured in Revit. Configure it first and run again.')
+    output.print_md(
+        '- No shared parameter file is configured in Revit. Configure it first and run again.')
     script.exit()
 
 category_set, missing_categories = _get_requested_categories(doc)
 if category_set.IsEmpty:
     output.print_md('## Error')
-    output.print_md('- None of the requested categories were found in this document.')
+    output.print_md(
+        '- None of the requested categories were found in this document.')
     script.exit()
 
 if missing_categories:
@@ -189,7 +196,8 @@ if missing_categories:
 parameter_entries = _collect_mapped_parameter_entries()
 if not parameter_entries:
     output.print_md('## Error')
-    output.print_md('- No parameter names were found in constants.project_parameter_map.')
+    output.print_md(
+        '- No parameter names were found in constants.project_parameter_map.')
     script.exit()
 
 group_resolution = {}
@@ -208,7 +216,8 @@ output.print_md('### Parameter group resolution')
 for group_name in ('Segments and Fittings', 'Construction'):
     group_id, group_label = group_resolution[group_name]
     if group_id is None:
-        output.print_md('- {}: not resolved (may appear under Other)'.format(group_name))
+        output.print_md(
+            '- {}: not resolved (may appear under Other)'.format(group_name))
     else:
         output.print_md('- {}: {}'.format(group_name, group_label))
 
@@ -218,7 +227,8 @@ try:
     for param_name, group_name in parameter_entries:
         definition = _find_shared_definition(shared_file, param_name)
         if not definition:
-            results['missing_definition'].append('{} [{}]'.format(param_name, group_name))
+            results['missing_definition'].append(
+                '{} [{}]'.format(param_name, group_name))
             continue
 
         results['found'] += 1
@@ -228,7 +238,8 @@ try:
         if _bind_instance_parameter(definition, category_set, group_id):
             results['instance_bound'] += 1
         else:
-            results['instance_failed'].append('{} [{}]'.format(param_name, group_name))
+            results['instance_failed'].append(
+                '{} [{}]'.format(param_name, group_name))
 
     t.Commit()
 except Exception:
@@ -236,16 +247,20 @@ except Exception:
     raise
 
 output.print_md('## BBM/PYT Project Parameter Binding')
-output.print_md('- Total mapped names in project_parameter_map: **{}**'.format(len(parameter_entries)))
+output.print_md(
+    '- Total mapped names in project_parameter_map: **{}**'.format(len(parameter_entries)))
 output.print_md('- Shared definitions found: **{}**'.format(results['found']))
-output.print_md('- Instance bindings inserted/updated: **{}**'.format(results['instance_bound']))
+output.print_md(
+    '- Instance bindings inserted/updated: **{}**'.format(results['instance_bound']))
 
 if results['missing_definition']:
-    output.print_md('### Missing in shared parameter file ({})'.format(len(results['missing_definition'])))
+    output.print_md('### Missing in shared parameter file ({})'.format(
+        len(results['missing_definition'])))
     for name in results['missing_definition']:
         output.print_md('- {}'.format(name))
 
 if results['instance_failed']:
-    output.print_md('### Instance binding failures ({})'.format(len(results['instance_failed'])))
+    output.print_md('### Instance binding failures ({})'.format(
+        len(results['instance_failed'])))
     for name in results['instance_failed']:
         output.print_md('- {}'.format(name))
