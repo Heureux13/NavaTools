@@ -30,7 +30,7 @@ import re
 
 # Button info
 # ===================================================
-__title__ = "Isolate by Fab Notes"
+__title__ = "Select by Fab Notes"
 __doc__ = """
 Select fabrication duct by Fabrication Notes parameter
 """

@@ -144,13 +144,15 @@ class EnhancedParamForm(Form):
 
             # Check if base name or any variant matches search
             base_matches = not search_filter or search_filter in base_name.lower()
-            variant_matches = [v for v in variants if search_filter is None or search_filter in v.lower()]
+            variant_matches = [
+                v for v in variants if search_filter is None or search_filter in v.lower()]
 
             if not base_matches and not variant_matches:
                 continue
 
             # Create parent node
-            total_count = sum(len(self.param_groups.get(v, [])) for v in variants)
+            total_count = sum(len(self.param_groups.get(v, []))
+                              for v in variants)
             parent_text = "{} ({} parts)".format(base_name, total_count)
             parent_node = TreeNode(parent_text)
             parent_node.Tag = ("parent", base_name)
@@ -220,6 +222,21 @@ class EnhancedParamForm(Form):
 # ========================================================================
 
 
+def get_element_id_int(element_id):
+    """Get integer value from ElementId, compatible with Revit 2023-2026.
+    Newer versions use .Value, older versions use .IntegerValue.
+    """
+    try:
+        # Try newer API first (Revit 2024+)
+        return element_id.Value
+    except AttributeError:
+        # Fall back to older API (Revit 2023)
+        try:
+            return element_id.IntegerValue
+        except AttributeError:
+            return None
+
+
 def natural_sort_key(s):
     # Sort runs with natural/numeric sorting
     return [
@@ -240,7 +257,7 @@ def get_param_value(param):
         if param.StorageType == 2:  # Integer
             return param.AsInteger()
         if param.StorageType == 3:  # ElementId
-            return param.AsElementId().IntegerValue
+            return get_element_id_int(param.AsElementId())
     except Exception:
         return None
 
@@ -365,7 +382,8 @@ try:
                 .ToElements())
 
     tag_ids = List[ElementId]()
-    duct_id_list = [d.Id.IntegerValue for d in duct_run]  # Convert to integer list for comparison
+    # Convert to integer list for comparison
+    duct_id_list = [get_element_id_int(d.Id) for d in duct_run]
 
     match_count = 0
     for tag in all_tags:
@@ -376,14 +394,14 @@ try:
             # Method 1: TaggedLocalElementId property (newer API)
             if hasattr(tag, 'TaggedLocalElementId'):
                 tagged_id = tag.TaggedLocalElementId
-                if tagged_id and tagged_id.IntegerValue in duct_id_list:
+                if tagged_id and get_element_id_int(tagged_id) in duct_id_list:
                     tag_ids.Add(tag.Id)
                     match_count += 1
             # Method 2: GetTaggedLocalElementIds (returns collection)
             elif hasattr(tag, 'GetTaggedLocalElementIds'):
                 tagged_ids_collection = tag.GetTaggedLocalElementIds()
                 for tid in tagged_ids_collection:
-                    if tid.IntegerValue in duct_id_list:
+                    if get_element_id_int(tid) in duct_id_list:
                         tag_ids.Add(tag.Id)
                         match_count += 1
                         break
