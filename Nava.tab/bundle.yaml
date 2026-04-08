@@ -1,7 +1,8 @@
 layout:
-  - About
-  - Websites
-  - General
-  - Sheet Metal
-  - Pipefitting
-  - Testing
+  - websites
+  - general
+  - checks
+  - duct
+  - tagging
+  - sheet_metal
+  - testing

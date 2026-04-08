@@ -37,6 +37,16 @@ tagger = RevitTagging(doc=doc, view=view)
 fittings = Fittings(doc=doc, view=view, tagger=tagger)
 
 
+def _fmt_length(value):
+    """Format length safely for report output."""
+    if isinstance(value, (int, float)):
+        return "{:06.2f}".format(float(value))
+    try:
+        return "{:06.2f}".format(float(str(value).strip()))
+    except Exception:
+        return str(value)
+
+
 # ======================================================================
 # MAIN
 # ======================================================================
@@ -153,22 +163,22 @@ output.print_md("---")
 if needs_tagging:
     output.print_md("## Newly Tagged")
     for i, d in enumerate(needs_tagging, start=1):
-        output.print_md("### No.{} | ID: {} | Fam: {} | Size: {} | Le: {:06.2f} | Ex: {}".format(
-            i, output.linkify(d.element.Id), d.family, d.size, d.length, d.extension_bottom))
+        output.print_md("### No.{} | ID: {} | Fam: {} | Size: {} | Le: {} | Ex: {}".format(
+            i, output.linkify(d.element.Id), d.family, d.size, _fmt_length(d.length), d.extension_bottom))
     output.print_md("---")
 
 if already_tagged:
     output.print_md("## Already Tagged")
     for i, d in enumerate(already_tagged, start=1):
-        output.print_md("### {} | Size: {} | Family: {} | Length: {:06.2f} | ID: {}".format(
-            i, d.size, d.family, d.length, output.linkify(d.element.Id)))
+        output.print_md("### {} | Size: {} | Family: {} | Length: {} | ID: {}".format(
+            i, d.size, d.family, _fmt_length(d.length), output.linkify(d.element.Id)))
     output.print_md("---")
 
 if skipped_by_param:
     output.print_md("## Skipped by Parameter")
     for i, d in enumerate(skipped_by_param, start=1):
-        output.print_md("### {} | Size: {} | Family: {} | Length: {:06.2f} | ID: {}".format(
-            i, d.size, d.family, d.length, output.linkify(d.element.Id)))
+        output.print_md("### {} | Size: {} | Family: {} | Length: {} | ID: {}".format(
+            i, d.size, d.family, _fmt_length(d.length), output.linkify(d.element.Id)))
     output.print_md("---")
 
 if skipped_no_tag_config:

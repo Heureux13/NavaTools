@@ -60,75 +60,94 @@ SLOT_ALL = (
 DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_BOD: [
         "-FabDuct_BOD_Tag",
-        "_umi_BOD"
+        "_umi_BOD",
+        '_Tag.DT_BOD'
     ],
     SLOT_BOD_CENTER: [
-        "_umi_BOD_CENTER"
+        "_umi_BOD_CENTER",
+        '_Tag.DT_BOD.Center'
     ],
     SLOT_BOD_LEFT: [
-        "_umi_BOD_LEFT"
+        "_umi_BOD_LEFT",
+        '_Tag.DT_BOD.Left'
     ],
     SLOT_BOD_RIGHT: [
-        "_umi_BOD_RIGHT"
+        "_umi_BOD_RIGHT",
+        '_Tag.DT_BOD.Right'
     ],
     SLOT_DEGREE: [
         "-FabDuct_DEGREE_MV_Tag",
-        "_umi_ANGLE"
+        "_umi_ANGLE",
+        '_Tag.DT_Degree'
     ],
     SLOT_EXT_IN: [
         "-FabDuct_EXT IN_MV_Tag",
-        "_umi_EXTENSION_BOTTOM"
+        "_umi_EXTENSION_BOTTOM",
+        '_Tag.DT_Ext.Bottom'
     ],
     SLOT_EXT_LEFT: [
         "-FabDuct_EXT LEFT_MV_Tag",
-        "_umi_EXTENSION_LEFT"
+        "_umi_EXTENSION_LEFT",
+        '_Tag.DT_Ext.Left'
     ],
     SLOT_EXT_OUT: [
         "-FabDuct_EXT OUT_MV_Tag",
-        "_umi_EXTENSION_TOP"
+        "_umi_EXTENSION_TOP",
+        '_Tag.DT_Ext.Top'
     ],
     SLOT_EXT_RIGHT: [
         "-FabDuct_EXT RIGHT_MV_Tag",
-        "_umi_EXTENSION_RIGHT"
+        "_umi_EXTENSION_RIGHT",
+        '_Tag.DT_Ext.Right'
     ],
     SLOT_LENGTH: [
         "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH"
+        "_umi_LENGTH",
+        '_Tag.DT_Length'
     ],
     SLOT_LENGTH_CENTER: [
         "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_CENTER"
+        "_umi_LENGTH_CENTER",
+        '_Tag.DT_Length.Center'
     ],
     SLOT_LENGTH_LEFT: [
         "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_LEFT"
+        "_umi_LENGTH_LEFT",
+        '_Tag.DT_Length.Left'
     ],
     SLOT_LENGTH_RIGHT: [
         "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_RIGHT"
+        "_umi_LENGTH_RIGHT",
+        '_Tag.DT_Length.Right'
     ],
     SLOT_MARK: [
         "-FabDuct_MARK_Tag",
-        "_umi_MARK"
+        "_umi_MARK",
+        '_Tag.DT_Mark'
     ],
     SLOT_MARK_NOTE: [
-        "_umi_MARK_note"
+        "_umi_MARK_note",
+        '_Tag.DT_Mark.Note'
     ],
     SLOT_SIZE: [
         "-FabDuct_SIZE_Tag",
-        "_umi_SIZE"
+        "_umi_SIZE",
+        '_Tag.DT_Size'
     ],
     SLOT_TRAN: [
         "-FabDuct_TRAN_MV_Tag",
-        "_umi_OFFSET"
+        "_umi_OFFSET",
+        '_Tag.DT_Offset.Value'
     ],
     SLOT_TYPE_MARK: [
         "-FabDuct_TM_MV_Tag",
-        "_umi_TYPE_MARK"
+        "_umi_TYPE_MARK",
+        '_Tag.DT_Type.Mark'
     ],
     SLOT_WEIGHT: [
         "-FabDuct_WEIGHT_Tag",
-        "_umi_WEIGHT"
+        "_umi_WEIGHT",
+        '_Tag.DT_Weight'
     ],
 }
 
