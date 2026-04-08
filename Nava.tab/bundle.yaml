@@ -1,7 +1,10 @@
+title:
+  en_us: Sheet Metal
 layout:
   - wwebsites
-  - ggeneral
+  - general
   - checks
+  - curate
   - duct
   - tagging
   - sheet_metal

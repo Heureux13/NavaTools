@@ -1,0 +1,6 @@
+title:
+  en_us: Sync
+layout:
+  - update
+  - reload
+  - sync
