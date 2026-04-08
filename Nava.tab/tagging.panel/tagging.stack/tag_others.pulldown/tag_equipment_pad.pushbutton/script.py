@@ -35,7 +35,7 @@ doc = revit.doc
 view = revit.active_view
 tagger = RevitTagging(doc, view)
 
-TAG_NAME = '_umi_equi_pad'
+TAG_NAME = '_Tag.EQ_Unit'
 WRITE_TO_PARAMETER = PYT_HEIGHT_PAD
 TARGET_CATEGORY = BuiltInCategory.OST_MechanicalEquipment
 
