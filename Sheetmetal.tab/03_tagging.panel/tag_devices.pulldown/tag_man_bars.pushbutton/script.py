@@ -151,6 +151,8 @@ try:
             failed.append((elem, "Unable to validate category"))
             continue
 
+        fittings.update_write_parameter_from_hierarchy(elem)
+
         tag_symbol = selected_tag_symbol
 
         # Skip only if element already has this MARK tag in this view

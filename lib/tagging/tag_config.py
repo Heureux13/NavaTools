@@ -6,148 +6,198 @@ from config.parameters_registry import *
 
 # fmt: off
 # autopep8: off
+SLOT_ACCESS_PANEL           = 'ACCESS_PANEL'
 SLOT_BOD                    = 'BOD'
-SLOT_BOD_CENTER             = 'BOD_CENTER'
 SLOT_BOD_LEFT               = 'BOD_LEFT'
 SLOT_BOD_RIGHT              = 'BOD_RIGHT'
+SLOT_CANVAS                 = 'CANVAS'
+SLOT_DAMPER_CONTROL         = 'DAMPER_CONTROL'
+SLOT_DAMPER_VOLUME          = 'DAMPER_VOLUME'
 SLOT_DEGREE                 = 'DEGREE'
-SLOT_EXT_IN                 = 'EXT_IN'
+SLOT_ENDCAP_SD              = 'ENDCAP_SD'
+SLOT_ENDCAP_TDF             = 'ENDCAP_TDF'
+SLOT_EQUIPMENT_PAD          = 'EQUIPMENT_PAD'
+SLOT_EXT_BOT                = 'EXT_IN'
 SLOT_EXT_LEFT               = 'EXT_LEFT'
-SLOT_EXT_OUT                = 'EXT_OUT'
 SLOT_EXT_RIGHT              = 'EXT_RIGHT'
+SLOT_EXT_TOP                = 'EXT_OUT'
+SLOT_FANS                   = 'FANS'
+SLOT_DAMPER_FIRE            = 'FIRE_DAMPER'
+SLOT_GRD                    = 'GRD'
+SLOT_GRD_CFM                = 'GRD_CFM'
 SLOT_LENGTH                 = 'LENGTH'
-SLOT_LENGTH_CENTER          = 'LENGTH_CENTER'
 SLOT_LENGTH_LEFT            = 'LENGTH_LEFT'
 SLOT_LENGTH_RIGHT           = 'LENGTH_RIGHT'
+SLOT_LOUVER                 = 'LOUVER'
+SLOT_MAN_BARS               = 'MAN_BARS'
 SLOT_MARK                   = 'MARK'
-SLOT_MARK_NOTE              = 'MARK_NOTE'
+SLOT_NOTE                   = 'NOTE'
+SLOT_NUMBER_BLUEBEAM        = 'NUMBER_BLUEBEAM'
+SLOT_NUMBER_FABRICATION     = 'NUMBER_FABRICATION'
+SLOT_NUMBER_SLEEVE          = 'NUMBER_SLEEVE'
+SLOT_OFFSET                 = 'OFFSET'
 SLOT_SIZE                   = 'SIZE'
-SLOT_SIZE_CENTER            = 'SIZE_CENTER'
 SLOT_SIZE_LEFT              = 'SIZE_LEFT'
 SLOT_SIZE_RIGHT             = 'SIZE_RIGHT'
-SLOT_TRAN                   = 'TRAN'
-SLOT_TYPE_MARK              = 'TYPE_MARK'
+SLOT_TAP                    = 'TAP'
+SLOT_UNIT                   = 'UNIT'
+SLOT_VAV                    = 'VAV'
 SLOT_WEIGHT                 = 'WEIGHT'
 # fmt: on
 # autopep8: on
 
 SLOT_ALL = (
+    SLOT_ACCESS_PANEL,
     SLOT_BOD,
-    SLOT_BOD_CENTER,
     SLOT_BOD_LEFT,
     SLOT_BOD_RIGHT,
+    SLOT_CANVAS,
     SLOT_DEGREE,
-    SLOT_EXT_IN,
+    SLOT_DAMPER_CONTROL,
+    SLOT_DAMPER_FIRE,
+    SLOT_DAMPER_VOLUME,
+    SLOT_ENDCAP_SD,
+    SLOT_ENDCAP_TDF,
+    SLOT_EQUIPMENT_PAD,
+    SLOT_EXT_BOT,
     SLOT_EXT_LEFT,
-    SLOT_EXT_OUT,
     SLOT_EXT_RIGHT,
+    SLOT_EXT_TOP,
+    SLOT_FANS,
+    SLOT_GRD,
+    SLOT_GRD_CFM,
     SLOT_LENGTH,
-    SLOT_LENGTH_CENTER,
     SLOT_LENGTH_LEFT,
     SLOT_LENGTH_RIGHT,
+    SLOT_LOUVER,
+    SLOT_MAN_BARS,
     SLOT_MARK,
-    SLOT_MARK_NOTE,
+    SLOT_NOTE,
+    SLOT_NUMBER_BLUEBEAM,
+    SLOT_NUMBER_FABRICATION,
+    SLOT_NUMBER_SLEEVE,
+    SLOT_OFFSET,
+    SLOT_TAP,
     SLOT_SIZE,
-    SLOT_SIZE_CENTER,
     SLOT_SIZE_LEFT,
     SLOT_SIZE_RIGHT,
-    SLOT_TRAN,
-    SLOT_TYPE_MARK,
-    SLOT_WEIGHT
+    SLOT_UNIT,
+    SLOT_VAV,
+    SLOT_WEIGHT,
 )
 
 
 DEFAULT_TAG_SLOT_CANDIDATES = {
-    SLOT_BOD: [
-        "-FabDuct_BOD_Tag",
-        "_umi_BOD",
-        '_Tag.DT_BOD'
+    SLOT_ACCESS_PANEL: [
+        ('_Tag.DV_AccessPanel', 'Black'),
     ],
-    SLOT_BOD_CENTER: [
-        "_umi_BOD_CENTER",
-        '_Tag.DT_BOD.Center'
+    SLOT_BOD: [
+        ('_Tag.DT_BOD', 'Center'),
     ],
     SLOT_BOD_LEFT: [
-        "_umi_BOD_LEFT",
-        '_Tag.DT_BOD.Left'
+        ('_Tag.DT_BOD', 'Left'),
     ],
     SLOT_BOD_RIGHT: [
-        "_umi_BOD_RIGHT",
-        '_Tag.DT_BOD.Right'
+        ('_Tag.DT_BOD', 'Right'),
+    ],
+    SLOT_CANVAS: [
+        ('_Tag.DT_Canvas', 'Black'),
     ],
     SLOT_DEGREE: [
-        "-FabDuct_DEGREE_MV_Tag",
-        "_umi_ANGLE",
-        '_Tag.DT_Degree'
+        ('_Tag.DT_Degree', 'Center'),
     ],
-    SLOT_EXT_IN: [
-        "-FabDuct_EXT IN_MV_Tag",
-        "_umi_EXTENSION_BOTTOM",
-        '_Tag.DT_Ext.Bottom'
+    SLOT_ENDCAP_SD: [
+        ('_Tag.DT_EndcapSD', 'Center'),
+    ],
+    SLOT_ENDCAP_TDF: [
+        ('_Tag.DV_EndcapTDF', 'Center'),
+    ],
+    SLOT_DAMPER_CONTROL: [
+        ('_Tag.DV_DamperControl', 'Black'),
+    ],
+    SLOT_DAMPER_FIRE: [
+        ('_Tag.DV_FireDamper', 'Black'),
+    ],
+    SLOT_DAMPER_VOLUME: [
+        ('_Tag.DV_DamperVolume', 'Black'),
+    ],
+    SLOT_EQUIPMENT_PAD: [
+        ('_Tag.EQ_EquipmentPad', 'Black'),
+    ],
+    SLOT_EXT_BOT: [
+        ('_Tag.DT_ExtensionBottom', 'Center'),
     ],
     SLOT_EXT_LEFT: [
-        "-FabDuct_EXT LEFT_MV_Tag",
-        "_umi_EXTENSION_LEFT",
-        '_Tag.DT_Ext.Left'
-    ],
-    SLOT_EXT_OUT: [
-        "-FabDuct_EXT OUT_MV_Tag",
-        "_umi_EXTENSION_TOP",
-        '_Tag.DT_Ext.Top'
+        ('_Tag.DT_ExtensionLeft', 'Center'),
     ],
     SLOT_EXT_RIGHT: [
-        "-FabDuct_EXT RIGHT_MV_Tag",
-        "_umi_EXTENSION_RIGHT",
-        '_Tag.DT_Ext.Right'
+        ('_Tag.DT_ExtensionRight', 'Center'),
+    ],
+    SLOT_EXT_TOP: [
+        ('_Tag.DT_ExtensionTop', 'Center'),
+    ],
+    SLOT_FANS: [
+        ('_Tag.EQ_Fans', 'Black'),
+    ],
+    SLOT_GRD: [
+        ('_Tag.DV_GRD', 'w/ flow'),
+    ],
+    SLOT_GRD_CFM: [
+        ('_Tag.DV_GRD.cfm', 'w/o flow'),
     ],
     SLOT_LENGTH: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH",
-        '_Tag.DT_Length'
-    ],
-    SLOT_LENGTH_CENTER: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_CENTER",
-        '_Tag.DT_Length.Center'
+        ('_Tag.DT_Length', 'Center'),
     ],
     SLOT_LENGTH_LEFT: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_LEFT",
-        '_Tag.DT_Length.Left'
+        ('_Tag.DT_Length', 'Left'),
     ],
     SLOT_LENGTH_RIGHT: [
-        "-FabDuct_LENGTH_Tag",
-        "_umi_LENGTH_RIGHT",
-        '_Tag.DT_Length.Right'
+        ('_Tag.DT_Length', 'Right'),
+    ],
+    SLOT_LOUVER: [
+        ('_Tag.DV_Louver', 'Black'),
+    ],
+    SLOT_MAN_BARS: [
+        ('_Tag.DV_ManBars', 'Black'),
     ],
     SLOT_MARK: [
-        "-FabDuct_MARK_Tag",
-        "_umi_MARK",
-        '_Tag.DT_Mark'
+        ('_Tag.DT_Mark', 'Black'),
     ],
-    SLOT_MARK_NOTE: [
-        "_umi_MARK_note",
-        '_Tag.DT_Mark.Note'
+    SLOT_NOTE: [
+        ('_Tag.DT_Note', '1 note'),
+    ],
+    SLOT_NUMBER_BLUEBEAM: [
+        ('_Tag.DT_NumberBluebeam', 'Default'),
+    ],
+    SLOT_NUMBER_FABRICATION: [
+        ('_Tag.DT_NumberFabrication', 'Default'),
+    ],
+    SLOT_NUMBER_SLEEVE: [
+        ('_Tag.DT_NumberSleeve', 'Default'),
+    ],
+    SLOT_OFFSET: [
+        ('_Tag.DT_Offset', 'Default'),
+    ],
+    SLOT_TAP: [
+        ('_Tag.DT_Tap', 'Default'),
     ],
     SLOT_SIZE: [
-        "-FabDuct_SIZE_Tag",
-        "_umi_SIZE",
-        '_Tag.DT_Size'
+        ('_Tag.DT_Size', 'Center'),
     ],
-    SLOT_TRAN: [
-        "-FabDuct_TRAN_MV_Tag",
-        "_umi_OFFSET",
-        '_Tag.DT_Offset.Value'
+    SLOT_SIZE_LEFT: [
+        ('_Tag.DT_Size', 'Left'),
     ],
-    SLOT_TYPE_MARK: [
-        "-FabDuct_TM_MV_Tag",
-        "_umi_TYPE_MARK",
-        '_Tag.DT_Type.Mark'
+    SLOT_SIZE_RIGHT: [
+        ('_Tag.DT_Size', 'Right'),
+    ],
+    SLOT_UNIT: [
+        ('_Tag.EQ_Mark', 'Black'),
+    ],
+    SLOT_VAV: [
+        ('_Tag.EQ_VAV', 'Black'),
     ],
     SLOT_WEIGHT: [
-        "-FabDuct_WEIGHT_Tag",
-        "_umi_WEIGHT",
-        '_Tag.DT_Weight'
+        ('_Tag.DT_Weight', 'Defaut'),
     ],
 }
 
@@ -159,8 +209,10 @@ DEFAULT_SKIP_PARAMETERS = {
 DEFAULT_PARAMETER_HIERARCHY = [
     RVT_TYPE_MARK,
     RVT_MARK,
-    BBM_LABEL,
+    PYT_LABEL,
 ]
+
+WRITE_PARAMETER = BBM_LABEL
 
 STRAIGHT_JOINT_FAMILIES = {
     'round duct',

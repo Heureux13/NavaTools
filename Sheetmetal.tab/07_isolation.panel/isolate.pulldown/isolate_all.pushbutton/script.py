@@ -9,10 +9,11 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from pyrevit import revit
+from pyrevit import revit, script
 from Autodesk.Revit.DB import (BuiltInCategory, FilteredElementCollector, ElementId,
                                TemporaryViewMode, ReferencePlane)
 from System.Collections.Generic import List
+from config.parameters_registry import RVT_CLEARANCE_ZONE, RVT_FAMILY, RVT_TYPE
 
 # Button info
 # ===================================================
@@ -25,6 +26,7 @@ Toggle isolation of walls, ducts, pipes, steel beams, and floors.
 # ==================================================
 doc = revit.doc
 active_view = doc.ActiveView
+output = script.get_output()
 
 # Categories to isolate
 categories_to_isolate = [
@@ -61,6 +63,7 @@ categories_to_isolate = [
     BuiltInCategory.OST_FlexPipeTags,
     BuiltInCategory.OST_Floors,
     BuiltInCategory.OST_GenericAnnotation,
+    BuiltInCategory.OST_GenericModel,
     BuiltInCategory.OST_Grids,
     BuiltInCategory.OST_MechanicalEquipment,
     BuiltInCategory.OST_MechanicalEquipmentTags,
@@ -110,6 +113,86 @@ def is_view_isolated(view):
         return False
 
 
+def get_element_type(element):
+    """Get element type safely."""
+    try:
+        type_id = element.GetTypeId()
+        if type_id and type_id != ElementId.InvalidElementId:
+            return doc.GetElement(type_id)
+    except BaseException:
+        pass
+    return None
+
+
+def get_text(value):
+    """Normalize text values for matching."""
+    if value is None:
+        return ""
+    return str(value).strip().lower()
+
+
+def get_parameter_text(element, name):
+    """Return normalized parameter text value or empty string."""
+    try:
+        param = element.LookupParameter(name)
+        if not param:
+            return ""
+        val = param.AsString() or param.AsValueString()
+        return get_text(val)
+    except BaseException:
+        return ""
+
+
+def is_clearance_like_element(element):
+    """Match clearance elements by category plus family/type/zone markers."""
+    if not element or not element.Category:
+        return False
+
+    cat_id = element.Category.Id.IntegerValue
+    allowed_categories = [
+        int(BuiltInCategory.OST_MechanicalEquipment),
+        int(BuiltInCategory.OST_GenericModel),
+    ]
+    if cat_id not in allowed_categories:
+        return False
+
+    element_type = get_element_type(element)
+    family_name = get_parameter_text(element, RVT_FAMILY)
+    type_name = get_parameter_text(element, RVT_TYPE)
+
+    if not family_name:
+        try:
+            if element_type and getattr(element_type, 'FamilyName', None):
+                family_name = get_text(element_type.FamilyName)
+        except BaseException:
+            pass
+
+    if not type_name:
+        try:
+            if element_type and getattr(element_type, 'Name', None):
+                type_name = get_text(element_type.Name)
+        except BaseException:
+            pass
+
+    if 'clearance' in family_name or 'clearance' in type_name:
+        return True
+
+    clearance_zone = get_parameter_text(element, RVT_CLEARANCE_ZONE)
+    return clearance_zone in ['yes', '1', 'true']
+
+
+def collect_clearance_like_elements(doc, view_id):
+    """Collect matching clearance elements in the active view."""
+    ids = List[ElementId]()
+    collector = FilteredElementCollector(doc, view_id).WhereElementIsNotElementType()
+
+    for el in collector:
+        if is_clearance_like_element(el):
+            ids.Add(el.Id)
+
+    return ids
+
+
 # Main Code
 # =================================================
 with revit.Transaction('Toggle Isolation'):
@@ -122,10 +205,14 @@ with revit.Transaction('Toggle Isolation'):
         ids = collect_elements_from_categories(
             doc, active_view.Id, categories_to_isolate)
 
+        # Ensure clearance-like instances are included.
+        clearance_ids = collect_clearance_like_elements(doc, active_view.Id)
+        for clearance_id in clearance_ids:
+            ids.Add(clearance_id)
+
         # Apply isolation if we have elements
         if ids.Count > 0:
             active_view.IsolateElementsTemporary(ids)
         else:
             # Show message if no elements found
-            from pyrevit import forms
-            forms.alert('No elements found to isolate.')
+            output.print_md('No elements found to isolate.')

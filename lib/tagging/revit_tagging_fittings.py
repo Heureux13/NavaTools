@@ -3,18 +3,26 @@ import re
 from revit.revit_element import RevitElement
 from ducts.revit_xyz import RevitXYZ
 from tagging.tag_config import (
-    SLOT_TYPE_MARK as CFG_SLOT_TYPE_MARK,
+    SLOT_ACCESS_PANEL as CFG_SLOT_ACCESS_PANEL,
+    SLOT_CANVAS as CFG_SLOT_CANVAS,
+    SLOT_DAMPER_FIRE as CFG_SLOT_DAMPER_FIRE,
+    SLOT_DAMPER_VOLUME as CFG_SLOT_DAMPER_VOLUME,
+    SLOT_ENDCAP_SD as CFG_SLOT_ENDCAP_SD,
+    SLOT_ENDCAP_TDF as CFG_SLOT_ENDCAP_TDF,
+    SLOT_MAN_BARS as CFG_SLOT_MAN_BARS,
     SLOT_SIZE as CFG_SLOT_SIZE,
-    SLOT_EXT_IN as CFG_SLOT_EXT_IN,
-    SLOT_EXT_OUT as CFG_SLOT_EXT_OUT,
+    SLOT_TAP as CFG_SLOT_TAP,
+    SLOT_EXT_BOT as CFG_SLOT_EXT_BOT,
+    SLOT_EXT_TOP as CFG_SLOT_EXT_TOP,
     SLOT_EXT_LEFT as CFG_SLOT_EXT_LEFT,
     SLOT_EXT_RIGHT as CFG_SLOT_EXT_RIGHT,
     SLOT_DEGREE as CFG_SLOT_DEGREE,
-    SLOT_TRAN as CFG_SLOT_TRAN,
+    SLOT_OFFSET as CFG_SLOT_OFFSET,
     SLOT_MARK as CFG_SLOT_MARK,
     DEFAULT_TAG_SLOT_CANDIDATES,
-    DEFAULT_SKIP_PARAMETERS,
     DEFAULT_PARAMETER_HIERARCHY,
+    DEFAULT_SKIP_PARAMETERS,
+    WRITE_PARAMETER,
 )
 from Autodesk.Revit.DB import FilteredElementCollector, IndependentTag
 
@@ -35,31 +43,31 @@ class Fittings:
         for slot, candidates in DEFAULT_TAG_SLOT_CANDIDATES.items()
     }
 
-    SLOT_TYPE_MARK = CFG_SLOT_TYPE_MARK
+    SLOT_ACCESS_PANEL = CFG_SLOT_ACCESS_PANEL
+    SLOT_CANVAS = CFG_SLOT_CANVAS
+    SLOT_DAMPER_FIRE = CFG_SLOT_DAMPER_FIRE
+    SLOT_DAMPER_VOLUME = CFG_SLOT_DAMPER_VOLUME
+    SLOT_ENDCAP_SD = CFG_SLOT_ENDCAP_SD
+    SLOT_ENDCAP_TDF = CFG_SLOT_ENDCAP_TDF
+    SLOT_MAN_BARS = CFG_SLOT_MAN_BARS
     SLOT_SIZE = CFG_SLOT_SIZE
-    SLOT_EXT_IN = CFG_SLOT_EXT_IN
-    SLOT_EXT_OUT = CFG_SLOT_EXT_OUT
+    SLOT_TAP = CFG_SLOT_TAP
+    SLOT_EXT_BOT = CFG_SLOT_EXT_BOT
+    SLOT_EXT_TOP = CFG_SLOT_EXT_TOP
     SLOT_EXT_LEFT = CFG_SLOT_EXT_LEFT
     SLOT_EXT_RIGHT = CFG_SLOT_EXT_RIGHT
     SLOT_DEGREE = CFG_SLOT_DEGREE
-    SLOT_TRAN = CFG_SLOT_TRAN
+    SLOT_OFFSET = CFG_SLOT_OFFSET
     SLOT_MARK = CFG_SLOT_MARK
 
     skip_parameters = {
         param: list(values)
         for param, values in DEFAULT_SKIP_PARAMETERS.items()
     }
-
     parameter_hierarchy_to_check = list(DEFAULT_PARAMETER_HIERARCHY)
+    write_parameter = WRITE_PARAMETER
 
     elbow_throat_allowances = {'tdf': 6, 's&d': 6}
-
-    elbow_extension_tags = {
-        '-FabDuct_EXT IN_MV_Tag',
-        '-FabDuct_EXT OUT_MV_Tag',
-        '-FabDuct_EXT LEFT_MV_Tag',
-        '-FabDuct_EXT RIGHT_MV_Tag',
-    }
 
     elbow_families = {
         'elbow',
@@ -96,14 +104,21 @@ class Fittings:
             x) for x in self.square_elbow_families}
         self._norm_angle_skip_fam = {self._norm(
             x) for x in self.family_to_angle_skip}
-        self._norm_ext_tags = {t.strip().lower()
-                               for t in self.elbow_extension_tags}
 
-        # Resolve all slots and build the family map once.
-        for slot in self.TAG_SLOT_CANDIDATES:
-            self._resolve_slot(slot)
+        # Build extension/degree tag sets from resolved slot candidates.
+        _ext_slots = (self.SLOT_EXT_BOT, self.SLOT_EXT_TOP, self.SLOT_EXT_LEFT, self.SLOT_EXT_RIGHT)
+        self._norm_ext_tags = {
+            self._candidate_pool_needle(name)
+            for slot in _ext_slots
+            for name in (self.TAG_SLOT_CANDIDATES.get(slot) or [])
+            if self._candidate_pool_needle(name)
+        }
+        self._norm_degree_tags = {
+            self._candidate_pool_needle(name)
+            for name in (self.TAG_SLOT_CANDIDATES.get(self.SLOT_DEGREE) or [])
+            if self._candidate_pool_needle(name)
+        }
         self.duct_families = self._build_duct_families()
-        self.rect_damper_switch_families = self._build_rect_damper_switch_families()
 
     # ------------------------------------------------------------------
     # Tag resolution
@@ -115,28 +130,89 @@ class Fittings:
             return ""
         return re.sub(r"[^a-z0-9]+", " ", str(name).strip().lower()).strip()
 
+    @staticmethod
+    def _candidate_pool_needle(candidate):
+        """Build a normalized search needle against 'family type' pools."""
+        if isinstance(candidate, tuple):
+            fam = str(candidate[0]).strip()
+            typ = str(candidate[1]).strip()
+            return "{} {}".format(fam, typ).strip().lower()
+        return str(candidate).strip().lower()
+
+    @staticmethod
+    def _candidate_family_name(candidate):
+        """Return the family-name portion of a candidate for family-only compares."""
+        if isinstance(candidate, tuple):
+            return str(candidate[0]).strip().lower()
+        return str(candidate).strip().lower()
+
+    @staticmethod
+    def _get_param_case_insensitive(element, param_name):
+        target = (param_name or '').strip().lower()
+        if not target or element is None:
+            return None
+        try:
+            for param in element.Parameters:
+                try:
+                    definition = param.Definition
+                    name = definition.Name if definition else None
+                    if name and name.strip().lower() == target:
+                        return param
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _get_param_text(param):
+        if not param:
+            return ''
+        try:
+            value = param.AsString()
+            if not value:
+                value = param.AsValueString()
+            return value.strip() if value else ''
+        except Exception:
+            return ''
+
     def _resolve_slot(self, slot_name):
-        """Return (tag, label_lower) for the first candidate found; cache the result."""
+        """Return (tag, label_lower) for the first candidate found; cache the result.
+
+        Each candidate can be a plain string (substring-matched against the tag pool)
+        or a (family, type) tuple for an exact family-name + type-name lookup.
+        """
         key = str(slot_name or '').strip().upper()
         if key in self._slot_resolution_cache:
             return self._slot_resolution_cache[key]
         result = (None, None)
         seen = set()
         attempted_names = []
-        for name in (self.TAG_SLOT_CANDIDATES.get(key) or []):
-            if not name:
+        for candidate in (self.TAG_SLOT_CANDIDATES.get(key) or []):
+            if not candidate:
                 continue
-            k = str(name).strip()
-            if not k or k.lower() in seen:
+            if isinstance(candidate, tuple):
+                fam = str(candidate[0]).strip()
+                typ = str(candidate[1]).strip()
+                dedup_key = "{}::{}".format(fam.lower(), typ.lower())
+                label = "{}::{}".format(fam, typ)
+            else:
+                fam = None
+                dedup_key = str(candidate).strip().lower()
+                label = str(candidate).strip()
+            if not dedup_key or dedup_key in seen:
                 continue
-            seen.add(k.lower())
-            attempted_names.append(k)
+            seen.add(dedup_key)
+            attempted_names.append(label)
             try:
-                tag = self.tagger.get_label(k)
+                if fam is not None:
+                    tag = self.tagger.get_label_exact(fam, typ)
+                else:
+                    tag = self.tagger.get_label(label)
             except LookupError:
                 tag = None
             if tag is not None:
-                result = (tag, k.strip().lower())
+                result = (tag, dedup_key)
                 break
 
         # Only report missing labels if no candidate in this slot could be resolved.
@@ -145,6 +221,45 @@ class Fittings:
 
         self._slot_resolution_cache[key] = result
         return result
+
+    def _get_hierarchy_value(self, element):
+        """Return the last non-empty value from the configured hierarchy.
+
+        Precedence is determined by order in parameter_hierarchy_to_check, so later
+        parameters override earlier ones when they have a value.
+        """
+        if element is None:
+            return ''
+
+        elem_type = None
+        try:
+            elem_type = self.doc.GetElement(element.GetTypeId())
+        except Exception:
+            elem_type = None
+
+        result = ''
+        for param_name in self.parameter_hierarchy_to_check:
+            value = self._get_param_text(
+                self._get_param_case_insensitive(element, param_name)
+            )
+            if not value and elem_type is not None:
+                value = self._get_param_text(
+                    self._get_param_case_insensitive(elem_type, param_name)
+                )
+            if value:
+                result = value
+        return result
+
+    def update_write_parameter_from_hierarchy(self, element):
+        """Write the resolved hierarchy value to the configured output parameter."""
+        value = self._get_hierarchy_value(element)
+        if element is None or not self.write_parameter:
+            return False, value
+        updated = RevitElement(self.doc, self.view, element).set_param(
+            self.write_parameter,
+            value,
+        )
+        return updated, value
 
     def _tag_cfg(self, *slot_names):
         """Build [(tag, 0.5), ...] from slot names, skipping unresolved slots."""
@@ -163,45 +278,37 @@ class Fittings:
         """Return normalized family-name -> [(tag, position)] map."""
         s = self
         family_cfg = {
-            "8inch long coupler wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "conical tap - wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
             # tag choice resolved at runtime
-            "rect volume damper": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "boot tap - wdamper": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "access panel": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "cap": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "canvas": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "end cap": s._tag_cfg(s.SLOT_TYPE_MARK),
-            "tdf end cap": s._tag_cfg(s.SLOT_TYPE_MARK),
+            "8inch long coupler wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "conical tap - wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "rect volume damper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "boot tap - wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "access panel": s._tag_cfg(s.SLOT_ACCESS_PANEL),
+            "cap": s._tag_cfg(s.SLOT_ENDCAP_SD),
+            "canvas": s._tag_cfg(s.SLOT_CANVAS),
+            "end cap": s._tag_cfg(s.SLOT_ENDCAP_SD),
+            "tdf end cap": s._tag_cfg(s.SLOT_ENDCAP_TDF),
             "drop cheek": s._tag_cfg(s.SLOT_SIZE),
             "radius bend": s._tag_cfg(s.SLOT_SIZE),
             "square bend": s._tag_cfg(s.SLOT_SIZE),
-            "tap": s._tag_cfg(s.SLOT_SIZE),
-            "elbow": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
-            "elbow 90 degree": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_OUT, s.SLOT_DEGREE),
+            "tap": s._tag_cfg(s.SLOT_TAP),
+            "elbow": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
+            "elbow 90 degree": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
             "gored elbow": s._tag_cfg(s.SLOT_DEGREE),
             "radius elbow": s._tag_cfg(s.SLOT_DEGREE),
-            "tee": s._tag_cfg(s.SLOT_EXT_IN, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
-            "mitred offset": s._tag_cfg(s.SLOT_TRAN),
-            "cid330 - (radius 2-way offset)": s._tag_cfg(s.SLOT_TRAN),
-            "offset": s._tag_cfg(s.SLOT_TRAN),
-            "ogee": s._tag_cfg(s.SLOT_TRAN),
-            "radius offset": s._tag_cfg(s.SLOT_TRAN),
-            "reducer": s._tag_cfg(s.SLOT_TRAN),
-            "square to ø": s._tag_cfg(s.SLOT_TRAN),
-            "transition": s._tag_cfg(s.SLOT_TRAN),
-            "fire damper - type b": s._tag_cfg(s.SLOT_MARK),
-            "manbars": s._tag_cfg(s.SLOT_MARK),
+            "tee": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
+            "mitred offset": s._tag_cfg(s.SLOT_OFFSET),
+            "cid330 - (radius 2-way offset)": s._tag_cfg(s.SLOT_OFFSET),
+            "offset": s._tag_cfg(s.SLOT_OFFSET),
+            "ogee": s._tag_cfg(s.SLOT_OFFSET),
+            "radius offset": s._tag_cfg(s.SLOT_OFFSET),
+            "reducer": s._tag_cfg(s.SLOT_OFFSET),
+            "square to ø": s._tag_cfg(s.SLOT_OFFSET),
+            "transition": s._tag_cfg(s.SLOT_OFFSET),
+            "fire damper - type b": s._tag_cfg(s.SLOT_DAMPER_FIRE),
+            "manbars": s._tag_cfg(s.SLOT_MAN_BARS),
         }
         return {self._norm(k): v for k, v in family_cfg.items()}
-
-    def _build_rect_damper_switch_families(self):
-        """All candidate tag family names for the rect damper MARK/TYPE_MARK swap logic."""
-        return {
-            name.strip().lower()
-            for slot in (self.SLOT_MARK, self.SLOT_TYPE_MARK)
-            for name in (self.TAG_SLOT_CANDIDATES.get(slot) or [])
-        }
 
     # ------------------------------------------------------------------
     # Skip rule helpers
@@ -218,7 +325,8 @@ class Fittings:
         return any(needle in pool for needle in self._norm_ext_tags)
 
     def _is_degree_tag(self, tag):
-        return "-fabduct_degree_mv_tag" in self._tag_pool_text(tag)
+        pool = self._tag_pool_text(tag)
+        return any(needle in pool for needle in self._norm_degree_tags)
 
     @staticmethod
     def _is_angle_close(raw_angle, target, tol=0.5):
@@ -342,45 +450,6 @@ class Fittings:
     # ------------------------------------------------------------------
     # Element / tagging helpers
     # ------------------------------------------------------------------
-
-    def _param_value_from_element_or_type(self, element, param_name):
-        """Return the string value of param_name from the element or its type, or None."""
-        target = (param_name or '').strip().lower()
-        if not target or element is None:
-            return None
-        elem_type = None
-        try:
-            elem_type = self.doc.GetElement(element.GetTypeId())
-        except Exception:
-            pass
-        for owner in [element, elem_type]:
-            if owner is None:
-                continue
-            try:
-                for p in owner.Parameters:
-                    try:
-                        dname = p.Definition.Name if p and p.Definition else None
-                        if not dname or dname.strip().lower() != target:
-                            continue
-                        val = p.AsString() or p.AsValueString()
-                        if val:
-                            return str(val).strip()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-        return None
-
-    def _rect_volume_damper_tag_choice(self, duct):
-        """Return (tag, label_lower) — MARK tag if the element has a mark, else TYPE_MARK tag."""
-        mark_param = self.parameter_hierarchy_to_check[0] if self.parameter_hierarchy_to_check else 'mark'
-        type_mark_param = self.parameter_hierarchy_to_check[1] if len(
-            self.parameter_hierarchy_to_check) > 1 else 'type mark'
-        if self._param_value_from_element_or_type(duct.element, mark_param):
-            return self._resolve_slot(self.SLOT_MARK)
-        if self._param_value_from_element_or_type(duct.element, type_mark_param):
-            return self._resolve_slot(self.SLOT_TYPE_MARK)
-        return self._resolve_slot(self.SLOT_TYPE_MARK)
 
     def _delete_conflicting_tags_for_element(self, element, keep_family_name_lower, candidate_family_names_lower):
         """Remove tags on this element whose family is a candidate but differs from the keeper."""

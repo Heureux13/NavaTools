@@ -52,7 +52,6 @@ def _fmt_length(value):
 # ======================================================================
 
 duct_families = fittings.duct_families
-RECT_DAMPER_SWITCH_FAMILIES = fittings.rect_damper_switch_families
 
 # Collect and filter ducts in the active view.
 ducts = RevitDuct.all(doc, view)
@@ -74,6 +73,7 @@ t.Start()
 try:
     needs_tagging = []
     already_tagged = []
+    skipped_placement = []
     skipped_by_param = []
     skipped_no_tag_config = []
 
@@ -84,23 +84,22 @@ try:
             skipped_no_tag_config.append(d)
             continue
 
+        fittings.update_write_parameter_from_hierarchy(d.element)
+
         if fittings.should_skip_by_param(d):
             skipped_by_param.append(d)
             continue
 
         existing_tag_fams = tagger.get_existing_tag_families(d.element)
-
-        # Rect volume damper: choose MARK or TM tag and remove the losing one first.
-        if key == fittings._norm('rect volume damper'):
-            chosen_tag, chosen_family_name = fittings._rect_volume_damper_tag_choice(
-                d)
-            if chosen_tag is not None:
-                fittings._delete_conflicting_tags_for_element(
-                    d.element, chosen_family_name, RECT_DAMPER_SWITCH_FAMILIES)
-                existing_tag_fams = tagger.get_existing_tag_families(d.element)
-                tag_configs = [(chosen_tag, 0.5)]
+        requested_tag_fams = {
+            (tag.Family.Name or '').strip().lower()
+            for tag, _ in tag_configs
+            if tag is not None and getattr(tag, 'Family', None) is not None
+        }
+        has_matching_existing_tag = bool(existing_tag_fams & requested_tag_fams)
 
         tagged_this_element = False
+        placement_failed_reason = None
         for tag, loc_param in tag_configs:
             if tag is None or fittings.should_skip_tag(d, tag):
                 continue
@@ -110,16 +109,17 @@ try:
                 continue
 
             # Tag placement: FabricationPart uses face reference; others use location.
+            placed_tag = None
             if isinstance(d.element, DB.FabricationPart):
                 face_ref, face_pt = tagger.get_face_facing_view(
                     d.element, prefer_point=None)
                 if face_ref is not None and face_pt is not None:
-                    tagger.place_tag(face_ref, tag, face_pt)
+                    placed_tag = tagger.place_tag(face_ref, tag, face_pt)
                 else:
                     bbox = d.element.get_BoundingBox(view)
                     if bbox is None:
                         continue
-                    tagger.place_tag(
+                    placed_tag = tagger.place_tag(
                         d.element, tag, (bbox.Min + bbox.Max) / 2.0)
             else:
                 loc = getattr(d.element, "Location", None)
@@ -127,20 +127,33 @@ try:
                     bbox = d.element.get_BoundingBox(view)
                     if bbox is None:
                         continue
-                    tagger.place_tag(
+                    placed_tag = tagger.place_tag(
                         d.element, tag, (bbox.Min + bbox.Max) / 2.0)
                 elif hasattr(loc, "Point") and loc.Point is not None:
-                    tagger.place_tag(d.element, tag, loc.Point)
+                    placed_tag = tagger.place_tag(d.element, tag, loc.Point)
                 elif hasattr(loc, "Curve") and loc.Curve is not None:
-                    tagger.place_tag(
+                    placed_tag = tagger.place_tag(
                         d.element, tag, loc.Curve.Evaluate(loc_param, True))
                 else:
                     continue
 
+            if placed_tag is None:
+                placement_failed_reason = (
+                    tagger.last_place_tag_failure
+                    or "No compatible tag could be placed"
+                )
+                continue
+
             existing_tag_fams.add(fam_name)
             tagged_this_element = True
 
-        (needs_tagging if tagged_this_element else already_tagged).append(d)
+        if tagged_this_element:
+            needs_tagging.append(d)
+        elif has_matching_existing_tag:
+            already_tagged.append(d)
+        else:
+            skipped_placement.append(
+                (d, placement_failed_reason or "No matching existing tag and no new tag was placed"))
 
     # Update selection.
     if needs_tagging:
@@ -174,6 +187,14 @@ if already_tagged:
             i, d.size, d.family, _fmt_length(d.length), output.linkify(d.element.Id)))
     output.print_md("---")
 
+if skipped_placement:
+    output.print_md("## Skipped – Placement Failed")
+    for i, item in enumerate(skipped_placement, start=1):
+        d, reason = item
+        output.print_md("### {} | Size: {} | Family: {} | Length: {} | ID: {} | Reason: {}".format(
+            i, d.size, d.family, _fmt_length(d.length), output.linkify(d.element.Id), reason))
+    output.print_md("---")
+
 if skipped_by_param:
     output.print_md("## Skipped by Parameter")
     for i, d in enumerate(skipped_by_param, start=1):
@@ -192,6 +213,8 @@ output.print_md("# Newly tagged: {}, {}".format(
     len(needs_tagging), output.linkify([d.element.Id for d in needs_tagging])))
 output.print_md("# Already tagged: {}, {}".format(
     len(already_tagged), output.linkify([d.element.Id for d in already_tagged])))
+output.print_md("# Skipped (placement failed): {}, {}".format(
+    len(skipped_placement), output.linkify([d.element.Id for d, _ in skipped_placement])))
 output.print_md("# Skipped by parameter: {}, {}".format(
     len(skipped_by_param), output.linkify([d.element.Id for d in skipped_by_param])))
 output.print_md("# Skipped (no tag family loaded): {}, {}".format(

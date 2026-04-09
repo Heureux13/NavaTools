@@ -9,6 +9,7 @@ the copyright holder.
 
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
+    ElementType,
     FamilySymbol,
     IndependentTag,
     Reference,
@@ -61,26 +62,196 @@ class RevitTagging:
     def __init__(self, doc=None, view=None):
         self.doc = doc or revit.doc
         self.view = view or revit.active_view
-        # Cache tag family symbols for fabrication ductwork tags
-        self.tag_syms = (
+        self.last_place_tag_failure = None
+        # Prefer fabrication ductwork tag types, but keep a broader tag-type pool
+        # as a fallback because some projects expose loaded tag types as generic
+        # element types rather than FamilySymbol instances.
+        self.fabrication_tag_syms = list(
             FilteredElementCollector(self.doc)
-            .OfClass(FamilySymbol)
+            .WhereElementIsElementType()
             .OfCategory(DB.BuiltInCategory.OST_FabricationDuctworkTags)
             .ToElements()
         )
+        all_tag_types = list(
+            FilteredElementCollector(self.doc)
+            .WhereElementIsElementType()
+            .ToElements()
+        )
+        self.tag_syms = []
+        seen_ids = set()
+        for symbol in self.fabrication_tag_syms + all_tag_types:
+            if symbol is None:
+                continue
+            try:
+                symbol_id = symbol.Id.IntegerValue
+            except Exception:
+                symbol_id = None
+            if symbol_id is not None and symbol_id in seen_ids:
+                continue
+            category_name = ''
+            try:
+                category_name = (symbol.Category.Name or '').strip().lower()
+            except Exception:
+                category_name = ''
+            if symbol in self.fabrication_tag_syms or 'tag' in category_name:
+                self.tag_syms.append(symbol)
+                if symbol_id is not None:
+                    seen_ids.add(symbol_id)
+
+    @staticmethod
+    def _get_type_param_text(symbol, param_name):
+        target = (param_name or "").strip().lower()
+        if not target or symbol is None:
+            return ""
+        try:
+            for param in symbol.Parameters:
+                try:
+                    definition = param.Definition
+                    name = definition.Name if definition else None
+                    if not name or name.strip().lower() != target:
+                        continue
+                    value = param.AsString() or param.AsValueString()
+                    return value.strip() if value else ""
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return ""
+
+    @staticmethod
+    def _tag_pool(symbol):
+        fam = getattr(symbol, "Family", None)
+        fam_name = fam.Name if fam is not None else ""
+        if not fam_name:
+            try:
+                fam_name = getattr(symbol, "FamilyName", "") or ""
+            except Exception:
+                fam_name = ""
+        if not fam_name:
+            fam_name = RevitTagging._get_type_param_text(symbol, "Family Name")
+        if not fam_name:
+            fam_name = RevitTagging._get_type_param_text(symbol, "Family")
+
+        ts_name = getattr(symbol, "Name", "") or ""
+        if not ts_name:
+            try:
+                ts_name = DB.Element.Name.GetValue(symbol)
+            except Exception:
+                ts_name = ""
+        if not ts_name:
+            ts_name = RevitTagging._get_type_param_text(symbol, "Type Name")
+        if not ts_name:
+            ts_name = RevitTagging._get_type_param_text(symbol, "Type")
+        return fam_name.strip(), ts_name.strip(), (fam_name + " " + ts_name).strip()
 
     def get_label(self, name_contains):
         if not name_contains:
             raise ValueError("name_contains must be a non-empty string")
         needle = name_contains.lower()
         for ts in self.tag_syms:
-            fam = getattr(ts, "Family", None)
-            fam_name = fam.Name if fam is not None else ""
-            ts_name = getattr(ts, "Name", "") or ""
-            pool = (fam_name + " " + ts_name).lower()
+            _, _, pool = self._tag_pool(ts)
+            pool = pool.lower()
             if needle in pool:
                 return ts
         raise LookupError("No label found with: " + name_contains)
+
+    def get_label_exact(self, family_name, type_name):
+        """Return the best matching FamilySymbol for family_name and type_name.
+
+        Exact family+type is preferred. If that fails, fall back to substring
+        matching against the combined family/type pool so slightly different tag
+        naming conventions in a project do not zero out all slot resolution.
+        """
+        fam_lower = family_name.strip().lower()
+        typ_lower = type_name.strip().lower()
+
+        for ts in self.fabrication_tag_syms + self.tag_syms:
+            fam_name, ts_name, _ = self._tag_pool(ts)
+            if fam_name.strip().lower() != fam_lower:
+                continue
+            if ts_name.strip().lower() == typ_lower:
+                return ts
+
+        for ts in self.tag_syms:
+            fam_name, ts_name, pool = self._tag_pool(ts)
+            fam_name = fam_name.strip().lower()
+            ts_name = ts_name.strip().lower()
+            pool = pool.lower()
+            if fam_name == fam_lower and typ_lower in ts_name:
+                return ts
+            if fam_lower in pool and typ_lower in pool:
+                return ts
+
+        raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
+
+    def _find_compatible_tag_type_id(self, tag, requested_tag_symbol):
+        """Return a valid type id for tag matching the requested tag symbol, if any."""
+        if tag is None or requested_tag_symbol is None:
+            return None
+
+        requested_id = getattr(requested_tag_symbol, "Id", requested_tag_symbol)
+        if requested_id is None:
+            return None
+
+        try:
+            valid_type_ids = list(tag.GetValidTypes() or [])
+        except Exception:
+            valid_type_ids = []
+
+        if not valid_type_ids:
+            return None
+
+        requested_int = None
+        try:
+            requested_int = requested_id.IntegerValue
+        except Exception:
+            requested_int = None
+
+        for valid_id in valid_type_ids:
+            try:
+                if requested_int is not None and valid_id.IntegerValue == requested_int:
+                    return valid_id
+            except Exception:
+                pass
+
+        requested_type = self.doc.GetElement(requested_id)
+        req_fam, req_typ, req_pool = self._tag_pool(requested_type or requested_tag_symbol)
+        req_fam = req_fam.strip().lower()
+        req_typ = req_typ.strip().lower()
+        req_pool = req_pool.strip().lower()
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            if fam_name.strip().lower() == req_fam and type_name.strip().lower() == req_typ:
+                return valid_id
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            fam_name = fam_name.strip().lower()
+            type_name = type_name.strip().lower()
+            if req_typ and type_name == req_typ:
+                return valid_id
+            if req_fam and fam_name == req_fam and not req_typ:
+                return valid_id
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            fam_name = fam_name.strip().lower()
+            type_name = type_name.strip().lower()
+            pool = pool.strip().lower()
+            if req_fam and req_typ and req_fam in pool and req_typ in pool:
+                return valid_id
+            if req_typ and req_typ in pool:
+                return valid_id
+            if req_fam and req_fam in pool:
+                return valid_id
+            if req_pool and req_pool == pool:
+                return valid_id
+
+        return None
 
     def already_tagged(self, elem, tag_fam_name):
         if elem is None:
@@ -138,6 +309,8 @@ class RevitTagging:
         """
         from Autodesk.Revit.DB import ElementId
 
+        self.last_place_tag_failure = None
+
         if element_or_ref is None:
             raise ValueError("element_or_ref is required")
 
@@ -161,10 +334,24 @@ class RevitTagging:
         )
 
         if tag_symbol is not None and getattr(tag_symbol, "Id", None):
-            # Accept either ElementId or FamilySymbol
-            new_id = tag_symbol.Id if hasattr(tag_symbol, "Id") else tag_symbol
-            if isinstance(new_id, ElementId):
-                tag.ChangeTypeId(new_id)
+            compatible_id = self._find_compatible_tag_type_id(tag, tag_symbol)
+            if compatible_id is not None:
+                try:
+                    tag.ChangeTypeId(compatible_id)
+                except Exception:
+                    self.last_place_tag_failure = "ChangeTypeId failed for requested tag type"
+                    try:
+                        self.doc.Delete(tag.Id)
+                    except Exception:
+                        pass
+                    return None
+            else:
+                self.last_place_tag_failure = "Requested tag type is not valid for this element"
+                try:
+                    self.doc.Delete(tag.Id)
+                except Exception:
+                    pass
+                return None
 
         return tag
 
