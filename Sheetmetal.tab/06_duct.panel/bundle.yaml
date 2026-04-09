@@ -1,0 +1,7 @@
+title:
+  en_us: Duct
+layout:
+  - duct_filter
+  - duct_select
+  - duct_selected
+  - duct_runs
