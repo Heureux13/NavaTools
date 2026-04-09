@@ -47,15 +47,15 @@ output = script.get_output()
 
 # Parameters that hold the item number (will be matched case-insensitive)
 number_paramters = {
-    RVT_ITEM_NUMBER,
-    PYT_NUMBER_FABRICATION,
+    RVT_ITEM_NUMBER.lower(),
+    PYT_NUMBER_FABRICATION.lower(),
 }
 
 match_paramters = {
-    RVT_FAMILY,
-    RVT_SIZE,
-    RVT_LENGTH,
-    RVT_ANGLE,
+    RVT_FAMILY.lower(),
+    RVT_SIZE.lower(),
+    RVT_LENGTH.lower(),
+    RVT_ANGLE.lower(),
 }
 
 # Families allowed to be numbered
