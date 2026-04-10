@@ -89,7 +89,7 @@ SLOT_ALL = (
 
 DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_ACCESS_PANEL: [
-        ('_Tag.DV_AccessPanel', 'Black'),
+        ('_Tag.DT_AccessPanel', 'Center'),
     ],
     SLOT_BOD: [
         ('_Tag.DT_BOD', 'Center'),
@@ -101,7 +101,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_BOD', 'Right'),
     ],
     SLOT_CANVAS: [
-        ('_Tag.DT_Canvas', 'Black'),
+        ('_Tag.DT_Canvas', 'Center'),
     ],
     SLOT_DEGREE: [
         ('_Tag.DT_Degree', 'Center'),
@@ -110,16 +110,16 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_EndcapSD', 'Center'),
     ],
     SLOT_ENDCAP_TDF: [
-        ('_Tag.DV_EndcapTDF', 'Center'),
+        ('_Tag.DT_EndcapTDF', 'Center'),
     ],
     SLOT_DAMPER_CONTROL: [
-        ('_Tag.DV_DamperControl', 'Black'),
+        ('_Tag.DV_DamperControl', 'Center'),
     ],
     SLOT_DAMPER_FIRE: [
-        ('_Tag.DV_FireDamper', 'Black'),
+        ('_Tag.DV_DamperFire', 'Center'),
     ],
     SLOT_DAMPER_VOLUME: [
-        ('_Tag.DV_DamperVolume', 'Black'),
+        ('_Tag.DV_DamperVolume', 'Center'),
     ],
     SLOT_EQUIPMENT_PAD: [
         ('_Tag.EQ_EquipmentPad', 'Black'),
@@ -158,7 +158,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DV_Louver', 'Black'),
     ],
     SLOT_MAN_BARS: [
-        ('_Tag.DV_ManBars', 'Black'),
+        ('_Tag.DV_ManBars', 'Center'),
     ],
     SLOT_MARK: [
         ('_Tag.DT_Mark', 'Black'),
@@ -167,19 +167,19 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_Note', '1 note'),
     ],
     SLOT_NUMBER_BLUEBEAM: [
-        ('_Tag.DT_NumberBluebeam', 'Default'),
+        ('_Tag.DT_NumberBluebeam', 'Center'),
     ],
     SLOT_NUMBER_FABRICATION: [
-        ('_Tag.DT_NumberFabrication', 'Default'),
+        ('_Tag.DT_NumberFabrication', 'Center'),
     ],
     SLOT_NUMBER_SLEEVE: [
-        ('_Tag.DT_NumberSleeve', 'Default'),
+        ('_Tag.DT_NumberSleeve', 'Center'),
     ],
     SLOT_OFFSET: [
-        ('_Tag.DT_Offset', 'Default'),
+        ('_Tag.DT_Offset', 'Center'),
     ],
     SLOT_TAP: [
-        ('_Tag.DT_Tap', 'Default'),
+        ('_Tag.DT_Tap', 'Center'),
     ],
     SLOT_SIZE: [
         ('_Tag.DT_Size', 'Center'),
@@ -201,9 +201,12 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
 }
 
-DEFAULT_SKIP_PARAMETERS = {
-    PYT_SKIP_NUMBER: ['skip'],
+DEFAULT_TAG_SKIP_PARAMETERS = {
     PYT_SKIP_TAG: ['skip'],
+}
+
+DEFAULT_NUMBER_SKIP_PARAMETERS = {
+    PYT_SKIP_NUMBER: ['skip'],
 }
 
 DEFAULT_PARAMETER_HIERARCHY = [

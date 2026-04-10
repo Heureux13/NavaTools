@@ -76,6 +76,7 @@ try:
     skipped_placement = []
     skipped_by_param = []
     skipped_no_tag_config = []
+    auto_removed = []
 
     for d in dic_ducts:
         key = fittings._norm(d.family)
@@ -85,6 +86,10 @@ try:
             continue
 
         fittings.update_write_parameter_from_hierarchy(d.element)
+
+        removed_count = fittings.delete_skipped_tags_for_element(d, tag_configs)
+        if removed_count:
+            auto_removed.append((d, removed_count))
 
         if fittings.should_skip_by_param(d):
             skipped_by_param.append(d)
@@ -202,6 +207,14 @@ if skipped_by_param:
             i, d.size, d.family, _fmt_length(d.length), output.linkify(d.element.Id)))
     output.print_md("---")
 
+if auto_removed:
+    output.print_md("## Auto Removed Invalid Tags")
+    for i, item in enumerate(auto_removed, start=1):
+        d, removed_count = item
+        output.print_md("### {} | Removed: {} | Size: {} | Family: {} | ID: {}".format(
+            i, removed_count, d.size, d.family, output.linkify(d.element.Id)))
+    output.print_md("---")
+
 if skipped_no_tag_config:
     output.print_md("## Skipped – Tag Family Not Loaded")
     for i, d in enumerate(skipped_no_tag_config, start=1):
@@ -217,6 +230,8 @@ output.print_md("# Skipped (placement failed): {}, {}".format(
     len(skipped_placement), output.linkify([d.element.Id for d, _ in skipped_placement])))
 output.print_md("# Skipped by parameter: {}, {}".format(
     len(skipped_by_param), output.linkify([d.element.Id for d in skipped_by_param])))
+output.print_md("# Auto removed invalid tags: {}, {}".format(
+    len(auto_removed), output.linkify([d.element.Id for d, _ in auto_removed])))
 output.print_md("# Skipped (no tag family loaded): {}, {}".format(
     len(skipped_no_tag_config), output.linkify([d.element.Id for d in skipped_no_tag_config])))
 output.print_md("# Total: {}, {}".format(

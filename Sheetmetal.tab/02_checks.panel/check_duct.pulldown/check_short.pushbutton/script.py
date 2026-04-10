@@ -12,7 +12,7 @@ the copyright holder."""
 from revit.revit_element import RevitElement
 from ducts.revit_duct import RevitDuct
 from constants.print_outputs import print_disclaimer
-from tagging.tag_config import DEFAULT_SKIP_PARAMETERS
+from tagging.tag_config import DEFAULT_TAG_SKIP_PARAMETERS
 from pyrevit import revit, script
 from Autodesk.Revit.DB import *
 
@@ -33,7 +33,7 @@ output = script.get_output()
 MAX_LENGTH_IN = 12.01
 SKIP_VALUES = {
     str(v).strip().lower()
-    for values in DEFAULT_SKIP_PARAMETERS.values()
+    for values in DEFAULT_TAG_SKIP_PARAMETERS.values()
     for v in (values or [])
     if v is not None
 }

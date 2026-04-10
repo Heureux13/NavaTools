@@ -21,7 +21,7 @@ from tagging.tag_config import (
     SLOT_MARK as CFG_SLOT_MARK,
     DEFAULT_TAG_SLOT_CANDIDATES,
     DEFAULT_PARAMETER_HIERARCHY,
-    DEFAULT_SKIP_PARAMETERS,
+    DEFAULT_TAG_SKIP_PARAMETERS,
     WRITE_PARAMETER,
 )
 from Autodesk.Revit.DB import FilteredElementCollector, IndependentTag
@@ -62,7 +62,7 @@ class Fittings:
 
     skip_parameters = {
         param: list(values)
-        for param, values in DEFAULT_SKIP_PARAMETERS.items()
+        for param, values in DEFAULT_TAG_SKIP_PARAMETERS.items()
     }
     parameter_hierarchy_to_check = list(DEFAULT_PARAMETER_HIERARCHY)
     write_parameter = WRITE_PARAMETER
@@ -107,6 +107,14 @@ class Fittings:
 
         # Build extension/degree tag sets from resolved slot candidates.
         _ext_slots = (self.SLOT_EXT_BOT, self.SLOT_EXT_TOP, self.SLOT_EXT_LEFT, self.SLOT_EXT_RIGHT)
+        self._norm_ext_tags_by_slot = {
+            slot: {
+                self._candidate_pool_needle(name)
+                for name in (self.TAG_SLOT_CANDIDATES.get(slot) or [])
+                if self._candidate_pool_needle(name)
+            }
+            for slot in _ext_slots
+        }
         self._norm_ext_tags = {
             self._candidate_pool_needle(name)
             for slot in _ext_slots
@@ -175,6 +183,50 @@ class Fittings:
             return value.strip() if value else ''
         except Exception:
             return ''
+
+    @staticmethod
+    def _get_type_param_text(symbol, param_name):
+        target = (param_name or '').strip().lower()
+        if not target or symbol is None:
+            return ''
+        try:
+            for param in symbol.Parameters:
+                try:
+                    definition = param.Definition
+                    name = definition.Name if definition else None
+                    if not name or name.strip().lower() != target:
+                        continue
+                    value = param.AsString() or param.AsValueString()
+                    return value.strip() if value else ''
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return ''
+
+    @classmethod
+    def _tag_symbol_parts(cls, symbol):
+        fam = getattr(symbol, 'Family', None)
+        fam_name = fam.Name if fam is not None else ''
+        if not fam_name:
+            try:
+                fam_name = getattr(symbol, 'FamilyName', '') or ''
+            except Exception:
+                fam_name = ''
+        if not fam_name:
+            fam_name = cls._get_type_param_text(symbol, 'Family Name')
+        if not fam_name:
+            fam_name = cls._get_type_param_text(symbol, 'Family')
+
+        sym_name = getattr(symbol, 'Name', '') or ''
+        if not sym_name:
+            sym_name = cls._get_type_param_text(symbol, 'Type Name')
+        if not sym_name:
+            sym_name = cls._get_type_param_text(symbol, 'Type')
+
+        fam_name = str(fam_name or '').strip()
+        sym_name = str(sym_name or '').strip()
+        return fam_name, sym_name
 
     def _resolve_slot(self, slot_name):
         """Return (tag, label_lower) for the first candidate found; cache the result.
@@ -315,9 +367,9 @@ class Fittings:
     # ------------------------------------------------------------------
 
     def _tag_pool_text(self, tag):
-        fam_name = (
-            tag.Family.Name if tag and tag.Family else "").strip().lower()
-        sym_name = (getattr(tag, "Name", "") or "").strip().lower()
+        fam_name, sym_name = self._tag_symbol_parts(tag)
+        fam_name = fam_name.lower()
+        sym_name = sym_name.lower()
         return (fam_name + " " + sym_name).strip()
 
     def _is_extension_tag(self, tag):
@@ -328,12 +380,75 @@ class Fittings:
         pool = self._tag_pool_text(tag)
         return any(needle in pool for needle in self._norm_degree_tags)
 
+    def _extension_tag_slot(self, tag):
+        pool = self._tag_pool_text(tag)
+        for slot_name, needles in self._norm_ext_tags_by_slot.items():
+            if any(needle in pool for needle in needles):
+                return slot_name
+        return None
+
     @staticmethod
     def _is_angle_close(raw_angle, target, tol=0.5):
         try:
             return abs(abs(float(raw_angle)) - float(target)) <= float(tol)
         except Exception:
             return False
+
+    @staticmethod
+    def _normalize_connector_type(connector_type):
+        if not connector_type:
+            return ''
+        key = re.sub(r'\s+', ' ', str(connector_type).strip().lower())
+        if 'tdf' in key:
+            return 'tdf'
+        if key in {'slip & drive', 'standing s&d', 'standing s and d', 's and d', 's&d'}:
+            return 's&d'
+        return key
+
+    def _matches_throat_allowance(self, duct, tag):
+        allowances = set()
+        connector_types = [
+            duct.connector_0_type,
+            duct.connector_1_type,
+            getattr(duct, 'connector_2_type', None),
+        ]
+        for connector_type in connector_types:
+            key = self._normalize_connector_type(connector_type)
+            required = self.elbow_throat_allowances.get(key)
+            if isinstance(required, (int, float)):
+                allowances.add(float(required))
+
+        # Fall back to the configured allowance values when connector naming
+        # does not map cleanly but the extension length still matches the rule.
+        if not allowances:
+            allowances = {
+                float(value)
+                for value in self.elbow_throat_allowances.values()
+                if isinstance(value, (int, float))
+            }
+
+        slot_name = self._extension_tag_slot(tag)
+        ext_values_by_slot = {
+            self.SLOT_EXT_TOP: (duct.extension_top,),
+            self.SLOT_EXT_BOT: (duct.extension_bottom,),
+            self.SLOT_EXT_LEFT: (getattr(duct, 'extension_left', None),),
+            self.SLOT_EXT_RIGHT: (getattr(duct, 'extension_right', None),),
+        }
+        ext_values = ext_values_by_slot.get(slot_name)
+        if ext_values is None:
+            ext_values = (
+                duct.extension_top,
+                duct.extension_bottom,
+                getattr(duct, 'extension_left', None),
+                getattr(duct, 'extension_right', None),
+            )
+
+        for ext_value in ext_values:
+            if not isinstance(ext_value, (int, float)):
+                continue
+            if any(abs(float(ext_value) - allowance) <= 0.01 for allowance in allowances):
+                return True
+        return False
 
     @staticmethod
     def _connector_dz(element):
@@ -387,65 +502,114 @@ class Fittings:
 
         fam = self._norm(duct.family)
 
-        # Never place a degree tag on a 90° fitting regardless of orientation.
-        if self._is_degree_tag(tag) and self._is_angle_close(duct.angle, 90.0):
+        # Never place degree tags on 45° or 90° fittings.
+        if self._is_degree_tag(tag) and (
+            self._is_angle_close(duct.angle, 45.0)
+            or self._is_angle_close(duct.angle, 90.0)
+        ):
             return True
-
-        # Square elbows at 45°/90°: degree tag only on vertical elbows.
-        is_45_or_90 = False
-        if fam in self._norm_square_elbow_fam:
-            try:
-                ang = duct.angle
-                if ang is not None:
-                    if ang in [45, 90, 45.0, 90.0]:
-                        is_45_or_90 = True
-                    else:
-                        ang_f = abs(float(ang))
-                        if (44.5 <= ang_f <= 45.5) or (89.5 <= ang_f <= 90.5):
-                            is_45_or_90 = True
-            except Exception:
-                pass
-        if is_45_or_90 and self._is_degree_tag(tag):
-            # skip horizontal; allow vertical
-            return self._connector_dz(duct.element) <= 0.01
 
         # Extension tags: skip for any elbow with vertical movement.
         if fam in self._norm_elbow_fam and self._is_extension_tag(tag):
             if self._connector_dz(duct.element) > 0.01:
                 return True
 
-        # Radius/gored elbows at 45/90°: degree tag only on vertical elbows.
-        if fam in self._norm_angle_skip_fam and duct.angle in [45, 90] and self._is_degree_tag(tag):
-            # skip horizontal; allow vertical
-            return self._connector_dz(duct.element) <= 0.01
-
         # Extension tags: skip when extension equals the required throat allowance.
         if fam in self._norm_elbow_fam and self._is_extension_tag(tag):
-            connector_types = [
-                duct.connector_0_type,
-                duct.connector_1_type,
-                getattr(duct, 'connector_2_type', None),
-            ]
-            for ctype in connector_types:
-                if not ctype:
-                    continue
-                key = ctype.lower().strip()
-                if key in {'slip & drive', 'standing s&d', 'standing s and d', 's and d'}:
-                    key = 's&d'
-                required_ext = self.elbow_throat_allowances.get(key)
-                if required_ext is None:
-                    continue
-                ext_values = (
-                    duct.extension_top,
-                    duct.extension_bottom,
-                    getattr(duct, 'extension_left', None),
-                    getattr(duct, 'extension_right', None),
-                )
-                for ev in ext_values:
-                    if isinstance(ev, (int, float)) and abs(ev - required_ext) <= 0.01:
-                        return True
+            if self._matches_throat_allowance(duct, tag):
+                return True
 
         return False
+
+    @staticmethod
+    def _as_int_id(revit_id_like):
+        """Normalize ElementId/LinkElementId-like objects to int id values."""
+        if revit_id_like is None:
+            return None
+
+        host_id = getattr(revit_id_like, 'HostElementId', None)
+        if host_id is not None:
+            revit_id_like = host_id
+
+        for attr in ('Value', 'IntegerValue'):
+            try:
+                value = getattr(revit_id_like, attr)
+                if value is not None:
+                    return int(value)
+            except Exception:
+                pass
+        return None
+
+    def _tag_family_name_lower(self, tag_type):
+        fam_name, _ = self._tag_symbol_parts(tag_type)
+        return fam_name.strip().lower()
+
+    def delete_tag_families_for_element(self, element, family_names_lower):
+        """Delete tags on element whose family names are in family_names_lower."""
+        if element is None or not family_names_lower:
+            return 0
+        try:
+            tags_in_view = (
+                FilteredElementCollector(self.doc, self.view.Id)
+                .OfClass(IndependentTag)
+                .ToElements()
+            )
+        except Exception:
+            return 0
+
+        target_id = self._as_int_id(element.Id)
+        removed = 0
+        for t in tags_in_view:
+            try:
+                tagged_ids = t.GetTaggedLocalElementIds()
+            except Exception:
+                tagged_ids = []
+            if not tagged_ids:
+                continue
+            is_for_element = any(
+                self._as_int_id(tid) == target_id
+                for tid in tagged_ids
+            )
+            if not is_for_element:
+                continue
+            try:
+                t_type = self.doc.GetElement(t.GetTypeId())
+                fam_name = self._tag_family_name_lower(t_type)
+            except Exception:
+                fam_name = ''
+            if fam_name not in family_names_lower:
+                continue
+            try:
+                self.doc.Delete(t.Id)
+                removed += 1
+            except Exception:
+                pass
+        return removed
+
+    def delete_skipped_tags_for_element(self, duct, tag_configs):
+        """Delete existing tags that now violate skip rules for this duct."""
+        if duct is None or not tag_configs:
+            return 0
+
+        if self.should_skip_by_param(duct):
+            family_names = {
+                self._tag_family_name_lower(tag)
+                for tag, _ in tag_configs
+                if tag is not None
+            }
+            family_names.discard('')
+            return self.delete_tag_families_for_element(duct.element, family_names)
+
+        family_names = set()
+        for tag, _ in tag_configs:
+            if tag is None:
+                continue
+            if self.should_skip_tag(duct, tag):
+                fam_name = self._tag_family_name_lower(tag)
+                if fam_name:
+                    family_names.add(fam_name)
+
+        return self.delete_tag_families_for_element(duct.element, family_names)
 
     # ------------------------------------------------------------------
     # Element / tagging helpers
@@ -469,36 +633,16 @@ class Fittings:
             if not tagged_ids:
                 continue
 
-            def _as_int_id(revit_id_like):
-                """Normalize ElementId/LinkElementId-like objects to int id values."""
-                if revit_id_like is None:
-                    return None
-
-                # LinkElementId may wrap the host element id.
-                host_id = getattr(revit_id_like, 'HostElementId', None)
-                if host_id is not None:
-                    revit_id_like = host_id
-
-                for attr in ('Value', 'IntegerValue'):
-                    try:
-                        value = getattr(revit_id_like, attr)
-                        if value is not None:
-                            return int(value)
-                    except Exception:
-                        pass
-                return None
-
-            target_id = _as_int_id(element.Id)
+            target_id = self._as_int_id(element.Id)
             is_for_element = any(
-                _as_int_id(tid) == target_id
+                self._as_int_id(tid) == target_id
                 for tid in tagged_ids
             )
             if not is_for_element:
                 continue
             try:
                 t_type = self.doc.GetElement(t.GetTypeId())
-                fam_name = (
-                    t_type.Family.Name if t_type and t_type.Family else '').strip().lower()
+                fam_name = self._tag_family_name_lower(t_type)
             except Exception:
                 fam_name = ''
             if fam_name in candidate_family_names_lower and fam_name != keep_family_name_lower:

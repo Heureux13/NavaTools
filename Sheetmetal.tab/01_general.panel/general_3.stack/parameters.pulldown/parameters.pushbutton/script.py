@@ -33,7 +33,7 @@ PARAMETER_MAP_PATH = None
 LIB_DIR = None
 
 dictionary = {
-    'python': "Construction",
+    'python': "General",
     'bluebeam': "Data"
 }
 
