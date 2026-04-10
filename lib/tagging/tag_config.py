@@ -143,7 +143,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DV_GRD', 'w/ flow'),
     ],
     SLOT_GRD_CFM: [
-        ('_Tag.DV_GRD.cfm', 'w/o flow'),
+        ('_Tag.DV_GRD', 'w/o flow'),
     ],
     SLOT_LENGTH: [
         ('_Tag.DT_Length', 'Center'),
