@@ -86,6 +86,46 @@ class Fittings:
         'gored elbow',
     }
 
+    # Family groups for targeted runs (useful for per-button filtering).
+    family_groups = {
+        'all': (),
+        'elbows': (
+            'elbow',
+            'elbow 90 degree',
+            'gored elbow',
+            'radius elbow',
+        ),
+        'reducers': (
+            'reducer',
+            'transition',
+            'square to ø',
+        ),
+        'offsets': (
+            'mitred offset',
+            'cid330 - (radius 2-way offset)',
+            'offset',
+            'ogee',
+            'radius offset',
+        ),
+        'dampers': (
+            '8inch long coupler wdamper',
+            'conical tap - wdamper',
+            'rect volume damper',
+            'boot tap - wdamper',
+        ),
+        'endcaps': (
+            'end cap',
+            'tdf end cap',
+        ),
+        'manbars': (
+            'manbars',
+            'access panel',
+        ),
+        'fire_dampers': (
+            'fire damper - type b',
+        ),
+    }
+
     # ------------------------------------------------------------------
     # Init
     # ------------------------------------------------------------------
@@ -361,6 +401,39 @@ class Fittings:
             "manbars": s._tag_cfg(s.SLOT_MAN_BARS),
         }
         return {self._norm(k): v for k, v in family_cfg.items()}
+
+    def get_duct_families_for_groups(self, group_names=None):
+        """Return duct family map filtered by configured group names.
+
+        Pass None/empty or include 'all' to return all configured families.
+        Unknown groups are ignored.
+        """
+        if not group_names:
+            return dict(self.duct_families)
+
+        if isinstance(group_names, str):
+            group_names = [group_names]
+
+        normalized_groups = [self._norm(name) for name in group_names if name]
+        if not normalized_groups or 'all' in normalized_groups:
+            return dict(self.duct_families)
+
+        selected_families = set()
+        for group_name in normalized_groups:
+            members = self.family_groups.get(group_name) or ()
+            for family_name in members:
+                norm_family = self._norm(family_name)
+                if norm_family:
+                    selected_families.add(norm_family)
+
+        if not selected_families:
+            return {}
+
+        return {
+            family_name: cfg
+            for family_name, cfg in self.duct_families.items()
+            if family_name in selected_families
+        }
 
     # ------------------------------------------------------------------
     # Skip rule helpers
