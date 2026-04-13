@@ -7,418 +7,537 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-# Imports
-# ==================================================
 from pyrevit import revit, script
 from Autodesk.Revit.DB import (
     BuiltInCategory,
-    ElementId,
     FilteredElementCollector,
-    FamilySymbol,
     IndependentTag,
+    Reference,
+    TagMode,
+    TagOrientation,
     Transaction,
     XYZ,
 )
 from tagging.revit_tagging import RevitTagging
-from tagging.tag_config import *
-from config.parameters_registry import *
+from tagging.tag_config import (
+    DEFAULT_TAG_SLOT_CANDIDATES,
+    SLOT_CONDENSER,
+    SLOT_CONDENSER_NOTE,
+    SLOT_FAN,
+    SLOT_FAN_NOTE,
+    SLOT_HEAT_PUMP,
+    SLOT_HEAT_PUMP_NOTE,
+    SLOT_HEATER,
+    SLOT_HEATER_NOTE,
+    SLOT_HOOD,
+    SLOT_HOOD_NOTE,
+    SLOT_HUMIDIFIER,
+    SLOT_HUMIDIFIER_NOTE,
+    SLOT_SPLIT,
+    SLOT_SPLIT_NOTE,
+    SLOT_UNIT,
+    SLOT_UNIT_NOTE,
+    SLOT_VALVE,
+    SLOT_VALVE_NOTE,
+    SLOT_VRF,
+    SLOT_VRF_NOTE,
+)
+from config.parameters_registry import BBM_SUBJECT, PYT_NOTE_0
 
 # Button display information
 # =================================================
 __title__ = "Tag Equipment"
 __doc__ = """
-Tags all mechanical equipment in the current view.
+
 """
 
-# Helpers
-# ==================================================
-tags_mark = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK]
-tags_mark_note = DEFAULT_TAG_SLOT_CANDIDATES[SLOT_MARK_NOTE]
+# Subject -> equipment slot mapping.
+SUBJECT_SLOT_MAP = {
+    "condenser": SLOT_CONDENSER,
+    "fan": SLOT_FAN,
+    "heat pump": SLOT_HEAT_PUMP,
+    "heater": SLOT_HEATER,
+    "hood": SLOT_HOOD,
+    "humidifier": SLOT_HUMIDIFIER,
+    "split": SLOT_SPLIT,
+    "unit": SLOT_UNIT,
+    "valve": SLOT_VALVE,
+    "vrf": SLOT_VRF,
+}
 
-MARK = SLOT_MARK
-MARK_NOTE = SLOT_MARK_NOTE
-TRIGGER_PARAM = PYT_NOTE_0
+SUBJECT_SLOT_MAP_NOTE = {
+    "condenser": SLOT_CONDENSER_NOTE,
+    "fan": SLOT_FAN_NOTE,
+    "heat pump": SLOT_HEAT_PUMP_NOTE,
+    "heater": SLOT_HEATER_NOTE,
+    "hood": SLOT_HOOD_NOTE,
+    "humidifier": SLOT_HUMIDIFIER_NOTE,
+    "split": SLOT_SPLIT_NOTE,
+    "unit": SLOT_UNIT_NOTE,
+    "valve": SLOT_VALVE_NOTE,
+    "vrf": SLOT_VRF_NOTE,
+}
 
+SUBJECT_PARAMETER_NAMES = (
+    BBM_SUBJECT,
+)
+TARGET_CATEGORY = BuiltInCategory.OST_MechanicalEquipment
 
-# Tag categories compatible with OST_MechanicalEquipment
-_EQUIPMENT_TAG_CATEGORIES = [
-    BuiltInCategory.OST_MechanicalEquipmentTags,
-    BuiltInCategory.OST_MultiCategoryTags,
-]
-
-
-def _find_tag_symbol(doc, target_name):
-    """Return the first tag symbol whose name contains target_name."""
-    if not target_name:
-        return None
-    needle = target_name.strip().lower()
-    categories = _EQUIPMENT_TAG_CATEGORIES
-
-    symbols = []
-    for bic in categories:
-        symbols.extend(
-            FilteredElementCollector(doc)
-            .OfCategory(bic)
-            .OfClass(FamilySymbol)
-            .ToElements()
-        )
-    exact_matches = []
-    contains_matches = []
-    for sym in symbols:
-        fam = getattr(sym, "Family", None)
-        fam_name = fam.Name if fam else ""
-        type_name = getattr(sym, "Name", "") or ""
-        fam_norm = fam_name.strip().lower()
-        type_norm = type_name.strip().lower()
-        label = (fam_name + " " + type_name).lower()
-        if needle == fam_norm or needle == type_norm:
-            exact_matches.append(sym)
-        elif needle in label:
-            contains_matches.append(sym)
-
-    if exact_matches:
-        return exact_matches[0]
-    if contains_matches:
-        return contains_matches[0]
-    return None
-
-
-# Code
-# ==================================================
-uidoc = __revit__.ActiveUIDocument
-
+output = script.get_output()
 doc = revit.doc
 view = revit.active_view
-output = script.get_output()
-
 tagger = RevitTagging(doc, view)
 
 
-def _find_first_available_tag(doc, tag_names):
-    """Try to find the first available tag from a list of tag names.
-    Falls back to any loaded equipment or multi-category tag."""
-    for tag_name in tag_names:
-        tag_sym = _find_tag_symbol(doc, tag_name)
-        if tag_sym:
-            return tag_sym, tag_name
-    # Fallback: use any available equipment-compatible tag
-    for bic in _EQUIPMENT_TAG_CATEGORIES:
-        syms = list(
-            FilteredElementCollector(doc)
-            .OfCategory(bic)
-            .OfClass(FamilySymbol)
-            .ToElements()
+def _norm(text):
+    return (text or '').strip().lower()
+
+
+def _get_param(elem, *param_names):
+    for param_name in param_names:
+        if not param_name:
+            continue
+        try:
+            param = elem.LookupParameter(param_name)
+            if param:
+                return param
+        except Exception:
+            continue
+    return None
+
+
+def _get_param_text(elem, *param_names):
+    param = _get_param(elem, *param_names)
+    if not param:
+        return ''
+
+    try:
+        value = param.AsString()
+    except Exception:
+        value = None
+
+    if not value:
+        try:
+            value = param.AsValueString()
+        except Exception:
+            value = None
+
+    return (value or '').strip()
+
+
+def _subject_slot(subject_text, has_note=False):
+    subject_code = _norm(subject_text)
+    if not subject_code:
+        return None
+
+    if has_note:
+        return SUBJECT_SLOT_MAP_NOTE.get(subject_code)
+
+    return SUBJECT_SLOT_MAP.get(subject_code)
+
+
+def _resolve_tag_candidates(slot_name):
+    resolved = []
+    seen = set()
+    configured_candidates = DEFAULT_TAG_SLOT_CANDIDATES.get(slot_name) or []
+
+    for family_name, type_name in configured_candidates:
+        key = (_norm(family_name), _norm(type_name))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        try:
+            tag_symbol = tagger.get_label_exact(family_name, type_name)
+        except Exception:
+            continue
+
+        resolved.append((family_name, type_name, tag_symbol))
+
+    return resolved
+
+
+def _center_point(elem):
+    try:
+        location = elem.Location
+        if hasattr(location, 'Point') and location.Point:
+            return location.Point
+    except Exception:
+        pass
+
+    bbox = elem.get_BoundingBox(view) if view else None
+    if not bbox:
+        return None
+
+    min_pt = bbox.Min
+    max_pt = bbox.Max
+    return XYZ(
+        (min_pt.X + max_pt.X) / 2.0,
+        (min_pt.Y + max_pt.Y) / 2.0,
+        (min_pt.Z + max_pt.Z) / 2.0,
+    )
+
+
+def _build_existing_tag_map():
+    existing = {}
+    tags = (
+        FilteredElementCollector(doc, view.Id)
+        .OfClass(IndependentTag)
+        .ToElements()
+    )
+
+    for tag in tags:
+        try:
+            tag_type = doc.GetElement(tag.GetTypeId())
+            family_name, type_name, _ = tagger._tag_pool(tag_type)
+            tag_key = (_norm(family_name), _norm(type_name))
+            if not all(tag_key):
+                continue
+
+            tagged_ids = []
+            try:
+                tagged_ids = list(tag.GetTaggedLocalElementIds() or [])
+            except Exception:
+                pass
+
+            if not tagged_ids:
+                try:
+                    tagged_id = tag.TaggedLocalElementId
+                    if tagged_id:
+                        tagged_ids = [tagged_id]
+                except Exception:
+                    pass
+
+            for tagged_id in tagged_ids:
+                try:
+                    elem_id = tagged_id.IntegerValue
+                except Exception:
+                    continue
+                existing.setdefault(elem_id, set()).add(tag_key)
+        except Exception:
+            continue
+
+    return existing
+
+
+def _placed_tag_matches(tag, expected_family_name, expected_type_name):
+    if tag is None:
+        return False
+
+    try:
+        tag_type = doc.GetElement(tag.GetTypeId())
+    except Exception:
+        tag_type = None
+
+    if tag_type is None:
+        return False
+
+    family_name, type_name, _ = tagger._tag_pool(tag_type)
+    return (
+        _norm(family_name) == _norm(expected_family_name)
+        and _norm(type_name) == _norm(expected_type_name)
+    )
+
+
+def _get_tag_family_type(tag):
+    if tag is None:
+        return '', ''
+
+    try:
+        tag_type = doc.GetElement(tag.GetTypeId())
+    except Exception:
+        tag_type = None
+
+    if tag_type is None:
+        return '', ''
+
+    family_name, type_name, _ = tagger._tag_pool(tag_type)
+    return family_name, type_name
+
+
+def _get_valid_tag_type_labels(tag, max_items=8):
+    labels = []
+    seen = set()
+
+    if tag is None:
+        return labels
+
+    try:
+        valid_type_ids = list(tag.GetValidTypes() or [])
+    except Exception:
+        valid_type_ids = []
+
+    for valid_id in valid_type_ids:
+        try:
+            valid_type = doc.GetElement(valid_id)
+        except Exception:
+            valid_type = None
+
+        if valid_type is None:
+            continue
+
+        family_name, type_name, _ = tagger._tag_pool(valid_type)
+        label = '{} : {}'.format(family_name, type_name).strip()
+        label_key = _norm(label)
+        if not label_key or label_key in seen:
+            continue
+
+        seen.add(label_key)
+        labels.append(label)
+        if len(labels) >= max_items:
+            break
+
+    return labels
+
+
+def _tag_symbol_category_id(tag_symbol):
+    if tag_symbol is None:
+        return None
+
+    try:
+        category = tag_symbol.Category
+        if category and getattr(category, 'Id', None):
+            return category.Id.IntegerValue
+    except Exception:
+        pass
+
+    return None
+
+
+def _placement_modes_for_tag(tag_symbol):
+    symbol_category_id = _tag_symbol_category_id(tag_symbol)
+    multi_category_id = int(BuiltInCategory.OST_MultiCategoryTags)
+
+    if symbol_category_id == multi_category_id:
+        return (
+            TagMode.TM_ADDBY_MULTICATEGORY,
+            TagMode.TM_ADDBY_CATEGORY,
         )
-        if syms:
-            fam = getattr(syms[0], "Family", None)
-            fallback_name = fam.Name if fam else getattr(syms[0], "Name", "")
-            return syms[0], fallback_name
-    return None, None
+
+    return (
+        TagMode.TM_ADDBY_CATEGORY,
+        TagMode.TM_ADDBY_MULTICATEGORY,
+    )
 
 
-equipment_elements = (
-    FilteredElementCollector(doc, view.Id)
-    .OfCategory(BuiltInCategory.OST_MechanicalEquipment)
-    .WhereElementIsNotElementType()
-    .ToElements()
-)
+def _place_requested_tag(element_or_ref, tag_candidates, point_xyz):
+    if element_or_ref is None:
+        return None
 
-if not equipment_elements:
-    # output.print_md("## No mechanical equipment found in this view.")
+    target = getattr(element_or_ref, 'element', element_or_ref)
+    ref = target if isinstance(target, Reference) else Reference(target)
+    valid_labels_by_mode = []
+
+    for expected_family_name, expected_type_name, tag_symbol in tag_candidates:
+        for tag_mode in _placement_modes_for_tag(tag_symbol):
+            try:
+                new_tag = IndependentTag.Create(
+                    doc,
+                    view.Id,
+                    ref,
+                    False,
+                    tag_mode,
+                    TagOrientation.Horizontal,
+                    point_xyz,
+                )
+            except Exception:
+                continue
+
+            try:
+                compatible_id = tagger._find_compatible_tag_type_id(new_tag, tag_symbol)
+                if compatible_id is None:
+                    valid_labels = _get_valid_tag_type_labels(new_tag)
+                    if valid_labels:
+                        valid_labels_by_mode.extend(valid_labels)
+                    doc.Delete(new_tag.Id)
+                    continue
+
+                new_tag.ChangeTypeId(compatible_id)
+
+                if _placed_tag_matches(new_tag, expected_family_name, expected_type_name):
+                    return new_tag, expected_family_name, expected_type_name
+
+                valid_labels = _get_valid_tag_type_labels(new_tag)
+                if valid_labels:
+                    valid_labels_by_mode.extend(valid_labels)
+                doc.Delete(new_tag.Id)
+            except Exception:
+                try:
+                    doc.Delete(new_tag.Id)
+                except Exception:
+                    pass
+
+    deduped = []
+    seen = set()
+    for label in valid_labels_by_mode:
+        label_key = _norm(label)
+        if not label_key or label_key in seen:
+            continue
+        seen.add(label_key)
+        deduped.append(label)
+
+    if deduped:
+        tagger.last_place_tag_failure = 'Requested tag type is not valid for this element; valid {}'.format(
+            ', '.join(deduped))
+    else:
+        tagger.last_place_tag_failure = 'Requested tag type is not valid for this element'
+
+    return None
+
+
+def _candidate_keys(tag_candidates):
+    return {
+        (_norm(family_name), _norm(type_name))
+        for family_name, type_name, _ in tag_candidates
+    }
+
+
+def _is_target_equipment(elem):
+    if elem is None:
+        return False
+
+    try:
+        category = elem.Category
+        if not category or not getattr(category, 'Id', None):
+            return False
+        return category.Id.IntegerValue == int(TARGET_CATEGORY)
+    except Exception:
+        return False
+
+
+def _collect_equipment_in_view():
+    equipment = []
+    seen_ids = set()
+
+    def _append(elem):
+        if not _is_target_equipment(elem):
+            return
+
+        try:
+            elem_id = elem.Id.IntegerValue
+        except Exception:
+            return
+
+        if elem_id in seen_ids:
+            return
+
+        seen_ids.add(elem_id)
+        equipment.append(elem)
+
+    for elem in (
+        FilteredElementCollector(doc, view.Id)
+        .WhereElementIsNotElementType()
+        .ToElements()
+    ):
+        _append(elem)
+
+    if equipment:
+        return equipment
+
+    for elem in (
+        FilteredElementCollector(doc, view.Id)
+        .OfCategory(TARGET_CATEGORY)
+        .WhereElementIsNotElementType()
+        .ToElements()
+    ):
+        _append(elem)
+
+    return equipment
+
+
+equipment_in_view = _collect_equipment_in_view()
+
+if not equipment_in_view:
+    output.print_md('## No mechanical equipment found in the active view.')
     script.exit()
 
-selected_mark_symbol, selected_mark_name = _find_first_available_tag(doc, tags_mark)
-if not selected_mark_symbol:
-    output.print_md(
-        "## No MARK tag found from configured tags list: {}".format(", ".join(tags_mark)))
-    script.exit()
-
-selected_mark_note_symbol = None
-selected_mark_note_name = None
-for tag_name in tags_mark_note:
-    tag_sym = _find_tag_symbol(doc, tag_name)
-    if tag_sym:
-        selected_mark_note_symbol = tag_sym
-        selected_mark_note_name = tag_name
-        break
+existing_tag_map = _build_existing_tag_map()
 
 placed = []
-failed = []
 already_tagged = []
-placed_mark = []
-placed_mark_note = []
-removed_conflicting = []
+missing_subject = []
+unmapped_subject = []
+failed = []
 
-# Check how many tags already exist in the view
-existing_tags = list(
-    FilteredElementCollector(doc, view.Id)
-    .OfClass(IndependentTag)
-    .ToElements()
-)
-
-# Build maps of element IDs keyed by tracked tag type id.
-existing_tag_maps = {}
-
-tracked_tag_type_ids = {selected_mark_symbol.Id.IntegerValue}
-if selected_mark_note_symbol:
-    tracked_tag_type_ids.add(selected_mark_note_symbol.Id.IntegerValue)
-
-mark_type_id_val = selected_mark_symbol.Id.IntegerValue
-mark_note_type_id_val = (
-    selected_mark_note_symbol.Id.IntegerValue if selected_mark_note_symbol else None
-)
-
-
-def _eid_int(eid):
-    try:
-        return eid.IntegerValue
-    except Exception:
-        try:
-            return int(eid)
-        except Exception:
-            return None
-
-
-def _collect_tagged_local_ids(tag):
-    """Return local element IDs tagged by an IndependentTag (version-safe)."""
-    ids = []
-
-    # Revit 2026+ primary API
-    try:
-        for tid in tag.GetTaggedLocalElementIds() or []:
-            if tid and tid != ElementId.InvalidElementId:
-                ids.append(tid)
-    except Exception:
-        pass
-
-    # Revit 2022-2025 property API
-    try:
-        tid = tag.TaggedLocalElementId
-        if tid and tid != ElementId.InvalidElementId:
-            ids.append(tid)
-    except Exception:
-        pass
-
-    # Some tag types expose LinkElementId-based APIs
-    def _append_from_link_eid(link_eid):
-        if not link_eid:
-            return
-        for attr in ("HostElementId", "LinkedElementId", "ElementId"):
-            try:
-                candidate = getattr(link_eid, attr)
-                if candidate and candidate != ElementId.InvalidElementId:
-                    ids.append(candidate)
-            except Exception:
-                pass
-
-    try:
-        for leid in tag.GetTaggedElementIds() or []:
-            _append_from_link_eid(leid)
-    except Exception:
-        pass
-
-    try:
-        _append_from_link_eid(tag.TaggedElementId)
-    except Exception:
-        pass
-
-    # Deduplicate by int value
-    uniq = []
-    seen = set()
-    for eid in ids:
-        ival = _eid_int(eid)
-        if ival is None or ival in seen:
-            continue
-        seen.add(ival)
-        uniq.append(eid)
-    return uniq
-
-
-for tag in existing_tags:
-    try:
-        # Only count tags whose type matches selected MARK / MARK_COMMENT symbols.
-        try:
-            tag_type_id = tag.GetTypeId()
-        except Exception:
-            tag_type_id = None
-        tag_type_id_val = _eid_int(tag_type_id)
-        if tag_type_id is None or tag_type_id_val not in tracked_tag_type_ids:
-            continue
-
-        # Use integer -1 check (IronPython-safe) instead of ElementId object comparison.
-        elem_id_int = None
-        try:
-            v = _eid_int(tag.TaggedLocalElementId)
-            if v is not None and v != -1:
-                elem_id_int = v
-        except Exception:
-            pass
-        if elem_id_int is None:
-            try:
-                for tid in (tag.GetTaggedLocalElementIds() or []):
-                    v = _eid_int(tid)
-                    if v is not None and v != -1:
-                        elem_id_int = v
-                        break
-            except Exception:
-                pass
-        if elem_id_int is not None:
-            existing_tag_maps.setdefault(tag_type_id_val, {}).setdefault(elem_id_int, []).append(tag)
-    except BaseException:
-        pass
-
-t = Transaction(doc, "Tag Mechanical Equipment")
+t = Transaction(doc, 'Tag Equipment')
 t.Start()
 try:
-    for elem in equipment_elements:
+    for elem in equipment_in_view:
         try:
-            if not elem.Category or elem.Category.Id.IntegerValue != int(BuiltInCategory.OST_MechanicalEquipment):
-                failed.append((elem, "Skipped non-equipment category"))
+            subject_text = _get_param_text(elem, *SUBJECT_PARAMETER_NAMES)
+            if not subject_text:
+                missing_subject.append(elem)
                 continue
-        except Exception:
-            failed.append((elem, "Unable to validate category"))
-            continue
 
-        comments_value = ""
-        try:
-            comments_param = elem.LookupParameter(TRIGGER_PARAM)
-            if comments_param:
-                comments_value = (comments_param.AsString() or comments_param.AsValueString() or "").strip()
-        except Exception:
-            comments_value = ""
+            has_note = bool(_get_param_text(elem, PYT_NOTE_0))
+            slot_name = _subject_slot(subject_text, has_note)
+            if not slot_name:
+                unmapped_subject.append((elem, subject_text))
+                continue
 
-        if comments_value and selected_mark_note_symbol:
-            tag_symbol = selected_mark_note_symbol
-            tag_name = selected_mark_note_name
-        else:
-            tag_symbol = selected_mark_symbol
-            tag_name = selected_mark_name
-
-        # Skip if element already has the chosen tag type in this view.
-        elem_id_val = elem.Id.IntegerValue
-        chosen_type_id_val = _eid_int(tag_symbol.Id)
-        existing_for_elem = existing_tag_maps.get(chosen_type_id_val, {}).get(elem_id_val, [])
-        if existing_for_elem:
-            already_tagged.append(elem)
-            continue
-
-        opposite_type_id_val = None
-        if chosen_type_id_val == mark_type_id_val and mark_note_type_id_val is not None:
-            opposite_type_id_val = mark_note_type_id_val
-        elif chosen_type_id_val == mark_note_type_id_val:
-            opposite_type_id_val = mark_type_id_val
-
-        # Get location point for tag placement - use element location directly
-        tag_pt = None
-        try:
-            loc = elem.Location
-            if hasattr(loc, 'Point'):
-                tag_pt = loc.Point
-        except Exception:
-            pass
-
-        if tag_pt is None:
-            # Fallback to bounding box center
-            view = uidoc.ActiveView
-            bbox = elem.get_BoundingBox(view) if view else None
-            if bbox:
-                min_pt = bbox.Min
-                max_pt = bbox.Max
-                tag_pt = XYZ(
-                    (min_pt.X + max_pt.X) / 2.0,
-                    (min_pt.Y + max_pt.Y) / 2.0,
-                    (min_pt.Z + max_pt.Z) / 2.0,
+            tag_candidates = _resolve_tag_candidates(slot_name)
+            if not tag_candidates:
+                failed.append(
+                    (
+                        elem,
+                        'Missing tag type for slot {}'.format(slot_name),
+                    )
                 )
-            else:
-                failed.append((elem, "Unable to determine tag location"))
+                continue
+            elem_id = elem.Id.IntegerValue
+
+            if existing_tag_map.get(elem_id, set()) & _candidate_keys(tag_candidates):
+                already_tagged.append(elem)
                 continue
 
-        # Place tag using element directly with its location point
-        try:
-            new_tag = tagger.place_tag(elem, tag_symbol, tag_pt)
+            tag_point = _center_point(elem)
+            if not tag_point:
+                failed.append((elem, 'Unable to determine tag point'))
+                continue
+
+            placed_result = _place_requested_tag(
+                elem,
+                tag_candidates,
+                tag_point,
+            )
+            if not placed_result:
+                failed.append(
+                    (
+                        elem,
+                        tagger.last_place_tag_failure or 'Unable to place tag',
+                    )
+                )
+                continue
+
+            new_tag, family_name, type_name = placed_result
+            tag_key = (_norm(family_name), _norm(type_name))
+
             placed.append(elem)
-            existing_tag_maps.setdefault(chosen_type_id_val, {}).setdefault(elem_id_val, []).append(new_tag)
-
-            # If we switched tag types, remove the old opposite tag(s) on this element.
-            if opposite_type_id_val is not None:
-                old_tags = list(
-                    existing_tag_maps.get(opposite_type_id_val, {}).get(elem_id_val, [])
-                )
-                # Fallback: direct scan in case pre-built map missed any.
-                if not old_tags:
-                    for et in existing_tags:
-                        try:
-                            if _eid_int(et.GetTypeId()) != opposite_type_id_val:
-                                continue
-                            et_elem = None
-                            try:
-                                v = _eid_int(et.TaggedLocalElementId)
-                                if v is not None and v != -1:
-                                    et_elem = v
-                            except Exception:
-                                pass
-                            if et_elem is None:
-                                try:
-                                    for tid in (et.GetTaggedLocalElementIds() or []):
-                                        v = _eid_int(tid)
-                                        if v is not None and v != -1:
-                                            et_elem = v
-                                            break
-                                except Exception:
-                                    pass
-                            if et_elem == elem_id_val:
-                                old_tags.append(et)
-                        except Exception:
-                            pass
-                for old_tag in old_tags:
-                    try:
-                        doc.Delete(old_tag.Id)
-                        removed_conflicting.append(old_tag)
-                    except Exception:
-                        pass
-                existing_tag_maps.setdefault(opposite_type_id_val, {})[elem_id_val] = []
-
-            if tag_symbol.Id == selected_mark_symbol.Id:
-                placed_mark.append(elem)
-            elif selected_mark_note_symbol and tag_symbol.Id == selected_mark_note_symbol.Id:
-                placed_mark_note.append(elem)
-        except Exception as e:
-            failed.append((elem, "Tag placement error [{}]: {}".format(tag_name, str(e))))
+            existing_tag_map.setdefault(elem_id, set()).add(tag_key)
+        except Exception as ex:
+            failed.append((elem, str(ex)))
 
     t.Commit()
-except Exception as e:
-    # output.print_md("Tag placement error: {}".format(e))
+except Exception:
     t.RollBack()
     raise
 
 output.print_md(
-    "## Summary: placed {}, already tagged {}, failed {}".format(
+    '## Equipment Tagging: placed {}, already tagged {}, missing subject {}, unmapped {}, failed {}'.format(
         len(placed),
         len(already_tagged),
+        len(missing_subject),
+        len(unmapped_subject),
         len(failed),
     )
 )
 
-output.print_md(
-    "## Placed by type: MARK {}, MARK_NOTE {}".format(
-        len(placed_mark),
-        len(placed_mark_note),
-    )
-)
-
-output.print_md(
-    "## Replaced old opposite tags: {}".format(
-        len(removed_conflicting),
-    )
-)
+if unmapped_subject:
+    output.print_md('### Unmapped Subject Codes')
+    for elem, subject_text in unmapped_subject:
+        output.print_md('- ID {}: {}'.format(output.linkify(elem.Id), subject_text))
 
 if failed:
-    output.print_md("\n### Failed Elements:")
-    for idx, (elem, reason) in enumerate(failed, 1):
-        output.print_md(
-            "- {:03} | ID: {} | Reason: {}".format(
-                idx,
-                output.linkify(elem.Id),
-                reason,
-            )
-        )
+    output.print_md('### Failed Elements')
+    for elem, reason in failed:
+        output.print_md('- ID {}: {}'.format(output.linkify(elem.Id), reason))

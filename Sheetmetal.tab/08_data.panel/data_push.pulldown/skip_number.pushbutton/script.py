@@ -35,10 +35,7 @@ selected_ids = uidoc.Selection.GetElementIds()
 if not selected_ids:
     forms.alert("Please select one or more elements", exitscript=True)
 
-# Normalize parameter names for comparison
-normalized_params_to_skip = {p.strip().lower() for p in parameters_to_skip}
-
-t = Transaction(doc, "Set Parameters to Skip")
+t = Transaction(doc, "Toggle Parameters Skip")
 t.Start()
 try:
     for elem_id in selected_ids:
@@ -46,21 +43,18 @@ try:
         if elem is None:
             continue
 
-        # Iterate through all element parameters
-        for param in elem.Parameters:
+        # Toggle parameters: set to 'skip' if not already, clear if already 'skip'
+        for param_name in parameters_to_skip:
             try:
-                param_name = param.Definition.Name
-                normalized_name = param_name.strip().lower()
-
-                # Check if this parameter should be set to skip
-                if normalized_name not in normalized_params_to_skip:
+                param = elem.LookupParameter(param_name)
+                if param is None or param.IsReadOnly:
                     continue
 
-                if param.IsReadOnly:
-                    continue
-
-                # Set the parameter value
-                param.Set("skip")
+                current = (param.AsString() or '').strip().lower()
+                if current == 'skip':
+                    param.Set('')
+                else:
+                    param.Set('skip')
             except Exception:
                 pass
 
