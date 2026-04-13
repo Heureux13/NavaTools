@@ -1,6 +1,8 @@
 title:
   en_us: Manual
 layout:
+  - tag_reversal
+  - ----
   - tag_1_bod
   - tag_1_length
   - tag_1_size
@@ -21,4 +23,3 @@ layout:
   - tag_sleeves_1
   - ----
   - tag_removal
-  - tag_reversal
