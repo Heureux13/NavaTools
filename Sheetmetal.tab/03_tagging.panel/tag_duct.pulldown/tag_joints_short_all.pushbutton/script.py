@@ -19,7 +19,7 @@ from constants.print_outputs import print_disclaimer
 
 # Button info
 # ==================================================
-__title__ = "Tag All Joints Short"
+__title__ = "Tag Joints Short All"
 __doc__ = """
 Tag all short straight duct with length.
 """

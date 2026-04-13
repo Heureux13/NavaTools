@@ -100,17 +100,36 @@ def resolve_tag_slot(tag_or_slot_name):
     seen = set()
     attempted = []
     for candidate in candidates:
-        name = str(candidate or '').strip()
-        if not name:
-            continue
-        if name.lower() in seen:
-            continue
-        seen.add(name.lower())
-        attempted.append(name)
-        try:
-            tag_symbol = tagger.get_label(name)
-        except LookupError:
-            tag_symbol = None
+        if isinstance(candidate, (list, tuple)) and len(candidate) == 2:
+            fam_candidate = str(candidate[0] or '').strip()
+            type_candidate = str(candidate[1] or '').strip()
+            if not fam_candidate:
+                continue
+            dedupe_key = (fam_candidate.lower(), type_candidate.lower())
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            label = "{}/{}".format(fam_candidate, type_candidate)
+            attempted.append(label)
+            try:
+                tag_symbol = tagger.get_label_exact(
+                    fam_candidate, type_candidate)
+            except (LookupError, Exception):
+                tag_symbol = None
+            matched_name = label
+        else:
+            name = str(candidate or '').strip()
+            if not name:
+                continue
+            if name.lower() in seen:
+                continue
+            seen.add(name.lower())
+            attempted.append(name)
+            try:
+                tag_symbol = tagger.get_label(name)
+            except LookupError:
+                tag_symbol = None
+            matched_name = name
 
         if tag_symbol is None:
             continue
@@ -118,7 +137,7 @@ def resolve_tag_slot(tag_or_slot_name):
         fam_name = (
             tag_symbol.Family.Name if tag_symbol and tag_symbol.Family else ""
         ).strip().lower()
-        resolved = (tag_symbol, fam_name, name)
+        resolved = (tag_symbol, fam_name, matched_name)
         break
 
     if resolved[0] is None:
@@ -189,7 +208,7 @@ def is_vertical_piece(elem):
 
 
 def get_short_threshold_inches(duct_wrap):
-    fam = (duct_wrap.family or '').strip().lower()
+    fam = (duct_wrap.family or '').strip().lower()vertical_ids
     conn0 = (duct_wrap.connector_0_type or '').strip().lower()
     conn1 = (duct_wrap.connector_1_type or '').strip().lower()
 
@@ -814,5 +833,7 @@ try:
     t.Commit()
 except Exception as e:
     output.print_md("Tag placement error: {}".format(e))
-    t.RollBack()
+    from Autodesk.Revit.DB import TransactionStatus
+    if t.GetStatus() == TransactionStatus.Started:
+        t.RollBack()
     raise

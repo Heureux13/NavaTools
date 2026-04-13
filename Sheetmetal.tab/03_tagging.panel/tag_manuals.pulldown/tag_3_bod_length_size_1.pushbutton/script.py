@@ -12,6 +12,7 @@ the copyright holder."""
 from System.Collections.Generic import List
 from constants.print_outputs import print_disclaimer
 from tagging.revit_tagging import RevitTagging
+from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH_LEFT, SLOT_BOD, SLOT_SIZE_RIGHT
 from revit.revit_element import RevitElement
 from ducts.revit_duct import RevitDuct
 from ducts.revit_xyz import RevitXYZ
@@ -34,18 +35,37 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
+# Helper function for version-compatible ElementId access
+
+
+def get_element_id_value(element_id):
+    """Extract integer value from ElementId (compatible with Revit 2025 and 2026+)."""
+    if element_id is None:
+        return None
+    try:
+        # Revit 2025 and earlier
+        return element_id.IntegerValue
+    except AttributeError:
+        # Revit 2026+ uses .Value
+        try:
+            return element_id.Value
+        except (AttributeError, TypeError):
+            # Fallback: try direct int conversion
+            return int(element_id)
+
+
 # Define tags and their positions
 tag_configs = {
     'Length': {
-        'tags': ['_umi_length_left',],
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_LENGTH_LEFT, [])),
         'position': 'start'
     },
     'BOD': {
-        'tags': ['_umi_bod_center',],
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_BOD, [])),
         'position': 'center'
     },
     'Size': {
-        'tags': ['_umi_size_right',],
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_SIZE_RIGHT, [])),
         'position': 'end'
     }
 }
@@ -76,7 +96,11 @@ try:
         tag_label = None
         for tag_name in tag_to_use:
             try:
-                tag_label = tagger.get_label(tag_name)
+                if isinstance(tag_name, tuple):
+                    tag_label = tagger.get_label_exact(
+                        tag_name[0], tag_name[1])
+                else:
+                    tag_label = tagger.get_label(tag_name)
                 break
             except LookupError:
                 continue
@@ -94,7 +118,7 @@ try:
         for elem in selected_elements:
             try:
                 # Check if already tagged with this tag family
-                elem_key = elem.Id.IntegerValue if elem and elem.Id else None
+                elem_key = get_element_id_value(elem.Id)
                 existing_fams = existing_tag_map.get(
                     elem_key, set()) if elem_key is not None else set()
                 if tag_fam_name_norm and tag_fam_name_norm in existing_fams:
@@ -112,7 +136,7 @@ try:
                     existing_tag_map[elem_key].add(tag_fam_name_norm)
 
             except Exception as e:
-                elem_id = elem.Id.IntegerValue if elem and elem.Id else "Unknown"
+                elem_id = get_element_id_value(elem.Id)
                 output.print_md(
                     "**Skipped {} tag on element {}:** {}".format(tag_choice, elem_id, e))
 

@@ -1,3 +1,11 @@
 title:
   en_us: Duct
 layout:
+  - check_duct_long
+  - check_duct_short
+  - -----
+  - check_duct_offsets
+  - check_duct_taps
+  - -----
+  - check_number_fabrication
+  - check_number_item

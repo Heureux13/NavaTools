@@ -12,6 +12,7 @@ the copyright holder."""
 from System.Collections.Generic import List
 from constants.print_outputs import print_disclaimer
 from tagging.revit_tagging import RevitTagging
+from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_SIZE_LEFT, SLOT_BOD_RIGHT
 from revit.revit_element import RevitElement
 from ducts.revit_duct import RevitDuct
 from ducts.revit_xyz import RevitXYZ
@@ -34,14 +35,33 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
+# Helper function for version-compatible ElementId access
+
+
+def get_element_id_value(element_id):
+    """Extract integer value from ElementId (compatible with Revit 2025 and 2026+)."""
+    if element_id is None:
+        return None
+    try:
+        # Revit 2025 and earlier
+        return element_id.IntegerValue
+    except AttributeError:
+        # Revit 2026+ uses .Value
+        try:
+            return element_id.Value
+        except (AttributeError, TypeError):
+            # Fallback: try direct int conversion
+            return int(element_id)
+
+
 # Define tags and their positions
 tag_configs = {
     'Length': {
-        'tags': ['_umi_size_left', '-fabduct_length_mv_tag'],
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_SIZE_LEFT, [])),
         'position': 'start'
     },
     'Size': {
-        'tags': ['_umi_bod_right', '-fabduct_size_mv_tag'],
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_BOD_RIGHT, [])),
         'position': 'end'
     }
 }
@@ -92,7 +112,11 @@ try:
         tag_label = None
         for tag_name in tag_to_use:
             try:
-                tag_label = tagger.get_label(tag_name)
+                if isinstance(tag_name, tuple):
+                    tag_label = tagger.get_label_exact(
+                        tag_name[0], tag_name[1])
+                else:
+                    tag_label = tagger.get_label(tag_name)
                 break
             except LookupError:
                 continue
@@ -107,7 +131,7 @@ try:
         # Tag each element with this tag type
         for elem in selected_elements:
             try:
-                elem_key = elem.Id.IntegerValue if elem and elem.Id else None
+                elem_key = get_element_id_value(elem.Id)
                 existing_fams = existing_tag_map.get(
                     elem_key, set()) if elem_key is not None else set()
 

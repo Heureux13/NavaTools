@@ -1,3 +1,9 @@
 title:
   en_us: Devices
 layout:
+- tag_dampers_fire
+- tag_dampers
+- -----
+- tag_grds
+- -----
+- tag_manbars
