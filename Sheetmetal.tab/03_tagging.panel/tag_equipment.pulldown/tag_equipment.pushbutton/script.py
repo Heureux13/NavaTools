@@ -33,6 +33,8 @@ from tagging.tag_config import (
     SLOT_HOOD_NOTE,
     SLOT_HUMIDIFIER,
     SLOT_HUMIDIFIER_NOTE,
+    SLOT_LOUVER,
+    SLOT_LOUVER_NOTE,
     SLOT_SPLIT,
     SLOT_SPLIT_NOTE,
     SLOT_UNIT,
@@ -42,6 +44,7 @@ from tagging.tag_config import (
     SLOT_VRF,
     SLOT_VRF_NOTE,
 )
+
 from config.parameters_registry import BBM_SUBJECT, PYT_NOTE_0
 
 # Button display information
@@ -52,35 +55,42 @@ __doc__ = """
 """
 
 # Subject -> equipment slot mapping.
+# fmt: off
+# autopep8: off
 SUBJECT_SLOT_MAP = {
-    "condenser": SLOT_CONDENSER,
-    "fan": SLOT_FAN,
-    "heat pump": SLOT_HEAT_PUMP,
-    "heater": SLOT_HEATER,
-    "hood": SLOT_HOOD,
-    "humidifier": SLOT_HUMIDIFIER,
-    "split": SLOT_SPLIT,
-    "unit": SLOT_UNIT,
-    "valve": SLOT_VALVE,
-    "vrf": SLOT_VRF,
+    "condenser":    SLOT_CONDENSER,
+    "fan":          SLOT_FAN,
+    "heat pump":    SLOT_HEAT_PUMP,
+    "heater":       SLOT_HEATER,
+    "hood":         SLOT_HOOD,
+    "humidifier":   SLOT_HUMIDIFIER,
+    "louver":       SLOT_LOUVER,
+    "split":        SLOT_SPLIT,
+    "unit":         SLOT_UNIT,
+    "valve":        SLOT_VALVE,
+    "vrf":          SLOT_VRF,
 }
 
 SUBJECT_SLOT_MAP_NOTE = {
-    "condenser": SLOT_CONDENSER_NOTE,
-    "fan": SLOT_FAN_NOTE,
-    "heat pump": SLOT_HEAT_PUMP_NOTE,
-    "heater": SLOT_HEATER_NOTE,
-    "hood": SLOT_HOOD_NOTE,
-    "humidifier": SLOT_HUMIDIFIER_NOTE,
-    "split": SLOT_SPLIT_NOTE,
-    "unit": SLOT_UNIT_NOTE,
-    "valve": SLOT_VALVE_NOTE,
-    "vrf": SLOT_VRF_NOTE,
+    "condenser":    SLOT_CONDENSER_NOTE,
+    "fan":          SLOT_FAN_NOTE,
+    "heat pump":    SLOT_HEAT_PUMP_NOTE,
+    "heater":       SLOT_HEATER_NOTE,
+    "hood":         SLOT_HOOD_NOTE,
+    "humidifier":   SLOT_HUMIDIFIER_NOTE,
+    "louver":       SLOT_LOUVER_NOTE,
+    "split":        SLOT_SPLIT_NOTE,
+    "unit":         SLOT_UNIT_NOTE,
+    "valve":        SLOT_VALVE_NOTE,
+    "vrf":          SLOT_VRF_NOTE,
 }
+# fmt: on
+# autopep8: on
 
 SUBJECT_PARAMETER_NAMES = (
     BBM_SUBJECT,
 )
+
 TARGET_CATEGORY = BuiltInCategory.OST_MechanicalEquipment
 
 output = script.get_output()

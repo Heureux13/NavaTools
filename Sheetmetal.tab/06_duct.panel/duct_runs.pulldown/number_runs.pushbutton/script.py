@@ -45,11 +45,19 @@ output = script.get_output()
 # 4. Once chain is complete, number remaining unvisited connections sequentially
 # 5. This ensures directional flow without backtracking
 
-# Parameters that hold the item number (will be matched case-insensitive)
-number_paramters = {
-    RVT_ITEM_NUMBER.lower(),
+# Parameters used to read and write item numbers in priority order
+number_value_parameters = [
     PYT_NUMBER_FABRICATION.lower(),
-}
+    RVT_ITEM_NUMBER.lower(),
+]
+
+# Parameters used only to determine whether numbering should be skipped
+skip_check_parameters = [
+    PYT_SKIP_NUMBER.lower(),
+]
+
+# Parameters used to determine whether traversal should stop
+stop_check_parameters = list(number_value_parameters)
 
 match_paramters = {
     RVT_FAMILY.lower(),
@@ -165,31 +173,69 @@ def sizes_match(filter_size, conn_size):
     return sig_a == sig_b
 
 
-def get_item_number(duct):
-    """Get the current item number from any of the number parameters."""
-    # Get all parameters and search case-insensitively
+def get_prioritized_parameters(duct, parameter_names):
+    """Return matching parameters in the configured priority order."""
+    params_by_name = {name: [] for name in parameter_names}
+
     for param in duct.element.Parameters:
         param_name_lower = param.Definition.Name.strip().lower()
-        if param_name_lower not in number_paramters:
+        if param_name_lower in params_by_name:
+            params_by_name[param_name_lower].append(param)
+
+    ordered_params = []
+    for name in parameter_names:
+        ordered_params.extend(params_by_name.get(name, []))
+
+    return ordered_params
+
+
+def get_number_parameters(duct):
+    """Return item number parameters in configured read/write priority order."""
+    return get_prioritized_parameters(duct, number_value_parameters)
+
+
+def _get_parameter_value(param):
+    """Return a parameter value as a string when possible."""
+    val = param.AsString()
+    if val is None:
+        val = param.AsValueString()
+    return val
+
+
+def _has_control_value(duct, parameter_names, control_values):
+    """Return True when any configured control parameter contains a control value."""
+    for param in get_prioritized_parameters(duct, parameter_names):
+        val = _get_parameter_value(param)
+        if val is None:
             continue
 
+        val_lower = str(val).strip().lower()
+        if val_lower in control_values:
+            return True
+
+        try:
+            if int(val) in control_values:
+                return True
+        except (ValueError, TypeError):
+            pass
+
+    return False
+
+
+def get_item_number(duct):
+    """Get the current item number from any of the number parameters."""
+    if has_skip_value(duct):
+        return None
+
+    for param in get_number_parameters(duct):
         # Get the value as string
-        val = param.AsString()
-        if val is None:
-            val = param.AsValueString()
+        val = _get_parameter_value(param)
 
         if val is not None:
-            # Check if it's a skip value first (case-insensitive)
-            val_lower = str(val).strip().lower()
-            if val_lower in skip_values or val_lower == "skip" or val_lower == "n/a":
-                return None
-
             # Try to convert to int
             try:
                 num_val = int(val) if isinstance(
                     val, (int, float)) else int(float(val))
-                if num_val in skip_values:
-                    return None
                 return num_val
             except (ValueError, TypeError):
                 # Try to extract number from string
@@ -201,13 +247,7 @@ def get_item_number(duct):
 
 def set_item_number(duct, number):
     """Set the item number in the first available parameter."""
-    # Get all parameters and search case-insensitively
-    for param in duct.element.Parameters:
-        param_name_lower = param.Definition.Name.strip().lower()
-
-        if param_name_lower not in number_paramters:
-            continue
-
+    for param in get_number_parameters(duct):
         if param.IsReadOnly:
             continue
 
@@ -285,47 +325,12 @@ def has_skip_value(duct):
         if sig is not None and sig[0] == "round":
             return True
 
-    # Get all parameters and search case-insensitively
-    for param in duct.element.Parameters:
-        param_name_lower = param.Definition.Name.strip().lower()
-        if param_name_lower not in number_paramters:
-            continue
-
-        val = param.AsString()
-        if val is None:
-            val = param.AsValueString()
-
-        if val is not None:
-            # Check as lowercase string
-            val_lower = str(val).strip().lower()
-            if val_lower in skip_values or val_lower == "skip":
-                return True
-            # Also check raw value in case it's an integer
-            try:
-                if int(val) in skip_values:
-                    return True
-            except (ValueError, TypeError):
-                pass
-    return False
+    return _has_control_value(duct, skip_check_parameters, skip_values)
 
 
 def has_stop_value(duct):
     """Check if duct has a stop value in its number parameter."""
-    # Get all parameters and search case-insensitively
-    for param in duct.element.Parameters:
-        param_name_lower = param.Definition.Name.strip().lower()
-        if param_name_lower not in number_paramters:
-            continue
-
-        val = param.AsString()
-        if val is None:
-            val = param.AsValueString()
-
-        if val is not None:
-            val_lower = str(val).strip().lower()
-            if val_lower in stop_values:
-                return True
-    return False
+    return _has_control_value(duct, stop_check_parameters, stop_values)
 
 
 def get_match_signature(duct):

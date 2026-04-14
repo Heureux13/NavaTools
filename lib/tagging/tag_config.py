@@ -11,7 +11,6 @@ from config.parameters_registry import *
 SLOT_CANVAS                 = 'CANVAS'
 SLOT_ENDCAP_SD              = 'ENDCAP_SD'
 SLOT_ENDCAP_TDF             = 'ENDCAP_TDF'
-SLOT_LOUVER                 = 'LOUVER'
 SLOT_OFFSET                 = 'OFFSET'
 SLOT_TAP                    = 'TAP'
 SLOT_TRANSITION             = 'TRANSITION'
@@ -23,6 +22,8 @@ SLOT_DAMPER_FIRE            = 'FIRE_DAMPER'
 SLOT_DAMPER_VOLUME          = 'DAMPER_VOLUME'
 SLOT_GRD                    = 'GRD'
 SLOT_GRD_CFM                = 'GRD_CFM'
+SLOT_LOUVER                 = 'LOUVER'
+SLOT_LOUVER_NOTE            = 'LOUVER_NOTE'
 SLOT_MAN_BARS               = 'MAN_BARS'
 
 # Equipment
@@ -96,6 +97,7 @@ SLOT_ALL = (
     SLOT_LENGTH_LEFT,
     SLOT_LENGTH_RIGHT,
     SLOT_LOUVER,
+    SLOT_LOUVER_NOTE,
     SLOT_MAN_BARS,
     SLOT_CONDENSER,
     SLOT_HEAT_PUMP,
@@ -202,6 +204,9 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_LOUVER: [
         ('_Tag.DV_Louver', 'Black'),
+    ],
+    SLOT_LOUVER_NOTE: [
+        ('_Tag.DV_Louver', 'Black w/ note'),
     ],
     SLOT_MAN_BARS: [
         ('_Tag.DV_ManBar', 'Center'),

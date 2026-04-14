@@ -19,7 +19,12 @@ from Autodesk.Revit.DB import (
     StorageType,
 )
 from tagging.revit_tagging import RevitTagging
-from ducts.revit_duct import RevitDuct
+from config.parameters_registry import PYT_NUMBER_FABRICATION, RVT_FAMILY, RVT_ITEM_NUMBER
+from tagging.tag_config import (
+    DEFAULT_NUMBER_SKIP_PARAMETERS,
+    DEFAULT_TAG_SLOT_CANDIDATES,
+    SLOT_NUMBER_FABRICATION,
+)
 
 # Button display information
 # =================================================
@@ -128,6 +133,32 @@ def _get_tag_family_name(doc, tag):
     return ""
 
 
+def _get_parameter_value(param):
+    """Return a parameter value as a normalized string."""
+    if not param:
+        return ""
+
+    value = param.AsString()
+    if value is None:
+        value = param.AsValueString()
+    if value is None:
+        if param.StorageType == StorageType.Integer:
+            value = str(param.AsInteger())
+        elif param.StorageType == StorageType.Double:
+            value = str(param.AsDouble())
+
+    return (value or "").strip()
+
+
+def _get_first_matching_parameter(elem, parameter_names):
+    """Return the first existing parameter from parameter_names in priority order."""
+    for parameter_name in parameter_names:
+        param = elem.LookupParameter(parameter_name)
+        if param:
+            return param
+    return None
+
+
 # Code
 # ==================================================
 uidoc = __revit__.ActiveUIDocument
@@ -156,15 +187,26 @@ families_to_tag = {
 
 tagger = RevitTagging(doc, view)
 
+number_parameter_names = [
+    PYT_NUMBER_FABRICATION,
+    RVT_ITEM_NUMBER,
+]
+
 tag_names = [
-    "-FabDuct_Item Number_Tag",
-    "_umi_duct_ITEM_NUMBER",
+    family_name
+    for family_name, _ in DEFAULT_TAG_SLOT_CANDIDATES.get(
+        SLOT_NUMBER_FABRICATION, []
+    )
 ]
 
 values_to_skip = {
     "0",
     "skip",
 }
+
+for skip_values in DEFAULT_NUMBER_SKIP_PARAMETERS.values():
+    for skip_value in skip_values:
+        values_to_skip.add(str(skip_value))
 
 families_to_tag_norm = {v.strip().lower() for v in families_to_tag if v}
 values_to_skip_norm = {v.strip().lower() for v in values_to_skip if v}
@@ -247,10 +289,10 @@ try:
     for elem in fab_ducts:
         # Only tag elements whose family is in families_to_tag
         try:
-            fam_param = elem.LookupParameter("Family")
+            fam_param = elem.LookupParameter(RVT_FAMILY)
             if not fam_param:
                 continue
-            fam_value = (fam_param.AsValueString() or "").strip().lower()
+            fam_value = _get_parameter_value(fam_param).lower()
             if not any(f in fam_value for f in families_to_tag_norm):
                 continue
         except Exception:
@@ -258,18 +300,10 @@ try:
 
         # Skip elements with empty or disallowed item number values
         try:
-            item_param = elem.LookupParameter("Item Number")
+            item_param = _get_first_matching_parameter(elem, number_parameter_names)
             if not item_param:
                 continue
-            item_value = item_param.AsString()
-            if item_value is None:
-                item_value = item_param.AsValueString()
-            if item_value is None:
-                if item_param.StorageType == StorageType.Integer:
-                    item_value = str(item_param.AsInteger())
-                elif item_param.StorageType == StorageType.Double:
-                    item_value = str(item_param.AsDouble())
-            item_value = (item_value or "").strip().lower()
+            item_value = _get_parameter_value(item_param).lower()
             if not item_value or item_value in values_to_skip_norm:
                 # Remove any existing tags for this element
                 for existing_tag in elem_to_tags.get(elem.Id.IntegerValue, []):
