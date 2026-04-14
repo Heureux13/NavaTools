@@ -22,7 +22,7 @@ Sets parameters to skip selected elements when tagging
 
 # Parameters to set to 'skip'
 parameters_to_skip = {
-    PYT_SKIP_NUMBER
+    PYT_SKIP_TAG,
 }
 
 # Code

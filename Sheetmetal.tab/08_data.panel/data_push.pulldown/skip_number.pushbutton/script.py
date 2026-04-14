@@ -22,7 +22,7 @@ Sets parameters to 'skip' for selected elements
 
 # Parameters to set to 'skip'
 parameters_to_skip = {
-    PYT_SKIP_NUMBER
+    PYT_SKIP_NUMBER,
 }
 
 # Code

@@ -40,6 +40,7 @@ SLOT_SIZE                   = 'SIZE'
 SLOT_SIZE_LEFT              = 'SIZE_LEFT'
 SLOT_SIZE_RIGHT             = 'SIZE_RIGHT'
 SLOT_TAP                    = 'TAP'
+SLOT_TRANSITION             = 'TRANSITION'
 SLOT_UNIT                   = 'UNIT'
 SLOT_VAV                    = 'VAV'
 SLOT_WEIGHT                 = 'WEIGHT'
@@ -78,6 +79,7 @@ SLOT_ALL = (
     SLOT_NUMBER_SLEEVE,
     SLOT_OFFSET,
     SLOT_TAP,
+    SLOT_TRANSITION,
     SLOT_SIZE,
     SLOT_SIZE_LEFT,
     SLOT_SIZE_RIGHT,
@@ -180,6 +182,9 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_TAP: [
         ('_Tag.DT_Tap', 'Center'),
+    ],
+    SLOT_TRANSITION: [
+        ('_Tag.DT_Transition', 'Center'),
     ],
     SLOT_SIZE: [
         ('_Tag.DT_Size', 'Center'),

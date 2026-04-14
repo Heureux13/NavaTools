@@ -18,6 +18,7 @@ from tagging.tag_config import (
     SLOT_EXT_RIGHT as CFG_SLOT_EXT_RIGHT,
     SLOT_DEGREE as CFG_SLOT_DEGREE,
     SLOT_OFFSET as CFG_SLOT_OFFSET,
+    SLOT_TRANSITION as CFG_SLOT_TRANSITION,
     SLOT_MARK as CFG_SLOT_MARK,
     DEFAULT_TAG_SLOT_CANDIDATES,
     DEFAULT_PARAMETER_HIERARCHY,
@@ -58,6 +59,7 @@ class Fittings:
     SLOT_EXT_RIGHT = CFG_SLOT_EXT_RIGHT
     SLOT_DEGREE = CFG_SLOT_DEGREE
     SLOT_OFFSET = CFG_SLOT_OFFSET
+    SLOT_TRANSITION = CFG_SLOT_TRANSITION
     SLOT_MARK = CFG_SLOT_MARK
 
     skip_parameters = {
@@ -371,34 +373,38 @@ class Fittings:
         s = self
         family_cfg = {
             # tag choice resolved at runtime
-            "8inch long coupler wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
-            "conical tap - wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
-            "rect volume damper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
-            "boot tap - wdamper": s._tag_cfg(s.SLOT_DAMPER_VOLUME),
-            "access panel": s._tag_cfg(s.SLOT_ACCESS_PANEL),
-            "cap": s._tag_cfg(s.SLOT_ENDCAP_SD),
-            "canvas": s._tag_cfg(s.SLOT_CANVAS),
-            "end cap": s._tag_cfg(s.SLOT_ENDCAP_SD),
-            "tdf end cap": s._tag_cfg(s.SLOT_ENDCAP_TDF),
-            "drop cheek": s._tag_cfg(s.SLOT_SIZE),
-            "radius bend": s._tag_cfg(s.SLOT_SIZE),
-            "square bend": s._tag_cfg(s.SLOT_SIZE),
-            "tap": s._tag_cfg(s.SLOT_TAP),
-            "elbow": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
-            "elbow 90 degree": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
-            "gored elbow": s._tag_cfg(s.SLOT_DEGREE),
-            "radius elbow": s._tag_cfg(s.SLOT_DEGREE),
-            "tee": s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
-            "mitred offset": s._tag_cfg(s.SLOT_OFFSET),
+            # fmt: off
+            # autopep8: off
+            "8inch long coupler wdamper":     s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "access panel":                   s._tag_cfg(s.SLOT_ACCESS_PANEL),
+            "boot tap - wdamper":             s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "cap":                            s._tag_cfg(s.SLOT_ENDCAP_SD),
+            "canvas":                         s._tag_cfg(s.SLOT_CANVAS),
             "cid330 - (radius 2-way offset)": s._tag_cfg(s.SLOT_OFFSET),
-            "offset": s._tag_cfg(s.SLOT_OFFSET),
-            "ogee": s._tag_cfg(s.SLOT_OFFSET),
-            "radius offset": s._tag_cfg(s.SLOT_OFFSET),
-            "reducer": s._tag_cfg(s.SLOT_OFFSET),
-            "square to ø": s._tag_cfg(s.SLOT_OFFSET),
-            "transition": s._tag_cfg(s.SLOT_OFFSET),
-            "fire damper - type b": s._tag_cfg(s.SLOT_DAMPER_FIRE),
-            "manbars": s._tag_cfg(s.SLOT_MAN_BARS),
+            "conical tap - wdamper":          s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "drop cheek":                     s._tag_cfg(s.SLOT_SIZE),
+            "elbow":                          s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
+            "elbow 90 degree":                s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
+            "end cap":                        s._tag_cfg(s.SLOT_ENDCAP_SD),
+            "fire damper - type b":           s._tag_cfg(s.SLOT_DAMPER_FIRE),
+            "gored elbow":                    s._tag_cfg(s.SLOT_DEGREE),
+            "manbars":                        s._tag_cfg(s.SLOT_MAN_BARS),
+            "mitred offset":                  s._tag_cfg(s.SLOT_OFFSET),
+            "offset":                         s._tag_cfg(s.SLOT_OFFSET),
+            "ogee":                           s._tag_cfg(s.SLOT_OFFSET),
+            "radius bend":                    s._tag_cfg(s.SLOT_SIZE),
+            "radius elbow":                   s._tag_cfg(s.SLOT_DEGREE),
+            "radius offset":                  s._tag_cfg(s.SLOT_OFFSET),
+            "rect volume damper":             s._tag_cfg(s.SLOT_DAMPER_VOLUME),
+            "reducer":                        s._tag_cfg(s.SLOT_OFFSET),
+            "square bend":                    s._tag_cfg(s.SLOT_SIZE),
+            "square to ø":                    s._tag_cfg(s.SLOT_OFFSET),
+            "tap":                            s._tag_cfg(s.SLOT_TAP),
+            "tdf end cap":                    s._tag_cfg(s.SLOT_ENDCAP_TDF),
+            "tee":                            s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_LEFT, s.SLOT_EXT_RIGHT),
+            "transition":                     s._tag_cfg(s.SLOT_TRANSITION),
+            # fmt: on
+            # autopep8: on
         }
         return {self._norm(k): v for k, v in family_cfg.items()}
 
