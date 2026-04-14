@@ -208,7 +208,7 @@ def is_vertical_piece(elem):
 
 
 def get_short_threshold_inches(duct_wrap):
-    fam = (duct_wrap.family or '').strip().lower()vertical_ids
+    fam = (duct_wrap.family or '').strip().lower()
     conn0 = (duct_wrap.connector_0_type or '').strip().lower()
     conn1 = (duct_wrap.connector_1_type or '').strip().lower()
 
