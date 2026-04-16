@@ -47,8 +47,8 @@ output = script.get_output()
 
 # Parameters used to read and write item numbers in priority order
 number_value_parameters = [
-    PYT_NUMBER_FABRICATION.lower(),
     RVT_ITEM_NUMBER.lower(),
+    PYT_NUMBER_FABRICATION.lower(),
 ]
 
 # Parameters used only to determine whether numbering should be skipped

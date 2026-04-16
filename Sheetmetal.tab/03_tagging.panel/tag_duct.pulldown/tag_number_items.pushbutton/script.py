@@ -19,11 +19,9 @@ from Autodesk.Revit.DB import (
     StorageType,
 )
 from tagging.revit_tagging import RevitTagging
-from config.parameters_registry import PYT_NUMBER_FABRICATION, RVT_FAMILY, RVT_ITEM_NUMBER
+from config.parameters_registry import RVT_FAMILY, RVT_ITEM_NUMBER
 from tagging.tag_config import (
     DEFAULT_NUMBER_SKIP_PARAMETERS,
-    DEFAULT_TAG_SLOT_CANDIDATES,
-    SLOT_NUMBER_FABRICATION,
 )
 
 # Button display information
@@ -188,16 +186,14 @@ families_to_tag = {
 tagger = RevitTagging(doc, view)
 
 number_parameter_names = [
-    PYT_NUMBER_FABRICATION,
     RVT_ITEM_NUMBER,
 ]
 
-tag_names = [
-    family_name
-    for family_name, _ in DEFAULT_TAG_SLOT_CANDIDATES.get(
-        SLOT_NUMBER_FABRICATION, []
-    )
+annotation_to_use = [
+    "_Tag.DT_NumberItem",
 ]
+
+tag_names = list(annotation_to_use)
 
 values_to_skip = {
     "0",

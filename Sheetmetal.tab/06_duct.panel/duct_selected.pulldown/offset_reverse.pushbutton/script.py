@@ -9,6 +9,7 @@ the copyright holder."""
 
 from pyrevit import revit, script
 from Autodesk.Revit.DB import StorageType
+from config.parameters_registry import *
 
 # Button info
 # ======================================================================
@@ -72,8 +73,7 @@ else:
     with revit.Transaction("Reverse Offset"):
         for element in selection:
             try:
-                # Get the _offset parameter
-                tag_p = element.LookupParameter('PYT_OFFSET_VALUE')
+                tag_p = element.LookupParameter(PYT_OFFSET_VALUE)
 
                 if tag_p and not tag_p.IsReadOnly:
                     if tag_p.StorageType == StorageType.String:

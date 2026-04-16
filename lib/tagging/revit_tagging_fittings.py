@@ -119,10 +119,12 @@ class Fittings:
         ),
         'manbars': (
             'manbars',
-            'access panel',
         ),
         'fire_dampers': (
             'fire damper - type b',
+        ),
+        'access_panel': (
+            'access panel',
         ),
     }
 
