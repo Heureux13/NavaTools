@@ -85,7 +85,11 @@ stop_values = {
     "stop"
 }
 
-store_families = {
+boot_families_to_skip = {
+    'boot tap',
+}
+
+branch_start_families = {
     "boot tap",
     "straight tap",
     "rec on rnd straight tap"
@@ -121,9 +125,8 @@ class RevitRuns(object):
         self.allow_but_not_number       = set(traversable_families or allow_but_not_number)
         self.skip_values                = set(skip_value_set or skip_values)
         self.stop_values                = set(stop_value_set or stop_values)
-        self.store_families             = set(stored_families or store_families)
-        # fmt:on
-        # autopep8: on
+        self.branch_start_families             = set(stored_families or branch_start_families)
+
 
     def round_up_to_nearest_10(self, number):
         # Round up to the nearest 10th
@@ -144,8 +147,9 @@ class RevitRuns(object):
             return ("round", round(float(size_obj.in_diameter), 4))
 
         if size_obj.in_oval_dia is not None:
-            width = size_obj.in_width
-            height = size_obj.in_height
+            width   = size_obj.in_width
+            height  = size_obj.in_height
+
             if width is not None and height is not None:
                 return ("oval", round(float(width), 4), round(float(height), 4))
 
@@ -159,6 +163,106 @@ class RevitRuns(object):
         return None
 
     def is_rectangular_size(self, size_value):
-        # Check if a size is a rectangle
+        # Checks if a size is a rectangle
         sig = self._size_signature(size_value)
+
         return sig is not None and sig[0] == "rect"
+
+
+    def is_oval_size(self, size_value):
+        # Checks if a size is an oval
+        sig = self._size_signature(size_value)
+
+        return sig is not None and sig[0] == "oval"
+
+
+    def is_round_size(self, size_value):
+        # Check if a size is round
+        sig = self._size_signature(size_value)
+
+        return sig is not None and sig[0] == "round"
+
+
+    def sizes_match(self, target_size, conn_size):
+        # Return True if a size match, ignoring quotes and width/height order
+        sig_a = self._size_signature(target_size)
+        sig_b = self._size_signature(conn_size)
+
+        if sig_a is None or sig_b is None:
+            return False
+
+        return sig_a == sig_b
+
+
+    def get_prioritized_parameters(self, duct, parameter_names):
+        # Return matching parameters in the configured priority order
+        cleaned = [n.strip().lower() for n in parameter_names]
+        dic = {n: [] for n in cleaned}
+
+        for d in duct.element.Parameters:
+            pname = d.Definition.Name.strip().lower()
+            if pname in dic:
+                dic[pname].append(d)
+
+        ordered_params = []
+        for name in cleaned:
+            ordered_params.extend(dic.get(name, []))
+
+        return ordered_params
+
+
+    def get_number_parameters(self, duct):
+        # Return item number parameters in configured read/write priority order
+        return self.get_prioritized_parameters(duct, self.number_value_parameters)
+
+
+    @staticmethod
+    def _get_parameter_value(param):
+        # Return a parameter value as a string when possible
+        value = param.AsString()
+
+        if value is None:
+            value = param.AsValueString()
+
+        return value
+
+    def _has_control_value(self, duct, parameter_names, skip_values):
+        # Return True when any configured control parametres contain a control value
+        for param in self.get_prioritized_parameters(duct, parameter_names):
+            value = self._get_parameter_value(param)
+
+            if value is None:
+                continue
+
+            value_lower = str(value).strip().lower()
+            if value_lower in skip_values:
+                return True
+
+        return False
+
+    def has_skip_value(self, duct):
+        # Check if duct has a skip value in its number parameter or is a round boot taop
+        family = duct.family
+        family_lower = family.lower() if family else ""
+
+        if family_lower in boot_families_to_skip:
+            sig = self._size_signature(duct.size)
+
+            if sig is not None and sig[0] == "round":
+                return True
+
+        return self._has_control_value(
+            duct,
+            self.skip_check_parameters,
+            self.skip_values,
+        )
+
+
+    def get_item_number(self, duct):
+        # Get the current item number form any of the number parameters
+        if self.has_skip_value(duct):
+            return None
+
+
+# fmt:on
+# autopep8: on

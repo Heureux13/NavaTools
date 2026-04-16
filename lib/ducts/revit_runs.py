@@ -92,7 +92,7 @@ stop_values = {
     "stop",
 }
 
-store_families = {
+branch_start_families = {
     "boot tap",
     "straight tap",
     "rec on rnd straight tap",
@@ -104,14 +104,14 @@ class RevitRuns(object):
 
     def __init__(
         self,
-        doc_obj                 =None,
-        view_obj                =None,
-        output_obj              =None,
-        number_parameters       =None,
-        skip_parameters         =None,
-        stop_parameters         =None,
+        doc_obj=None,
+        view_obj=None,
+        output_obj=None,
+        number_parameters=None,
+        skip_parameters=None,
+        stop_parameters=None,
         numberable_families=None,
-        traversable_families=None,
+        traversable_familie=None,
         skip_value_set=None,
         stop_value_set=None,
         stored_families=None,
@@ -128,7 +128,7 @@ class RevitRuns(object):
         self.allow_but_not_number           = set(traversable_families or allow_but_not_number)
         self.skip_values                    = set(skip_value_set or skip_values)
         self.stop_values                    = set(stop_value_set or stop_values)
-        self.store_families                 = set(stored_families or store_families)
+        self.branch_start_families                 = set(stored_families or branch_start_families)
         # fmt: on
         # autopep8: on
 
@@ -462,7 +462,7 @@ class RevitRuns(object):
     def find_connected_numbered_element(self, duct, doc_obj=None, view_obj=None):
         """
         Find a connected element that has a number assigned.
-        For store_families (taps), look for elements connected to size_out (smaller size).
+        For branch_start_families (taps), look for elements connected to size_out (smaller size).
         Returns (number, duct) or (None, None) if not found.
         """
         doc_obj = doc_obj or self.doc
@@ -470,7 +470,7 @@ class RevitRuns(object):
 
         family = duct.family
         family_lower = family.lower() if family else ""
-        is_store = family_lower in self.store_families
+        is_store = family_lower in self.branch_start_families
 
         connected = self.get_connected_fittings(duct, doc_obj, view_obj)
 
@@ -537,7 +537,7 @@ class RevitRuns(object):
     ):
         """
         Number a branch starting from start_duct with start_number.
-        Processes depth-first: if we encounter more store_families, process those sub-branches first.
+        Processes depth-first: if we encounter more branch_start_families, process those sub-branches first.
         filter_by_size: If provided, only process connected elements matching this size.
         Returns the last number used.
         """
@@ -570,7 +570,7 @@ class RevitRuns(object):
             family = conn.family
             family_lower = family.lower() if family else ""
 
-            if family_lower in self.store_families:
+            if family_lower in self.branch_start_families:
                 if self.has_skip_value(conn):
                     pass
                 else:
@@ -605,7 +605,7 @@ class RevitRuns(object):
                 family = next_conn.family
                 family_lower = family.lower() if family else ""
 
-                if family_lower in self.store_families:
+                if family_lower in self.branch_start_families:
                     if self.has_skip_value(next_conn):
                         pass
                     else:
@@ -624,13 +624,13 @@ class RevitRuns(object):
         visited=None,
         stored_taps=None,
         modified_ducts=None,
-        allow_store_families=False,
+        allow_branch_start_families=False,
         filter_by_size=None,
     ):
         """
         Number fittings sequentially starting from start_duct with start_number.
         Simply increments the number for each numberable fitting (no duplicate matching).
-        allow_store_families: If True, store_families can be numbered.
+        allow_branch_start_families: If True, branch_start_families can be numbered.
         filter_by_size: If provided, only process elements with matching sizes.
         Returns the last number used, list of stored tap fittings, and modified ducts.
         """
@@ -665,10 +665,10 @@ class RevitRuns(object):
             family = duct.family
             family_lower = family.lower() if family else ""
 
-            if family_lower in self.store_families:
+            if family_lower in self.branch_start_families:
                 if self.has_skip_value(duct):
                     continue
-                if not allow_store_families:
+                if not allow_branch_start_families:
                     stored_taps.append((duct, None))
                     continue
 
@@ -810,7 +810,7 @@ def number_run_forward(
     visited=None,
     stored_taps=None,
     modified_ducts=None,
-    allow_store_families=False,
+    allow_branch_start_families=False,
     filter_by_size=None,
 ):
     return _default_runs.number_run_forward(
@@ -821,6 +821,6 @@ def number_run_forward(
         visited,
         stored_taps,
         modified_ducts,
-        allow_store_families,
+        allow_branch_start_families,
         filter_by_size,
     )
