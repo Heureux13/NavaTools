@@ -223,6 +223,7 @@ class RevitRuns(object):
                 pass
 
         return False
+#
 
     def get_item_number(self, duct):
         """Get the current item number from any of the number parameters."""
