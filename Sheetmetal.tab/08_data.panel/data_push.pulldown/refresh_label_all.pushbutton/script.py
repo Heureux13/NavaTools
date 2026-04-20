@@ -24,10 +24,10 @@ from config.parameters_registry import (
 
 # Button info
 # ======================================================================
-__title__ = 'Refresh Label Data'
+__title__ = 'Refresh Label Data All'
 __doc__ = '''
 Refresh _UMI_BBM_Label from hierarchy:
-Alias -> Family -> Fabrication Fitting Description -> Type Mark -> Mark -> _UMI_PYT_Label
+Type Mark -> Mark -> _UMI_PYT_Label -> Fabrication Fitting Description -> Family -> Alias
 
 Last non-empty value in the hierarchy wins.
 Applies to air terminals, mechanical equipment, MEP duct,
@@ -49,9 +49,9 @@ TARGET_CATEGORIES = (
 )
 
 HIERARCHY = (
-    RVT_ALIAS,
-    RVT_FAMILY,
     RVT_FABRICATION_FITTING_DESCRIPTION,
+    RVT_FAMILY,
+    RVT_ALIAS,
     RVT_TYPE_MARK,
     RVT_MARK,
     PYT_LABEL,
@@ -139,11 +139,10 @@ def _resolve_cfm_value(element):
 def _collect_elements_by_category(doc, categories):
     result = []
     seen = set()
-    active_view = revit.active_view
 
     for bic in categories:
         elements = (
-            FilteredElementCollector(doc, active_view.Id)
+            FilteredElementCollector(doc)
             .OfCategory(bic)
             .WhereElementIsNotElementType()
             .ToElements()

@@ -590,7 +590,7 @@ def number_branch_recursive(
             if has_skip_value(conn):
                 pass
             else:
-                all_stored_branches.append(conn)
+                all_stored_branches.append((conn, start_duct))
             continue
 
         # If we're filtering by size, skip non-store elements that don't match
@@ -634,7 +634,7 @@ def number_branch_recursive(
                     if has_skip_value(next_conn):
                         pass
                     else:
-                        all_stored_branches.append(next_conn)
+                        all_stored_branches.append((next_conn, duct))
                 else:
                     if is_numberable(next_conn) or is_traversable(next_conn):
                         to_process.append(next_conn)
@@ -680,11 +680,11 @@ def number_run_forward(
                 filtered_connected.append(conn)
         connected = filtered_connected
 
-    to_process = [(conn, current_number)
+    to_process = [(conn, start_duct)
                   for conn in connected if conn.id not in visited]
 
     while to_process:
-        duct, num = to_process.pop(0)
+        duct, source_duct = to_process.pop(0)
 
         if duct.id in visited:
             continue
@@ -701,7 +701,7 @@ def number_run_forward(
                 continue
 
             if not allow_store_families:
-                stored_taps.append((duct, None))
+                stored_taps.append((duct, source_duct))
                 # Skip during traversal unless it was the selected fitting
                 continue
             # If allow_store_families is True, fall through to number it
@@ -726,7 +726,7 @@ def number_run_forward(
         next_connected = get_connected_fittings(duct, doc, view)
         for conn in next_connected:
             if conn.id not in visited:
-                to_process.append((conn, current_number))
+                to_process.append((conn, duct))
 
     return current_number - 1, stored_taps, modified_ducts, len(modified_ducts)
 
@@ -789,18 +789,24 @@ if selected_duct:
             modified_ducts.extend(forward_modified)
 
             if stored_taps:
-                branches_to_process = [tap_duct for tap_duct, _ in stored_taps]
+                branches_to_process = list(stored_taps)
 
                 while branches_to_process:
-                    branch_duct = branches_to_process.pop(0)
+                    branch_duct, stored_anchor_duct = branches_to_process.pop(0)
 
                     if branch_duct.id in visited and not (
                         branch_duct.family and branch_duct.family.lower() in store_families
                     ):
                         continue
 
-                    anchor_num, anchor_duct = find_connected_numbered_element(
-                        branch_duct, doc, view)
+                    anchor_num = None
+                    anchor_duct = stored_anchor_duct
+                    if anchor_duct is not None:
+                        anchor_num = get_item_number(anchor_duct)
+
+                    if anchor_num is None:
+                        anchor_num, anchor_duct = find_connected_numbered_element(
+                            branch_duct, doc, view)
 
                     if anchor_num is None:
                         continue
