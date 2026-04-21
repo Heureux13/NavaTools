@@ -427,7 +427,12 @@ class RevitRuns(object):
 
         return (current_duct, current_number, visited, chain_ducts)
 
-    def find_endpoints(self, start_duct, doc_obj=None, view_obj=None, visited=None):
+    def find_endpoints(self,
+                       start_duct,
+                       doc_obj=None,
+                       view_obj=None,
+                       visited=None
+                       ):
         # Find all fittings in the runt that are true endpoints only 1 connection totla
         # Returns a list of dut objects that are endpoints
         doc_obj = doc_obj or self.doc
@@ -463,7 +468,11 @@ class RevitRuns(object):
 
         return endpoints
 
-    def find_connected_numbered_elements(self, duct, doc_obj=None, view_obj=None):
+    def find_connected_numbered_elements(self,
+                                         duct,
+                                         doc_obj=None,
+                                         view_obj=None
+                                         ):
         # Find a connected element that has a number assigned.
         # For branch_start_families (taps), look for elements connected to size_out(smaller size).
         # returns (number, duct) or (None, None) if not found
@@ -491,7 +500,12 @@ class RevitRuns(object):
 
         return (None, None)
 
-    def find_anchor_number(self, duct, doc_obj=None, view_obj=None, visited=None):
+    def find_anchor_number(self,
+                           duct,
+                           doc_obj=None,
+                           view_obj=None,
+                           visited=None
+                           ):
         # Recursively search backwards through connections to find an exisitng number.
         # Returns (anchor_number, anchor_duct) or (None, None) if no anchor found.
         doc_obj = doc_obj or self.doc
@@ -504,25 +518,90 @@ class RevitRuns(object):
 
         current_number = self.get_item_number(duct)
         if current_number is not None and current_number > 0:
-            return (current_number, duct)
+            return (current_number,
+                    duct
+                    )
 
-        connected = self.get_connected_fittings(duct, doc_obj, view_obj)
+        connected = self.get_connected_fittings(duct,
+                                                doc_obj,
+                                                view_obj
+                                                )
         for conn in connected:
             if conn.id in visited:
                 continue
             if not self.is_traversable(conn):
                 continue
 
-            anchor_num, anchor_duct = self.find_anchor_number(
-                conn,
-                doc_obj=doc_obj,
-                view_obj=view_obj,
-                visited=visited,
-            )
+            anchor_num, anchor_duct = self.find_anchor_number(conn,
+                                                              doc_obj=doc_obj,
+                                                              view_obj=view_obj,
+                                                              visited=visited,
+                                                              )
             if anchor_num is not None:
                 return (anchor_num, anchor_duct)
 
         return (None, None)
+
+    def is_rect_branch_fitting(self,
+                               fitting
+                               ):
+        # Returns true if a fitting is a start duct fitting
+        family = fitting.family
+        cleaned_family = family.lower().strip() if family else ""
+
+        if cleaned_family not in self.branch_start_families:
+            return False
+
+        size_in = fitting.size_in
+        size_out = fitting.size_out
+
+        if not size_in or not size_out:
+            return False
+
+        return (
+            self.is_rectangular_size(size_in) and
+            self.is_rectangular_size(size_out)
+        )
+
+    def create_run_and_brach_sets(self,
+                                  start_duct,
+                                  doc_obj=None,
+                                  view_obj=None,
+                                  visited=None,
+                                  branch_list=None,
+                                  filter_by_size=None,
+                                  ):
+        # Classify immediate neighbors as run candidates or branch starts.
+
+        doc_obj = doc_obj or self.doc
+        view_obj = view_obj or self.view
+        visited = visited if visited is not None else set()
+        branch_list = branch_list if branch_list is not None else set()
+        to_run = set()
+
+        # Mark only the current duct as visited. Neighbors are only classified here.
+        visited.add(start_duct.id)
+
+        connected = self.get_connected_fittings(start_duct, doc_obj, view_obj)
+
+        for conn in connected:
+            if conn.id in visited:
+                continue
+
+            if filter_by_size and conn.size:
+                if not self.sizes_match(filter_by_size, conn.size):
+                    continue
+
+            if self.is_rect_branch_fitting(conn):
+                branch_list.add(conn)
+                visited.add(conn.id)
+                continue
+
+            if self.is_traversable(conn):
+                to_run.add(conn)
+                visited.add(conn.id)
+
+        return (to_run, branch_list)
 
     def number_branch_recursive(
         self,
