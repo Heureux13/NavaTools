@@ -502,7 +502,7 @@ class RevitRuns(object):
                 if self.has_skip_value(conn):
                     pass
                 else:
-                    all_stored_branches.append(conn)
+                    all_stored_branches.append((conn, start_duct))
                 continue
 
             if filter_by_size and apply_size_filter:
@@ -539,7 +539,7 @@ class RevitRuns(object):
                         if self.has_skip_value(next_conn):
                             pass
                         else:
-                            all_stored_branches.append(next_conn)
+                            all_stored_branches.append((next_conn, duct))
                     else:
                         if self.is_numberable(next_conn) or self.is_traversable(next_conn):
                             to_process.append(next_conn)
@@ -587,11 +587,11 @@ class RevitRuns(object):
                     filtered_connected.append(conn)
             connected = filtered_connected
 
-        to_process = [(conn, current_number)
+        to_process = [(conn, start_duct)
                       for conn in connected if conn.id not in visited]
 
         while to_process:
-            duct, num = to_process.pop(0)
+            duct, source_duct = to_process.pop(0)
 
             if duct.id in visited:
                 continue
@@ -606,7 +606,7 @@ class RevitRuns(object):
                     continue
 
                 if not allow_store_families:
-                    stored_taps.append((duct, None))
+                    stored_taps.append((duct, source_duct))
                     continue
 
             if self.is_numberable(duct):
@@ -626,7 +626,7 @@ class RevitRuns(object):
             next_connected = self.get_connected_fittings(duct, doc, view)
             for conn in next_connected:
                 if conn.id not in visited:
-                    to_process.append((conn, current_number))
+                    to_process.append((conn, duct))
 
         return current_number - 1, stored_taps, modified_ducts, len(modified_ducts)
 
