@@ -1,6 +1,8 @@
 title:
   en_us: Devices
 layout:
+- tag_louvers
+- -----
 - tag_dampers_fire
 - tag_dampers
 - -----
