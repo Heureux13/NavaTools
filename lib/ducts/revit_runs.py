@@ -335,43 +335,22 @@ class RevitRuns(object):
         )
 
     def get_match_signature(self, duct):
-        """
-        Get the match signature for a duct based on match_parameters.
-        Returns a tuple of (family, size, length, angle) for comparison.
-        """
+        # Get the match signature for a duct based on match paramters
+        # Returns a tuple of (family, size, length, angle) for comparison
+
         signature = []
 
         family = duct.family if duct.family else ""
         signature.append(family.lower())
 
-        size = duct.size if hasattr(duct, "size") and duct.size else ""
-        signature.append(str(size))
+        size = duct.size if duct.size else ""
+        signature.append(size)
 
-        length = ""
-        try:
-            for param in duct.element.Parameters:
-                param_name_lower = param.Definition.Name.strip().lower()
-                if param_name_lower == "length":
-                    value = self._get_parameter_value(param)
-                    if value:
-                        length = str(value)
-                    break
-        except Exception:
-            pass
-        signature.append(length)
+        length = duct.length
+        signature.append("" if length is None else str(length))
 
-        angle = ""
-        try:
-            for param in duct.element.Parameters:
-                param_name_lower = param.Definition.Name.strip().lower()
-                if param_name_lower == "angle":
-                    value = self._get_parameter_value(param)
-                    if value:
-                        angle = str(value)
-                    break
-        except Exception:
-            pass
-        signature.append(angle)
+        angle = duct.angle
+        signature.append("" if angle is None else str(angle))
 
         return tuple(signature)
 
@@ -614,6 +593,7 @@ class RevitRuns(object):
                     to_process.append(next_conn)
 
         return current_number - 1
+
 
     def number_run_forward(
         self,
