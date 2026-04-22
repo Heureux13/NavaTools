@@ -32,7 +32,7 @@ import os
 
 # Button info
 # ===================================================
-__title__ = "Select by Item Number"
+__title__ = "Select by Fab Note"
 __doc__ = """
 Select by Fab Notes with Item Number
 """
@@ -205,6 +205,18 @@ class EnhancedParamForm(Form):
 
         return list(ducts)
 
+    def get_checked_values(self):
+        """Returns selected Fabrication Notes values from checked child nodes"""
+        checked_values = []
+
+        for parent_node in self.tree_view.Nodes:
+            if parent_node.Tag and parent_node.Tag[0] == "parent":
+                for child_node in parent_node.Nodes:
+                    if child_node.Checked and child_node.Tag and child_node.Tag[0] == "child":
+                        checked_values.append(child_node.Tag[1])
+
+        return checked_values
+
 # Helpers
 # ========================================================================
 
@@ -332,8 +344,9 @@ try:
     if form.ShowDialog() != DialogResult.Yes:
         script.exit()
 
+    selected_fab_notes = form.get_checked_values()
     duct_run = form.get_checked_ducts()
-    if not duct_run:
+    if not selected_fab_notes or not duct_run:
         script.exit()
 
     # Select ducts in Revit
@@ -347,6 +360,16 @@ try:
 
     # Select the ducts
     uidoc.Selection.SetElementIds(duct_ids)
+
+    output.print_md("## Selected Fabrication Notes")
+    for fab_note in sorted(selected_fab_notes, key=natural_sort_key):
+        output.print_md("# {}".format(fab_note))
+
+    output.print_md("---")
+    output.print_md("# Total Elements: {}, {}".format(
+        len(duct_run),
+        output.linkify([d.Id for d in duct_run])
+    ))
 
 except Exception as e:
     output.print_md("**Error:** {}".format(str(e)))

@@ -168,6 +168,10 @@ class Fittings:
             for name in (self.TAG_SLOT_CANDIDATES.get(self.SLOT_DEGREE) or [])
             if self._candidate_pool_needle(name)
         }
+        self._normalized_family_groups = {
+            self._norm(group_name): tuple(members)
+            for group_name, members in self.family_groups.items()
+        }
         self.duct_families = self._build_duct_families()
 
     # ------------------------------------------------------------------
@@ -426,7 +430,7 @@ class Fittings:
 
         selected_families = set()
         for group_name in normalized_groups:
-            members = self.family_groups.get(group_name) or ()
+            members = self._normalized_family_groups.get(group_name) or ()
             for family_name in members:
                 norm_family = self._norm(family_name)
                 if norm_family:
