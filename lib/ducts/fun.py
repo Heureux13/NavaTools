@@ -576,30 +576,45 @@ class RevitRuns(object):
         doc_obj = doc_obj or self.doc
         view_obj = view_obj or self.view
         visited = visited if visited is not None else set()
-        branch_list = branch_list if branch_list is not None else set()
-        to_run = set()
+        branch_list = branch_list if branch_list is not None else []
 
-        # Mark only the current duct as visited. Neighbors are only classified here.
-        visited.add(start_duct.id)
+        to_run = []
+        to_run_ids = set()
+        branch_ids = set([b.id for b in branch_list])
+        to_process = [start_duct]
 
-        connected = self.get_connected_fittings(start_duct, doc_obj, view_obj)
+        while to_process:
+            current = to_process.pop(0)
 
-        for conn in connected:
-            if conn.id in visited:
+            if current.id in visited:
                 continue
+            visited.add(current.id)
 
-            if filter_by_size and conn.size:
-                if not self.sizes_match(filter_by_size, conn.size):
+            if current.id not in to_run_ids:
+                to_run.append(current)
+                to_run_ids.add(current.id)
+
+            connected = self.get_connected_fittings(current,
+                                                    doc_obj,
+                                                    view_obj
+                                                    )
+
+            for conn in connected:
+                if conn.id in visited:
                     continue
 
-            if self.is_rect_branch_fitting(conn):
-                branch_list.add(conn)
-                visited.add(conn.id)
-                continue
+                if filter_by_size and conn.size:
+                    if not self.sizes_match(filter_by_size, conn.size):
+                        continue
 
-            if self.is_traversable(conn):
-                to_run.add(conn)
-                visited.add(conn.id)
+                if self.is_rect_branch_fitting(conn) and conn.id not in branch_ids:
+                    branch_ids.add(conn.id)
+                    branch_list.append(conn)
+
+                elif self.is_traversable(conn) and conn.id not in to_run_ids:
+                    to_run.append(conn)
+                    to_run_ids.add(conn.id)
+                    to_process.append(conn)
 
         return (to_run, branch_list)
 
