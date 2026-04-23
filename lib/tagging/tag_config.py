@@ -203,10 +203,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_Length', 'Right'),
     ],
     SLOT_LOUVER: [
-        ('_Tag.DV_Louver', 'Black'),
+        ('_Tag.DV_Louvers', 'Black'),
     ],
     SLOT_LOUVER_NOTE: [
-        ('_Tag.DV_Louver', 'Black w/ note'),
+        ('_Tag.DV_Louvers', 'Black w/ note0'),
     ],
     SLOT_MAN_BARS: [
         ('_Tag.DV_ManBar', 'Center'),

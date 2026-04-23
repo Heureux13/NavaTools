@@ -53,6 +53,7 @@ def _fmt_length(value):
 
 # Change this tuple to target other groups, e.g. ("reducers",) or ("all",).
 TARGET_FAMILY_GROUPS = ("fire_dampers",)
+DEBUG_ELEMENT_IDS = (6847929,)
 duct_families = fittings.get_duct_families_for_groups(TARGET_FAMILY_GROUPS)
 
 # Collect and filter ducts in the active view.
@@ -62,12 +63,76 @@ if not ducts:
     import sys
     sys.exit()
 
+debug_target_hits = []
+debug_seen_families = sorted({
+    fittings._norm(d.family) for d in ducts if getattr(d, 'family', None)
+})
+for d in ducts:
+    try:
+        element_id = int(d.element.Id.Value)
+    except AttributeError:
+        element_id = int(d.element.Id.IntegerValue)
+    if element_id in DEBUG_ELEMENT_IDS:
+        debug_target_hits.append((
+            element_id,
+            d.family,
+            fittings._norm(d.family),
+            d.size,
+        ))
+
 if fittings.missing_tag_labels:
     output.print_md("## Missing tag label(s); skipped where unavailable: {}".format(
         ", ".join(sorted(fittings.missing_tag_labels))))
 
 dic_ducts = [d for d in ducts if fittings._norm(
     d.family) in duct_families]
+
+debug_filtered_hits = []
+for d in dic_ducts:
+    try:
+        element_id = int(d.element.Id.Value)
+    except AttributeError:
+        element_id = int(d.element.Id.IntegerValue)
+    if element_id in DEBUG_ELEMENT_IDS:
+        debug_filtered_hits.append((
+            element_id,
+            d.family,
+            fittings._norm(d.family),
+            d.size,
+        ))
+
+output.print_md("## Debug")
+output.print_md("### Active view collected fabrication ductwork: {}".format(len(ducts)))
+output.print_md("### Fire damper family keys configured: {}".format(
+    ", ".join(sorted(duct_families.keys())) or "<none>"))
+output.print_md("### Unique normalized families seen in view: {}".format(
+    ", ".join(debug_seen_families) if debug_seen_families else "<none>"))
+if DEBUG_ELEMENT_IDS:
+    output.print_md("### Debug target ids requested: {}".format(
+        ", ".join(str(x) for x in DEBUG_ELEMENT_IDS)))
+    if debug_target_hits:
+        for element_id, family_name, normalized_family, size in debug_target_hits:
+            output.print_md(
+                "### Collected target {} | Family: {} | Normalized: {} | Size: {}".format(
+                    output.linkify(ElementId(element_id)),
+                    family_name or "<none>",
+                    normalized_family or "<none>",
+                    size or "<none>",
+                ))
+    else:
+        output.print_md("### Collected target ids: none")
+    if debug_filtered_hits:
+        for element_id, family_name, normalized_family, size in debug_filtered_hits:
+            output.print_md(
+                "### Matched target {} | Family: {} | Normalized: {} | Size: {}".format(
+                    output.linkify(ElementId(element_id)),
+                    family_name or "<none>",
+                    normalized_family or "<none>",
+                    size or "<none>",
+                ))
+    else:
+        output.print_md("### Matched target ids after family filter: none")
+output.print_md("---")
 
 # Tag in a single transaction.
 t = Transaction(doc, "General Tagging")
@@ -79,11 +144,18 @@ try:
     skipped_by_param = []
     skipped_no_tag_config = []
     auto_removed = []
+    debug_unmatched_targets = []
 
     for d in dic_ducts:
+        try:
+            element_id = int(d.element.Id.Value)
+        except AttributeError:
+            element_id = int(d.element.Id.IntegerValue)
         key = fittings._norm(d.family)
         tag_configs = duct_families.get(key)
         if not tag_configs:
+            if element_id in DEBUG_ELEMENT_IDS:
+                debug_unmatched_targets.append((d, "No tag config for normalized family '{}'".format(key)))
             skipped_no_tag_config.append(d)
             continue
 
@@ -94,6 +166,8 @@ try:
             auto_removed.append((d, removed_count))
 
         if fittings.should_skip_by_param(d):
+            if element_id in DEBUG_ELEMENT_IDS:
+                debug_unmatched_targets.append((d, "Skipped by parameter rules"))
             skipped_by_param.append(d)
             continue
 
@@ -157,8 +231,13 @@ try:
         if tagged_this_element:
             needs_tagging.append(d)
         elif has_matching_existing_tag:
+            if element_id in DEBUG_ELEMENT_IDS:
+                debug_unmatched_targets.append((d, "Already had a matching existing tag family"))
             already_tagged.append(d)
         else:
+            if element_id in DEBUG_ELEMENT_IDS:
+                debug_unmatched_targets.append(
+                    (d, placement_failed_reason or "No matching existing tag and no new tag was placed"))
             skipped_placement.append(
                 (d, placement_failed_reason or "No matching existing tag and no new tag was placed"))
 
@@ -222,6 +301,14 @@ if skipped_no_tag_config:
     for i, d in enumerate(skipped_no_tag_config, start=1):
         output.print_md("### {} | Family: {} | Size: {} | ID: {}".format(
             i, d.family, d.size, output.linkify(d.element.Id)))
+    output.print_md("---")
+
+if debug_unmatched_targets:
+    output.print_md("## Debug Target Outcomes")
+    for i, item in enumerate(debug_unmatched_targets, start=1):
+        d, reason = item
+        output.print_md("### {} | ID: {} | Family: {} | Size: {} | Reason: {}".format(
+            i, output.linkify(d.element.Id), d.family, d.size, reason))
     output.print_md("---")
 
 output.print_md("# Newly tagged: {}, {}".format(
