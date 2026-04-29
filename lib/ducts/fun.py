@@ -179,7 +179,10 @@ class RevitRuns(object):
 
         return sig is not None and sig[0] == "round"
 
-    def sizes_match(self, target_size, conn_size):
+    def sizes_match(self,
+                    target_size,
+                    conn_size
+                    ):
         # Return True if a size match, ignoring quotes and width/height order
         sig_a = self._size_signature(target_size)
         sig_b = self._size_signature(conn_size)
@@ -189,7 +192,10 @@ class RevitRuns(object):
 
         return sig_a == sig_b
 
-    def get_prioritized_parameters(self, duct, parameter_names):
+    def get_prioritized_parameters(self,
+                                   duct,
+                                   parameter_names
+                                   ):
         # Return matching parameters in the configured priority order
         cleaned = [n.strip().lower() for n in parameter_names]
         dic = {n: [] for n in cleaned}
@@ -219,7 +225,11 @@ class RevitRuns(object):
 
         return value
 
-    def _has_control_value(self, duct, parameter_names, skip_values):
+    def _has_control_value(self,
+                           duct,
+                           parameter_names,
+                           skip_values
+                           ):
         # Return True when any configured control parametres contain a control value
         for param in self.get_prioritized_parameters(duct, parameter_names):
             value = self._get_parameter_value(param)
@@ -373,7 +383,10 @@ class RevitRuns(object):
 
         return tuple(signature)
 
-    def find_duct_with_number(self, connected_ducts, target_number):
+    def find_duct_with_number(self,
+                              connected_ducts,
+                              target_number
+                              ):
         # Find a connected fitting with a specific number
         for duct in connected_ducts:
             if self.get_item_number(duct) == target_number:
@@ -381,7 +394,12 @@ class RevitRuns(object):
 
         return None
 
-    def follow_number_chain(self, start_duct, doc_obj=None, view_obj=None, visited=None):
+    def follow_number_chain(self,
+                            start_duct,
+                            doc_obj=None,
+                            view_obj=None,
+                            visited=None
+                            ):
         # Follow the existing number chain from start fitting.
         # Return (last_duct_in_chain, last_number_in_chain, visited_in_chain, chain_ducts).
         doc_obj = doc_obj or self.doc
@@ -563,14 +581,14 @@ class RevitRuns(object):
             self.is_rectangular_size(size_out)
         )
 
-    def create_run_and_brach_sets(self,
-                                  start_duct,
-                                  doc_obj=None,
-                                  view_obj=None,
-                                  visited=None,
-                                  branch_list=None,
-                                  filter_by_size=None,
-                                  ):
+    def collect_run_and_branch_sets(self,
+                                    start_duct,
+                                    doc_obj=None,
+                                    view_obj=None,
+                                    visited=None,
+                                    branch_list=None,
+                                    filter_by_size=None,
+                                    ):
         # Classify immediate neighbors as run candidates or branch starts.
 
         doc_obj = doc_obj or self.doc
@@ -618,99 +636,71 @@ class RevitRuns(object):
 
         return (to_run, branch_list)
 
-    def number_branch_recursive(
-        self,
-        start_duct,
-        start_number,
-        doc_obj=None,
-        view_obj=None,
-        visited=None,
-        all_stored_branches=None,
-        modified_ducts=None,
-        filter_by_size=None,
-        skip_start_numbering=None,
-    ):
-        # Number a branch starting from start_duct with start_number.
-        # Process depth first: If we encounter more branch_start_families, process those sub-branches first
-        # filter_by_size: If provided, only process connected elements matching this size.
-        # Returns the last number used.
+    def get_reusable_connected_number(self,
+                                      duct,
+                                      numbered_by_id,
+                                      doc_obj=None,
+                                      view_obj=None
+                                      ):
+        doc_obj = doc_obj or self.doc
+        view_obj = view_obj or self.view
+
+        duct_sig = self.get_match_signature(duct)
+        if duct_sig is None:
+            return None:
+
+        for conn in self.get_connected_fittings(duct,
+                                                doc_obj,
+                                                view_obj
+                                                ):
+            conn_number = numbered_by_id(conn.id)
+            if conn_number is None:
+                continue
+
+            if self.get_match_signature(conn) == duct_sig:
+                return conn_number
+
+        return None
+
+    def number_duct(self,
+                    start_duct,
+                    start_number,
+                    doc_obj,
+                    view_obj,
+                    ):
+        # Numbers duct from collect_run_and_branch_sets
 
         doc_obj = doc_obj or self.doc
         view_obj = view_obj or self.view
-        visited = visited if visited is not None else set()
-        all_stored_branches = all_stored_branches if all_stored_branches is not None else []
-        modified_ducts = modified_ducts if modified_ducts is not None else []
-
         current_number = start_number
+        run_list, branch_list = self.collect_run_and_branch_sets(
+            start_duct,
+            doc_obj=doc_obj,
+            view_obj=view_obj,
+        )
 
-        if not skip_start_numbering:
-            if self.is_numberable(start_duct) and not self.has_skip_value(start_duct):
-                self.set_item_number(start_duct, current_number)
-                modified_ducts.append(start_duct)
-                current_number += 1
+        last_used_number = start_number - 1
 
-        visited.add(start_duct.id)
-
-        to_process = []
-        connected = self.get_connected_fittings(start_duct, doc_obj, view_obj)
-        apply_size_filter = True
-
-        for conn in connected:
-            if conn.id in visited:
+        for duct in run_list:
+            if self.has_skip_value(duct):
                 continue
 
-            family = conn.family
-            cleaned_family = family.lower().strip() if family else ""
-
-            if cleaned_family in self.branch_start_families:
-                if self.has_skip_value(conn):
-                    pass
-                else:
-                    all_stored_branches.append(conn)
-
-            if filter_by_size and apply_size_filter:
-                conn_size = conn.size
-                if conn_size and not self.size_match(filter_by_size, conn_size):
-                    continue
-
-            elif self.is_numberable(conn) or self.is_traversable(conn):
-                to_process.append(conn)
-
-        for duct in to_process:
-            if duct.id in visited:
-                continue
-
-            visited.add(duct.id)
-
-            if self.is_numberable(duct) and not self.has_skip_value(duct):
+            if self.is_numberable(duct):
                 self.set_item_number(duct, current_number)
-                modified_ducts.append(duct)
+                last_used_number = current_number
                 current_number += 1
 
-            next_connected = self.get_connected_fittings(
-                duct,
-                doc_obj,
-                view_obj,
+        branch_number = self.round_up_to_nearest_10(last_used_number)
+
+        for branch in branch_list:
+            branch_end = self.number_duct(
+                branch,
+                branch_number,
+                doc_obj=doc_obj,
+                view_obj=view_obj,
             )
-            for next_conn in next_connected:
-                if next_conn.id in visited:
-                    continue
 
-                family = next_conn.family
-                cleaned_family = family.lower().strip() if family else ""
+            branch_number = self.round_up_to_nearest_10(branch_end)
+            last_used_number = branch_end
 
-                if cleaned_family in self.branch_start_families:
-                    if self.has_skip_value(next_conn):
-                        pass
-                    else:
-                        all_stored_branches.append(next_conn)
-
-                if filter_by_size and apply_size_filter:
-                    conn_size = conn.size
-                    if conn_size and not self.size_match(filter_by_size, conn_size):
-                        continue
-
-                elif self.is_numberable(next_conn) or self.is_traversable(next_conn):
-                    to_process.append(next_conn)
-
-        return current_number - 1
+        return last_used_number

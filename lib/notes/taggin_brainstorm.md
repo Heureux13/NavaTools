@@ -1,19 +1,140 @@
-_umiDT_ExtensionLeft.mv
-_umiDT_Length.fx
-_umiDT_LengthCenter.fx
-_umiDT_Note0.fx
-_umiDT_OffsetVAlue.mv
-_umiDV_Mark.fx
-_umiDV_Mark.mv
-_umiDV_TypeMark.mv
-_umiEQ_Mark.fx
+color = {
+    '_CRL.Black',
+    '_CRL.BlackNote1',
+    '_CRL.BlackNote2',
+    '_CRL.BlackNote3',
+    '_CRL.BlackNote4',
+    '_CRL.Blue',
+    '_CRL.BlueNote0',
+    '_CRL.BlueNote1',
+    '_CRL.BlueNote2',
+    '_CRL.BlueNote3',
+    '_CRL.BlueNote4',
+    '_CRL.Cyan',
+    '_CRL.CyanNote0',
+    '_CRL.CyanNote1',
+    '_CRL.CyanNote2',
+    '_CRL.CyanNote3',
+    '_CRL.CyanNote4',
+    '_CRL.Green',
+    '_CRL.GreenNote0',
+    '_CRL.GreenNote1',
+    '_CRL.GreenNote2',
+    '_CRL.GreenNote3',
+    '_CRL.GreenNote4',
+    '_CRL.Magenta',
+    '_CRL.MagentaNote0',
+    '_CRL.MagentaNote1',
+    '_CRL.MagentaNote2',
+    '_CRL.MagentaNote3',
+    '_CRL.MagentaNote4',
+    '_CRL.Orange',
+    '_CRL.OrangeNote0',
+    '_CRL.OrangeNote1',
+    '_CRL.OrangeNote2',
+    '_CRL.OrangeNote3',
+    '_CRL.OrangeNote4',
+    '_CRL.Purple',
+    '_CRL.PurpleNote0',
+    '_CRL.PurpleNote1',
+    '_CRL.PurpleNote2',
+    '_CRL.PurpleNote3',
+    '_CRL.PurpleNote4',
+    '_CRL.Red',
+    '_CRL.RedNote0',
+    '_CRL.RedNote1',
+    '_CRL.RedNote2',
+    '_CRL.RedNote3',
+    '_CRL.RedNote4',
+    '_CRL.Yellow',
+    '_CRL.YellowNote0',
+    '_CRL.YellowNote1',
+    '_CRL.YellowNote2',
+    '_CRL.YellowNote3',
+    '_CRL.YellowNote4',
+}
 
+bluebeam = {
+    '_BBM.Author',
+    '_BBM.Ceiling',
+    '_BBM.CFMEA',
+    '_BBM.CFMSA',
+    '_BBM.Class',
+    '_BBM.Color',
+    '_BBM.Comments',
+    '_BBM.Damper',
+    '_BBM.Device',
+    '_BBM.Duty',
+    '_BBM.Face',
+    '_BBM.Fan',
+    '_BBM.GPM',
+    '_BBM.Hand',
+    '_BBM.HP',
+    '_BBM.K',
+    '_BBM.KW',
+    '_BBM.Label',
+    '_BBM.Layer',
+    '_BBM.Make',
+    '_BBM.Material',
+    '_BBM.Model',
+    '_BBM.Mount',
+    '_BBM.Neck',
+    '_BBM.Notes',
+    '_BBM.Number',
+    '_BBM.PageLabel',
+    '_BBM.Paint',
+    '_BBM.Phase',
+    '_BBM.Qty',
+    '_BBM.Section',
+    '_BBM.Size',
+    '_BBM.Sleeve',
+    '_BBM.Slot',
+    '_BBM.Space',
+    '_BBM.Status',
+    '_BBM.Subclass',
+    '_BBM.Subject',
+    '_BBM.System',
+    '_BBM.Trade',
+    '_BBM.Type',
+    '_BBM.Unit',
+    '_BBM.VAV',
+    '_BBM.VPH',
+}
 
+python = {
+    '_PYT.AspectRatio',
+    '_PYT.CFM',
+    '_PYT.HeightPad',
+    '_PYT.Label',
+    '_PYT.Note0',
+    '_PYT.Note1',
+    '_PYT.Note2',
+    '_PYT.Note3',
+    '_PYT.Note4',
+    '_PYT.Number',
+    '_PYT.NumberFabrication',
+    '_PYT.NumberRun',
+    '_PYT.NumberSleeve',
+    '_PYT.OffsetBottom',
+    '_PYT.OffsetCenterH',
+    '_PYT.OffsetCenterV',
+    '_PYT.OffsetLeft',
+    '_PYT.OffsetRight',
+    '_PYT.OffsetTop',
+    '_PYT.OffsetValue',
+    '_PYT.SkipNumber',
+    '_PYT.SkipTag',
+    '_PYT.Sleeve',
+    '_PYT.SleeveOpening',
+    '_PYT.SleeveValue',
+    '_PYT.WeightRun',
+    '_PYT.WeightSupport',
+}
 
-category_function_variant
-_Tag.DT_Size
-_Tag.EQ_Mark.note
-_Tag.DV_GRD.cfm
-_Tag.DV_GRD
-_Tag.DT_Offset.Value
-_Tag.DT_Ext.Top
+text_types = {
+    '_TXT.125_Arial.Black.R.'
+    '_TXT.125_Arial.Black.B.'
+    '_TXT.125_Arial.Black.U.'
+    '_TXT.125_Arial.Black.BU'
+}
+
