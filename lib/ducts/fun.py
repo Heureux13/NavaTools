@@ -10,8 +10,16 @@ the copyright holder.
 import math
 import re
 
-from config.parameters_registry *
-from Autodesk.Revit.DB.import FabricationPart, StorageType
+from config.parameters_registry import (
+    PYT_NUMBER_FABRICATION,
+    PYT_SKIP_NUMBER,
+    RVT_ANGLE,
+    RVT_FAMILY,
+    RVT_ITEM_NUMBER,
+    RVT_LENGTH,
+    RVT_SIZE,
+)
+from Autodesk.Revit.DB import FabricationPart, StorageType
 from pyrevit import revit, script
 
 from ducts.revit_duct import RevitDuct
@@ -23,6 +31,7 @@ revit_host  = globals().get("__revit__")
 app         = revit_host.Application if revit_host else None
 uidoc       = revit_host.ActiveUIDocument if revit_host else None
 doc         = getattr(revit, "doc", None)
+view        = getattr(revit, "active_view", None)
 output      = script.get_output()
 #fmt: on
 # autopep8: on
@@ -91,6 +100,10 @@ branch_start_families = {
     "rec on rnd straight tap"
 }
 
+boot_families_to_skip = {
+    "boot tap",
+}
+
 
 # fmt:off
 # autopep8: off
@@ -99,8 +112,6 @@ class RevitRuns(object):
 
     def __init__(
         self,
-        doc_obj=None,
-        view_obj=None,
         output_obj=None,
         number_parameters=None,
         skip_parameters=None,
@@ -112,8 +123,8 @@ class RevitRuns(object):
         stored_families=None,
         rectangle_only=True
     ):
-        self.doc                        = doc_obj                   or getattr(revit, "doc", None)
-        self.view                       = view_obj                  or getattr(revit, "active_view", None)
+        self.doc                        = getattr(revit, "doc", None)
+        self.view                       = getattr(revit, "active_view", None)
         self.output                     = output_obj                or output
         self.number_value_parameters    = list(number_parameters    or number_value_parameters)
         self.skip_check_parameters      = list(skip_parameters      or skip_check_parameters)
@@ -314,11 +325,8 @@ class RevitRuns(object):
 
         return False
 
-    def get_connected_fittings(self, duct, doc_obj=None, view_obj=None):
+    def get_connected_fittings(self, duct):
         # Get all immediate directly connected fittings
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
-
         connected = []
         for connector in duct.get_connectors():
             if not connector.IsConnected:
@@ -336,8 +344,8 @@ class RevitRuns(object):
 
                 try:
                     connected_duct = RevitDuct(
-                        doc_obj,
-                        view_obj,
+                        self.doc,
+                        self.view,
                         connected_el,
                     )
                     if self.has_stop_value(connected_duct):
@@ -396,15 +404,10 @@ class RevitRuns(object):
 
     def follow_number_chain(self,
                             start_duct,
-                            doc_obj=None,
-                            view_obj=None,
                             visited=None
                             ):
         # Follow the existing number chain from start fitting.
         # Return (last_duct_in_chain, last_number_in_chain, visited_in_chain, chain_ducts).
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
-
         if visited is None:
             visited = set()
 
@@ -420,11 +423,7 @@ class RevitRuns(object):
 
         while True:
             next_number = current_number + 1
-            connected = self.get_connected_fittings(
-                current_duct,
-                doc_obj,
-                view_obj
-            )
+            connected = self.get_connected_fittings(current_duct)
             unvisited_traversable = [
                 conn for conn in connected
                 if conn.id not in visited and self.is_traversable(conn)
@@ -447,15 +446,10 @@ class RevitRuns(object):
 
     def find_endpoints(self,
                        start_duct,
-                       doc_obj=None,
-                       view_obj=None,
                        visited=None
                        ):
         # Find all fittings in the runt that are true endpoints only 1 connection totla
         # Returns a list of dut objects that are endpoints
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
-
         if visited is None:
             visited = set()
 
@@ -471,13 +465,13 @@ class RevitRuns(object):
             visited.add(duct.id)
             all_ducts.append(duct)
 
-            connected = self.get_connected_fittings(duct, doc_obj, view_obj)
+            connected = self.get_connected_fittings(duct)
             for conn in connected:
                 if conn.id not in visited and self.is_traversable(conn):
                     to_process.append(conn)
 
         for duct in all_ducts:
-            connected = self.get_connected_fittings(duct, doc_obj, view_obj)
+            connected = self.get_connected_fittings(duct)
             traversable_count = sum(
                 1 for conn in connected if self.is_traversable(conn)
             )
@@ -488,20 +482,15 @@ class RevitRuns(object):
 
     def find_connected_numbered_elements(self,
                                          duct,
-                                         doc_obj=None,
-                                         view_obj=None
                                          ):
         # Find a connected element that has a number assigned.
         # For branch_start_families (taps), look for elements connected to size_out(smaller size).
         # returns (number, duct) or (None, None) if not found
-        doc_obj = doc_obj or self.doc
-        doc_view = view_obj or self.view
-
         family = duct.family
         clean_family = family.lower().strip() if family else ""
         is_store = clean_family in self.branch_start_families
 
-        connected = self.get_connected_fittings(duct, doc_obj, view_obj)
+        connected = self.get_connected_fittings(duct)
 
         if is_store and duct.size_out:
             for conn in connected:
@@ -520,15 +509,10 @@ class RevitRuns(object):
 
     def find_anchor_number(self,
                            duct,
-                           doc_obj=None,
-                           view_obj=None,
                            visited=None
                            ):
         # Recursively search backwards through connections to find an exisitng number.
         # Returns (anchor_number, anchor_duct) or (None, None) if no anchor found.
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
-
         if visited is None:
             visited = set()
 
@@ -540,10 +524,7 @@ class RevitRuns(object):
                     duct
                     )
 
-        connected = self.get_connected_fittings(duct,
-                                                doc_obj,
-                                                view_obj
-                                                )
+        connected = self.get_connected_fittings(duct)
         for conn in connected:
             if conn.id in visited:
                 continue
@@ -551,8 +532,6 @@ class RevitRuns(object):
                 continue
 
             anchor_num, anchor_duct = self.find_anchor_number(conn,
-                                                              doc_obj=doc_obj,
-                                                              view_obj=view_obj,
                                                               visited=visited,
                                                               )
             if anchor_num is not None:
@@ -583,16 +562,11 @@ class RevitRuns(object):
 
     def collect_run_and_branch_sets(self,
                                     start_duct,
-                                    doc_obj=None,
-                                    view_obj=None,
                                     visited=None,
                                     branch_list=None,
                                     filter_by_size=None,
                                     ):
         # Classify immediate neighbors as run candidates or branch starts.
-
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
         visited = visited if visited is not None else set()
         branch_list = branch_list if branch_list is not None else []
 
@@ -612,10 +586,7 @@ class RevitRuns(object):
                 to_run.append(current)
                 to_run_ids.add(current.id)
 
-            connected = self.get_connected_fittings(current,
-                                                    doc_obj,
-                                                    view_obj
-                                                    )
+            connected = self.get_connected_fittings(current)
 
             for conn in connected:
                 if conn.id in visited:
@@ -638,22 +609,14 @@ class RevitRuns(object):
 
     def get_reusable_connected_number(self,
                                       duct,
-                                      numbered_by_id,
-                                      doc_obj=None,
-                                      view_obj=None
+                                      numbered_by_id
                                       ):
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
-
         duct_sig = self.get_match_signature(duct)
         if duct_sig is None:
-            return None:
+            return None
 
-        for conn in self.get_connected_fittings(duct,
-                                                doc_obj,
-                                                view_obj
-                                                ):
-            conn_number = numbered_by_id(conn.id)
+        for conn in self.get_connected_fittings(duct):
+            conn_number = numbered_by_id.get(conn.id)
             if conn_number is None:
                 continue
 
@@ -662,43 +625,61 @@ class RevitRuns(object):
 
         return None
 
+    def assign_number_by_signature(self,
+                                   duct,
+                                   current_number,
+                                   previous_signature,
+                                   repeat_numbers=True):
+
+        current_signature = self.get_match_signature(duct)
+
+        if not repeat_numbers:
+            assigned_number = current_number
+            current_number += 1
+        else:
+            if previous_signature is None or current_signature == previous_signature:
+                assigned_number = current_number
+            else:
+                current_number += 1
+                assigned_number = current_number
+
+        self.set_item_number(duct, assigned_number)
+
+        return assigned_number, current_number, current_signature
+
     def number_duct(self,
                     start_duct,
                     start_number,
-                    doc_obj,
-                    view_obj,
+                    repeat_numbers=True,
                     ):
         # Numbers duct from collect_run_and_branch_sets
-
-        doc_obj = doc_obj or self.doc
-        view_obj = view_obj or self.view
         current_number = start_number
-        run_list, branch_list = self.collect_run_and_branch_sets(
-            start_duct,
-            doc_obj=doc_obj,
-            view_obj=view_obj,
-        )
+        run_list, branch_list = self.collect_run_and_branch_sets(start_duct)
 
         last_used_number = start_number - 1
+        previous_signature = None
 
         for duct in run_list:
             if self.has_skip_value(duct):
                 continue
+            if not self.is_numberable(duct):
+                continue
 
-            if self.is_numberable(duct):
-                self.set_item_number(duct, current_number)
-                last_used_number = current_number
-                current_number += 1
+            assigned_number, current_number, previous_signature = self.assign_number_by_signature(duct,
+                                                                                                  current_number,
+                                                                                                  previous_signature,
+                                                                                                  repeat_numbers=repeat_numbers,
+                                                                                                  )
+
+            last_used_number = assigned_number
 
         branch_number = self.round_up_to_nearest_10(last_used_number)
 
         for branch in branch_list:
-            branch_end = self.number_duct(
-                branch,
-                branch_number,
-                doc_obj=doc_obj,
-                view_obj=view_obj,
-            )
+            branch_end = self.number_duct(branch,
+                                          branch_number,
+                                          repeat_numbers=repeat_numbers,
+                                          )
 
             branch_number = self.round_up_to_nearest_10(branch_end)
             last_used_number = branch_end
