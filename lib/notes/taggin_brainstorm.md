@@ -1,19 +1,144 @@
-_umiDT_ExtensionLeft.mv
-_umiDT_Length.fx
-_umiDT_LengthCenter.fx
-_umiDT_Note0.fx
-_umiDT_OffsetVAlue.mv
-_umiDV_Mark.fx
-_umiDV_Mark.mv
-_umiDV_TypeMark.mv
-_umiEQ_Mark.fx
+color = {
+    '_NV_CRL.Black',
+    '_NV_CRL.BlackNote',
+    '_NV_CRL.Blue',
+    '_NV_CRL.BlueNote',
+    '_NV_CRL.Cyan',
+    '_NV_CRL.CyanNote',
+    '_NV_CRL.Green',
+    '_NV_CRL.GreenNote',
+    '_NV_CRL.Magenta',
+    '_NV_CRL.MagentaNote',
+    '_NV_CRL.Orange',
+    '_NV_CRL.OrangeNote',
+    '_NV_CRL.Purple',
+    '_NV_CRL.PurpleNote',
+    '_NV_CRL.Red',
+    '_NV_CRL.RedNote',
+    '_NV_CRL.Yellow',
+    '_NV_CRL.YellowNote',
+}
 
+location = {
+    '_NV_LOC.Bottom',
+    '_NV_LOC.Center',
+    '_NV_LOC.Left',
+    '_NV_LOC.Right',
+    '_NV_LOC.Top',
+}
 
+devices = {
+    '_NV_DEV.AFMS',
+    '_NV_DEV.DamperControl',
+    '_NV_DEV.DamperFire'
+    '_NV_DEV.DamperMechanical',
+    '_NV_DEV.DamperVolume',
+    '_NV_DEV.Louver',
+    '_NV_DEV.GRD',
+    '_NV_DEV.AFMS',
+}
 
-category_function_variant
-_Tag.DT_Size
-_Tag.EQ_Mark.note
-_Tag.DV_GRD.cfm
-_Tag.DV_GRD
-_Tag.DT_Offset.Value
-_Tag.DT_Ext.Top
+equipement = {
+    '_NV_EQP.Condenser',
+    '_NV_EQP.Fan',
+    '_NV_EQP.Split',
+    '_NV_EQP.UnitAHU',
+    '_NV_EQP.UnitCRAC',
+    '_NV_EQP.UnitDOAS',
+    '_NV_EQP.VAV',
+}
+
+duct = {
+    "_NV_DCT.RND_Spiral',
+    "_NV_DCT.RND_Reducer',
+    "_NV_DCT.RND_Tap',
+    "_NV_DCT.SnD_Straight',
+    "_NV_DCT.SnD_Reducer',
+    "_NV_DCT.TDF_Straight',
+    "_NV_DCT.TDF_Straight',
+}
+
+bluebeam = {
+    '_NV_BBM.Author',
+    '_NV_BBM.Ceiling',
+    '_NV_BBM.CFMEA',
+    '_NV_BBM.CFMSA',
+    '_NV_BBM.Class',
+    '_NV_BBM.Color',
+    '_NV_BBM.Comments',
+    '_NV_BBM.Damper',
+    '_NV_BBM.Device',
+    '_NV_BBM.Duty',
+    '_NV_BBM.Face',
+    '_NV_BBM.Fan',
+    '_NV_BBM.GPM',
+    '_NV_BBM.Hand',
+    '_NV_BBM.HP',
+    '_NV_BBM.K',
+    '_NV_BBM.KW',
+    '_NV_BBM.Label',
+    '_NV_BBM.Layer',
+    '_NV_BBM.Make',
+    '_NV_BBM.Material',
+    '_NV_BBM.Model',
+    '_NV_BBM.Mount',
+    '_NV_BBM.Neck',
+    '_NV_BBM.Notes',
+    '_NV_BBM.Number',
+    '_NV_BBM.PageLabel',
+    '_NV_BBM.Paint',
+    '_NV_BBM.Phase',
+    '_NV_BBM.Qty',
+    '_NV_BBM.Section',
+    '_NV_BBM.Size',
+    '_NV_BBM.Sleeve',
+    '_NV_BBM.Slot',
+    '_NV_BBM.Space',
+    '_NV_BBM.Status',
+    '_NV_BBM.Subclass',
+    '_NV_BBM.Subject',
+    '_NV_BBM.System',
+    '_NV_BBM.Trade',
+    '_NV_BBM.Type',
+    '_NV_BBM.Unit',
+    '_NV_BBM.VAV',
+    '_NV_BBM.VPH',
+}
+
+python = {
+    '_NV_PYT.AspectRatio',
+    '_NV_PYT.CFM',
+    '_NV_PYT.HeightPad',
+    '_NV_PYT.Label',
+    '_NV_PYT.Note0',
+    '_NV_PYT.Note1',
+    '_NV_PYT.Note2',
+    '_NV_PYT.Note3',
+    '_NV_PYT.Note4',
+    '_NV_PYT.Number',
+    '_NV_PYT.NumberFabrication',
+    '_NV_PYT.NumberRun',
+    '_NV_PYT.NumberSleeve',
+    '_NV_PYT.OffsetBottom',
+    '_NV_PYT.OffsetCenterH',
+    '_NV_PYT.OffsetCenterV',
+    '_NV_PYT.OffsetLeft',
+    '_NV_PYT.OffsetRight',
+    '_NV_PYT.OffsetTop',
+    '_NV_PYT.OffsetValue',
+    '_NV_PYT.SkipNumber',
+    '_NV_PYT.SkipTag',
+    '_NV_PYT.Sleeve',
+    '_NV_PYT.SleeveOpening',
+    '_NV_PYT.SleeveValue',
+    '_NV_PYT.WeightRun',
+    '_NV_PYT.WeightSupport',
+}
+
+text_types = {
+    '_TXT.125_Arial_Black_R',
+    '_TXT.125_Arial_Black.B.',
+    '_TXT.125_Arial_Black.U.',
+    '_TXT.125_Arial_Black.BU',
+}
+
