@@ -66,11 +66,16 @@ def collect_elements_from_categories(doc, view_id, categories):
     for plane in ref_plane_collector:
         ids.Add(plane.Id)
 
-    # Collect FREE FLOATING CLEARANCE family instances by family name
+    # Collect clearance generic models even when they are not part of the
+    # isolated mechanical categories.
     family_collector = FilteredElementCollector(doc, view_id).OfClass(FamilyInstance)
     for el in family_collector:
         try:
-            if el.Symbol.Family.Name == 'FREE FLOATING CLEARANCE':
+            family_name = el.Symbol.Family.Name if el.Symbol and el.Symbol.Family else ''
+            clearance_param = el.LookupParameter('Clearance Zone')
+            has_clearance_zone = bool(clearance_param and clearance_param.AsInteger() == 1)
+
+            if family_name == 'FREE FLOATING CLEARANCE' or has_clearance_zone:
                 ids.Add(el.Id)
         except Exception:
             pass

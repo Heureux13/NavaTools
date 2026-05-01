@@ -9,6 +9,7 @@ the copyright holder."""
 
 from pyrevit import revit, script
 from config.parameters_registry import *
+from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_NUMBER_SLEEVE
 from Autodesk.Revit.DB import (
     BuiltInCategory,
     ElementId,
@@ -61,7 +62,7 @@ TYPE_PARAM = PYT_SLEEVE_VALUE
 NUMBER_PARAM = PYT_NUMBER_SLEEVE
 SLEEVE_VALUE = 'sleeve'
 TAG_PARAM = PYT_NUMBER_SLEEVE
-ANNOTATION_TAG_CANDIDATES = ['_umi_sleeve_#']
+ANNOTATION_TAG_CANDIDATES = list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_NUMBER_SLEEVE, []))
 SIZE = RVT_SIZE
 CONNECTOR = NDBS_CONNECTOR0_END_CONDITION
 WRAP = RVT_INSULATION_SPECIFICATION
@@ -295,6 +296,23 @@ def _collect_tagged_local_ids(tag):
     return unique
 
 
+def _tag_family_name(tag):
+    if tag is None:
+        return ''
+
+    try:
+        tag_type = doc.GetElement(tag.GetTypeId())
+    except Exception:
+        tag_type = None
+
+    if tag_type is None:
+        return ''
+
+    family = getattr(tag_type, 'Family', None)
+    family_name = getattr(family, 'Name', '') if family is not None else ''
+    return _normalize_text(family_name)
+
+
 def _format_dim(value):
     rounded = round(float(value), 3)
     if abs(rounded - round(rounded)) < 1e-6:
@@ -395,7 +413,10 @@ def _build_sleeve_opening_value(element):
 def _find_first_tag_symbol(tagger, candidates):
     for candidate in candidates:
         try:
-            tag_symbol = tagger.get_label(candidate)
+            if isinstance(candidate, tuple):
+                tag_symbol = tagger.get_label_exact(candidate[0], candidate[1])
+            else:
+                tag_symbol = tagger.get_label(candidate)
             if tag_symbol is not None:
                 return tag_symbol, candidate
         except LookupError:
@@ -494,7 +515,7 @@ if annotation_tag_symbol is not None:
     )
     for existing_tag in existing_annotation_tags:
         try:
-            if existing_tag.GetTypeId() != annotation_tag_symbol.Id:
+            if _tag_family_name(existing_tag) != annotation_tag_family:
                 continue
             for tagged_id in _collect_tagged_local_ids(existing_tag):
                 tagged_id_int = _eid_int(tagged_id)

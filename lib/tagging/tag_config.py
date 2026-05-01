@@ -248,7 +248,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_NumberFabrication', 'Center'),
     ],
     SLOT_NUMBER_SLEEVE: [
-        ('_Tag.DT_NumberSleeve', 'Center'),
+        ('_Tag.DT_NumberSleeve', 'Blue'),
     ],
     SLOT_OFFSET: [
         ('_Tag.DT_Offset', 'Center'),
