@@ -67,8 +67,23 @@ SIZE = RVT_SIZE
 CONNECTOR = NDBS_CONNECTOR0_END_CONDITION
 WRAP = RVT_INSULATION_SPECIFICATION
 FAMILY = NDBS_FAMILY
+SERVICE_TYPE = NDBS_SERVICE_TYPE
 DEFAULT_CLEARANCE = 1
 SLEEVE_OPENING = PYT_SLEEVE_OPENING
+
+values_to_keep = {
+    'existing',
+    'keep'
+}
+
+FIRE_DAMPER_FAMILIES = {
+    'fire damper - type a',
+    'fire damper - type b',
+    'fire damper - type c',
+    'fire damper - type cr',
+    'smoke fire damper - type cr',
+    'smoke fire damper - type csr',
+}
 
 CONNECTOR_RULES = {
     'tdf': {
@@ -371,14 +386,18 @@ def _get_param_number(element, param_name, length_double_to_inches=False):
 
 
 def _build_sleeve_opening_value(element):
+    family_value = _normalized_param_value(element, FAMILY)
+    service_type_value = _normalized_param_value(element, SERVICE_TYPE)
+    if family_value in FIRE_DAMPER_FAMILIES:
+        return None, 'skip-fire-damper'
+
     size_raw = _get_param_string(element, SIZE)
     size_pair = _parse_size_pair(size_raw)
     if size_pair is None:
-        return None
+        return None, 'invalid-size'
 
     width, height, is_round = size_pair
 
-    family_value = _normalized_param_value(element, FAMILY)
     uses_connector_rules = (
         ('straight' in family_value) or
         ('spiral' in family_value)
@@ -388,8 +407,8 @@ def _build_sleeve_opening_value(element):
         opening_width = width + total_add
         opening_height = height + total_add
         if is_round:
-            return '{}{}'.format(_format_dim(opening_width), chr(216))
-        return '{}x{}'.format(_format_dim(opening_width), _format_dim(opening_height))
+            return '{}"{}'.format(_format_dim(opening_width), chr(216)), None
+        return '{}"×{}"'.format(_format_dim(opening_width), _format_dim(opening_height)), None
 
     connector_key = _normalized_param_value(element, CONNECTOR)
     rule = NORMALIZED_CONNECTOR_RULES.get(connector_key, DEFAULT_CONNECTOR_RULE)
@@ -406,8 +425,17 @@ def _build_sleeve_opening_value(element):
     opening_width = width + total_add
     opening_height = height + total_add
     if is_round:
-        return '{}{}'.format(_format_dim(opening_width), chr(216))
-    return '{}x{}'.format(_format_dim(opening_width), _format_dim(opening_height))
+        return '{}"{}'.format(_format_dim(opening_width), chr(216)), None
+    return '{}"×{}"'.format(_format_dim(opening_width), _format_dim(opening_height)), None
+
+
+def _should_keep_existing_opening(element):
+    current_value = _normalized_param_value(element, SLEEVE_OPENING)
+    if not current_value:
+        return False
+
+    tokens = set(re.findall(r'[a-z0-9]+', current_value))
+    return any(marker in tokens for marker in values_to_keep)
 
 
 def _find_first_tag_symbol(tagger, candidates):
@@ -422,6 +450,12 @@ def _find_first_tag_symbol(tagger, candidates):
         except LookupError:
             continue
     return None, None
+
+
+def _format_tag_candidate(candidate):
+    if isinstance(candidate, tuple):
+        return ' : '.join(str(part).strip() for part in candidate if part)
+    return str(candidate).strip()
 
 
 def _tag_point_for_element(element):
@@ -540,6 +574,8 @@ opening_failed = []
 opening_param_missing = []
 opening_param_readonly = []
 opening_no_value = []
+opening_preserved = []
+opening_skipped_fire_damper = []
 size_parse_failed = []
 has_tag_param = any(s.LookupParameter(TAG_PARAM) for s in sleeves)
 
@@ -592,13 +628,16 @@ with revit.Transaction('Number sleeve elements'):
                 else:
                     tag_failed.append(element)
 
-        opening_value = _build_sleeve_opening_value(element)
+        opening_value, opening_skip_reason = _build_sleeve_opening_value(element)
         if opening_value is None:
-            raw_size = _get_param_string(element, SIZE)
-            if _parse_size_pair(raw_size) is None:
+            if opening_skip_reason == 'skip-fire-damper':
+                opening_skipped_fire_damper.append(element)
+            elif opening_skip_reason == 'invalid-size':
                 size_parse_failed.append(element)
             else:
                 opening_no_value.append(element)
+        elif _should_keep_existing_opening(element):
+            opening_preserved.append(element)
         else:
             _, opening_param_issue = _lookup_writable_param(element, SLEEVE_OPENING)
             if opening_param_issue == 'missing':
@@ -643,13 +682,25 @@ if has_tag_param:
 else:
     output.print_md('Parameter `{}` not found on sleeves; skipped parameter write.'.format(TAG_PARAM))
 output.print_md('Updated `{}`: {}'.format(SLEEVE_OPENING, len(opening_updated)))
+if opening_preserved:
+    output.print_md(
+        'Preserved existing `{}` values: {}'.format(SLEEVE_OPENING, len(opening_preserved))
+    )
+if opening_skipped_fire_damper:
+    output.print_md(
+        'Skipped `{}` for fire dampers: {}'.format(SLEEVE_OPENING, len(opening_skipped_fire_damper))
+    )
 if annotation_tag_symbol is None:
     output.print_md(
-        'No loaded annotation tag found for: {}'.format(', '.join(ANNOTATION_TAG_CANDIDATES))
+        'No loaded annotation tag found for: {}'.format(
+            ', '.join(_format_tag_candidate(candidate) for candidate in ANNOTATION_TAG_CANDIDATES)
+        )
     )
 else:
     output.print_md(
-        'Placed annotation tags (`{}`): {}'.format(annotation_tag_name, len(annotations_placed))
+        'Placed annotation tags (`{}`): {}'.format(
+            _format_tag_candidate(annotation_tag_name), len(annotations_placed)
+        )
     )
     if annotations_already_tagged:
         output.print_md(
