@@ -63,7 +63,6 @@ SIZE = RVT_SIZE
 CONNECTOR = NDBS_CONNECTOR0_END_CONDITION
 WRAP = RVT_INSULATION_SPECIFICATION
 FAMILY = NDBS_FAMILY
-SERVICE_TYPE = NDBS_SERVICE_TYPE
 DEFAULT_CLEARANCE = 1
 SLEEVE_OPENING = PYT_SLEEVE_OPENING
 
@@ -317,7 +316,6 @@ def _get_param_number(element, param_name, length_double_to_inches=False):
 
 def _build_sleeve_opening_value(element):
     family_value = _normalized_param_value(element, FAMILY)
-    service_type_value = _normalized_param_value(element, SERVICE_TYPE)
     if family_value in FIRE_DAMPER_FAMILIES:
         return None, 'skip-fire-damper'
 
@@ -389,50 +387,20 @@ def _format_tag_candidate(candidate):
     return str(candidate).strip()
 
 
-def _tag_point_for_element(element):
-    try:
-        location = getattr(element, 'Location', None)
-        if location is not None and hasattr(location, 'Curve') and location.Curve:
-            return location.Curve.Evaluate(0.5, True)
-    except Exception:
-        pass
-
-    try:
-        bbox = element.get_BoundingBox(view)
-        if bbox is not None:
-            return (bbox.Min + bbox.Max) / 2.0
-    except Exception:
-        pass
-
-    return None
-
-
-def _rotate_tag_to_element(tag, element):
-    try:
-        location = getattr(element, 'Location', None)
-        if location is None or not hasattr(location, 'Curve') or not location.Curve:
-            return False
-
-        curve = location.Curve
-        direction = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
-        angle_radians = math.atan2(direction.Y, direction.X)
-
-        head = tag.TagHeadPosition
-        axis = Line.CreateBound(
-            head,
-            XYZ(head.X, head.Y, head.Z + 1.0)
-        )
-        ElementTransformUtils.RotateElement(doc, tag.Id, axis, angle_radians)
-        return True
-    except Exception:
-        return False
-
-
 all_ducts = list(
     FilteredElementCollector(doc)
     .OfClass(FabricationPart)
     .WhereElementIsNotElementType()
     .ToElements()
+)
+
+# Elements visible in the active view - only these can receive tags.
+_view_visible_ids = set(
+    e.IntegerValue
+    for e in FilteredElementCollector(doc, view.Id)
+    .OfClass(FabricationPart)
+    .WhereElementIsNotElementType()
+    .ToElementIds()
 )
 
 sleeves = []
@@ -559,30 +527,27 @@ with revit.Transaction('Number sleeve elements'):
         elif _should_keep_existing_opening(element):
             opening_preserved.append(element)
         else:
-            opening_value = _build_sleeve_opening_value(element)
-            if opening_value is None:
-                raw_size = _get_param_string(element, SIZE)
-                if _parse_size_pair(raw_size) is None:
-                    size_parse_failed.append(element)
-                else:
-                    opening_no_value.append(element)
+            _, opening_param_issue = _lookup_writable_param(
+                element, SLEEVE_OPENING)
+            if opening_param_issue == 'missing':
+                opening_param_missing.append(element)
+            elif opening_param_issue == 'readonly':
+                opening_param_readonly.append(element)
+            elif _set_param_value(element, SLEEVE_OPENING, opening_value):
+                opening_updated.append(element)
             else:
-                _, opening_param_issue = _lookup_writable_param(
-                    element, SLEEVE_OPENING)
-                if opening_param_issue == 'missing':
-                    opening_param_missing.append(element)
-                elif opening_param_issue == 'readonly':
-                    opening_param_readonly.append(element)
-                elif _set_param_value(element, SLEEVE_OPENING, opening_value):
-                    opening_updated.append(element)
-                else:
-                    opening_failed.append(element)
+                opening_failed.append(element)
 
         if annotation_tag_symbol is None or not annotation_tag_family:
             continue
 
+        # Skip elements not visible in the active view - tagging them fails silently.
+        elem_id_int = _eid_int(element.Id)
+        if elem_id_int not in _view_visible_ids:
+            continue
+
         existing_families = existing_annotation_tag_map.get(
-            _eid_int(element.Id), set())
+            elem_id_int, set())
         if annotation_tag_family in existing_families:
             annotations_already_tagged.append(element)
             continue
@@ -597,7 +562,6 @@ with revit.Transaction('Number sleeve elements'):
                 annotations_failed.append(element)
                 continue
             annotations_placed.append(element)
-            elem_id_int = _eid_int(element.Id)
             if elem_id_int is not None:
                 existing_annotation_tag_map.setdefault(
                     elem_id_int, set()).add(annotation_tag_family)
@@ -641,6 +605,11 @@ else:
             'Already tagged with same family: {}'.format(
                 len(annotations_already_tagged))
         )
+    _not_in_view = len(sleeves) - len(
+        [s for s in sleeves if _eid_int(s.Id) in _view_visible_ids])
+    if _not_in_view:
+        output.print_md(
+            'Sleeves not in active view (tagging skipped): {}'.format(_not_in_view))
     if annotations_failed:
         output.print_md('Failed to place annotation tag: {}'.format(
             len(annotations_failed)))

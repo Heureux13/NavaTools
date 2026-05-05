@@ -96,36 +96,56 @@ try:
             continue
 
         existing_tag_fams = tagger.get_existing_tag_families(d.element)
-        requested_tag_fams = {
-            (tag.Family.Name or '').strip().lower()
-            for tag, _ in tag_configs
-            if tag is not None and getattr(tag, 'Family', None) is not None
-        }
+        requested_tag_fams = set()
+        for tag, _ in tag_configs:
+            if tag is None:
+                continue
+            fam_name, _ = fittings._tag_symbol_parts(tag)
+            fam_name = (fam_name or '').strip().lower()
+            if fam_name:
+                requested_tag_fams.add(fam_name)
         has_matching_existing_tag = bool(existing_tag_fams & requested_tag_fams)
 
         tagged_this_element = False
         placement_failed_reason = None
+        attempted_any_candidate = False
+        skipped_by_rule_count = 0
+        skip_rule_reasons = []
         for tag, loc_param in tag_configs:
-            if tag is None or fittings.should_skip_tag(d, tag):
+            if tag is None:
                 continue
-            fam_name = (
-                tag.Family.Name if tag and tag.Family else "").strip().lower()
-            if not fam_name or fam_name in existing_tag_fams:
+            skip_reason = fittings.skip_tag_reason(d, tag)
+            if skip_reason:
+                skipped_by_rule_count += 1
+                skip_rule_reasons.append(skip_reason)
+                continue
+            fam_name, _ = fittings._tag_symbol_parts(tag)
+            fam_name = (fam_name or '').strip().lower()
+            if fam_name and fam_name in existing_tag_fams:
                 continue
 
-            # Tag placement: FabricationPart uses face reference; others use location.
+            attempted_any_candidate = True
+
+            # Tag placement: FabricationPart tries element then face reference; others use location.
             placed_tag = None
             if isinstance(d.element, DB.FabricationPart):
-                face_ref, face_pt = tagger.get_face_facing_view(
-                    d.element, prefer_point=None)
-                if face_ref is not None and face_pt is not None:
-                    placed_tag = tagger.place_tag(face_ref, tag, face_pt)
-                else:
-                    bbox = d.element.get_BoundingBox(view)
-                    if bbox is None:
-                        continue
-                    placed_tag = tagger.place_tag(
-                        d.element, tag, (bbox.Min + bbox.Max) / 2.0)
+                # Elbow-like fabrication geometry can be inconsistent, so try two
+                # strategies before giving up.
+                bbox = d.element.get_BoundingBox(view)
+                if bbox is None:
+                    continue
+                center_pt = (bbox.Min + bbox.Max) / 2.0
+
+                # Strategy 1: direct element reference
+                placed_tag = tagger.place_tag(d.element, tag, center_pt)
+
+                # Strategy 2: face reference fallback for elements that reject
+                # category-level placement but accept face-hosted tagging.
+                if placed_tag is None:
+                    face_ref, face_pt = tagger.get_face_facing_view(
+                        d.element, prefer_point=center_pt)
+                    if face_ref is not None and face_pt is not None:
+                        placed_tag = tagger.place_tag(face_ref, tag, face_pt)
             else:
                 loc = getattr(d.element, "Location", None)
                 if not loc:
@@ -157,6 +177,14 @@ try:
         elif has_matching_existing_tag:
             already_tagged.append(d)
         else:
+            if not attempted_any_candidate and skipped_by_rule_count:
+                unique_reasons = sorted(set(skip_rule_reasons))
+                if unique_reasons:
+                    placement_failed_reason = "All candidate tags were skipped by tag rules ({})".format(
+                        "; ".join(unique_reasons)
+                    )
+                else:
+                    placement_failed_reason = "All candidate tags were skipped by tag rules"
             skipped_placement.append(
                 (d, placement_failed_reason or "No matching existing tag and no new tag was placed"))
 

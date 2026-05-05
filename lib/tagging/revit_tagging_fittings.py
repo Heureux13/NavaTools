@@ -139,6 +139,7 @@ class Fittings:
 
         self.missing_tag_labels = set()
         self._slot_resolution_cache = {}
+        self._slot_by_tag_id = {}
 
         # Pre-normalize rule sets once.
         self._norm_elbow_fam = {self._norm(x) for x in self.elbow_families}
@@ -304,12 +305,15 @@ class Fittings:
             attempted_names.append(label)
             try:
                 if fam is not None:
-                    tag = self.tagger.get_label_exact(fam, typ)
+                    tag = self.tagger.get_label_exact(fam, typ, allow_fallback=False)
                 else:
                     tag = self.tagger.get_label(label)
             except LookupError:
                 tag = None
             if tag is not None:
+                tag_id = self._as_int_id(getattr(tag, 'Id', None))
+                if tag_id is not None:
+                    self._slot_by_tag_id[tag_id] = key
                 result = (tag, dedup_key)
                 break
 
@@ -456,14 +460,42 @@ class Fittings:
         return (fam_name + " " + sym_name).strip()
 
     def _is_extension_tag(self, tag):
+        slot_name = self._slot_name_for_tag(tag)
+        if slot_name in {
+            self.SLOT_EXT_BOT,
+            self.SLOT_EXT_TOP,
+            self.SLOT_EXT_LEFT,
+            self.SLOT_EXT_RIGHT,
+        }:
+            return True
+
         pool = self._tag_pool_text(tag)
         return any(needle in pool for needle in self._norm_ext_tags)
 
     def _is_degree_tag(self, tag):
+        slot_name = self._slot_name_for_tag(tag)
+        if slot_name == self.SLOT_DEGREE:
+            return True
+
         pool = self._tag_pool_text(tag)
         return any(needle in pool for needle in self._norm_degree_tags)
 
+    def _slot_name_for_tag(self, tag):
+        tag_id = self._as_int_id(getattr(tag, 'Id', None))
+        if tag_id is None:
+            return None
+        return self._slot_by_tag_id.get(tag_id)
+
     def _extension_tag_slot(self, tag):
+        slot_name = self._slot_name_for_tag(tag)
+        if slot_name in {
+            self.SLOT_EXT_BOT,
+            self.SLOT_EXT_TOP,
+            self.SLOT_EXT_LEFT,
+            self.SLOT_EXT_RIGHT,
+        }:
+            return slot_name
+
         pool = self._tag_pool_text(tag)
         for slot_name, needles in self._norm_ext_tags_by_slot.items():
             if any(needle in pool for needle in needles):
@@ -579,30 +611,32 @@ class Fittings:
                 return True
         return False
 
-    def should_skip_tag(self, duct, tag):
+    def skip_tag_reason(self, duct, tag):
         if self.should_skip_by_param(duct):
-            return True
+            return 'Skipped by parameter rule'
 
         fam = self._norm(duct.family)
+        slot_name = self._slot_name_for_tag(tag)
 
         # Never place degree tags on 45° or 90° fittings.
-        if self._is_degree_tag(tag) and (
-            self._is_angle_close(duct.angle, 45.0)
-            or self._is_angle_close(duct.angle, 90.0)
-        ):
-            return True
+        if self._is_degree_tag(tag):
+            if self._is_angle_close(duct.angle, 45.0) or self._is_angle_close(duct.angle, 90.0):
+                return '45/90 angle rule'
 
         # Extension tags: skip for any elbow with vertical movement.
         if fam in self._norm_elbow_fam and self._is_extension_tag(tag):
             if self._connector_dz(duct.element) > 0.01:
-                return True
+                return 'Vertical connector movement rule'
 
         # Extension tags: skip when extension equals the required throat allowance.
         if fam in self._norm_elbow_fam and self._is_extension_tag(tag):
             if self._matches_throat_allowance(duct, tag):
-                return True
+                return 'Throat allowance extension rule'
 
-        return False
+        return None
+
+    def should_skip_tag(self, duct, tag):
+        return self.skip_tag_reason(duct, tag) is not None
 
     @staticmethod
     def _as_int_id(revit_id_like):

@@ -155,7 +155,7 @@ class RevitTagging:
                 return ts
         raise LookupError("No label found with: " + name_contains)
 
-    def get_label_exact(self, family_name, type_name):
+    def get_label_exact(self, family_name, type_name, allow_fallback=True):
         """Return the best matching FamilySymbol for family_name and type_name.
 
         Exact family+type is preferred. If that fails, fall back to substring
@@ -171,6 +171,9 @@ class RevitTagging:
                 continue
             if ts_name.strip().lower() == typ_lower:
                 return ts
+
+        if not allow_fallback:
+            raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
 
         for ts in self.tag_syms:
             fam_name, ts_name, pool = self._tag_pool(ts)
