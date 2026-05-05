@@ -148,14 +148,8 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_CANVAS: [
         ('_Tag.DT_Canvas', 'Center'),
     ],
-    SLOT_DEGREE: [
-        ('_Tag.DT_Degree', 'Center'),
-    ],
-    SLOT_ENDCAP_SD: [
-        ('_Tag.DT_EndcapSD', 'Center'),
-    ],
-    SLOT_ENDCAP_TDF: [
-        ('_Tag.DT_EndcapTDF', 'Center'),
+    SLOT_CONDENSER: [
+        ('_Tag.EQ_Condenser', 'Black'),
     ],
     SLOT_DAMPER_CONTROL: [
         ('_Tag.DV_DamperControl', 'Center'),
@@ -165,6 +159,15 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_DAMPER_VOLUME: [
         ('_Tag.DV_DamperVolume', 'Center'),
+    ],
+    SLOT_DEGREE: [
+        ('_Tag.DT_Degree', 'Center'),
+    ],
+    SLOT_ENDCAP_SD: [
+        ('_Tag.DT_EndcapSD', 'Center'),
+    ],
+    SLOT_ENDCAP_TDF: [
+        ('_Tag.DT_EndcapTDF', 'Center'),
     ],
     SLOT_EQUIPMENT_PAD: [
         ('_Tag.EQ_EquipmentPad', 'Black'),
@@ -185,13 +188,37 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQ_Fan', 'Black'),
     ],
     SLOT_FAN_NOTE: [
-        ('_Tag.EQ_Fan', 'Black w/ note'),
+        ('_Tag.EQ_Fan', 'BlackNote'),
     ],
     SLOT_GRD: [
         ('_Tag.DEV_GRD', 'CFM'),
     ],
     SLOT_GRD_CFM: [
         ('_Tag.DEV_GRD', 'Center'),
+    ],
+    SLOT_HEAT_PUMP: [
+        ('_Tag.EQ_HeatPump', 'Black'),
+    ],
+    SLOT_HEAT_PUMP_NOTE: [
+        ('_Tag.EQ_HeatPump', 'BlackNote'),
+    ],
+    SLOT_HEATER: [
+        ('_Tag.EQ_Heater', 'Black'),
+    ],
+    SLOT_HEATER_NOTE: [
+        ('_Tag.EQ_Heater', 'BlackNote'),
+    ],
+    SLOT_HOOD: [
+        ('_Tag.EQ_Hood', 'Black'),
+    ],
+    SLOT_HOOD_NOTE: [
+        ('_Tag.EQ_Hood', 'BlackNote'),
+    ],
+    SLOT_HUMIDIFIER: [
+        ('_Tag.EQ_Humidifier', 'Black'),
+    ],
+    SLOT_HUMIDIFIER_NOTE: [
+        ('_Tag.EQ_Humidifier', 'BlackNote'),
     ],
     SLOT_LENGTH: [
         ('_Tag.DT_Length', 'Center'),
@@ -211,33 +238,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_MAN_BARS: [
         ('_Tag.DV_ManBar', 'Center'),
     ],
-    SLOT_CONDENSER: [
-        ('_Tag.EQ_Condenser', 'Black'),
-    ],
-    SLOT_HEAT_PUMP: [
-        ('_Tag.EQ_HeatPump', 'Black'),
-    ],
-    SLOT_HEAT_PUMP_NOTE: [
-        ('_Tag.EQ_HeatPump', 'Black w/ note'),
-    ],
-    SLOT_HEATER: [
-        ('_Tag.EQ_Heater', 'Black'),
-    ],
-    SLOT_HEATER_NOTE: [
-        ('_Tag.EQ_Heater', 'Black w/ note'),
-    ],
-    SLOT_HOOD: [
-        ('_Tag.EQ_Hood', 'Black'),
-    ],
-    SLOT_HOOD_NOTE: [
-        ('_Tag.EQ_Hood', 'Black w/ note'),
-    ],
-    SLOT_HUMIDIFIER: [
-        ('_Tag.EQ_Humidifier', 'Black'),
-    ],
-    SLOT_HUMIDIFIER_NOTE: [
-        ('_Tag.EQ_Humidifier', 'Black w/ note'),
-    ],
     SLOT_NOTE: [
         ('_Tag.DT_Note', '1 note'),
     ],
@@ -248,22 +248,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_NumberFabrication', 'Center'),
     ],
     SLOT_NUMBER_SLEEVE: [
-        ('_Tag.DT_NumberSleeve', 'Green'),
+        ('_Tag.DCT_NumberSleeve', 'Green'),
     ],
     SLOT_OFFSET: [
         ('_Tag.DT_Offset', 'Center'),
-    ],
-    SLOT_SPLIT: [
-        ('_Tag.EQ_Split', 'Black'),
-    ],
-    SLOT_SPLIT_NOTE: [
-        ('_Tag.EQ_Split', 'Black w/ note'),
-    ],
-    SLOT_TAP: [
-        ('_Tag.DT_Tap', 'Center'),
-    ],
-    SLOT_TRANSITION: [
-        ('_Tag.DT_Transition', 'Center'),
     ],
     SLOT_SIZE: [
         ('_Tag.DT_Size', 'Center'),
@@ -274,23 +262,35 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_SIZE_RIGHT: [
         ('_Tag.DT_Size', 'Right'),
     ],
+    SLOT_SPLIT: [
+        ('_Tag.EQ_Split', 'Black'),
+    ],
+    SLOT_SPLIT_NOTE: [
+        ('_Tag.EQ_Split', 'BlackNote'),
+    ],
+    SLOT_TAP: [
+        ('_Tag.DT_Tap', 'Center'),
+    ],
+    SLOT_TRANSITION: [
+        ('_Tag.DT_Transition', 'Center'),
+    ],
     SLOT_UNIT: [
-        ('_Tag.EQ_Unit', 'Black'),
+        ('_Tag.EQP_Unit', 'Black'),
     ],
     SLOT_UNIT_NOTE: [
-        ('_Tag.EQ_Unit', 'Black w/ note'),
+        ('_Tag.EQP_Unit', 'BlackNote'),
     ],
     SLOT_VALVE: [
-        ('_Tag.EQ_Valve', 'Black'),
+        ('_Tag.EQP_Valve', 'Black'),
     ],
     SLOT_VALVE_NOTE: [
-        ('_Tag.EQ_Valve', 'Black w/ note'),
+        ('_Tag.EQP_Valve', 'BlackNote'),
     ],
     SLOT_VRF: [
         ('_Tag.EQ_VRF', 'Black'),
     ],
     SLOT_VRF_NOTE: [
-        ('_Tag.EQ_VRF', 'Black w/ note'),
+        ('_Tag.EQ_VRF', 'BlackNote'),
     ],
     SLOT_WEIGHT: [
         ('_Tag.DT_Weight', 'Defaut'),
