@@ -134,61 +134,61 @@ SLOT_ALL = (
 
 DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_ACCESS_PANEL: [
-        ('_Tag.DT_AccessPanel', 'Center'),
+        ('_Tag.DCT_AccessPanel', 'Center'),
     ],
     SLOT_BOD: [
-        ('_Tag.DT_BOD', 'Center'),
+        ('_Tag.DCT_BOD', 'Center'),
     ],
     SLOT_BOD_LEFT: [
-        ('_Tag.DT_BOD', 'Left'),
+        ('_Tag.DCT_BOD', 'Left'),
     ],
     SLOT_BOD_RIGHT: [
-        ('_Tag.DT_BOD', 'Right'),
+        ('_Tag.DCT_BOD', 'Right'),
     ],
     SLOT_CANVAS: [
-        ('_Tag.DT_Canvas', 'Center'),
+        ('_Tag.DCT_Canvas', 'Center'),
     ],
     SLOT_CONDENSER: [
-        ('_Tag.EQ_Condenser', 'Black'),
+        ('_Tag.EQP_Condenser', 'Black'),
     ],
     SLOT_DAMPER_CONTROL: [
-        ('_Tag.DV_DamperControl', 'Center'),
+        ('_Tag.DEV_DamperControl', 'Center'),
     ],
     SLOT_DAMPER_FIRE: [
-        ('_Tag.DV_DamperFire', 'Center'),
+        ('_Tag.DEV_DamperFire', 'Center'),
     ],
     SLOT_DAMPER_VOLUME: [
-        ('_Tag.DV_DamperVolume', 'Center'),
+        ('_Tag.DEV_DamperVolume', 'Center'),
     ],
     SLOT_DEGREE: [
-        ('_Tag.DT_Degree', 'Center'),
+        ('_Tag.DCT_Degree', 'Center'),
     ],
     SLOT_ENDCAP_SD: [
-        ('_Tag.DT_EndcapSD', 'Center'),
+        ('_Tag.DCT_EndcapSD', 'Center'),
     ],
     SLOT_ENDCAP_TDF: [
-        ('_Tag.DT_EndcapTDF', 'Center'),
+        ('_Tag.DCT_EndcapTDF', 'Center'),
     ],
     SLOT_EQUIPMENT_PAD: [
-        ('_Tag.EQ_EquipmentPad', 'Black'),
+        ('_Tag.EQP_EquipmentPad', 'Black'),
     ],
     SLOT_EXT_BOT: [
-        ('_Tag.DT_ExtensionBottom', 'Center'),
+        ('_Tag.DCT_ExtensionBottom', 'Center'),
     ],
     SLOT_EXT_LEFT: [
-        ('_Tag.DT_ExtensionLeft', 'Center'),
+        ('_Tag.DCT_ExtensionLeft', 'Center'),
     ],
     SLOT_EXT_RIGHT: [
-        ('_Tag.DT_ExtensionRight', 'Center'),
+        ('_Tag.DCT_ExtensionRight', 'Center'),
     ],
     SLOT_EXT_TOP: [
-        ('_Tag.DT_ExtensionTop', 'Center'),
+        ('_Tag.DCT_ExtensionTop', 'Center'),
     ],
     SLOT_FAN: [
-        ('_Tag.EQ_Fan', 'Black'),
+        ('_Tag.EQP_Fan', 'Black'),
     ],
     SLOT_FAN_NOTE: [
-        ('_Tag.EQ_Fan', 'BlackNote'),
+        ('_Tag.EQP_Fan', 'BlackNote'),
     ],
     SLOT_GRD: [
         ('_Tag.DEV_GRD', 'CFM'),
@@ -197,82 +197,82 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DEV_GRD', 'Center'),
     ],
     SLOT_HEAT_PUMP: [
-        ('_Tag.EQ_HeatPump', 'Black'),
+        ('_Tag.EQP_HeatPump', 'Black'),
     ],
     SLOT_HEAT_PUMP_NOTE: [
-        ('_Tag.EQ_HeatPump', 'BlackNote'),
+        ('_Tag.EQP_HeatPump', 'BlackNote'),
     ],
     SLOT_HEATER: [
-        ('_Tag.EQ_Heater', 'Black'),
+        ('_Tag.EQP_Heater', 'Black'),
     ],
     SLOT_HEATER_NOTE: [
-        ('_Tag.EQ_Heater', 'BlackNote'),
+        ('_Tag.EQP_Heater', 'BlackNote'),
     ],
     SLOT_HOOD: [
-        ('_Tag.EQ_Hood', 'Black'),
+        ('_Tag.EQP_Hood', 'Black'),
     ],
     SLOT_HOOD_NOTE: [
-        ('_Tag.EQ_Hood', 'BlackNote'),
+        ('_Tag.EQP_Hood', 'BlackNote'),
     ],
     SLOT_HUMIDIFIER: [
-        ('_Tag.EQ_Humidifier', 'Black'),
+        ('_Tag.EQP_Humidifier', 'Black'),
     ],
     SLOT_HUMIDIFIER_NOTE: [
-        ('_Tag.EQ_Humidifier', 'BlackNote'),
+        ('_Tag.EQP_Humidifier', 'BlackNote'),
     ],
     SLOT_LENGTH: [
-        ('_Tag.DT_Length', 'Center'),
+        ('_Tag.DCT_Length', 'Center'),
     ],
     SLOT_LENGTH_LEFT: [
-        ('_Tag.DT_Length', 'Left'),
+        ('_Tag.DCT_Length', 'Left'),
     ],
     SLOT_LENGTH_RIGHT: [
-        ('_Tag.DT_Length', 'Right'),
+        ('_Tag.DCT_Length', 'Right'),
     ],
     SLOT_LOUVER: [
-        ('_Tag.DV_Louvers', 'Black'),
+        ('_Tag.DEV_Louvers', 'Black'),
     ],
     SLOT_LOUVER_NOTE: [
-        ('_Tag.DV_Louvers', 'Black w/ note0'),
+        ('_Tag.DEV_Louvers', 'Black w/ note0'),
     ],
     SLOT_MAN_BARS: [
-        ('_Tag.DV_ManBar', 'Center'),
+        ('_Tag.DEV_ManBars', 'Center'),
     ],
     SLOT_NOTE: [
-        ('_Tag.DT_Note', '1 note'),
+        ('_Tag.DCT_Note', '1 note'),
     ],
     SLOT_NUMBER_BLUEBEAM: [
-        ('_Tag.DT_NumberBluebeam', 'Center'),
+        ('_Tag.DCT_NumberBluebeam', 'Center'),
     ],
     SLOT_NUMBER_FABRICATION: [
-        ('_Tag.DT_NumberFabrication', 'Center'),
+        ('_Tag.DCT_NumberFabrication', 'Center'),
     ],
     SLOT_NUMBER_SLEEVE: [
         ('_Tag.DCT_NumberSleeve', 'Green'),
     ],
     SLOT_OFFSET: [
-        ('_Tag.DT_Offset', 'Center'),
+        ('_Tag.DCT_Offset', 'Center'),
     ],
     SLOT_SIZE: [
-        ('_Tag.DT_Size', 'Center'),
+        ('_Tag.DCT_Size', 'Center'),
     ],
     SLOT_SIZE_LEFT: [
-        ('_Tag.DT_Size', 'Left'),
+        ('_Tag.DCT_Size', 'Left'),
     ],
     SLOT_SIZE_RIGHT: [
-        ('_Tag.DT_Size', 'Right'),
+        ('_Tag.DCT_Size', 'Right'),
     ],
     SLOT_SPLIT: [
-        ('_Tag.EQ_Split', 'Black'),
+        ('_Tag.EQP_Split', 'Black'),
     ],
     SLOT_SPLIT_NOTE: [
-        ('_Tag.EQ_Split', 'BlackNote'),
+        ('_Tag.EQP_Split', 'BlackNote'),
     ],
     SLOT_TAP: [
-        ('_Tag.DT_Tap', 'Center'),
+        ('_Tag.DCT_Tap', 'Center'),
     ],
     SLOT_TRANSITION: [
-        ('_Tag.DT_Transition', 'Center'),
+        ('_Tag.DCT_Transition', 'Center'),
     ],
     SLOT_UNIT: [
         ('_Tag.EQP_Unit', 'Black'),
@@ -287,13 +287,13 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQP_Valve', 'BlackNote'),
     ],
     SLOT_VRF: [
-        ('_Tag.EQ_VRF', 'Black'),
+        ('_Tag.EQP_VRF', 'Black'),
     ],
     SLOT_VRF_NOTE: [
-        ('_Tag.EQ_VRF', 'BlackNote'),
+        ('_Tag.EQP_VRF', 'BlackNote'),
     ],
     SLOT_WEIGHT: [
-        ('_Tag.DT_Weight', 'Defaut'),
+        ('_Tag.DCT_Weight', 'Defaut'),
     ],
 }
 
