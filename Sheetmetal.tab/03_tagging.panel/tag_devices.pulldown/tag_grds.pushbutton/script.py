@@ -111,7 +111,8 @@ def _find_tag_symbol(doc, target_candidate):
     if family_name and type_name:
         try:
             matched = tagger.get_label_exact(family_name, type_name)
-            matched_family_name, matched_type_name = _tag_symbol_family_type(matched)
+            matched_family_name, matched_type_name = _tag_symbol_family_type(
+                matched)
             if (
                 matched_family_name.lower() == family_name.lower()
                 and matched_type_name.lower() == type_name.lower()
@@ -121,7 +122,8 @@ def _find_tag_symbol(doc, target_candidate):
             pass
 
         for sym in tagger.tag_syms:
-            matched_family_name, matched_type_name = _tag_symbol_family_type(sym)
+            matched_family_name, matched_type_name = _tag_symbol_family_type(
+                sym)
             if (
                 matched_family_name.lower() == family_name.lower()
                 and matched_type_name.lower() == type_name.lower()
@@ -129,7 +131,8 @@ def _find_tag_symbol(doc, target_candidate):
                 return sym
 
         for sym in _iter_tag_symbols(doc):
-            matched_family_name, matched_type_name = _tag_symbol_family_type(sym)
+            matched_family_name, matched_type_name = _tag_symbol_family_type(
+                sym)
             if (
                 matched_family_name.lower() == family_name.lower()
                 and matched_type_name.lower() == type_name.lower()
@@ -454,7 +457,8 @@ def _collect_air_terminals(doc, active_view):
     return [], True, len(all_elements)
 
 
-air_terminals, used_fallback_collection, total_air_terminals = _collect_air_terminals(doc, view)
+air_terminals, used_fallback_collection, total_air_terminals = _collect_air_terminals(
+    doc, view)
 
 if not air_terminals:
     if used_fallback_collection:
@@ -483,8 +487,10 @@ second_tag_symbol, second_tag_name = _find_first_available_tag(doc, second_tag)
 if not first_tag_symbol and not second_tag_symbol:
     output.print_md(
         "## No GRD tag types resolved. With-flow candidates: {} | No-flow candidates: {}".format(
-            ", ".join(_format_tag_candidate(candidate) for candidate in first_tag) or "none",
-            ", ".join(_format_tag_candidate(candidate) for candidate in second_tag) or "none",
+            ", ".join(_format_tag_candidate(candidate)
+                      for candidate in first_tag) or "none",
+            ", ".join(_format_tag_candidate(candidate)
+                      for candidate in second_tag) or "none",
         )
     )
     script.exit()
@@ -522,7 +528,8 @@ for tag in existing_tags:
             tid_val = _eid_int(tid)
             if tid_val is None or tid_val == -1:
                 continue
-            existing_tag_maps.setdefault(tag_type_id_val, {}).setdefault(tid_val, []).append(tag)
+            existing_tag_maps.setdefault(
+                tag_type_id_val, {}).setdefault(tid_val, []).append(tag)
     except BaseException:
         pass
 
@@ -563,7 +570,8 @@ try:
 
                 # Clear any cached map entries for this element.
                 for tracked_type_id in tracked_tag_type_ids:
-                    existing_tag_maps.setdefault(tracked_type_id, {})[elem_id_val] = []
+                    existing_tag_maps.setdefault(tracked_type_id, {})[
+                        elem_id_val] = []
 
                 # Clear write parameter for skipped elements.
                 for param_name in value_parameters:
@@ -586,12 +594,14 @@ try:
 
                 skipped.append((
                     elem,
-                    "Parameter '{}' has skip value '{}'".format(skip_parameter_name, skip_value)
+                    "Parameter '{}' has skip value '{}'".format(
+                        skip_parameter_name, skip_value)
                 ))
                 continue
 
         # Get value based on ordered parameter hierarchy
-        value_to_write = _get_value_from_ordered_params(elem, doc, order_parameters)
+        value_to_write = _get_value_from_ordered_params(
+            elem, doc, order_parameters)
 
         # Write only when target value parameter is currently empty.
         for param_name in value_parameters:
@@ -638,7 +648,8 @@ try:
         # Skip if already tagged with the correct tag; otherwise delete wrong tags
         elem_id_val = elem.Id.IntegerValue
         chosen_type_id_val = _eid_int(tag_symbol.Id)
-        existing_for_elem = existing_tag_maps.get(chosen_type_id_val, {}).get(elem_id_val, [])
+        existing_for_elem = existing_tag_maps.get(
+            chosen_type_id_val, {}).get(elem_id_val, [])
         if existing_for_elem:
             already_tagged.append(elem)
             continue
@@ -651,7 +662,8 @@ try:
                 opposite_type_id_val = _eid_int(first_tag_symbol.Id)
 
         if opposite_type_id_val is not None:
-            wrong_tags = list(existing_tag_maps.get(opposite_type_id_val, {}).get(elem_id_val, []))
+            wrong_tags = list(existing_tag_maps.get(
+                opposite_type_id_val, {}).get(elem_id_val, []))
             for existing_tag in wrong_tags:
                 try:
                     deleted_type = doc.GetElement(existing_tag.GetTypeId())
@@ -664,7 +676,8 @@ try:
                     ))
                 except Exception:
                     pass
-            existing_tag_maps.setdefault(opposite_type_id_val, {})[elem_id_val] = []
+            existing_tag_maps.setdefault(opposite_type_id_val, {})[
+                elem_id_val] = []
 
         # Get location point for tag placement - use element location directly
         tag_pt = None
@@ -696,7 +709,8 @@ try:
             new_tag = tagger.place_tag(elem, tag_symbol, tag_pt)
             if new_tag is None:
                 reason = tagger.last_place_tag_failure or "Tag placement returned no tag"
-                failed.append((elem, "Tag placement error [{}]: {}".format(tag_name, reason)))
+                failed.append(
+                    (elem, "Tag placement error [{}]: {}".format(tag_name, reason)))
                 continue
 
             placed_type = doc.GetElement(new_tag.GetTypeId())
@@ -731,14 +745,16 @@ try:
                 continue
 
             placed.append(elem)
-            existing_tag_maps.setdefault(chosen_type_id_val, {}).setdefault(elem_id_val, []).append(new_tag)
+            existing_tag_maps.setdefault(chosen_type_id_val, {}).setdefault(
+                elem_id_val, []).append(new_tag)
             tags_added.append((
                 elem,
                 new_tag.Id,
                 _format_tag_symbol(placed_type),
             ))
         except Exception as e:
-            failed.append((elem, "Tag placement error [{}]: {}".format(tag_name, str(e))))
+            failed.append(
+                (elem, "Tag placement error [{}]: {}".format(tag_name, str(e))))
 
     t.Commit()
 except Exception as e:
@@ -759,8 +775,10 @@ output.print_md(
 
 output.print_md(
     "## Tag Candidates: with airflow {}, without airflow {}".format(
-        ", ".join(_format_tag_candidate(candidate) for candidate in first_tag) or "none",
-        ", ".join(_format_tag_candidate(candidate) for candidate in second_tag) or "none",
+        ", ".join(_format_tag_candidate(candidate)
+                  for candidate in first_tag) or "none",
+        ", ".join(_format_tag_candidate(candidate)
+                  for candidate in second_tag) or "none",
     )
 )
 

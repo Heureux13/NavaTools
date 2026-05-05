@@ -112,16 +112,18 @@ class RevitRuns(object):
 
     def __init__(
         self,
-        output_obj=None,
-        number_parameters=None,
-        skip_parameters=None,
-        stop_parameters=None,
-        numberable_families=None,
-        traversable_families=None,
-        skip_value_set=None,
-        stop_value_set=None,
-        stored_families=None,
-        rectangle_only=True
+        output_obj                  =None,
+        number_parameters           =None,
+        skip_parameters             =None,
+        stop_parameters             =None,
+        numberable_families         =None,
+        traversable_families        =None,
+        skip_value_set              =None,
+        stop_value_set              =None,
+        stored_families             =None,
+        allow_rectangle             =True,
+        allow_round                 =True,
+        allow_oval                  =True,
     ):
         self.doc                        = getattr(revit, "doc", None)
         self.view                       = getattr(revit, "active_view", None)
@@ -134,7 +136,9 @@ class RevitRuns(object):
         self.skip_values                = set(skip_value_set        or skip_values)
         self.stop_values                = set(stop_value_set        or stop_values)
         self.branch_start_families      = set(stored_families       or branch_start_families)
-        self.rectangle_only             = rectangle_only
+        self.allow_rectangle            = allow_rectangle
+        self.allow_round                = allow_round
+        self.allow_oval                 = allow_oval
 # fmt:on
 # autopep8: on
 
@@ -189,6 +193,20 @@ class RevitRuns(object):
         sig = self._size_signature(size_value)
 
         return sig is not None and sig[0] == "round"
+
+    def is_allowed_shape(self, duct):
+        sig = self._size_signature(duct.size)
+
+        if sig is None:
+            return None
+        if sig[0] == "rect":
+            return self.allow_rectangle
+        if sig[0] == "round":
+            return self.allow_round
+        if sig[0] == "oval":
+            return self.allow_oval
+
+        return True
 
     def sizes_match(self,
                     target_size,
@@ -256,7 +274,7 @@ class RevitRuns(object):
 
     def has_skip_value(self, duct):
         # Check if duct has a skip value in its number parameter or is a round boot taop
-        if self.rectangle_only:
+        if not self.allow_round:
             family = duct.family
             family_lower = family.lower() if family else ""
 
@@ -266,19 +284,17 @@ class RevitRuns(object):
                 if sig is not None and sig[0] == "round":
                     return True
 
-        return self._has_control_value(
-            duct,
-            self.skip_check_parameters,
-            self.skip_values,
-        )
+        return self._has_control_value(duct,
+                                       self.skip_check_parameters,
+                                       self.skip_values,
+                                       )
 
     def has_stop_value(self, duct):
         # Checks to see if duct has a stop value
-        return self._has_control_value(
-            duct,
-            self.stop_check_parameters,
-            self.stop_values,
-        )
+        return self._has_control_value(duct,
+                                       self.stop_check_parameters,
+                                       self.stop_values,
+                                       )
 
     def get_item_number(self, duct):
         # Get the current item number form any of the number parameters

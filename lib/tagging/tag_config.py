@@ -188,10 +188,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQ_Fan', 'Black w/ note'),
     ],
     SLOT_GRD: [
-        ('_Tag.DV_GRD', 'w/ flow'),
+        ('_Tag.DEV_GRD', 'CFM'),
     ],
     SLOT_GRD_CFM: [
-        ('_Tag.DV_GRD', 'w/o flow'),
+        ('_Tag.DEV_GRD', 'Center'),
     ],
     SLOT_LENGTH: [
         ('_Tag.DT_Length', 'Center'),
@@ -248,7 +248,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DT_NumberFabrication', 'Center'),
     ],
     SLOT_NUMBER_SLEEVE: [
-        ('_Tag.DT_NumberSleeve', 'Blue'),
+        ('_Tag.DT_NumberSleeve', 'Green'),
     ],
     SLOT_OFFSET: [
         ('_Tag.DT_Offset', 'Center'),
