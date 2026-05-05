@@ -357,9 +357,15 @@ class Fittings:
         value = self._get_hierarchy_value(element)
         if element is None or not self.write_parameter:
             return False, value
+
+        # Do not clear existing labels when hierarchy resolution is empty.
+        value_text = str(value).strip() if value is not None else ''
+        if not value_text:
+            return False, value
+
         updated = RevitElement(self.doc, self.view, element).set_param(
             self.write_parameter,
-            value,
+            value_text,
         )
         return updated, value
 
