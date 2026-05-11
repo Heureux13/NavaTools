@@ -25,7 +25,7 @@ import math
 
 # Button info
 # ===================================================
-__title__ = "Add Note Below Room Label"
+__title__ = "Rooms - Create Label"
 __doc__ = """
 Selects all Room Tags in the active view
 """
