@@ -123,3 +123,4 @@
 | _value_a              | x                |           |         |               | segments and fittings |
 | _value_k              | x                |           |         |               | segments and fittings |
 | _weight_support       |                  |           | x       |               | segments and fittings |
+

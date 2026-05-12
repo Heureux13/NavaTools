@@ -187,17 +187,17 @@ class RevitTagging:
 
         raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
 
-    def _find_compatible_tag_type_id(self, tag, requested_tag_symbol):
+    def _find_compatible_tag_type_id(self, tag_object, annotation_type):
         """Return a valid type id for tag matching the requested tag symbol, if any."""
-        if tag is None or requested_tag_symbol is None:
+        if tag_object is None or annotation_type is None:
             return None
 
-        requested_id = getattr(requested_tag_symbol, "Id", requested_tag_symbol)
+        requested_id = getattr(annotation_type, "Id", annotation_type)
         if requested_id is None:
             return None
 
         try:
-            valid_type_ids = list(tag.GetValidTypes() or [])
+            valid_type_ids = list(tag_object.GetValidTypes() or [])
         except Exception:
             valid_type_ids = []
 
@@ -218,7 +218,7 @@ class RevitTagging:
                 pass
 
         requested_type = self.doc.GetElement(requested_id)
-        req_fam, req_typ, req_pool = self._tag_pool(requested_type or requested_tag_symbol)
+        req_fam, req_typ, req_pool = self._tag_pool(requested_type or annotation_type)
         req_fam = req_fam.strip().lower()
         req_typ = req_typ.strip().lower()
         req_pool = req_pool.strip().lower()

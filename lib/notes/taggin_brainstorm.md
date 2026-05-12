@@ -1,22 +1,24 @@
 color = {
-    '_NV_CRL.Black',
-    '_NV_CRL.BlackNote',
-    '_NV_CRL.Blue',
-    '_NV_CRL.BlueNote',
-    '_NV_CRL.Cyan',
-    '_NV_CRL.CyanNote',
-    '_NV_CRL.Green',
-    '_NV_CRL.GreenNote',
-    '_NV_CRL.Magenta',
-    '_NV_CRL.MagentaNote',
-    '_NV_CRL.Orange',
-    '_NV_CRL.OrangeNote',
-    '_NV_CRL.Purple',
-    '_NV_CRL.PurpleNote',
-    '_NV_CRL.Red',
-    '_NV_CRL.RedNote',
-    '_NV_CRL.Yellow',
-    '_NV_CRL.YellowNote',
+    'CLR_Black',
+    'CLR_BlackNote',
+    'CLR_Blue',
+    'CLR_BlueNote',
+    'CLR_Cyan',
+    'CLR_CyanNote',
+    'CLR_Green',
+    'CLR_GreenNote',
+    'CLR_Magenta',
+    'CLR_MagentaNote',
+    'CLR_Maroon',
+    'CLR_MarronNote
+    'CLR_Orange',
+    'CLR_OrangeNote',
+    'CLR_Purple',
+    'CLR_PurpleNote',
+    'CLR_Red',
+    'CLR_RedNote',
+    'CLR_Yellow',
+    'CLR_YellowNote',
 }
 
 location = {
@@ -28,24 +30,24 @@ location = {
 }
 
 devices = {
-    '_NV_DEV.AFMS',
-    '_NV_DEV.DamperControl',
-    '_NV_DEV.DamperFire'
-    '_NV_DEV.DamperMechanical',
-    '_NV_DEV.DamperVolume',
-    '_NV_DEV.Louver',
-    '_NV_DEV.GRD',
-    '_NV_DEV.AFMS',
+    '_Tag.DEV_AFMS',
+    '_Tag.DEV_DamperControl',
+    '_Tag.DEV_DamperFire'
+    '_Tag.DEV_DamperMechanical',
+    '_Tag.DEV_DamperVolume',
+    '_Tag.DEV_Louver',
+    '_Tag.DEV_GRD',
+    '_Tag.DEV_AFMS',
 }
 
-equipement = {
-    '_NV_EQP.Condenser',
-    '_NV_EQP.Fan',
-    '_NV_EQP.Split',
-    '_NV_EQP.UnitAHU',
-    '_NV_EQP.UnitCRAC',
-    '_NV_EQP.UnitDOAS',
-    '_NV_EQP.VAV',
+equipment = {
+    '_Tag.EQP_Condenser',
+    '_Tag.EQP_Fan',
+    '_Tag.EQP_Split',
+    '_Tag.EQP_UnitAHU',
+    '_Tag.EQP_UnitCRAC',
+    '_Tag.EQP_UnitDOAS',
+    '_Tag.EQP_VAV',
 }
 
 duct = {
@@ -141,4 +143,104 @@ text_types = {
     '_TXT.125_Arial_Black.U.',
     '_TXT.125_Arial_Black.BU',
 }
+
+we start with the trade
+
+Trades = {
+'sheetmetal      MDT',
+'pipefitting     MPF',
+'plumbing        MPL',
+}
+
+we add floor
+
+floors = {
+    'basement 1 = B01',
+    'basement 2 = B02',
+    'basement 3 = B03',
+    '1st = 001',
+    '2nd = 002',
+    '3rd = 003',
+    '4th = 004',
+    '5th = 005',
+    '6th = 004',
+    '7th = 005',
+    '8th = 006',
+}
+
+maybe add floor types = {
+    'F = floor',
+    'B = basement',
+    'M = mezzanine',
+    'R = roof',
+}
+
+we add specifics
+
+specifics = {
+    'LVR = louver',
+    'SLV = sleeves',
+    'SCH = schedules',
+    'SPA = supply air',
+    'EXA = exhaust air',
+    'RTA = return air',
+    'OTA = outside air',
+    'REA = releaf air',
+    'TOA = treated outside air',
+    'DTL = details',
+    'SCT = section views',
+    'DCT = ductwork',
+    'DEV = devices',
+    'EQP = equipment',
+    'EQP = equipment',
+    'UNT = unit',
+    'FAN = fan',
+    'GRD = grilles',
+    'DMP = dampers',
+    'FDM = fire dampers',
+    'MNB = man bars',
+    'VAV = vav',
+    'VAV = vav',
+}
+
+we add area
+
+Areas = {
+    'Area A = A'
+    'Area B = B'
+    'Area C = C'
+    'Area D = D'
+    'Area E = E'
+}
+
+we add area number
+
+area number = {
+    'A01',
+    'A02',
+    'A03',
+    'A04',
+    'B01',
+    'B02',
+    'B03',
+    'B04',
+}
+
+UIM-MDT-DCT-01-A1
+MDT-SLV-01-A1
+
+MDT-F01-A01
+MDT-DTL-01
+MDT-SLV-A01
+MDT-SLV-DT1
+
+
+MDT-F01-A1
+MDT-F01-A2
+MDT-F01-A3
+MDT-F01-A4
+MDT-F01-B1
+MDT-F01-B2
+MDT-F01-B3
+MDT-F01-B4
 

@@ -107,7 +107,7 @@ boot_families_to_skip = {
 
 # fmt:off
 # autopep8: off
-class RevitRuns(object):
+class RevitNumbers(object):
     # Run numbering helpers wrapped as an instance API
 
     def __init__(
@@ -496,9 +496,9 @@ class RevitRuns(object):
 
         return endpoints
 
-    def find_connected_numbered_elements(self,
-                                         duct,
-                                         ):
+    def find_connected_numbered_element(self,
+                                        duct,
+                                        ):
         # Find a connected element that has a number assigned.
         # For branch_start_families (taps), look for elements connected to size_out(smaller size).
         # returns (number, duct) or (None, None) if not found
@@ -623,24 +623,6 @@ class RevitRuns(object):
 
         return (to_run, branch_list)
 
-    def get_reusable_connected_number(self,
-                                      duct,
-                                      numbered_by_id
-                                      ):
-        duct_sig = self.get_match_signature(duct)
-        if duct_sig is None:
-            return None
-
-        for conn in self.get_connected_fittings(duct):
-            conn_number = numbered_by_id.get(conn.id)
-            if conn_number is None:
-                continue
-
-            if self.get_match_signature(conn) == duct_sig:
-                return conn_number
-
-        return None
-
     def assign_number_by_signature(self,
                                    duct,
                                    current_number,
@@ -658,8 +640,6 @@ class RevitRuns(object):
             else:
                 current_number += 1
                 assigned_number = current_number
-
-        self.set_item_number(duct, assigned_number)
 
         return assigned_number, current_number, current_signature
 
@@ -686,6 +666,7 @@ class RevitRuns(object):
                                                                                                   previous_signature,
                                                                                                   repeat_numbers=repeat_numbers,
                                                                                                   )
+            self.set_item_number(duct, assigned_number)
 
             last_used_number = assigned_number
 
