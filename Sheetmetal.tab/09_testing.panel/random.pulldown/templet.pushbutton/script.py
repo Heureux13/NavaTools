@@ -22,4 +22,3 @@ Gives raw offset data and writes to parameters
 output = script.get_output()
 
 output.print_md('Testing script is running.')
-

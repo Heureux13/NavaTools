@@ -143,17 +143,34 @@ def get_parameter_text(element, name):
         return ""
 
 
+def get_element_id_int(element_id):
+    """Get integer id value across Revit API versions."""
+    if not element_id:
+        return None
+
+    # Older APIs expose IntegerValue, newer APIs expose Value.
+    try:
+        return element_id.IntegerValue
+    except BaseException:
+        pass
+
+    try:
+        return int(element_id.Value)
+    except BaseException:
+        return None
+
+
 def is_clearance_like_element(element):
     """Match clearance elements by category plus family/type/zone markers."""
     if not element or not element.Category:
         return False
 
-    cat_id = element.Category.Id.IntegerValue
+    cat_id = get_element_id_int(element.Category.Id)
     allowed_categories = [
         int(BuiltInCategory.OST_MechanicalEquipment),
         int(BuiltInCategory.OST_GenericModel),
     ]
-    if cat_id not in allowed_categories:
+    if cat_id is None or cat_id not in allowed_categories:
         return False
 
     element_type = get_element_type(element)

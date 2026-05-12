@@ -19,7 +19,7 @@ from System.Collections.Generic import List
 
 # Button info
 # ===================================================
-__title__ = "List of room tags"
+__title__ = "Rooms - List w/ Ceilings"
 __doc__ = """
 Lists all room tags in the active view.
 """
