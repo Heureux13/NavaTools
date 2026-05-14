@@ -118,8 +118,10 @@ output = script.get_output()
 SOURCE_HEADER_ALIASES = {}
 for bluebeam_col, config in COLUMN_MAP.items():
     if config['aliases']:
-        revit_param = config['aliases'][0].lstrip('_')  # Strip leading underscore
-        SOURCE_HEADER_ALIASES[revit_param] = [bluebeam_col.lower().replace(' ', '_'), bluebeam_col.lower()]
+        revit_param = config['aliases'][0].lstrip(
+            '_')  # Strip leading underscore
+        SOURCE_HEADER_ALIASES[revit_param] = [
+            bluebeam_col.lower().replace(' ', '_'), bluebeam_col.lower()]
 
 
 class DataOption(object):
@@ -194,7 +196,8 @@ def release_com_object(com_object):
 
 def read_delimited_file(file_path):
     if not _HAS_TEXT_FIELD_PARSER:
-        raise Exception('Delimited file reader is unavailable in this environment.')
+        raise Exception(
+            'Delimited file reader is unavailable in this environment.')
 
     parser = TextFieldParser(file_path)
     parser.TextFieldType = FieldType.Delimited
@@ -322,7 +325,8 @@ def get_table_data(file_path):
 
     sheets = read_excel_workbook(file_path)
     if not sheets:
-        raise Exception('The workbook does not contain any populated worksheets.')
+        raise Exception(
+            'The workbook does not contain any populated worksheets.')
 
     selected = sheets[0]
     if len(sheets) > 1:
@@ -436,7 +440,8 @@ def build_column_map(schedule_headers, source_headers):
                 break
 
         if source_col_index is not None:
-            mapped_columns.append((schedule_col_index, source_col_index, schedule_header))
+            mapped_columns.append(
+                (schedule_col_index, source_col_index, schedule_header))
         else:
             missing_headers.append(schedule_header)
 
@@ -542,9 +547,11 @@ def build_element_label_map(schedule, label_field):
     for element in FilteredElementCollector(doc, schedule.Id).WhereElementIsNotElementType():
         total_elements += 1
         try:
-            _, param = get_param_target_and_param(element, label_param_id, fallback_names)
+            _, param = get_param_target_and_param(
+                element, label_param_id, fallback_names)
             if param is not None:
-                label = clean_cell_value(param.AsString() or param.AsValueString())
+                label = clean_cell_value(
+                    param.AsString() or param.AsValueString())
                 if label:
                     elements_with_labels += 1
                     key = label.lower()
@@ -562,7 +569,8 @@ def build_element_label_map(schedule, label_field):
 def collect_source_label_samples(data_rows, label_source_col, max_count):
     samples = []
     for row_values in data_rows:
-        label = row_values[label_source_col] if label_source_col < len(row_values) else ''
+        label = row_values[label_source_col] if label_source_col < len(
+            row_values) else ''
         label = clean_cell_value(label)
         if label:
             samples.append(label)
@@ -620,7 +628,8 @@ def to_internal_double_value(param, numeric_value):
 
 
 def set_element_parameter(element, field, value_text):
-    _, param = get_param_target_and_param(element, field.ParameterId, get_field_lookup_names(field))
+    _, param = get_param_target_and_param(
+        element, field.ParameterId, get_field_lookup_names(field))
     if param is None or param.IsReadOnly:
         return False
     try:
@@ -628,7 +637,8 @@ def set_element_parameter(element, field, value_text):
         if storage == StorageType.String:
             param.Set(value_text)
         elif storage == StorageType.Integer:
-            param.Set(int(parse_number(value_text))) if value_text else param.Set(0)
+            param.Set(int(parse_number(value_text))
+                      ) if value_text else param.Set(0)
         elif storage == StorageType.Double:
             if value_text:
                 numeric_value = parse_number(value_text)
@@ -649,7 +659,8 @@ def get_body_label_map(schedule, label_schedule_col):
     abs_col = body.FirstColumnNumber + label_schedule_col
     for row in range(body.FirstRowNumber, body.LastRowNumber + 1):
         try:
-            label = clean_cell_value(schedule.GetCellText(SectionType.Body, row, abs_col))
+            label = clean_cell_value(schedule.GetCellText(
+                SectionType.Body, row, abs_col))
             if label:
                 label_map[label.lower()] = row
         except Exception:
@@ -669,7 +680,8 @@ def update_schedule_rows_by_label(schedule, data_rows, mapped_columns, label_sch
     matched_keys = set()
 
     for row_values in data_rows:
-        label = row_values[label_source_col] if label_source_col < len(row_values) else ''
+        label = row_values[label_source_col] if label_source_col < len(
+            row_values) else ''
         label = clean_cell_value(label)
         if not label:
             empty_label += 1
@@ -685,7 +697,8 @@ def update_schedule_rows_by_label(schedule, data_rows, mapped_columns, label_sch
             field = field_map.get(schedule_col_index)
             if field is None:
                 continue
-            cell_text = row_values[source_col_index] if source_col_index < len(row_values) else ''
+            cell_text = row_values[source_col_index] if source_col_index < len(
+                row_values) else ''
             if not cell_text:
                 empty_cols.append(col_header)
             set_element_parameter(element, field, cell_text)
@@ -725,7 +738,8 @@ def update_schedule_rows_by_label(schedule, data_rows, mapped_columns, label_sch
 
 def get_import_rows(table_rows):
     if len(table_rows) < 2:
-        raise Exception('The source data must include a header row and at least one data row.')
+        raise Exception(
+            'The source data must include a header row and at least one data row.')
 
     headers = [clean_cell_value(value) for value in table_rows[0]]
     data_rows = []
@@ -735,7 +749,8 @@ def get_import_rows(table_rows):
             data_rows.append(normalized)
 
     if not data_rows:
-        raise Exception('No populated data rows were found below the header row.')
+        raise Exception(
+            'No populated data rows were found below the header row.')
 
     return headers, data_rows
 
@@ -769,11 +784,15 @@ for schedule in selected_schedules:
         output.print_md('Could not read schedule column headers — skipped.')
         continue
 
-    mapped_columns, missing_headers = build_column_map(schedule_headers, source_headers)
+    mapped_columns, missing_headers = build_column_map(
+        schedule_headers, source_headers)
     if not mapped_columns:
-        output.print_md('**No source columns match the schedule headers — skipped.**')
-        output.print_md('- Schedule headers: {}'.format(', '.join(['`{}`'.format(h) for h in schedule_headers])))
-        output.print_md('- Excel headers: {}'.format(', '.join(['`{}`'.format(h) for h in source_headers])))
+        output.print_md(
+            '**No source columns match the schedule headers — skipped.**')
+        output.print_md(
+            '- Schedule headers: {}'.format(', '.join(['`{}`'.format(h) for h in schedule_headers])))
+        output.print_md(
+            '- Excel headers: {}'.format(', '.join(['`{}`'.format(h) for h in source_headers])))
         continue
 
     label_schedule_col = None
@@ -785,9 +804,12 @@ for schedule in selected_schedules:
     label_source_col = get_source_header_index(source_headers, 'Label')
 
     if label_schedule_col is None or label_source_col is None:
-        output.print_md('No Label column found in both schedule and source — skipped.')
-        output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
-        output.print_md('- Source headers: {}'.format(', '.join(source_headers)))
+        output.print_md(
+            'No Label column found in both schedule and source — skipped.')
+        output.print_md(
+            '- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
+        output.print_md(
+            '- Source headers: {}'.format(', '.join(source_headers)))
         continue
 
     updated_count = 0
@@ -805,21 +827,28 @@ for schedule in selected_schedules:
         schedule.RefreshData()
 
     output.print_md('- Schedule: {}'.format(output.linkify(schedule.Id)))
-    output.print_md('- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
+    output.print_md(
+        '- Mapped columns: {}'.format(', '.join([item[2] for item in mapped_columns])))
 
     # Extract debug stats from element_map
     debug_total = schedule_label_map.pop('_debug_total_elements', 0)
-    debug_with_labels = schedule_label_map.pop('_debug_elements_with_labels', 0)
-    output.print_md('- Schedule elements collected: {} (with readable Label: {})'.format(debug_total, debug_with_labels))
+    debug_with_labels = schedule_label_map.pop(
+        '_debug_elements_with_labels', 0)
+    output.print_md(
+        '- Schedule elements collected: {} (with readable Label: {})'.format(debug_total, debug_with_labels))
 
     if missing_headers:
-        output.print_md('- Schedule columns not in source: {}'.format(', '.join(missing_headers)))
-    output.print_md('- Rows updated: {} / {}'.format(updated_count, len(schedule_label_map)))
-    output.print_md('- Missing schedule labels cleared: {}'.format(cleared_missing_labels))
+        output.print_md(
+            '- Schedule columns not in source: {}'.format(', '.join(missing_headers)))
+    output.print_md(
+        '- Rows updated: {} / {}'.format(updated_count, len(schedule_label_map)))
+    output.print_md(
+        '- Missing schedule labels cleared: {}'.format(cleared_missing_labels))
 
     # Matched rows table
     if matched_details:
-        data_cols = [h for _, _, h in mapped_columns if normalize_header(h) != 'label']
+        data_cols = [h for _, _,
+                     h in mapped_columns if normalize_header(h) != 'label']
         header_row = '| Label | ' + ' | '.join(data_cols) + ' |'
         sep_row = '|---|' + '|'.join(['---'] * len(data_cols)) + '|'
         output.print_md(header_row)

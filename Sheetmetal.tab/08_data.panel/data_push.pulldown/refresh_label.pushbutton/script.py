@@ -8,16 +8,10 @@ the copyright holder."""
 # ======================================================================
 
 from pyrevit import revit, script
-from Autodesk.Revit.DB import BuiltInCategory, FilteredElementCollector, Transaction
+from Autodesk.Revit.DB import BuiltInCategory, FilteredElementCollector, StorageType, Transaction
 from config.parameters_registry import (
-    BBM_CFM_EA,
-    BBM_CFM_SA,
     BBM_LABEL,
-    PYT_CFM,
     PYT_LABEL,
-    RVT_ALIAS,
-    RVT_FABRICATION_FITTING_DESCRIPTION,
-    RVT_FAMILY,
     RVT_MARK,
     RVT_TYPE_MARK,
 )
@@ -27,11 +21,9 @@ from config.parameters_registry import (
 __title__ = 'Refresh Label Data'
 __doc__ = '''
 Refresh _UMI_BBM_Label from hierarchy:
-Alias -> Family -> Fabrication Fitting Description -> Type Mark -> Mark -> _UMI_PYT_Label
+Type Mark -> Mark -> _UMI_PYT_Label
 
 Last non-empty value in the hierarchy wins.
-Applies to air terminals, mechanical equipment, MEP duct,
-fabrication ductwork (including stiffeners), and fabrication hangers.
 '''
 
 # Variables
@@ -40,18 +32,18 @@ fabrication ductwork (including stiffeners), and fabrication hangers.
 output = script.get_output()
 
 
+MAX_TRANSACTION_BATCH_SIZE = 1000
+
 TARGET_CATEGORIES = (
     BuiltInCategory.OST_DuctTerminal,
     BuiltInCategory.OST_MechanicalEquipment,
     BuiltInCategory.OST_DuctCurves,
     BuiltInCategory.OST_FabricationDuctwork,
     BuiltInCategory.OST_FabricationHangers,
+
 )
 
 HIERARCHY = (
-    RVT_ALIAS,
-    RVT_FAMILY,
-    RVT_FABRICATION_FITTING_DESCRIPTION,
     RVT_TYPE_MARK,
     RVT_MARK,
     PYT_LABEL,
@@ -65,168 +57,176 @@ INVALID_TEXT_VALUES = {
 }
 
 
-def _get_param_case_insensitive(element, param_name):
-    target = (param_name or '').strip().lower()
-    if not target or element is None:
+def _get_element_id_value(element_id):
+    if element_id is None:
         return None
 
     try:
-        direct = element.LookupParameter(param_name)
-        if direct:
-            return direct
+        return element_id.Value
     except Exception:
         pass
 
-    for param in element.Parameters:
-        try:
-            definition = param.Definition
-            name = definition.Name if definition else None
-            if name and name.strip().lower() == target:
-                return param
-        except Exception:
-            pass
-    return None
+    try:
+        return element_id.IntegerValue
+    except Exception:
+        return None
 
 
-def _get_param_text(param):
+def _get_param_case_insensitive(element, param_name):
+    if not param_name or element is None:
+        return None
+
+    try:
+        return element.LookupParameter(param_name)
+    except Exception:
+        return None
+
+
+def _read_param_as_text(param):
     if not param:
         return ''
     try:
-        val = param.AsString()
-        if not val:
-            val = param.AsValueString()
-        if not val:
-            return ''
-        cleaned = val.strip()
-        if cleaned.lower() in INVALID_TEXT_VALUES:
-            return ''
-        return cleaned
+        storage_type = param.StorageType
+        if storage_type == StorageType.String:
+            return (param.AsString() or '').strip()
+        if storage_type == StorageType.Integer:
+            return str(param.AsInteger())
+        if storage_type == StorageType.Double:
+            return str(param.AsDouble())
+        return ''
     except Exception:
         return ''
 
 
-def _resolve_hierarchy_value(element, doc, hierarchy):
+def _normalize_text(value):
+    cleaned = (value or '').strip()
+    if cleaned.lower() in INVALID_TEXT_VALUES:
+        return ''
+    return cleaned
+
+
+def _get_param_text(param):
+    return _normalize_text(_read_param_as_text(param))
+
+
+def _resolve_hierarchy_value(element, doc, hierarchy, type_cache):
     """Return last non-empty value found while iterating hierarchy in order."""
     elem_type = None
     try:
-        elem_type = doc.GetElement(element.GetTypeId())
+        type_id = element.GetTypeId()
+        type_key = _get_element_id_value(type_id)
+        if type_key is not None:
+            if type_key not in type_cache:
+                type_cache[type_key] = doc.GetElement(type_id)
+            elem_type = type_cache[type_key]
     except Exception:
         elem_type = None
 
     result = ''
     for param_name in hierarchy:
-        value = _get_param_text(_get_param_case_insensitive(element, param_name))
+        value = _get_param_text(
+            _get_param_case_insensitive(element, param_name))
         if not value and elem_type:
-            value = _get_param_text(_get_param_case_insensitive(elem_type, param_name))
+            value = _get_param_text(
+                _get_param_case_insensitive(elem_type, param_name))
         if value:
             result = value
 
     return result
 
 
-def _resolve_cfm_value(element):
-    """Resolve PYT_CFM from BBM CFMs; SA wins when both have values."""
-    sa_value = _get_param_text(_get_param_case_insensitive(element, BBM_CFM_SA))
-    ea_value = _get_param_text(_get_param_case_insensitive(element, BBM_CFM_EA))
+def _set_param_from_text(param, value_text):
+    if not param or param.IsReadOnly:
+        return False
 
-    if sa_value:
-        return sa_value
-    if ea_value:
-        return ea_value
-    return ''
+    storage_type = param.StorageType
+
+    if storage_type != StorageType.String:
+        return False
+
+    try:
+        param.Set(value_text or '')
+        return True
+    except Exception:
+        return False
 
 
-def _collect_elements_by_category(doc, categories):
+def _collect_active_view_elements(doc):
     result = []
-    seen = set()
     active_view = revit.active_view
+    if not active_view:
+        return result
 
-    for bic in categories:
-        elements = (
+    try:
+        collector = (
             FilteredElementCollector(doc, active_view.Id)
-            .OfCategory(bic)
             .WhereElementIsNotElementType()
             .ToElements()
         )
-        for elem in elements:
-            if elem is None:
-                continue
-            try:
-                elem_id = elem.Id.IntegerValue
-            except Exception:
-                continue
-            if elem_id in seen:
-                continue
-            seen.add(elem_id)
-            result.append(elem)
+    except Exception:
+        return result
+
+    for elem in collector:
+        result.append(elem)
 
     return result
 
 
 doc = revit.doc
-elements = _collect_elements_by_category(doc, TARGET_CATEGORIES)
-
+elements = _collect_active_view_elements(doc)
 if not elements:
-    output.print_md('No supported elements found in model.')
+    output.print_md('No elements found in active view.')
     script.exit()
+
+output.print_md(
+    'Processing all elements in active view ({}).'.format(len(elements)))
 
 updated = 0
 unchanged = 0
 skipped = 0
-cfm_updated = 0
-cfm_unchanged = 0
-cfm_skipped = 0
 errors = []
+type_cache = {}
 
-t = Transaction(doc, 'Refresh BBM Label From Hierarchy')
-t.Start()
-try:
-    for elem in elements:
-        try:
-            target_param = _get_param_case_insensitive(elem, BBM_LABEL)
-            if not target_param or target_param.IsReadOnly:
-                skipped += 1
-                continue
+for batch_start in range(0, len(elements), MAX_TRANSACTION_BATCH_SIZE):
+    batch = elements[batch_start: batch_start + MAX_TRANSACTION_BATCH_SIZE]
+    t = Transaction(doc, 'Refresh BBM Label From Hierarchy')
+    t.Start()
+    try:
+        for elem in batch:
+            try:
+                target_param = _get_param_case_insensitive(elem, BBM_LABEL)
+                if not target_param or target_param.IsReadOnly:
+                    skipped += 1
+                    continue
 
-            new_value = _resolve_hierarchy_value(elem, doc, HIERARCHY)
-            old_value = _get_param_text(target_param)
+                new_value = _resolve_hierarchy_value(
+                    elem, doc, HIERARCHY, type_cache)
+                old_value = _get_param_text(target_param)
 
-            if old_value == new_value:
-                unchanged += 1
-            else:
-                target_param.Set(new_value)
-                updated += 1
+                if old_value == new_value:
+                    unchanged += 1
+                else:
+                    if _set_param_from_text(target_param, new_value):
+                        updated += 1
+                    else:
+                        skipped += 1
+            except Exception as ex:
+                errors.append((elem, str(ex)))
 
-            cfm_target_param = _get_param_case_insensitive(elem, PYT_CFM)
-            if not cfm_target_param or cfm_target_param.IsReadOnly:
-                cfm_skipped += 1
-                continue
-
-            new_cfm_value = _resolve_cfm_value(elem)
-            old_cfm_value = _get_param_text(cfm_target_param)
-
-            if old_cfm_value == new_cfm_value:
-                cfm_unchanged += 1
-                continue
-
-            cfm_target_param.Set(new_cfm_value)
-            cfm_updated += 1
-        except Exception as ex:
-            errors.append((elem, str(ex)))
-
-    t.Commit()
-except Exception:
-    t.RollBack()
-    raise
+        t.Commit()
+    except Exception:
+        t.RollBack()
+        raise
 
 output.print_md('Updated: {}'.format(updated))
 output.print_md('Unchanged: {}'.format(unchanged))
 output.print_md('Skipped (missing/read-only BBM label): {}'.format(skipped))
-output.print_md('PYT CFM Updated: {}'.format(cfm_updated))
-output.print_md('PYT CFM Unchanged: {}'.format(cfm_unchanged))
-output.print_md('PYT CFM Skipped (missing/read-only PYT CFM): {}'.format(cfm_skipped))
 
 if errors:
     output.print_md('Errors: {}'.format(len(errors)))
     for elem, reason in errors:
-        output.print_md('- ID {}: {}'.format(output.linkify(elem.Id), reason))
+        try:
+            elem_id = _get_element_id_value(elem.Id)
+        except Exception:
+            elem_id = 'Unknown'
+        output.print_md('- ID {}: {}'.format(elem_id, reason))

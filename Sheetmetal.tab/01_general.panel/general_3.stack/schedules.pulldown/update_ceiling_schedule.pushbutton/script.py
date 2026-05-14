@@ -12,7 +12,7 @@ from pyrevit import revit, script
 
 # Button info
 # ======================================================================
-__title__ = 'Get ceiling data'
+__title__ = 'Schedule Ceiling Data'
 __doc__ = '''
 Lists all ceilings in the project with room/space and height data.
 '''
@@ -422,7 +422,8 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
             if should_replace_selected(existing, ceiling_data[-1]):
                 selected_ceiling_by_room_key[room_key] = ceiling_data[-1]
 
-    selected_ceiling_ids = set(item['ceiling_id_value'] for item in selected_ceiling_by_room_key.values())
+    selected_ceiling_ids = set(item['ceiling_id_value']
+                               for item in selected_ceiling_by_room_key.values())
 
     for room in rooms:
         room_name, room_number = read_name_number(room)
@@ -433,7 +434,8 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
             p_room_number = room.LookupParameter('_UMI_PYT_RoomNumber')
             p_ceiling_type = room.LookupParameter('_UMI_PYT_CeilingType')
             p_ceiling_height = room.LookupParameter('_UMI_PYT_CeilingHeight')
-            slot_type_params = [room.LookupParameter('_UMI_PYT_CeilingType{}'.format(i)) for i in CEILING_SLOT_INDEXES]
+            slot_type_params = [room.LookupParameter(
+                '_UMI_PYT_CeilingType{}'.format(i)) for i in CEILING_SLOT_INDEXES]
             slot_height_params = [room.LookupParameter('_UMI_PYT_CeilingHeight{}'.format(i))
                                   for i in CEILING_SLOT_INDEXES]
 
@@ -463,11 +465,13 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
                 else:
                     height_write_status = 'skipped: no selected ceiling'
 
-            ranked = ranked_room_ceilings(ceilings_by_room_key.get(room_key, []))
+            ranked = ranked_room_ceilings(
+                ceilings_by_room_key.get(room_key, []))
             for slot_idx in range(len(CEILING_SLOT_INDEXES)):
                 p_type_slot = slot_type_params[slot_idx]
                 p_height_slot = slot_height_params[slot_idx]
-                slot_item = ranked[slot_idx] if slot_idx < len(ranked) else None
+                slot_item = ranked[slot_idx] if slot_idx < len(
+                    ranked) else None
 
                 if slot_item and is_non_negative_height(slot_item['height_value']):
                     if p_type_slot:
@@ -488,7 +492,8 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
                 after_height = safe_as_string(p_ceiling_height)
                 storage_name = 'N/A'
                 try:
-                    storage_name = str(p_ceiling_height.StorageType) if p_ceiling_height else 'MISSING'
+                    storage_name = str(
+                        p_ceiling_height.StorageType) if p_ceiling_height else 'MISSING'
                 except Exception:
                     storage_name = 'UNKNOWN'
                 output.print_md(
@@ -513,7 +518,8 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
 
     # Sort ceiling data by room number for easier reading
     try:
-        ceiling_data.sort(key=lambda x: (room_sort_key(x['room_number']), x['idx']))
+        ceiling_data.sort(key=lambda x: (
+            room_sort_key(x['room_number']), x['idx']))
     except Exception:
         ceiling_data.sort(key=lambda x: x['room_number'])
 
@@ -551,12 +557,14 @@ with Transaction(doc, 'Update Ceiling Parameters') as txn:
                 'room_number': room_number,
             })
 
-    rooms_without_ceilings.sort(key=lambda item: room_sort_key(item['room_number']))
+    rooms_without_ceilings.sort(
+        key=lambda item: room_sort_key(item['room_number']))
 
     for item in rooms_without_ceilings:
         room_name = item['room_name']
         room_number = item['room_number']
-        output.print_md('### NO CEILING: Room {} | Type: OTS'.format(room_number))
+        output.print_md(
+            '### NO CEILING: Room {} | Type: OTS'.format(room_number))
         output.print_md('Room Name: {}'.format(room_name))
 
     txn.Commit()
