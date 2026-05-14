@@ -108,10 +108,18 @@ class EquipmentSelectionForm(Form):
         self.create_section_checkbox.Checked = True
         self.Controls.Add(self.create_section_checkbox)
 
+        btn_all = Button()
+        btn_all.Text = "Select All"
+        btn_all.Top = 470
+        btn_all.Left = 10
+        btn_all.Width = 120
+        btn_all.Click += self._on_select_all
+        self.Controls.Add(btn_all)
+
         btn_select = Button()
         btn_select.Text = "Create Views"
         btn_select.Top = 470
-        btn_select.Left = 10
+        btn_select.Left = 140
         btn_select.Width = 140
         btn_select.DialogResult = DialogResult.Yes
         self.Controls.Add(btn_select)
@@ -120,7 +128,7 @@ class EquipmentSelectionForm(Form):
         btn_cancel = Button()
         btn_cancel.Text = "Cancel"
         btn_cancel.Top = 470
-        btn_cancel.Left = 160
+        btn_cancel.Left = 290
         btn_cancel.Width = 120
         btn_cancel.DialogResult = DialogResult.Cancel
         self.Controls.Add(btn_cancel)
@@ -172,6 +180,18 @@ class EquipmentSelectionForm(Form):
         search = sender.Text.lower().strip()
         self._build_tree(search if search else None)
         self.tree_view.CollapseAll()
+
+    def _on_select_all(self, sender, args):
+        self._suppress_after_check = True
+        try:
+            for parent_node in self.tree_view.Nodes:
+                parent_node.Checked = True
+                for child_node in parent_node.Nodes:
+                    child_node.Checked = True
+                    if child_node.Tag and child_node.Tag[0] == "child":
+                        self.checked_families.add(child_node.Tag[1])
+        finally:
+            self._suppress_after_check = False
 
     def _on_node_checked(self, sender, args):
         if self._suppress_after_check:
@@ -294,6 +314,7 @@ def fit_bbox_to_padding_and_levels(bbox_min, bbox_max, xy_padding_ft=2.0):
         if z_top is None and elev >= bbox_max.Z:
             z_top = elev
 
+    # Apply fallback independently for each missing side.
     if z_bottom is None:
         z_bottom = bbox_min.Z - 2.0
     if z_top is None:
