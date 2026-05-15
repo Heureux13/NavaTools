@@ -36,9 +36,9 @@ from System.Windows.Forms import (
 
 # Button info
 # ======================================================================
-__title__ = 'Create Views'
+__title__ = 'Create Equipment Views'
 __doc__ = '''
-Select a Mechanical Equipment family and create 3D and optional section views
+Select a Mechanical Equipment family and create optional 3D and section views
 '''
 
 # Main Script
@@ -59,11 +59,12 @@ class _SilentOutput(object):
 output = script.get_output() if SHOW_LOG_WINDOW else _SilentOutput()
 
 templet_name_3d = 'FRANK 3D'
-templet_name_section = '1-SHEETS - MD - ALL'
+templet_name_section = '1-SHEETS - MD - ALL - JN - 3/8'
 section_view = '-Working View - Frank'
 
 # If True, use only templet_name_section and do not fall back to section type default template.
 FORCE_NAMED_SECTION_TEMPLATE = True
+ONE_INCH_FT = 1.0 / 12.0
 
 
 def log_md(message):
@@ -76,7 +77,7 @@ class EquipmentSelectionForm(Form):
         Form.__init__(self)
         self.Text = "Select Mechanical Equipment"
         self.Width = 700
-        self.Height = 560
+        self.Height = 630
         self.StartPosition = FormStartPosition.CenterScreen
 
         self.family_names = family_names
@@ -95,22 +96,38 @@ class EquipmentSelectionForm(Form):
         self.tree_view.Top = 40
         self.tree_view.Left = 10
         self.tree_view.Width = 660
-        self.tree_view.Height = 390
+        self.tree_view.Height = 380
         self.tree_view.CheckBoxes = True
         self.tree_view.AfterCheck += self._on_node_checked
         self.Controls.Add(self.tree_view)
 
-        self.create_section_checkbox = CheckBox()
-        self.create_section_checkbox.Text = "Create section views (North + East)"
-        self.create_section_checkbox.Top = 440
-        self.create_section_checkbox.Left = 10
-        self.create_section_checkbox.Width = 320
-        self.create_section_checkbox.Checked = True
-        self.Controls.Add(self.create_section_checkbox)
+        self.create_north_checkbox = CheckBox()
+        self.create_north_checkbox.Text = "Create horizontal section (North)"
+        self.create_north_checkbox.Top = 430
+        self.create_north_checkbox.Left = 10
+        self.create_north_checkbox.Width = 320
+        self.create_north_checkbox.Checked = True
+        self.Controls.Add(self.create_north_checkbox)
+
+        self.create_east_checkbox = CheckBox()
+        self.create_east_checkbox.Text = "Create vertical section (East)"
+        self.create_east_checkbox.Top = 455
+        self.create_east_checkbox.Left = 10
+        self.create_east_checkbox.Width = 320
+        self.create_east_checkbox.Checked = True
+        self.Controls.Add(self.create_east_checkbox)
+
+        self.create_3d_checkbox = CheckBox()
+        self.create_3d_checkbox.Text = "Create 3D view"
+        self.create_3d_checkbox.Top = 480
+        self.create_3d_checkbox.Left = 10
+        self.create_3d_checkbox.Width = 320
+        self.create_3d_checkbox.Checked = True
+        self.Controls.Add(self.create_3d_checkbox)
 
         btn_all = Button()
         btn_all.Text = "Select All"
-        btn_all.Top = 470
+        btn_all.Top = 520
         btn_all.Left = 10
         btn_all.Width = 120
         btn_all.Click += self._on_select_all
@@ -118,7 +135,7 @@ class EquipmentSelectionForm(Form):
 
         btn_select = Button()
         btn_select.Text = "Create Views"
-        btn_select.Top = 470
+        btn_select.Top = 520
         btn_select.Left = 140
         btn_select.Width = 140
         btn_select.DialogResult = DialogResult.Yes
@@ -127,7 +144,7 @@ class EquipmentSelectionForm(Form):
 
         btn_cancel = Button()
         btn_cancel.Text = "Cancel"
-        btn_cancel.Top = 470
+        btn_cancel.Top = 520
         btn_cancel.Left = 290
         btn_cancel.Width = 120
         btn_cancel.DialogResult = DialogResult.Cancel
@@ -151,8 +168,10 @@ class EquipmentSelectionForm(Form):
 
         for base_name in sorted(self.hierarchy.keys()):
             variants = self.hierarchy[base_name]
-            base_matches = (not search_filter) or (search_filter in base_name.lower())
-            variant_matches = [v for v in variants if (not search_filter) or (search_filter in v.lower())]
+            base_matches = (not search_filter) or (
+                search_filter in base_name.lower())
+            variant_matches = [v for v in variants if (
+                not search_filter) or (search_filter in v.lower())]
 
             if not base_matches and not variant_matches:
                 continue
@@ -221,7 +240,8 @@ class EquipmentSelectionForm(Form):
                 else:
                     self.checked_families.discard(value)
                     if node.Parent:
-                        parent_checked = any(c.Checked for c in node.Parent.Nodes)
+                        parent_checked = any(
+                            c.Checked for c in node.Parent.Nodes)
                         node.Parent.Checked = parent_checked
         finally:
             self._suppress_after_check = False
@@ -235,8 +255,14 @@ class EquipmentSelectionForm(Form):
                     selected.add(child_node.Tag[1])
         return sorted(selected)
 
-    def get_create_section(self):
-        return self.create_section_checkbox.Checked
+    def get_create_north_section(self):
+        return self.create_north_checkbox.Checked
+
+    def get_create_east_section(self):
+        return self.create_east_checkbox.Checked
+
+    def get_create_3d_view(self):
+        return self.create_3d_checkbox.Checked
 
 
 def get_family_name(elem):
@@ -329,6 +355,31 @@ def fit_bbox_to_padding_and_levels(bbox_min, bbox_max, xy_padding_ft=2.0):
     )
 
 
+def get_section_vertical_limits(bbox_min_z, bbox_max_z, offset_ft=ONE_INCH_FT):
+    levels = list(FilteredElementCollector(doc).OfClass(DB.Level).ToElements())
+    elevations = sorted([lvl.Elevation for lvl in levels])
+
+    level_below = None
+    level_above = None
+
+    for elev in elevations:
+        if elev <= bbox_min_z:
+            level_below = elev
+        if level_above is None and elev >= bbox_max_z:
+            level_above = elev
+
+    z_bottom = (
+        level_below + offset_ft) if level_below is not None else (bbox_min_z - offset_ft)
+    z_top = (level_above -
+             offset_ft) if level_above is not None else (bbox_max_z + offset_ft)
+
+    if z_top <= z_bottom:
+        z_bottom = bbox_min_z - 1.0
+        z_top = bbox_max_z + 1.0
+
+    return z_bottom, z_top
+
+
 def get_unique_view_name(base_name):
     existing = set()
     for view in FilteredElementCollector(doc).OfClass(View):
@@ -398,7 +449,8 @@ def get_default_template_from_view_type(view_family_type):
         return None
 
     try:
-        default_template_id = getattr(view_family_type, "DefaultTemplateId", ElementId.InvalidElementId)
+        default_template_id = getattr(
+            view_family_type, "DefaultTemplateId", ElementId.InvalidElementId)
         if default_template_id and default_template_id != ElementId.InvalidElementId:
             template_view = doc.GetElement(default_template_id)
             if template_view and getattr(template_view, "IsTemplate", False):
@@ -407,7 +459,8 @@ def get_default_template_from_view_type(view_family_type):
         pass
 
     try:
-        p = view_family_type.LookupParameter("View Template applied to new views")
+        p = view_family_type.LookupParameter(
+            "View Template applied to new views")
         if p:
             tid = p.AsElementId()
             if tid and tid != ElementId.InvalidElementId:
@@ -432,7 +485,8 @@ def set_default_template_on_view_type(view_family_type, template_view):
         pass
 
     try:
-        p = view_family_type.LookupParameter("View Template applied to new views")
+        p = view_family_type.LookupParameter(
+            "View Template applied to new views")
         if p and not p.IsReadOnly:
             p.Set(template_view.Id)
             return True
@@ -516,7 +570,8 @@ try:
     families_dict = {}
     for elem in mep_equipment:
         family_name = get_family_name(elem)
-        group_name = get_mark_or_family(elem, family_name if family_name else "(No Family)")
+        group_name = get_mark_or_family(
+            elem, family_name if family_name else "(No Family)")
         if not group_name:
             group_name = "(Unnamed)"
 
@@ -542,14 +597,21 @@ try:
         output.print_md("No families selected.")
         script.exit()
 
-    create_section = selection_form.get_create_section()
+    create_north_section = selection_form.get_create_north_section()
+    create_east_section = selection_form.get_create_east_section()
+    create_3d_view = selection_form.get_create_3d_view()
+
+    if not (create_north_section or create_east_section or create_3d_view):
+        output.print_md("No view types selected.")
+        script.exit()
 
     view_family_3d = get_view_family_type(doc, ViewFamily.ThreeDimensional)
-    view_family_section = get_view_family_type_by_name(doc, ViewFamily.Section, section_view)
+    view_family_section = get_view_family_type_by_name(
+        doc, ViewFamily.Section, section_view)
     if not view_family_section:
         view_family_section = get_view_family_type(doc, ViewFamily.Section)
 
-    if not view_family_3d:
+    if create_3d_view and not view_family_3d:
         output.print_md("Could not find 3D view family type.")
         script.exit()
 
@@ -562,7 +624,8 @@ try:
         forms.alert("Section template '{}' was not found. Update templet_name_section or disable FORCE_NAMED_SECTION_TEMPLATE.".format(
             templet_name_section), title="Create Views Warning")
     for tpl in named_section_templates:
-        already_added = any(existing.Id == tpl.Id for existing in section_template_candidates)
+        already_added = any(
+            existing.Id == tpl.Id for existing in section_template_candidates)
         if not already_added:
             section_template_candidates.append(tpl)
 
@@ -570,12 +633,14 @@ try:
     # 1) Prefer a section view type that already defaults to the named template.
     # 2) Otherwise try to rewrite the selected section type default template.
     if FORCE_NAMED_SECTION_TEMPLATE and view_family_section and section_template_candidates:
-        preferred_section_type = get_section_view_type_by_default_template_name(doc, templet_name_section)
+        preferred_section_type = get_section_view_type_by_default_template_name(
+            doc, templet_name_section)
         if preferred_section_type:
             view_family_section = preferred_section_type
         else:
             with revit.Transaction("Set Section View Type Default Template"):
-                set_ok = set_default_template_on_view_type(view_family_section, section_template_candidates[0])
+                set_ok = set_default_template_on_view_type(
+                    view_family_section, section_template_candidates[0])
             if not set_ok:
                 forms.alert(
                     "Could not set default template '{}' on section type '{}'. Revit may be locking this type/template relationship.".format(
@@ -585,12 +650,14 @@ try:
 
     # Priority 2 (optional): template attached to selected section view type.
     if not FORCE_NAMED_SECTION_TEMPLATE:
-        section_type_default_template = get_default_template_from_view_type(view_family_section)
+        section_type_default_template = get_default_template_from_view_type(
+            view_family_section)
         if section_type_default_template:
             already_added = any(
                 existing.Id == section_type_default_template.Id for existing in section_template_candidates)
             if not already_added:
-                section_template_candidates.append(section_type_default_template)
+                section_template_candidates.append(
+                    section_type_default_template)
 
     all_element_ids = []
     total_section_views = 0
@@ -609,34 +676,41 @@ try:
 
         bbox_min, bbox_max = build_combined_bbox(elements)
         if not (bbox_min and bbox_max):
-            output.print_md("Could not build a bounding box for family **{}**. Skipping.".format(selected_family))
+            output.print_md(
+                "Could not build a bounding box for family **{}**. Skipping.".format(selected_family))
             continue
 
-        fitted_min, fitted_max = fit_bbox_to_padding_and_levels(bbox_min, bbox_max, 2.0)
+        fitted_min, fitted_max = fit_bbox_to_padding_and_levels(
+            bbox_min, bbox_max, 2.0)
+        section_bottom_z, section_top_z = get_section_vertical_limits(
+            bbox_min.Z, bbox_max.Z)
         desired_3d_name = "3D - {}".format(view_base_name)
         section_views = []
         new_3d_view = None
 
         with revit.Transaction("Create Mechanical Equipment Views - {}".format(selected_family)):
-            existing_3d = find_view_by_name(desired_3d_name)
-            if existing_3d:
-                new_3d_view = existing_3d
-                if template_view:
-                    try:
-                        if new_3d_view.IsValidViewTemplate(template_view.Id):
-                            new_3d_view.ViewTemplateId = template_view.Id
-                    except BaseException:
-                        pass
-            else:
-                new_3d_view = View3D.CreateIsometric(doc, view_family_3d.Id)
-                new_3d_view.Name = desired_3d_name
+            if create_3d_view:
+                existing_3d = find_view_by_name(desired_3d_name)
+                if existing_3d:
+                    new_3d_view = existing_3d
+                    if template_view:
+                        try:
+                            if new_3d_view.IsValidViewTemplate(template_view.Id):
+                                new_3d_view.ViewTemplateId = template_view.Id
+                        except BaseException:
+                            pass
+                else:
+                    new_3d_view = View3D.CreateIsometric(
+                        doc, view_family_3d.Id)
+                    new_3d_view.Name = desired_3d_name
 
-                if template_view:
-                    new_3d_view.ViewTemplateId = template_view.Id
-                new_3d_view.IsSectionBoxActive = False
-                prepare_view_visibility(new_3d_view, clear_template=(template_view is None))
+                    if template_view:
+                        new_3d_view.ViewTemplateId = template_view.Id
+                    new_3d_view.IsSectionBoxActive = False
+                    prepare_view_visibility(
+                        new_3d_view, clear_template=(template_view is None))
 
-            if create_section:
+            if create_north_section or create_east_section:
                 if view_family_section:
                     center = XYZ(
                         (fitted_min.X + fitted_max.X) / 2.0,
@@ -645,38 +719,44 @@ try:
                     )
                     half_x = (fitted_max.X - fitted_min.X) / 2.0
                     half_y = (fitted_max.Y - fitted_min.Y) / 2.0
-                    half_h = (fitted_max.Z - fitted_min.Z) / 2.0
 
-                    section_defs = [
-                        {
+                    section_defs = []
+
+                    if create_north_section:
+                        section_defs.append({
                             "label": "North",
                             "bx": XYZ(1, 0, 0),
                             "by": XYZ(0, 0, 1),
                             "bz": XYZ(0, 1, 0),
                             "half_w": half_x,
                             "depth": half_y * 2,
-                        },
-                        {
+                        })
+
+                    if create_east_section:
+                        section_defs.append({
                             "label": "East",
                             "bx": XYZ(0, -1, 0),
                             "by": XYZ(0, 0, 1),
                             "bz": XYZ(1, 0, 0),
                             "half_w": half_y,
                             "depth": half_x * 2,
-                        },
-                    ]
+                        })
 
                     for sdef in section_defs:
-                        desired_section_name = "{} - Section {}".format(view_base_name, sdef["label"])
-                        existing_section = find_view_by_name(desired_section_name)
+                        desired_section_name = "{} - Section {}".format(
+                            view_base_name, sdef["label"])
+                        existing_section = find_view_by_name(
+                            desired_section_name)
                         if existing_section:
                             try:
                                 if existing_section.ViewType == DB.ViewType.Section:
-                                    apply_section_view_type(existing_section, view_family_section)
+                                    apply_section_view_type(
+                                        existing_section, view_family_section)
                             except BaseException:
                                 pass
                             if section_template_candidates:
-                                apply_first_valid_template(existing_section, section_template_candidates)
+                                apply_first_valid_template(
+                                    existing_section, section_template_candidates)
                             continue
 
                         t = Transform.Identity
@@ -685,12 +765,26 @@ try:
                         t.BasisZ = sdef["bz"]
                         t.Origin = center
 
+                        # Section vertical extents follow adjacent levels with 1-inch offsets.
+                        p_bottom = XYZ(center.X, center.Y, section_bottom_z)
+                        p_top = XYZ(center.X, center.Y, section_top_z)
+                        local_bottom_y = t.Inverse.OfPoint(p_bottom).Y
+                        local_top_y = t.Inverse.OfPoint(p_top).Y
+
+                        if local_top_y <= local_bottom_y:
+                            old_bottom_y = local_bottom_y
+                            old_top_y = local_top_y
+                            local_bottom_y = min(old_bottom_y, old_top_y)
+                            local_top_y = max(old_bottom_y, old_top_y)
+
                         sbox = BoundingBoxXYZ()
                         sbox.Transform = t
-                        sbox.Min = XYZ(-sdef["half_w"], -half_h, 0)
-                        sbox.Max = XYZ(sdef["half_w"], half_h, sdef["depth"])
+                        sbox.Min = XYZ(-sdef["half_w"], local_bottom_y, 0)
+                        sbox.Max = XYZ(
+                            sdef["half_w"], local_top_y, sdef["depth"])
 
-                        sv = ViewSection.CreateSection(doc, view_family_section.Id, sbox)
+                        sv = ViewSection.CreateSection(
+                            doc, view_family_section.Id, sbox)
                         sv.Name = desired_section_name
 
                         # Enforce configured section view type so type-based callout/tag settings match.
@@ -698,7 +792,8 @@ try:
 
                         applied_section_template = None
                         if section_template_candidates:
-                            applied_section_template = apply_first_valid_template(sv, section_template_candidates)
+                            applied_section_template = apply_first_valid_template(
+                                sv, section_template_candidates)
                         if not applied_section_template:
                             prepare_view_visibility(sv, clear_template=True)
 
