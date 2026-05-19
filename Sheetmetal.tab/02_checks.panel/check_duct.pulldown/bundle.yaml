@@ -7,5 +7,7 @@ layout:
   - check_duct_offsets
   - check_duct_taps
   - -----
-  - check_number_fabrication
-  - check_number_item
+  - check_number_fabrication_duplicates
+  - check_number_item_duplicates
+  - ----
+  - view_item_numbers

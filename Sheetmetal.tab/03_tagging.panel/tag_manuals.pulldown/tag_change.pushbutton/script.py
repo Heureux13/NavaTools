@@ -8,17 +8,7 @@ the copyright holder."""
 # ======================================================================
 
 from constants.print_outputs import print_disclaimer
-from System.Windows.Forms import (
-    Form,
-    Label,
-    Button,
-    DialogResult,
-    TextBox,
-    TreeView,
-    TreeNode,
-)
-from System.Collections.Generic import List
-from Autodesk.Revit.UI import TaskDialog
+from pyrevit import revit, script
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
     IndependentTag,
@@ -26,7 +16,18 @@ from Autodesk.Revit.DB import (
     ElementId,
     BuiltInParameter,
 )
-from pyrevit import revit, script
+from Autodesk.Revit.UI import TaskDialog
+from System.Collections.Generic import List
+from System.Windows.Forms import (
+    Form,
+    Label,
+    Button,
+    DialogResult,
+    FormStartPosition,
+    TextBox,
+    TreeView,
+    TreeNode,
+)
 import clr
 import re
 
@@ -160,6 +161,7 @@ class AnnotationTypePicker(Form):
     def __init__(self, title, prompt, catalog, show_counts=False):
         Form.__init__(self)
         self.Text = title
+        self.StartPosition = FormStartPosition.CenterScreen
         self.Width = 760
         self.Height = 760
         self.catalog = catalog
@@ -172,23 +174,25 @@ class AnnotationTypePicker(Form):
         self.lbl_prompt.Top = 10
         self.lbl_prompt.Left = 20
         self.lbl_prompt.Width = 700
+        self.lbl_prompt.Height = 42
+        self.lbl_prompt.AutoSize = False
         self.Controls.Add(self.lbl_prompt)
 
         self.search_box = TextBox()
-        self.search_box.Top = 35
+        self.search_box.Top = 55
         self.search_box.Left = 20
         self.search_box.Width = 700
         self.search_box.TextChanged += self._on_search_changed
         self.Controls.Add(self.search_box)
 
         self.tree_view = TreeView()
-        self.tree_view.Top = 65
+        self.tree_view.Top = 85
         self.tree_view.Left = 20
         self.tree_view.Width = 700
-        self.tree_view.Height = 610
+        self.tree_view.Height = 590
         self.tree_view.HideSelection = False
-        self.tree_view.AfterSelect += self._on_after_select
-        self.tree_view.NodeMouseDoubleClick += self._on_double_click
+        self.tree_view.CheckBoxes = True
+        self.tree_view.AfterCheck += self._on_after_check
         self.Controls.Add(self.tree_view)
 
         self.lbl_selected = Label()
@@ -257,34 +261,62 @@ class AnnotationTypePicker(Form):
             if cat_node.Nodes.Count > 0:
                 self.tree_view.Nodes.Add(cat_node)
 
-        self.tree_view.ExpandAll()
+        # Keep tree collapsed by default so users opt into expanded branches.
+        self.tree_view.CollapseAll()
 
     def _on_search_changed(self, sender, args):
         self._build_tree(sender.Text)
 
-    def _on_after_select(self, sender, args):
+    def _on_after_check(self, sender, args):
         node = args.Node
-        if not node or not node.Tag or node.Tag[0] != "type":
+        if node is None:
+            return
+
+        # Prevent recursive check events while we propagate parent checks.
+        self.tree_view.AfterCheck -= self._on_after_check
+        try:
+            if node.Tag and node.Tag[0] in ("category", "family"):
+                for child in node.Nodes:
+                    child.Checked = node.Checked
+        finally:
+            self.tree_view.AfterCheck += self._on_after_check
+
+        checked_types = self.get_checked_type_nodes()
+        if len(checked_types) == 1:
+            _, type_id, cat_name, family_name, type_name = checked_types[0].Tag
+            self.selected_type_id = int(type_id)
+            self.selected_label = "{} | {} | {}".format(cat_name, family_name, type_name)
+            self.lbl_selected.Text = "Selected: {}".format(self.selected_label)
+        elif len(checked_types) == 0:
             self.selected_type_id = None
             self.selected_label = ""
             self.lbl_selected.Text = "Selected: none"
-            return
+        else:
+            self.selected_type_id = None
+            self.selected_label = ""
+            self.lbl_selected.Text = "Selected: {} type nodes".format(len(checked_types))
 
-        _, type_id, cat_name, family_name, type_name = node.Tag
-        self.selected_type_id = int(type_id)
-        self.selected_label = "{} | {} | {}".format(cat_name, family_name, type_name)
-        self.lbl_selected.Text = "Selected: {}".format(self.selected_label)
+    def get_checked_type_nodes(self):
+        checked = []
 
-    def _on_double_click(self, sender, args):
-        node = args.Node
-        if node and node.Tag and node.Tag[0] == "type":
-            self.DialogResult = DialogResult.OK
-            self.Close()
+        for cat_node in self.tree_view.Nodes:
+            for fam_node in cat_node.Nodes:
+                for type_node in fam_node.Nodes:
+                    if type_node.Checked and type_node.Tag and type_node.Tag[0] == "type":
+                        checked.append(type_node)
+
+        return checked
 
     def _on_ok_clicked(self, sender, args):
-        if self.selected_type_id is None:
-            TaskDialog.Show("Select Type", "Pick a type node before clicking Select.")
+        checked_types = self.get_checked_type_nodes()
+        if len(checked_types) != 1:
+            TaskDialog.Show("Select Type", "Check exactly one type node before clicking Select.")
             self.DialogResult = getattr(DialogResult, "None")
+            return
+
+        _, type_id, cat_name, family_name, type_name = checked_types[0].Tag
+        self.selected_type_id = int(type_id)
+        self.selected_label = "{} | {} | {}".format(cat_name, family_name, type_name)
 
 
 def collect_view_independent_tags(doc_obj, view_obj):
@@ -384,10 +416,12 @@ try:
     if source_type_id is None:
         script.exit()
 
+    source_display = src_form.selected_label or "Type ID {}".format(source_type_id)
+
     target_catalog = build_type_catalog(all_tag_types, counts_by_type_id=None)
     tgt_form = AnnotationTypePicker(
         "Choose Replacement Annotation",
-        "Step 2: Select the annotation type to swap to (from all project tag types).",
+        "Step 2: Change FROM [{}]. Select the annotation type to swap TO (from all project tag types).".format(source_display),
         target_catalog,
         show_counts=False,
     )
