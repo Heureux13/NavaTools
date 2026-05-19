@@ -173,7 +173,8 @@ class RevitTagging:
                 return ts
 
         if not allow_fallback:
-            raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
+            raise LookupError(
+                "No label found with family '{}' and type '{}'".format(family_name, type_name))
 
         for ts in self.tag_syms:
             fam_name, ts_name, pool = self._tag_pool(ts)
@@ -185,7 +186,8 @@ class RevitTagging:
             if fam_lower in pool and typ_lower in pool:
                 return ts
 
-        raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
+        raise LookupError(
+            "No label found with family '{}' and type '{}'".format(family_name, type_name))
 
     def _find_compatible_tag_type_id(self, tag_object, annotation_type):
         """Return a valid type id for tag matching the requested tag symbol, if any."""
@@ -218,7 +220,8 @@ class RevitTagging:
                 pass
 
         requested_type = self.doc.GetElement(requested_id)
-        req_fam, req_typ, req_pool = self._tag_pool(requested_type or annotation_type)
+        req_fam, req_typ, req_pool = self._tag_pool(
+            requested_type or annotation_type)
         req_fam = req_fam.strip().lower()
         req_typ = req_typ.strip().lower()
         req_pool = req_pool.strip().lower()
@@ -579,6 +582,47 @@ class RevitTagging:
                 continue
 
         return fams
+
+    def get_existing_tag_type_ids(self, elem):
+        """Return tag type ids already placed on elem in this view."""
+        type_ids = set()
+        if elem is None:
+            return type_ids
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tagged_ids = None
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+
+                if not tagged_ids or elem.Id not in tagged_ids:
+                    continue
+
+                tag_type_id = itag.GetTypeId()
+                if tag_type_id is None:
+                    continue
+
+                value = getattr(tag_type_id, "Value", None)
+                if value is not None:
+                    type_ids.add(int(value))
+                    continue
+
+                integer_value = getattr(tag_type_id, "IntegerValue", None)
+                if integer_value is not None:
+                    type_ids.add(int(integer_value))
+            except Exception:
+                continue
+
+        return type_ids
 
     def build_existing_tag_family_map(self, elements=None):
         """

@@ -11,9 +11,11 @@ the copyright holder."""
 # ==================================================
 from Autodesk.Revit.DB import Transaction
 from pyrevit import revit, forms, DB, script
-from ducts.revit_duct import RevitDuct, JointSize, DuctAngleAllowance
+from ducts.revit_duct import RevitDuct, DuctAngleAllowance
 from ducts.revit_xyz import RevitXYZ
 from tagging.revit_tagging import RevitTagging
+from tagging.revit_tagging_joints import Joints
+from tagging.tag_config import SLOT_LENGTH, SLOT_STACK
 from constants.print_outputs import print_disclaimer
 
 # Button info
@@ -31,9 +33,7 @@ doc = revit.doc  # type: Document
 output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
-DEFAULT_SHORT_THRESHOLD_IN = 56.0
-PROGRESS_EVERY = 500
-BATCH_SIZE = 200
+joint_tagger = Joints(doc=doc, view=view, tagger=tagger)
 
 # View determination
 # ==================================================
@@ -44,114 +44,77 @@ elif view.ViewType == DB.ViewType.Section:
 else:
     current_view_type = "other"
 
+# Custom families for this script (different thresholds than default)
+joint_tagger.ELEMENT_FAMILIES = {
+    'straight': None,
+    'spiral': 6,
+    'spiral duct': 6,
+}
+joint_tagger.DEFAULT_SHORT_THRESHOLD_IN = 56.0
+
 # Collect ducts in view
 # ==================================================
 ducts = RevitDuct.all(doc, view)
 if not ducts:
     forms.alert("No ducts found in the current view", exitscript=True)
 
-
-# Cutoff lengths for no tags, if shorter than magic number, then dont tag
-element_families = {
-    'straight': None,
-    'spiral': 6,
-    'spiral duct': 6,
-}
-
-# Named parameters = Value that skips tagging if matches
-skip_parameters = {
-    'mark': ['skip', 'skip n/a'],
-}
-
-
-tag_family_name = [
-    "-FabDuct_LENGTH_FIX_Tag",
-    "_umi_length",
-]
-
-
-def should_skip_by_param(element, param_rules):
-    for param_name, skip_values in param_rules.items():
-        param = element.LookupParameter(param_name)
-        if not param:
-            continue
-        raw_val = None
-        try:
-            raw_val = param.AsString()
-        except Exception:
-            raw_val = None
-        if not raw_val:
-            try:
-                raw_val = param.AsValueString()
-            except Exception:
-                raw_val = None
-        if raw_val is None:
-            continue
-        val = raw_val.strip().lower()
-        if val in {v.strip().lower() for v in skip_values}:
-            return True, param_name, raw_val
-    return False, None, None
-
+# Slots to check for existing tags (skip if already tagged with these)
+skip_if_tagged_with = [SLOT_LENGTH, SLOT_STACK]
 
 # Choose tag
 # ==================================================
 tag = None
-for _name in tag_family_name:
+# Resolve from shared slot config in tagging classes.
+tag_candidates = joint_tagger.TAG_SLOT_CANDIDATES.get(SLOT_LENGTH, [])
+for candidate in tag_candidates:
     try:
-        tag = tagger.get_label(_name)
+        if isinstance(candidate, tuple):
+            family_name = str(candidate[0]).strip()
+            type_name = str(candidate[1]).strip() if len(candidate) > 1 else ''
+            if family_name and type_name:
+                tag = tagger.get_label_exact(
+                    family_name, type_name, allow_fallback=False)
+            elif family_name:
+                tag = tagger.get_label(family_name)
+            else:
+                continue
+        else:
+            tag = tagger.get_label(str(candidate).strip())
         break
     except LookupError:
         continue
 if tag is None:
+    tag_names = []
+    for candidate in tag_candidates:
+        if isinstance(candidate, tuple):
+            fam = str(candidate[0]).strip()
+            typ = str(candidate[1]).strip() if len(candidate) > 1 else ''
+            tag_names.append("{}::{}".format(fam, typ) if typ else fam)
+        else:
+            tag_names.append(str(candidate).strip())
     forms.alert(
-        "No tag family found. Tried:\n" + "\n".join(tag_family_name) +
+        "No tag family found for SLOT_LENGTH. Tried:\n" + "\n".join(tag_names) +
         "\n\nMake sure one of these tag families is loaded in the project.",
         exitscript=True
     )
 
-# Filtered results
+# Filter ducts with base filtering
+# ==================================================
+fil_ducts_base, skipped_by_param = joint_tagger.filter_ducts(ducts)
+
+# Additional filtering: spiral length and angle-based filtering
 # ==================================================
 fil_ducts = []
-skipped_by_param = []
-for d in ducts:
-    # Check if family matches allowed families
+for d in fil_ducts_base:
     fam = (d.family or "").strip().lower()
-    if fam not in element_families:
-        continue
-
-    # Skip when parameter exists and matches skip list
-    skip_param, skip_name, skip_val = should_skip_by_param(
-        d.element, skip_parameters)
-    if skip_param:
-        skipped_by_param.append((d, skip_name, skip_val))
-        continue
-
-    # Check minimum length threshold for this family
-    min_length = element_families.get(fam)
-    if min_length is not None:
-        length_val = d.length
-        # Handle different length types (float, int, or string)
-        if length_val is not None:
-            try:
-                if isinstance(length_val, str):
-                    length_val = float(length_val)
-                if isinstance(length_val, (int, float)) and length_val <= min_length:
-                    continue
-            except (ValueError, TypeError):
-                pass
 
     # Spiral parts should be considered short up to 10'-0" regardless of
     # connector metadata quality; this avoids false negatives in joint_size.
     if fam in ('spiral', 'spiral duct'):
         if d.length is None or d.length > 120.0:
             continue
-    else:
-        joint_size = d.joint_size
-        if joint_size == JointSize.INVALID:
-            if d.length is None or d.length > DEFAULT_SHORT_THRESHOLD_IN:
-                continue
-        elif joint_size != JointSize.SHORT:
-            continue
+
+    # Angle-based filtering based on view type
     angle = RevitXYZ(d.element).straight_joint_degree()
     if isinstance(angle, (int, float)):
         abs_angle = abs(angle)
@@ -161,6 +124,7 @@ for d in ducts:
         elif current_view_type == "section":
             if DuctAngleAllowance.HORIZONTAL.contains(abs_angle):
                 continue
+
     fil_ducts.append(d)
 
 # Transaction
@@ -171,68 +135,31 @@ could_not_place = []
 t = Transaction(doc, "Short Joints Tag")
 t.Start()
 try:
-    # Get tag family name once
-    tag_fam_name = (
-        tag.Family.Name if tag and tag.Family else "").strip().lower()
-
     # Begins our tagging process
     tagged_count = 0
     batch_count = 0
     for d in fil_ducts:
-        # Get existing tag families for this element
-        existing_tag_fams = tagger.get_existing_tag_families(d.element)
-
-        # Check if already tagged with this tag family
-        if tag_fam_name in existing_tag_fams:
+        # Check if already tagged with any of the skip slots
+        if joint_tagger.is_tagged_with_slots(d.element, skip_if_tagged_with):
             already_tagged.append(d)
             continue
 
-        loc = d.element.Location
-        if hasattr(loc, "Point") and loc.Point is not None:
-            tagger.place_tag(d.element, tag, loc.Point)
+        # Place tag (without rotation for this script)
+        placed_tag = joint_tagger.place_tag_with_rotation(
+            d, tag, attempt_rotation=False)
+        if placed_tag is not None:
             newly_tagged.append(d)
             tagged_count += 1
             batch_count += 1
-            if tagged_count % PROGRESS_EVERY == 0:
+            if tagged_count % Joints.PROGRESS_EVERY == 0:
                 output.print_md("Tagged {} so far...".format(tagged_count))
-            if batch_count >= BATCH_SIZE:
+            if batch_count >= Joints.BATCH_SIZE:
                 t.Commit()
                 t = Transaction(doc, "Short Joints Tag")
                 t.Start()
                 batch_count = 0
-            continue
-        if hasattr(loc, "Curve") and loc.Curve is not None:
-            curve = loc.Curve
-            midpoint = curve.Evaluate(0.5, True)
-            tagger.place_tag(d.element, tag, midpoint)
-            newly_tagged.append(d)
-            tagged_count += 1
-            batch_count += 1
-            if tagged_count % PROGRESS_EVERY == 0:
-                output.print_md("Tagged {} so far...".format(tagged_count))
-            if batch_count >= BATCH_SIZE:
-                t.Commit()
-                t = Transaction(doc, "Short Joints Tag")
-                t.Start()
-                batch_count = 0
-            continue
-
-        ref, centroid = tagger.get_face_facing_view(d.element)
-        if ref is not None and centroid is not None:
-            tagger.place_tag(ref, tag, centroid)
-            newly_tagged.append(d)
-            tagged_count += 1
-            batch_count += 1
-            if tagged_count % PROGRESS_EVERY == 0:
-                output.print_md("Tagged {} so far...".format(tagged_count))
-            if batch_count >= BATCH_SIZE:
-                t.Commit()
-                t = Transaction(doc, "Short Joints Tag")
-                t.Start()
-                batch_count = 0
-            continue
-
-        could_not_place.append(d)
+        else:
+            could_not_place.append(d)
 
     # Print newly tagged list first
     if newly_tagged:
