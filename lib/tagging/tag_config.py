@@ -173,16 +173,16 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQP_EquipmentPad', 'Black'),
     ],
     SLOT_EXT_BOT: [
-        ('_Tag.DCT_ExtensionBottom', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Bottom'),
     ],
     SLOT_EXT_LEFT: [
-        ('_Tag.DCT_ExtensionLeft', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Left'),
     ],
     SLOT_EXT_RIGHT: [
-        ('_Tag.DCT_ExtensionRight', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Right'),
     ],
     SLOT_EXT_TOP: [
-        ('_Tag.DCT_ExtensionTop', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Top'),
     ],
     SLOT_FAN: [
         ('_Tag.EQP_Fan', 'Black'),

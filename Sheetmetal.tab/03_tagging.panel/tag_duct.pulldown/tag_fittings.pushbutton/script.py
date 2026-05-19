@@ -25,6 +25,12 @@ __doc__ = """
 Tag all fitting with assosiated label
 """
 
+# Rule toggles
+# ==================================================
+# True: skip extension tags on elbows with vertical connector movement.
+# False: allow extension tags on vertical elbows.
+SKIP_VERTICAL_ELBOW_EXTENSION_TAGS = False
+
 # Revit context
 # ==================================================
 app = __revit__.Application  # type: Application
@@ -34,6 +40,7 @@ output = script.get_output()
 view = revit.active_view
 tagger = RevitTagging(doc=doc, view=view)
 
+Fittings.skip_vertical_movement_on_extensions = SKIP_VERTICAL_ELBOW_EXTENSION_TAGS
 fittings = Fittings(doc=doc, view=view, tagger=tagger)
 
 
@@ -87,7 +94,8 @@ try:
 
         fittings.update_write_parameter_from_hierarchy(d.element)
 
-        removed_count = fittings.delete_skipped_tags_for_element(d, tag_configs)
+        removed_count = fittings.delete_skipped_tags_for_element(
+            d, tag_configs)
         if removed_count:
             auto_removed.append((d, removed_count))
 
@@ -104,7 +112,8 @@ try:
             fam_name = (fam_name or '').strip().lower()
             if fam_name:
                 requested_tag_fams.add(fam_name)
-        has_matching_existing_tag = bool(existing_tag_fams & requested_tag_fams)
+        has_matching_existing_tag = bool(
+            existing_tag_fams & requested_tag_fams)
 
         tagged_this_element = False
         placement_failed_reason = None

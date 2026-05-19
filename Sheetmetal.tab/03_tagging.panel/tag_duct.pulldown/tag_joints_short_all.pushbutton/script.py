@@ -62,8 +62,7 @@ skip_parameters = {
 }
 
 tag_family_name = [
-    "-FabDuct_LENGTH_FIX_Tag",
-    "_umi_lenght",
+    "_Tag.DCT_Length",
 ]
 
 
