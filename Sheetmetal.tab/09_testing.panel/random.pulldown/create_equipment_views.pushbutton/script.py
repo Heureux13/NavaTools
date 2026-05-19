@@ -106,7 +106,7 @@ class EquipmentSelectionForm(Form):
         self.create_north_checkbox.Top = 430
         self.create_north_checkbox.Left = 10
         self.create_north_checkbox.Width = 320
-        self.create_north_checkbox.Checked = True
+        self.create_north_checkbox.Checked = False
         self.Controls.Add(self.create_north_checkbox)
 
         self.create_east_checkbox = CheckBox()
@@ -114,7 +114,7 @@ class EquipmentSelectionForm(Form):
         self.create_east_checkbox.Top = 455
         self.create_east_checkbox.Left = 10
         self.create_east_checkbox.Width = 320
-        self.create_east_checkbox.Checked = True
+        self.create_east_checkbox.Checked = False
         self.Controls.Add(self.create_east_checkbox)
 
         self.create_3d_checkbox = CheckBox()
@@ -122,7 +122,8 @@ class EquipmentSelectionForm(Form):
         self.create_3d_checkbox.Top = 480
         self.create_3d_checkbox.Left = 10
         self.create_3d_checkbox.Width = 320
-        self.create_3d_checkbox.Checked = True
+        self.create_3d_checkbox.Checked = False
+
         self.Controls.Add(self.create_3d_checkbox)
 
         btn_all = Button()
