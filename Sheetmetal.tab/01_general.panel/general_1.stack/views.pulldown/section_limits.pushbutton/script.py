@@ -81,19 +81,19 @@ all_levels = sorted(
     DB.FilteredElementCollector(doc).OfClass(DB.Level).ToElements(),
     key=lambda l: l.Elevation
 )
-level_dict = {
-    '{}   ({})'.format(l.Name, ft_to_ft_in(l.Elevation)): l
-    for l in all_levels
-}
+level_names = ['{}   ({})'.format(l.Name, ft_to_ft_in(l.Elevation))
+               for l in all_levels]
+
 selected_key = forms.SelectFromList.show(
-    list(level_dict.keys()),
+    level_names,
     title='Select Reference Level',
-    multiselect=False
+    multiselect=False,
+    sort_keys=False
 )
 if not selected_key:
     script.exit()
 
-ref_level = level_dict[selected_key]
+ref_level = all_levels[level_names.index(selected_key)]
 level_elev = ref_level.Elevation  # internal feet
 
 
@@ -151,14 +151,16 @@ with revit.Transaction('Set Section {} Limit'.format(edge)):
         if edge == 'Top':
             # Guard: top must stay above current bottom
             if new_local_y <= crop_box.Min.Y:
-                skipped.append('{} (new top would be at or below current bottom)'.format(view.Name))
+                skipped.append(
+                    '{} (new top would be at or below current bottom)'.format(view.Name))
                 continue
             new_min = crop_box.Min
             new_max = DB.XYZ(crop_box.Max.X, new_local_y, crop_box.Max.Z)
         else:
             # Guard: bottom must stay below current top
             if new_local_y >= crop_box.Max.Y:
-                skipped.append('{} (new bottom would be at or above current top)'.format(view.Name))
+                skipped.append(
+                    '{} (new bottom would be at or above current top)'.format(view.Name))
                 continue
             new_min = DB.XYZ(crop_box.Min.X, new_local_y, crop_box.Min.Z)
             new_max = crop_box.Max
@@ -178,8 +180,10 @@ with revit.Transaction('Set Section {} Limit'.format(edge)):
 # ── 7. Report ─────────────────────────────────────────────────────────
 output.print_md('## Section Limits Applied')
 output.print_md('**Edge:** {}'.format(edge))
-output.print_md('**Level:** {}  @ {}'.format(ref_level.Name, ft_to_ft_in(level_elev)))
-output.print_md('**Direction:** {} by {} in  →  {}'.format(direction, offset_in, ft_to_ft_in(target_z)))
+output.print_md(
+    '**Level:** {}  @ {}'.format(ref_level.Name, ft_to_ft_in(level_elev)))
+output.print_md('**Direction:** {} by {} in  →  {}'.format(direction,
+                offset_in, ft_to_ft_in(target_z)))
 output.print_md('---')
 
 if updated:

@@ -69,6 +69,9 @@ class Fittings:
 
     elbow_throat_allowances = {'tdf': 6, 's&d': 6}
 
+    # Skip extension tags on vertical elbows (dz > 0.01 ft)
+    skip_vertical_movement_on_extensions = True
+
     elbow_families = {
         'elbow',
         'elbow 90 degree',
@@ -149,7 +152,8 @@ class Fittings:
             x) for x in self.family_to_angle_skip}
 
         # Build extension/degree tag sets from resolved slot candidates.
-        _ext_slots = (self.SLOT_EXT_BOT, self.SLOT_EXT_TOP, self.SLOT_EXT_LEFT, self.SLOT_EXT_RIGHT)
+        _ext_slots = (self.SLOT_EXT_BOT, self.SLOT_EXT_TOP,
+                      self.SLOT_EXT_LEFT, self.SLOT_EXT_RIGHT)
         self._norm_ext_tags_by_slot = {
             slot: {
                 self._candidate_pool_needle(name)
@@ -305,7 +309,8 @@ class Fittings:
             attempted_names.append(label)
             try:
                 if fam is not None:
-                    tag = self.tagger.get_label_exact(fam, typ, allow_fallback=False)
+                    tag = self.tagger.get_label_exact(
+                        fam, typ, allow_fallback=False)
                 else:
                     tag = self.tagger.get_label(label)
             except LookupError:
@@ -630,7 +635,7 @@ class Fittings:
                 return '45/90 angle rule'
 
         # Extension tags: skip for any elbow with vertical movement.
-        if fam in self._norm_elbow_fam and self._is_extension_tag(tag):
+        if self.skip_vertical_movement_on_extensions and fam in self._norm_elbow_fam and self._is_extension_tag(tag):
             if self._connector_dz(duct.element) > 0.01:
                 return 'Vertical connector movement rule'
 

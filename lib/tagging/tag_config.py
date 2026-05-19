@@ -14,6 +14,7 @@ SLOT_ENDCAP_TDF             = 'ENDCAP_TDF'
 SLOT_OFFSET                 = 'OFFSET'
 SLOT_TAP                    = 'TAP'
 SLOT_TRANSITION             = 'TRANSITION'
+SLOT_STACK                  = 'STACK'
 
 # Devices
 SLOT_ACCESS_PANEL           = 'ACCESS_PANEL'
@@ -87,9 +88,6 @@ SLOT_ALL = (
     SLOT_ENDCAP_TDF,
     SLOT_EQUIPMENT_PAD,
     SLOT_EXT_BOT,
-    SLOT_EXT_LEFT,
-    SLOT_EXT_RIGHT,
-    SLOT_EXT_TOP,
     SLOT_FAN,
     SLOT_GRD,
     SLOT_GRD_CFM,
@@ -112,6 +110,7 @@ SLOT_ALL = (
     SLOT_SPLIT,
     SLOT_TAP,
     SLOT_TRANSITION,
+    SLOT_STACK,
     SLOT_SIZE,
     SLOT_SIZE_LEFT,
     SLOT_SIZE_RIGHT,
@@ -164,25 +163,25 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DCT_Degree', 'Center'),
     ],
     SLOT_ENDCAP_SD: [
-        ('_Tag.DCT_EndcapSD', 'Center'),
+        ('_Tag.DCT_Endcap', 'S&D'),
     ],
     SLOT_ENDCAP_TDF: [
-        ('_Tag.DCT_EndcapTDF', 'Center'),
+        ('_Tag.DCT_Endcap', 'TDF'),
     ],
     SLOT_EQUIPMENT_PAD: [
         ('_Tag.EQP_EquipmentPad', 'Black'),
     ],
     SLOT_EXT_BOT: [
-        ('_Tag.DCT_ExtensionBottom', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Bottom'),
     ],
     SLOT_EXT_LEFT: [
-        ('_Tag.DCT_ExtensionLeft', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Left'),
     ],
     SLOT_EXT_RIGHT: [
-        ('_Tag.DCT_ExtensionRight', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Right'),
     ],
     SLOT_EXT_TOP: [
-        ('_Tag.DCT_ExtensionTop', 'Center'),
+        ('_Tag.DCT_ElbowExtension', 'Top'),
     ],
     SLOT_FAN: [
         ('_Tag.EQP_Fan', 'Black'),
@@ -261,6 +260,9 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_SIZE_RIGHT: [
         ('_Tag.DCT_Size', 'Right'),
+    ],
+    SLOT_STACK: [
+        ('_Tag.DCT_Stack', '3_Center'),
     ],
     SLOT_SPLIT: [
         ('_Tag.EQP_Split', 'Black'),
