@@ -714,30 +714,84 @@ class Fittings:
                 pass
         return removed
 
+    def delete_tag_type_ids_for_element(self, element, tag_type_ids):
+        """Delete tags on element whose type ids are in tag_type_ids."""
+        if element is None or not tag_type_ids:
+            return 0
+
+        target_type_ids = {
+            int(tid)
+            for tid in tag_type_ids
+            if tid is not None
+        }
+        if not target_type_ids:
+            return 0
+
+        try:
+            tags_in_view = (
+                FilteredElementCollector(self.doc, self.view.Id)
+                .OfClass(IndependentTag)
+                .ToElements()
+            )
+        except Exception:
+            return 0
+
+        target_id = self._as_int_id(element.Id)
+        removed = 0
+        for t in tags_in_view:
+            try:
+                tagged_ids = t.GetTaggedLocalElementIds()
+            except Exception:
+                tagged_ids = []
+            if not tagged_ids:
+                continue
+
+            is_for_element = any(
+                self._as_int_id(tid) == target_id
+                for tid in tagged_ids
+            )
+            if not is_for_element:
+                continue
+
+            try:
+                existing_type_id = self._as_int_id(t.GetTypeId())
+            except Exception:
+                existing_type_id = None
+            if existing_type_id not in target_type_ids:
+                continue
+
+            try:
+                self.doc.Delete(t.Id)
+                removed += 1
+            except Exception:
+                pass
+
+        return removed
+
     def delete_skipped_tags_for_element(self, duct, tag_configs):
         """Delete existing tags that now violate skip rules for this duct."""
         if duct is None or not tag_configs:
             return 0
 
         if self.should_skip_by_param(duct):
-            family_names = {
-                self._tag_family_name_lower(tag)
+            tag_type_ids = {
+                self._as_int_id(getattr(tag, 'Id', None))
                 for tag, _ in tag_configs
                 if tag is not None
             }
-            family_names.discard('')
-            return self.delete_tag_families_for_element(duct.element, family_names)
+            tag_type_ids.discard(None)
+            return self.delete_tag_type_ids_for_element(duct.element, tag_type_ids)
 
-        family_names = set()
+        tag_type_ids = set()
         for tag, _ in tag_configs:
             if tag is None:
                 continue
             if self.should_skip_tag(duct, tag):
-                fam_name = self._tag_family_name_lower(tag)
-                if fam_name:
-                    family_names.add(fam_name)
+                tag_type_id = self._as_int_id(getattr(tag, 'Id', None))
+                if tag_type_id is not None:
+                    tag_type_ids.add(tag_type_id)
 
-        return self.delete_tag_families_for_element(duct.element, family_names)
+        return self.delete_tag_type_ids_for_element(duct.element, tag_type_ids)
 
     # ------------------------------------------------------------------
     # Element / tagging helpers

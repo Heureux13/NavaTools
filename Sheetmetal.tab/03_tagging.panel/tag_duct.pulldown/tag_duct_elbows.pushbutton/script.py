@@ -105,23 +105,23 @@ try:
             skipped_by_param.append(d)
             continue
 
-        existing_tag_fams = tagger.get_existing_tag_families(d.element)
-        requested_tag_fams = {
-            (tag.Family.Name or '').strip().lower()
+        existing_tag_type_ids = tagger.get_existing_tag_type_ids(d.element)
+        requested_tag_type_ids = {
+            fittings._as_int_id(getattr(tag, 'Id', None))
             for tag, _ in tag_configs
-            if tag is not None and getattr(tag, 'Family', None) is not None
+            if tag is not None
         }
+        requested_tag_type_ids.discard(None)
         has_matching_existing_tag = bool(
-            existing_tag_fams & requested_tag_fams)
+            existing_tag_type_ids & requested_tag_type_ids)
 
         tagged_this_element = False
         placement_failed_reason = None
         for tag, loc_param in tag_configs:
             if tag is None or fittings.should_skip_tag(d, tag):
                 continue
-            fam_name = (
-                tag.Family.Name if tag and tag.Family else "").strip().lower()
-            if not fam_name or fam_name in existing_tag_fams:
+            tag_type_id = fittings._as_int_id(getattr(tag, 'Id', None))
+            if tag_type_id is not None and tag_type_id in existing_tag_type_ids:
                 continue
 
             # Tag placement: FabricationPart uses face reference; others use location.
@@ -160,7 +160,8 @@ try:
                 )
                 continue
 
-            existing_tag_fams.add(fam_name)
+            if tag_type_id is not None:
+                existing_tag_type_ids.add(tag_type_id)
             tagged_this_element = True
 
         if tagged_this_element:
