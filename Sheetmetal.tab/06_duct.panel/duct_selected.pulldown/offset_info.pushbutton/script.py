@@ -55,6 +55,48 @@ tag_paramger = {
 }
 
 
+def _try_parse_float(value_text):
+    text = (value_text or '').strip()
+    if not text:
+        return None
+    text = text.replace(',', '')
+    try:
+        return float(text)
+    except Exception:
+        return None
+
+
+def _copy_param_value(element, source_name, target_name, source_inches=False):
+    source_param = element.LookupParameter(source_name)
+    target_param = element.LookupParameter(target_name)
+    if not source_param or not target_param or target_param.IsReadOnly:
+        return
+
+    source_value = None
+    if source_param.StorageType == StorageType.Double:
+        source_value = source_param.AsDouble()
+    elif source_param.StorageType == StorageType.Integer:
+        source_value = float(source_param.AsInteger())
+    elif source_param.StorageType == StorageType.String:
+        source_value = _try_parse_float(source_param.AsString())
+
+    if source_value is None:
+        return
+
+    if source_inches:
+        source_value = source_value / 12.0
+
+    try:
+        if target_param.StorageType == StorageType.Double:
+            target_param.Set(float(source_value))
+        elif target_param.StorageType == StorageType.Integer:
+            target_param.Set(int(round(source_value)))
+        elif target_param.StorageType == StorageType.String:
+            target_param.Set(str(source_value))
+    except Exception:
+        pass
+
+
 def should_add_tag_prefix(classification):
     """Legacy detector for vertical UP/DN with numbers.
 
@@ -322,6 +364,19 @@ else:
                                             str(round(fitting[fitting_key], 3)))
                                 except Exception:
                                     pass
+
+                    _copy_param_value(
+                        element,
+                        PYT_OFFSET_LEFT,
+                        JG_OFFSET_LEFT,
+                        source_inches=True,
+                    )
+                    _copy_param_value(
+                        element,
+                        PYT_OFFSET_RIGHT,
+                        JG_OFFSET_RIGHT,
+                        source_inches=True,
+                    )
 
                     # Write classification to modern parameter first; fallback to legacy.
                     final_classification = convert_to_TU_TD(classification)

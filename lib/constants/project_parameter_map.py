@@ -62,6 +62,8 @@ parameter_bindings = {
     '_UMI_BBM_Unit'              : {'group': 'Data', 'categories': MEP_CATEGORIES},
     '_UMI_BBM_VAV'               : {'group': 'Data', 'categories': MEP_CATEGORIES},
     '_UMI_BBM_VPH'               : {'group': 'Data', 'categories': MEP_CATEGORIES},
+    '_UMI_JDG_OffsetLeft'        : {'group': 'Data', 'categories': MEP_CATEGORIES},
+    '_UMI_JDG_OffsetRight'       : {'group': 'Data', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_AspectRatio'       : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_CFM'               : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_HeightPad'         : {'group': 'General', 'categories': MEP_CATEGORIES},
