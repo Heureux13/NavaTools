@@ -23,6 +23,7 @@ Switches tags based on dictionary mapping (Left ↔ Right)
 # ==================================================
 uidoc = __revit__.ActiveUIDocument
 doc = revit.doc
+active_view_id = uidoc.ActiveView.Id if uidoc and uidoc.ActiveView else None
 
 dictonary = {
     SLOT_SIZE_LEFT: 'Right',
@@ -64,6 +65,9 @@ def get_annotation_dependents(host_element):
     for dep_id in raw_dep_ids or []:
         dep_elem = doc.GetElement(dep_id)
         if is_annotation_element(dep_elem):
+            if active_view_id and hasattr(dep_elem, 'OwnerViewId'):
+                if dep_elem.OwnerViewId != active_view_id:
+                    continue
             dependent_ids.add(dep_id)
 
     return dependent_ids
