@@ -114,6 +114,8 @@ PYT_ROOM_NAME                                       = '_UMI_PYT_RoomName'
 
 # fmt: off
 # autopep8: off
+JG_OFFSET_LEFT                                      = '_UMI_JDG_OffsetLeft'
+JG_OFFSET_RIGHT                                     = '_UMI_JDG_OffsetRight'
 LEGACY_NUMBER                                       = '_#'
 LEGACY_MAKE                                         = '_make'
 LEGACY_MODEL                                        = '_model'
