@@ -18,9 +18,7 @@ from config.parameters_registry import *
 # ======================================================================
 __title__ = 'Offset Data'
 __doc__ = '''
-Gives raw offset data and writes to parameters
----
-Values are representative of raw vector formulas used in linear mathmatics, seeing (-) and (+) does not mean in/out, it is movement from vector origins
+Writes offset data for all fittings
 '''
 
 # Variables
