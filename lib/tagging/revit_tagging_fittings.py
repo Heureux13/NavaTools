@@ -2,7 +2,7 @@
 import re
 from revit.revit_element import RevitElement
 from ducts.revit_xyz import RevitXYZ
-from tagging.tag_config import (
+from config.tag_config import (
     SLOT_ACCESS_PANEL as CFG_SLOT_ACCESS_PANEL,
     SLOT_CANVAS as CFG_SLOT_CANVAS,
     SLOT_DAMPER_FIRE as CFG_SLOT_DAMPER_FIRE,

@@ -10,7 +10,7 @@ the copyright holder.
 import math
 from ducts.revit_xyz import RevitXYZ
 from ducts.revit_duct import JointSize
-from tagging.tag_config import (
+from config.tag_config import (
     SLOT_LENGTH as CFG_SLOT_LENGTH,
     SLOT_STACK as CFG_SLOT_STACK,
     DEFAULT_TAG_SLOT_CANDIDATES,
@@ -262,7 +262,8 @@ class Joints:
                 # Map slot to expected keywords in tag family name
                 if slot == CFG_SLOT_LENGTH and 'length' in existing_family_lower:
                     return True
-                if slot == CFG_SLOT_STACK and ('stack' in existing_family_lower or 'sizestack' in existing_family_lower):
+                if slot == CFG_SLOT_STACK and (
+                        'stack' in existing_family_lower or 'sizestack' in existing_family_lower):
                     return True
 
         return False

@@ -1,0 +1,329 @@
+# -*- coding: utf-8 -*-
+
+from config.parameters_registry import *
+
+"""Shared tag slot configuration used by fitting and joint tagging scripts."""
+
+# fmt: off
+# autopep8: off
+
+# Duct
+SLOT_CANVAS                 = 'CANVAS'
+SLOT_ENDCAP_SD              = 'ENDCAP_SD'
+SLOT_ENDCAP_TDF             = 'ENDCAP_TDF'
+SLOT_OFFSET                 = 'OFFSET'
+SLOT_TAP                    = 'TAP'
+SLOT_TRANSITION             = 'TRANSITION'
+SLOT_STACK                  = 'STACK'
+
+# Devices
+SLOT_ACCESS_PANEL           = 'ACCESS_PANEL'
+SLOT_DAMPER_CONTROL         = 'DAMPER_CONTROL'
+SLOT_DAMPER_FIRE            = 'FIRE_DAMPER'
+SLOT_DAMPER_VOLUME          = 'DAMPER_VOLUME'
+SLOT_GRD                    = 'GRD'
+SLOT_GRD_CFM                = 'GRD_CFM'
+SLOT_LOUVER                 = 'LOUVER'
+SLOT_LOUVER_NOTE            = 'LOUVER_NOTE'
+SLOT_MAN_BARS               = 'MAN_BARS'
+
+# Equipment
+SLOT_CONDENSER              = "CONDENSER"
+SLOT_CONDENSER_NOTE         = "CONDENSER_NOTE"
+SLOT_EQUIPMENT_PAD          = 'EQUIPMENT_PAD'
+SLOT_FAN                    = "FAN"
+SLOT_FAN_NOTE               = "FAN_NOTE"
+SLOT_HEAT_PUMP              = "HEAT_PUMP"
+SLOT_HEAT_PUMP_NOTE         = "HEAT_PUMP_NOTE"
+SLOT_HEATER                 = "HEATER"
+SLOT_HEATER_NOTE            = "HEATER_NOTE"
+SLOT_HOOD                   = "HOOD"
+SLOT_HOOD_NOTE              = "HOOD_NOTE"
+SLOT_HUMIDIFIER             = "HUMIDIFIER"
+SLOT_HUMIDIFIER_NOTE        = "HUMIDIFIER_NOTE"
+SLOT_SPLIT                  = "SPLIT"
+SLOT_SPLIT_NOTE             = "SPLIT_NOTE"
+SLOT_UNIT                   = 'UNIT'
+SLOT_UNIT_NOTE              = 'UNIT_NOTE'
+SLOT_VALVE                  = 'VALVE'
+SLOT_VALVE_NOTE             = 'VALVE_NOTE'
+SLOT_VRF                    = "VRF"
+SLOT_VRF_NOTE               = "VRF_NOTE"
+
+# Parameters
+SLOT_BOD                    = 'BOD'
+SLOT_BOD_LEFT               = 'BOD_LEFT'
+SLOT_BOD_RIGHT              = 'BOD_RIGHT'
+SLOT_DEGREE                 = 'DEGREE'
+SLOT_EXT_BOT                = 'EXT_IN'
+SLOT_EXT_LEFT               = 'EXT_LEFT'
+SLOT_EXT_RIGHT              = 'EXT_RIGHT'
+SLOT_EXT_TOP                = 'EXT_OUT'
+SLOT_LENGTH                 = 'LENGTH'
+SLOT_LENGTH_LEFT            = 'LENGTH_LEFT'
+SLOT_LENGTH_RIGHT           = 'LENGTH_RIGHT'
+SLOT_NOTE                   = 'NOTE'
+SLOT_NUMBER_BLUEBEAM        = 'NUMBER_BLUEBEAM'
+SLOT_NUMBER_FABRICATION     = 'NUMBER_FABRICATION'
+SLOT_NUMBER_SLEEVE          = 'NUMBER_SLEEVE'
+SLOT_SIZE                   = 'SIZE'
+SLOT_SIZE_LEFT              = 'SIZE_LEFT'
+SLOT_SIZE_RIGHT             = 'SIZE_RIGHT'
+SLOT_WEIGHT                 = 'WEIGHT'
+
+# fmt: on
+# autopep8: on
+
+SLOT_ALL = (
+    SLOT_ACCESS_PANEL,
+    SLOT_BOD,
+    SLOT_BOD_LEFT,
+    SLOT_BOD_RIGHT,
+    SLOT_CANVAS,
+    SLOT_DEGREE,
+    SLOT_DAMPER_CONTROL,
+    SLOT_DAMPER_FIRE,
+    SLOT_DAMPER_VOLUME,
+    SLOT_ENDCAP_SD,
+    SLOT_ENDCAP_TDF,
+    SLOT_EQUIPMENT_PAD,
+    SLOT_EXT_BOT,
+    SLOT_FAN,
+    SLOT_GRD,
+    SLOT_GRD_CFM,
+    SLOT_LENGTH,
+    SLOT_LENGTH_LEFT,
+    SLOT_LENGTH_RIGHT,
+    SLOT_LOUVER,
+    SLOT_LOUVER_NOTE,
+    SLOT_MAN_BARS,
+    SLOT_CONDENSER,
+    SLOT_HEAT_PUMP,
+    SLOT_HEATER,
+    SLOT_HOOD,
+    SLOT_HUMIDIFIER,
+    SLOT_NOTE,
+    SLOT_NUMBER_BLUEBEAM,
+    SLOT_NUMBER_FABRICATION,
+    SLOT_NUMBER_SLEEVE,
+    SLOT_OFFSET,
+    SLOT_SPLIT,
+    SLOT_TAP,
+    SLOT_TRANSITION,
+    SLOT_STACK,
+    SLOT_SIZE,
+    SLOT_SIZE_LEFT,
+    SLOT_SIZE_RIGHT,
+    SLOT_UNIT,
+    SLOT_VALVE,
+    SLOT_VRF,
+    SLOT_WEIGHT,
+    SLOT_CONDENSER_NOTE,
+    SLOT_FAN_NOTE,
+    SLOT_HEAT_PUMP_NOTE,
+    SLOT_HEATER_NOTE,
+    SLOT_HOOD_NOTE,
+    SLOT_HUMIDIFIER_NOTE,
+    SLOT_SPLIT_NOTE,
+    SLOT_UNIT_NOTE,
+    SLOT_VALVE_NOTE,
+    SLOT_VRF_NOTE,
+)
+
+
+DEFAULT_TAG_SLOT_CANDIDATES = {
+    SLOT_ACCESS_PANEL: [
+        ('_Tag.DCT_AccessPanel', 'Center'),
+    ],
+    SLOT_BOD: [
+        ('_Tag.DCT_BOD', 'Center'),
+    ],
+    SLOT_BOD_LEFT: [
+        ('_Tag.DCT_BOD', 'Left'),
+    ],
+    SLOT_BOD_RIGHT: [
+        ('_Tag.DCT_BOD', 'Right'),
+    ],
+    SLOT_CANVAS: [
+        ('_Tag.DCT_Canvas', 'Center'),
+    ],
+    SLOT_CONDENSER: [
+        ('_Tag.EQP_Condenser', 'Black'),
+    ],
+    SLOT_DAMPER_CONTROL: [
+        ('_Tag.DEV_DamperControl', 'Center'),
+    ],
+    SLOT_DAMPER_FIRE: [
+        ('_Tag.DEV_DamperFire', 'Center'),
+    ],
+    SLOT_DAMPER_VOLUME: [
+        ('_Tag.DEV_DamperVolume', 'Center'),
+    ],
+    SLOT_DEGREE: [
+        ('_Tag.DCT_Degree', 'Center'),
+    ],
+    SLOT_ENDCAP_SD: [
+        ('_Tag.DCT_Endcap', 'S&D'),
+    ],
+    SLOT_ENDCAP_TDF: [
+        ('_Tag.DCT_Endcap', 'TDF'),
+    ],
+    SLOT_EQUIPMENT_PAD: [
+        ('_Tag.EQP_EquipmentPad', 'Black'),
+    ],
+    SLOT_EXT_BOT: [
+        ('_Tag.DCT_ElbowExtension', 'Bottom'),
+    ],
+    SLOT_EXT_LEFT: [
+        ('_Tag.DCT_ElbowExtension', 'Left'),
+    ],
+    SLOT_EXT_RIGHT: [
+        ('_Tag.DCT_ElbowExtension', 'Right'),
+    ],
+    SLOT_EXT_TOP: [
+        ('_Tag.DCT_ElbowExtension', 'Top'),
+    ],
+    SLOT_FAN: [
+        ('_Tag.EQP_Fan', 'Black'),
+    ],
+    SLOT_FAN_NOTE: [
+        ('_Tag.EQP_Fan', 'BlackNote'),
+    ],
+    SLOT_GRD: [
+        ('_Tag.DEV_GRD', 'CFM'),
+    ],
+    SLOT_GRD_CFM: [
+        ('_Tag.DEV_GRD', 'Center'),
+    ],
+    SLOT_HEAT_PUMP: [
+        ('_Tag.EQP_HeatPump', 'Black'),
+    ],
+    SLOT_HEAT_PUMP_NOTE: [
+        ('_Tag.EQP_HeatPump', 'BlackNote'),
+    ],
+    SLOT_HEATER: [
+        ('_Tag.EQP_Heater', 'Black'),
+    ],
+    SLOT_HEATER_NOTE: [
+        ('_Tag.EQP_Heater', 'BlackNote'),
+    ],
+    SLOT_HOOD: [
+        ('_Tag.EQP_Hood', 'Black'),
+    ],
+    SLOT_HOOD_NOTE: [
+        ('_Tag.EQP_Hood', 'BlackNote'),
+    ],
+    SLOT_HUMIDIFIER: [
+        ('_Tag.EQP_Humidifier', 'Black'),
+    ],
+    SLOT_HUMIDIFIER_NOTE: [
+        ('_Tag.EQP_Humidifier', 'BlackNote'),
+    ],
+    SLOT_LENGTH: [
+        ('_Tag.DCT_Length', 'Center'),
+    ],
+    SLOT_LENGTH_LEFT: [
+        ('_Tag.DCT_Length', 'Left'),
+    ],
+    SLOT_LENGTH_RIGHT: [
+        ('_Tag.DCT_Length', 'Right'),
+    ],
+    SLOT_LOUVER: [
+        ('_Tag.DEV_Louvers', 'Black'),
+    ],
+    SLOT_LOUVER_NOTE: [
+        ('_Tag.DEV_Louvers', 'Black w/ note0'),
+    ],
+    SLOT_MAN_BARS: [
+        ('_Tag.DEV_ManBars', 'Center'),
+    ],
+    SLOT_NOTE: [
+        ('_Tag.DCT_Note', '1 note'),
+    ],
+    SLOT_NUMBER_BLUEBEAM: [
+        ('_Tag.DCT_NumberBluebeam', 'Center'),
+    ],
+    SLOT_NUMBER_FABRICATION: [
+        ('_Tag.DCT_NumberDuct', 'Big'),
+    ],
+    SLOT_NUMBER_SLEEVE: [
+        ('_Tag.DCT_NumberSleeve', 'Green'),
+    ],
+    SLOT_OFFSET: [
+        ('_Tag.DCT_Offset', 'Center'),
+    ],
+    SLOT_SIZE: [
+        ('_Tag.DCT_Size', 'Center'),
+    ],
+    SLOT_SIZE_LEFT: [
+        ('_Tag.DCT_Size', 'Left'),
+    ],
+    SLOT_SIZE_RIGHT: [
+        ('_Tag.DCT_Size', 'Right'),
+    ],
+    SLOT_STACK: [
+        ('_Tag.DCT_Stack', '3_Center'),
+    ],
+    SLOT_SPLIT: [
+        ('_Tag.EQP_Split', 'Black'),
+    ],
+    SLOT_SPLIT_NOTE: [
+        ('_Tag.EQP_Split', 'BlackNote'),
+    ],
+    SLOT_TAP: [
+        ('_Tag.DCT_Tap', 'Center'),
+    ],
+    SLOT_TRANSITION: [
+        ('_Tag.DCT_Transition', 'Center'),
+    ],
+    SLOT_UNIT: [
+        ('_Tag.EQP_Unit', 'Black'),
+    ],
+    SLOT_UNIT_NOTE: [
+        ('_Tag.EQP_Unit', 'BlackNote'),
+    ],
+    SLOT_VALVE: [
+        ('_Tag.EQP_Valve', 'Black'),
+    ],
+    SLOT_VALVE_NOTE: [
+        ('_Tag.EQP_Valve', 'BlackNote'),
+    ],
+    SLOT_VRF: [
+        ('_Tag.EQP_VRF', 'Black'),
+    ],
+    SLOT_VRF_NOTE: [
+        ('_Tag.EQP_VRF', 'BlackNote'),
+    ],
+    SLOT_WEIGHT: [
+        ('_Tag.DCT_Weight', 'Defaut'),
+    ],
+}
+
+DEFAULT_TAG_SKIP_PARAMETERS = {
+    PYT_SKIP_TAG: ['skip'],
+}
+
+DEFAULT_NUMBER_SKIP_PARAMETERS = {
+    PYT_SKIP_NUMBER: ['skip'],
+}
+
+DEFAULT_PARAMETER_HIERARCHY = [
+    RVT_MARK,
+    PYT_LABEL,
+]
+
+WRITE_PARAMETER = BBM_LABEL
+
+STRAIGHT_JOINT_FAMILIES = {
+    'round duct',
+    'spiral duct',
+    'spiral tube',
+    'straight',
+    'tube',
+}
+
+DEFAULT_JOINT_TAG_SLOTS = [
+    SLOT_BOD,
+    SLOT_LENGTH,
+    SLOT_SIZE,
+]
