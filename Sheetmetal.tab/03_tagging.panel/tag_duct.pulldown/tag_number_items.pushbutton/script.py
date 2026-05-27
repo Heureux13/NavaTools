@@ -190,7 +190,7 @@ number_parameter_names = [
 ]
 
 annotation_to_use = [
-    "_Tag.DCT_NumberItem",
+    "_Tag.DCT_NumberDuct",
 ]
 
 tag_names = list(annotation_to_use)
