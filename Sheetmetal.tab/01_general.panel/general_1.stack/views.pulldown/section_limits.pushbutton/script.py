@@ -94,7 +94,12 @@ if not selected_key:
     script.exit()
 
 ref_level = all_levels[level_names.index(selected_key)]
-level_elev = ref_level.Elevation  # internal feet
+# Prefer project elevation so behavior matches what users read in-project.
+level_elev = ref_level.Elevation
+try:
+    level_elev = ref_level.ProjectElevation
+except Exception:
+    pass
 
 
 # ── 4. Above or below that level ─────────────────────────────────────
@@ -139,37 +144,101 @@ with revit.Transaction('Set Section {} Limit'.format(edge)):
     for view in section_views:
         crop_box = view.CropBox
         transform = crop_box.Transform
-        basis_y_z = transform.BasisY.Z
+        # Revit versions can expose section vertical on different local axes.
+        axis_z_values = [
+            transform.BasisX.Z,
+            transform.BasisY.Z,
+            transform.BasisZ.Z
+        ]
+        vert_axis_idx = max(range(3), key=lambda i: abs(axis_z_values[i]))
+        vert_axis_z = axis_z_values[vert_axis_idx]
 
-        if abs(basis_y_z) < 1e-6:
+        if abs(vert_axis_z) < 1e-6:
             skipped.append(view.Name)
             continue
 
-        origin_z = transform.Origin.Z
-        new_local_y = (target_z - origin_z) / basis_y_z
+        min_vals = [crop_box.Min.X, crop_box.Min.Y, crop_box.Min.Z]
+        max_vals = [crop_box.Max.X, crop_box.Max.Y, crop_box.Max.Z]
+
+        if vert_axis_z > 0:
+            top_bound = 'max'
+            bottom_bound = 'min'
+        else:
+            top_bound = 'min'
+            bottom_bound = 'max'
+
+        center_vals = [
+            (min_vals[0] + max_vals[0]) * 0.5,
+            (min_vals[1] + max_vals[1]) * 0.5,
+            (min_vals[2] + max_vals[2]) * 0.5
+        ]
+
+        if top_bound == 'max':
+            top_local = max_vals[vert_axis_idx]
+            bottom_local = min_vals[vert_axis_idx]
+        else:
+            top_local = min_vals[vert_axis_idx]
+            bottom_local = max_vals[vert_axis_idx]
+
+        top_pt_vals = list(center_vals)
+        bottom_pt_vals = list(center_vals)
+        top_pt_vals[vert_axis_idx] = top_local
+        bottom_pt_vals[vert_axis_idx] = bottom_local
+        top_pt = DB.XYZ(top_pt_vals[0], top_pt_vals[1], top_pt_vals[2])
+        bottom_pt = DB.XYZ(bottom_pt_vals[0], bottom_pt_vals[1], bottom_pt_vals[2])
+
+        top_world_z = transform.OfPoint(top_pt).Z
+        bottom_world_z = transform.OfPoint(bottom_pt).Z
+
+        # Solve local value from absolute world Z while keeping other axes fixed at center.
+        axis_z_basis = [transform.BasisX.Z, transform.BasisY.Z, transform.BasisZ.Z]
+        fixed_world_z = transform.Origin.Z
+        for i in range(3):
+            if i != vert_axis_idx:
+                fixed_world_z += axis_z_basis[i] * center_vals[i]
+
+        new_edge_local = (target_z - fixed_world_z) / vert_axis_z
 
         if edge == 'Top':
-            # Guard: top must stay above current bottom
-            if new_local_y <= crop_box.Min.Y:
-                skipped.append(
-                    '{} (new top would be at or below current bottom)'.format(view.Name))
-                continue
-            new_min = crop_box.Min
-            new_max = DB.XYZ(crop_box.Max.X, new_local_y, crop_box.Max.Z)
-        else:
-            # Guard: bottom must stay below current top
-            if new_local_y >= crop_box.Max.Y:
-                skipped.append(
-                    '{} (new bottom would be at or above current top)'.format(view.Name))
-                continue
-            new_min = DB.XYZ(crop_box.Min.X, new_local_y, crop_box.Min.Z)
-            new_max = crop_box.Max
+            new_top_local = new_edge_local
 
-        new_bb = DB.BoundingBoxXYZ()
-        new_bb.Transform = transform
-        new_bb.Min = new_min
-        new_bb.Max = new_max
-        view.CropBox = new_bb
+            # Guard in world coordinates to avoid local-axis ambiguity.
+            if target_z <= bottom_world_z:
+                skipped.append(
+                    '{} (new top {} would be at or below current bottom {})'.format(
+                        view.Name,
+                        ft_to_ft_in(target_z),
+                        ft_to_ft_in(bottom_world_z)
+                    )
+                )
+                continue
+
+            if top_bound == 'max':
+                max_vals[vert_axis_idx] = new_top_local
+            else:
+                min_vals[vert_axis_idx] = new_top_local
+        else:
+            new_bottom_local = new_edge_local
+
+            # Guard in world coordinates to avoid local-axis ambiguity.
+            if target_z >= top_world_z:
+                skipped.append(
+                    '{} (new bottom {} would be at or above current top {})'.format(
+                        view.Name,
+                        ft_to_ft_in(target_z),
+                        ft_to_ft_in(top_world_z)
+                    )
+                )
+                continue
+
+            if bottom_bound == 'min':
+                min_vals[vert_axis_idx] = new_bottom_local
+            else:
+                max_vals[vert_axis_idx] = new_bottom_local
+
+        crop_box.Min = DB.XYZ(min_vals[0], min_vals[1], min_vals[2])
+        crop_box.Max = DB.XYZ(max_vals[0], max_vals[1], max_vals[2])
+        view.CropBox = crop_box
 
         if not view.CropBoxActive:
             view.CropBoxActive = True

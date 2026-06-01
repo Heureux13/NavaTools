@@ -103,6 +103,24 @@ def _norm(text):
     return (text or '').strip().lower()
 
 
+def _element_id_value(element_id):
+    if element_id is None:
+        return None
+
+    value = getattr(element_id, 'Value', None)
+    if value is not None:
+        return int(value)
+
+    integer_value = getattr(element_id, 'IntegerValue', None)
+    if integer_value is not None:
+        return int(integer_value)
+
+    try:
+        return int(element_id)
+    except Exception:
+        return None
+
+
 def _get_param(elem, *param_names):
     for param_name in param_names:
         if not param_name:
@@ -220,8 +238,10 @@ def _build_existing_tag_map():
 
             for tagged_id in tagged_ids:
                 try:
-                    elem_id = tagged_id.IntegerValue
+                    elem_id = _element_id_value(tagged_id)
                 except Exception:
+                    continue
+                if elem_id is None:
                     continue
                 existing.setdefault(elem_id, set()).add(tag_key)
         except Exception:
@@ -307,7 +327,7 @@ def _tag_symbol_category_id(tag_symbol):
     try:
         category = tag_symbol.Category
         if category and getattr(category, 'Id', None):
-            return category.Id.IntegerValue
+            return _element_id_value(category.Id)
     except Exception:
         pass
 
@@ -410,7 +430,7 @@ def _is_target_equipment(elem):
         category = elem.Category
         if not category or not getattr(category, 'Id', None):
             return False
-        return category.Id.IntegerValue == int(TARGET_CATEGORY)
+        return _element_id_value(category.Id) == int(TARGET_CATEGORY)
     except Exception:
         return False
 
@@ -424,8 +444,10 @@ def _collect_equipment_in_view():
             return
 
         try:
-            elem_id = elem.Id.IntegerValue
+            elem_id = _element_id_value(elem.Id)
         except Exception:
+            return
+        if elem_id is None:
             return
 
         if elem_id in seen_ids:
@@ -494,7 +516,10 @@ try:
                     )
                 )
                 continue
-            elem_id = elem.Id.IntegerValue
+            elem_id = _element_id_value(elem.Id)
+            if elem_id is None:
+                failed.append((elem, 'Unable to determine element id'))
+                continue
 
             if existing_tag_map.get(elem_id, set()) & _candidate_keys(tag_candidates):
                 already_tagged.append(elem)

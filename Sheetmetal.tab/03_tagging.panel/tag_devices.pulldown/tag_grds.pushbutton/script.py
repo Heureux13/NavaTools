@@ -63,6 +63,30 @@ def _tag_candidate_parts(candidate):
     return label, "", label
 
 
+def _eid_int(eid):
+    if eid is None:
+        return None
+
+    value = getattr(eid, 'Value', None)
+    if value is not None:
+        try:
+            return int(value)
+        except Exception:
+            pass
+
+    integer_value = getattr(eid, 'IntegerValue', None)
+    if integer_value is not None:
+        try:
+            return int(integer_value)
+        except Exception:
+            pass
+
+    try:
+        return int(eid)
+    except Exception:
+        return None
+
+
 def _iter_tag_symbols(doc):
     seen_ids = set()
     for bic in _AIR_TERMINAL_TAG_CATEGORIES:
@@ -75,10 +99,7 @@ def _iter_tag_symbols(doc):
         for sym in symbols:
             if not isinstance(sym, (FamilySymbol, ElementType)):
                 continue
-            try:
-                symbol_id = sym.Id.IntegerValue
-            except Exception:
-                symbol_id = None
+            symbol_id = _eid_int(getattr(sym, 'Id', None))
             if symbol_id is not None and symbol_id in seen_ids:
                 continue
             if symbol_id is not None:
@@ -303,16 +324,6 @@ def _tag_symbol_matches_candidate(symbol, candidate):
     return pool_lower == sym_family_name or pool_lower == sym_type_name or pool_lower in label
 
 
-def _eid_int(eid):
-    try:
-        return eid.IntegerValue
-    except Exception:
-        try:
-            return int(eid)
-        except Exception:
-            return None
-
-
 def _collect_tagged_local_ids(tag):
     ids = []
 
@@ -513,9 +524,13 @@ existing_tags = list(
 existing_tag_maps = {}
 tracked_tag_type_ids = set()
 if first_tag_symbol is not None:
-    tracked_tag_type_ids.add(first_tag_symbol.Id.IntegerValue)
+    first_tag_type_id = _eid_int(first_tag_symbol.Id)
+    if first_tag_type_id is not None:
+        tracked_tag_type_ids.add(first_tag_type_id)
 if second_tag_symbol is not None:
-    tracked_tag_type_ids.add(second_tag_symbol.Id.IntegerValue)
+    second_tag_type_id = _eid_int(second_tag_symbol.Id)
+    if second_tag_type_id is not None:
+        tracked_tag_type_ids.add(second_tag_type_id)
 
 for tag in existing_tags:
     try:
@@ -547,7 +562,10 @@ try:
             skip_value_normalized = skip_value.lower().strip()
 
             if skip_value_normalized in skip_values_normalized:
-                elem_id_val = elem.Id.IntegerValue
+                elem_id_val = _eid_int(elem.Id)
+                if elem_id_val is None:
+                    failed.append((elem, 'Unable to determine element id'))
+                    continue
 
                 # Remove any existing GRD tags for skipped elements by scanning tags in view.
                 for existing_tag in list(existing_tags):
@@ -646,7 +664,10 @@ try:
             continue
 
         # Skip if already tagged with the correct tag; otherwise delete wrong tags
-        elem_id_val = elem.Id.IntegerValue
+        elem_id_val = _eid_int(elem.Id)
+        if elem_id_val is None:
+            failed.append((elem, 'Unable to determine element id'))
+            continue
         chosen_type_id_val = _eid_int(tag_symbol.Id)
         existing_for_elem = existing_tag_maps.get(
             chosen_type_id_val, {}).get(elem_id_val, [])
