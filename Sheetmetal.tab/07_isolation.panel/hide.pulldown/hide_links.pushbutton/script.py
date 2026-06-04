@@ -37,6 +37,19 @@ output = script.get_output()
 NICKNAME_KEY = 'NavaTools_LinkNicknames'
 
 
+def get_element_id_value(element_id):
+    """Return an integer ElementId value across Revit 2025 and 2026."""
+    if element_id is None:
+        return None
+    try:
+        return element_id.IntegerValue
+    except AttributeError:
+        try:
+            return int(element_id.Value)
+        except AttributeError:
+            return None
+
+
 def get_all_nicknames():
     try:
         data_file = script.get_document_data_file(doc.PathName or 'unsaved', NICKNAME_KEY)
@@ -59,7 +72,10 @@ def save_all_nicknames(nicknames_dict):
 
 def get_link_nickname(link, nicknames_dict):
     # Check custom nicknames first
-    link_id_str = str(link.Id.IntegerValue)
+    link_id_value = get_element_id_value(link.Id)
+    if link_id_value is None:
+        return None
+    link_id_str = str(link_id_value)
     if link_id_str in nicknames_dict:
         return nicknames_dict[link_id_str]
     return None
@@ -92,11 +108,11 @@ for idx, link in enumerate(links_in_view, start=1):
     nickname = get_link_nickname(link, nicknames_dict)
     if nickname:
         display_name = u'{}  |  {} — {} (Id: {})'.format(
-            idx_label, nickname, link.Name, link.Id.IntegerValue
+            idx_label, nickname, link.Name, get_element_id_value(link.Id)
         )
     else:
         display_name = u'{}  |  {} (Id: {})'.format(
-            idx_label, link.Name, link.Id.IntegerValue
+            idx_label, link.Name, get_element_id_value(link.Id)
         )
     display_map[display_name] = link.Id
     link_map[display_name] = link
@@ -141,10 +157,10 @@ if action == 'Rename Links':
                 title='Set Link Nickname'
             )
             if new_nick:
-                nicknames_dict[str(link.Id.IntegerValue)] = new_nick
+                nicknames_dict[str(get_element_id_value(link.Id))] = new_nick
             elif new_nick == '' and current_nick:
                 # Clear nickname if empty string entered
-                nicknames_dict.pop(str(link.Id.IntegerValue), None)
+                nicknames_dict.pop(str(get_element_id_value(link.Id)), None)
     save_all_nicknames(nicknames_dict)
     sys.exit(0)
 
