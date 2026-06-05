@@ -74,6 +74,7 @@ PYT_NOTE_3                                          = '_UMI_PYT_Note3'
 PYT_NOTE_4                                          = '_UMI_PYT_Note4'
 PYT_NUMBER                                          = '_UMI_PYT_Number'
 PYT_NUMBER_FABRICATION                              = "_UMI_PYT_NumberFabrication"
+PYT_NUMBER_ORDER                                    = "_UMI_PYT_NumberOrder"
 PYT_NUMBER_RUN                                      = '_UMI_PYT_NumberRun'
 PYT_NUMBER_SLEEVE                                   = "_UMI_PYT_NumberSleeve"
 PYT_OFFSET_BOTTOM                                   = '_UMI_PYT_OffsetBottom'

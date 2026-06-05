@@ -402,14 +402,48 @@ def normalize_header(text):
     return clean_cell_value(text).strip().lower()
 
 
-def get_candidate_source_keys(schedule_header_key):
-    """Return prioritized source-header keys for one schedule header key."""
-    candidates = [schedule_header_key]
-    alias_values = SOURCE_HEADER_ALIASES.get(schedule_header_key, [])
-    for alias in alias_values:
-        alias_key = normalize_header(alias)
-        if alias_key and alias_key not in candidates:
-            candidates.append(alias_key)
+def _append_unique(target, value):
+    if value and value not in target:
+        target.append(value)
+
+
+def header_key_variants(text):
+    """Return normalized header key variants for robust matching."""
+    base = normalize_header(text)
+    if not base:
+        return []
+
+    variants = []
+    _append_unique(variants, base)
+
+    compact = base.replace(' ', '_').replace('-', '_')
+    while '__' in compact:
+        compact = compact.replace('__', '_')
+    compact = compact.strip('_')
+
+    _append_unique(variants, compact)
+
+    for prefix in ('umi_bbm_', 'umi_pyt_', 'umi_jdg_', 'bbm_', 'pyt_', 'jdg_'):
+        if compact.startswith(prefix):
+            _append_unique(variants, compact[len(prefix):])
+
+    return variants
+
+
+def get_candidate_source_keys(schedule_header):
+    """Return prioritized source-header keys for one schedule header."""
+    candidates = []
+
+    schedule_variants = header_key_variants(schedule_header)
+    for key in schedule_variants:
+        _append_unique(candidates, key)
+
+    for key in schedule_variants:
+        alias_values = SOURCE_HEADER_ALIASES.get(key, [])
+        for alias in alias_values:
+            for alias_key in header_key_variants(alias):
+                _append_unique(candidates, alias_key)
+
     return candidates
 
 
@@ -425,16 +459,15 @@ def get_schedule_headers(schedule):
 def build_column_map(schedule_headers, source_headers):
     source_lookup = {}
     for index, header in enumerate(source_headers):
-        key = normalize_header(header)
-        if key and key not in source_lookup:
-            source_lookup[key] = index
+        for key in header_key_variants(header):
+            if key and key not in source_lookup:
+                source_lookup[key] = index
 
     mapped_columns = []
     missing_headers = []
     for schedule_col_index, schedule_header in enumerate(schedule_headers):
-        schedule_key = normalize_header(schedule_header)
         source_col_index = None
-        for candidate_key in get_candidate_source_keys(schedule_key):
+        for candidate_key in get_candidate_source_keys(schedule_header):
             if candidate_key in source_lookup:
                 source_col_index = source_lookup[candidate_key]
                 break
@@ -449,11 +482,16 @@ def build_column_map(schedule_headers, source_headers):
 
 
 def get_source_header_index(source_headers, expected_name):
-    """Return index of source header by normalized name."""
-    normalized_headers = [normalize_header(h) for h in source_headers]
-    normalized_expected = normalize_header(expected_name)
-    if normalized_expected in normalized_headers:
-        return normalized_headers.index(normalized_expected)
+    """Return index of source header by normalized/variant name."""
+    expected_keys = set(header_key_variants(expected_name))
+    if not expected_keys:
+        return None
+
+    for index, source_header in enumerate(source_headers):
+        source_keys = header_key_variants(source_header)
+        if any(key in expected_keys for key in source_keys):
+            return index
+
     return None
 
 
@@ -797,7 +835,7 @@ for schedule in selected_schedules:
 
     label_schedule_col = None
     for sched_col, src_col, header_name in mapped_columns:
-        if normalize_header(header_name) == 'label':
+        if 'label' in header_key_variants(header_name):
             label_schedule_col = sched_col
             break
 

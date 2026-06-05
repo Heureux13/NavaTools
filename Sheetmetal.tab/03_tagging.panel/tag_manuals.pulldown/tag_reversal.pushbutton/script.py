@@ -36,8 +36,25 @@ swap_dictionary = {
 
 
 def safe_int_id(element_id):
+    if element_id is None:
+        return None
+
+    value = getattr(element_id, 'Value', None)
+    if value is not None:
+        try:
+            return int(value)
+        except Exception:
+            pass
+
+    integer_value = getattr(element_id, 'IntegerValue', None)
+    if integer_value is not None:
+        try:
+            return int(integer_value)
+        except Exception:
+            pass
+
     try:
-        return element_id.IntegerValue
+        return int(element_id)
     except Exception:
         return None
 

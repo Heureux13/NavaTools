@@ -76,6 +76,7 @@ parameter_bindings = {
     '_UMI_PYT_Number'            : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_NumberFabrication' : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_NumberRun'         : {'group': 'General', 'categories': MEP_CATEGORIES},
+    '_UMI_PYT_NumberOrder'       : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_NumberSleeve'      : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_OffsetBottom'      : {'group': 'General', 'categories': MEP_CATEGORIES},
     '_UMI_PYT_OffsetCenterH'     : {'group': 'General', 'categories': MEP_CATEGORIES},
