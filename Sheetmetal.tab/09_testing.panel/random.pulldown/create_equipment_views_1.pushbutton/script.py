@@ -36,7 +36,7 @@ from System.Windows.Forms import (
 
 # Button info
 # ======================================================================
-__title__ = 'Create Equipment Views'
+__title__ = 'Create Equipment Views smaller'
 __doc__ = '''
 Select a Mechanical Equipment family and create optional 3D and section views
 '''
@@ -65,6 +65,7 @@ section_view = '-Working View - Frank'
 # If True, use only templet_name_section and do not fall back to section type default template.
 FORCE_NAMED_SECTION_TEMPLATE = True
 ONE_INCH_FT = 1.0 / 12.0
+SIX_INCH_FT = 0.5
 
 
 def log_md(message):
@@ -298,6 +299,70 @@ def get_view_family_type_by_name(doc, target_view_family, type_name):
     return None
 
 
+def get_preferred_section_view_type(doc):
+    section_types = []
+    scored_matches = []
+
+    for view_type in FilteredElementCollector(doc).OfClass(ViewFamilyType):
+        try:
+            if view_type.ViewFamily != ViewFamily.Section:
+                continue
+        except BaseException:
+            continue
+
+        section_types.append(view_type)
+
+        text_values = []
+        for param_name in ("Family and Type", "Type", "Type Name", "Family Name"):
+            try:
+                param = view_type.LookupParameter(param_name)
+                if param:
+                    text_values.append((param.AsString() or param.AsValueString() or "").strip().lower())
+            except BaseException:
+                pass
+
+        for attr_name in ("Name", "FamilyName"):
+            try:
+                text_values.append((getattr(view_type, attr_name, "") or "").strip().lower())
+            except BaseException:
+                pass
+
+        combined_text = " | ".join([text for text in text_values if text])
+        if "working" in combined_text:
+            score = (
+                0 if "frank" in combined_text else 1,
+                0 if "working view" in combined_text else 1,
+                0 if "0-section" in combined_text or "section-frank" in combined_text else 1,
+                (getattr(view_type, "Name", "") or "").lower(),
+            )
+            scored_matches.append((score, view_type))
+
+    if scored_matches:
+        return sorted(scored_matches, key=lambda item: item[0])[0][1]
+
+    if section_types:
+        return sorted(section_types, key=lambda view_type: (getattr(view_type, "Name", "") or "").lower())[0]
+
+    return None
+
+
+def get_element_id_value(element_id):
+    try:
+        return element_id.Value
+    except BaseException:
+        pass
+
+    try:
+        return element_id.IntegerValue
+    except BaseException:
+        pass
+
+    try:
+        return int(element_id)
+    except BaseException:
+        return None
+
+
 def build_combined_bbox(elements):
     bbox_min = None
     bbox_max = None
@@ -328,27 +393,9 @@ def build_combined_bbox(elements):
     return bbox_min, bbox_max
 
 
-def fit_bbox_to_padding_and_levels(bbox_min, bbox_max, xy_padding_ft=2.0):
-    levels = list(FilteredElementCollector(doc).OfClass(DB.Level).ToElements())
-    elevations = sorted([lvl.Elevation for lvl in levels])
-
-    z_bottom = None
-    z_top = None
-
-    for elev in elevations:
-        if elev <= bbox_min.Z:
-            z_bottom = elev
-        if z_top is None and elev >= bbox_max.Z:
-            z_top = elev
-
-    # Apply fallback independently for each missing side.
-    if z_bottom is None:
-        z_bottom = bbox_min.Z - 2.0
-    if z_top is None:
-        z_top = bbox_max.Z + 2.0
-    if z_top <= z_bottom:
-        z_bottom = bbox_min.Z - 2.0
-        z_top = bbox_max.Z + 2.0
+def fit_bbox_to_padding_and_levels(bbox_min, bbox_max, xy_padding_ft=2.0, z_padding_ft=SIX_INCH_FT):
+    z_bottom = bbox_min.Z - z_padding_ft
+    z_top = bbox_max.Z + z_padding_ft
 
     return (
         XYZ(bbox_min.X - xy_padding_ft, bbox_min.Y - xy_padding_ft, z_bottom),
@@ -356,28 +403,11 @@ def fit_bbox_to_padding_and_levels(bbox_min, bbox_max, xy_padding_ft=2.0):
     )
 
 
-def get_section_vertical_limits(bbox_min_z, bbox_max_z, offset_ft=ONE_INCH_FT):
-    levels = list(FilteredElementCollector(doc).OfClass(DB.Level).ToElements())
-    elevations = sorted([lvl.Elevation for lvl in levels])
-
-    level_below = None
-    level_above = None
-
-    for elev in elevations:
-        if elev <= bbox_min_z:
-            level_below = elev
-        if level_above is None and elev >= bbox_max_z:
-            level_above = elev
-
-    z_bottom = (
-        level_below + offset_ft) if level_below is not None else (bbox_min_z - offset_ft)
-    z_top = (level_above -
-             offset_ft) if level_above is not None else (bbox_max_z + offset_ft)
-
+def get_section_vertical_limits(bbox_min_z, bbox_max_z, z_padding_ft=SIX_INCH_FT):
+    z_bottom = bbox_min_z - z_padding_ft
+    z_top = bbox_max_z + z_padding_ft
     if z_top <= z_bottom:
-        z_bottom = bbox_min_z - 1.0
-        z_top = bbox_max_z + 1.0
-
+        z_top = z_bottom + (2.0 * z_padding_ft)
     return z_bottom, z_top
 
 
@@ -452,6 +482,9 @@ def get_default_template_from_view_type(view_family_type):
     try:
         default_template_id = getattr(
             view_family_type, "DefaultTemplateId", ElementId.InvalidElementId)
+        if not default_template_id or default_template_id == ElementId.InvalidElementId:
+            default_template_id = getattr(
+                view_family_type, "DefaultViewTemplateId", ElementId.InvalidElementId)
         if default_template_id and default_template_id != ElementId.InvalidElementId:
             template_view = doc.GetElement(default_template_id)
             if template_view and getattr(template_view, "IsTemplate", False):
@@ -478,9 +511,16 @@ def set_default_template_on_view_type(view_family_type, template_view):
     if not view_family_type or not template_view:
         return False
 
+    default_template_attr = None
+
     try:
-        if view_family_type.DefaultTemplateId != template_view.Id:
-            view_family_type.DefaultTemplateId = template_view.Id
+        if hasattr(view_family_type, "DefaultTemplateId"):
+            default_template_attr = "DefaultTemplateId"
+        elif hasattr(view_family_type, "DefaultViewTemplateId"):
+            default_template_attr = "DefaultViewTemplateId"
+
+        if default_template_attr and getattr(view_family_type, default_template_attr) != template_view.Id:
+            setattr(view_family_type, default_template_attr, template_view.Id)
         return True
     except BaseException:
         pass
@@ -560,6 +600,90 @@ def prepare_view_visibility(view, clear_template=True):
             pass
 
 
+def _safe_param_text(element, param_name):
+    try:
+        param = element.LookupParameter(param_name)
+        if not param:
+            return ''
+        value = param.AsString() or param.AsValueString()
+        return (value or '').strip().lower()
+    except BaseException:
+        return ''
+
+
+def _is_section_view_element(element):
+    try:
+        category = element.Category
+        if not category or category.Name != 'Views':
+            return False
+    except BaseException:
+        return False
+
+    tokens = []
+    try:
+        tokens.append((getattr(element, 'Name', '') or '').lower())
+    except BaseException:
+        pass
+
+    for pname in ['Family', 'Family and Type', 'Type', 'View Name']:
+        tokens.append(_safe_param_text(element, pname))
+
+    combined = ' '.join([t for t in tokens if t])
+    return 'section' in combined
+
+
+def _is_own_section_reference(element, target_view):
+    target_name = (getattr(target_view, 'Name', '') or '').strip().lower()
+    if not target_name:
+        return False
+
+    for pname in ['View Name', 'Type', 'Family and Type', 'Name']:
+        value = _safe_param_text(element, pname)
+        if value and target_name in value:
+            return True
+
+    try:
+        element_name = (getattr(element, 'Name', '') or '').strip().lower()
+        if element_name and target_name in element_name:
+            return True
+    except BaseException:
+        pass
+
+    return False
+
+
+def hide_section_references_in_views(target_views):
+    if not target_views:
+        return 0
+
+    unique_views = {}
+    for view in target_views:
+        if not view:
+            continue
+        view_id_val = get_element_id_value(view.Id)
+        if view_id_val is None:
+            continue
+        unique_views[view_id_val] = view
+
+    hidden_count = 0
+    with revit.Transaction('Hide Section References In New Views'):
+        for target_view in unique_views.values():
+            section_ids = []
+            collector = FilteredElementCollector(doc, target_view.Id).WhereElementIsNotElementType()
+            for element in collector:
+                if not _is_section_view_element(element):
+                    continue
+                if _is_own_section_reference(element, target_view):
+                    continue
+                section_ids.append(element.Id)
+
+            if section_ids:
+                target_view.HideElements(List[ElementId](section_ids))
+                hidden_count += len(section_ids)
+
+    return hidden_count
+
+
 try:
     output.print_md("## Mechanical Equipment View Builder")
 
@@ -607,10 +731,7 @@ try:
         script.exit()
 
     view_family_3d = get_view_family_type(doc, ViewFamily.ThreeDimensional)
-    view_family_section = get_view_family_type_by_name(
-        doc, ViewFamily.Section, section_view)
-    if not view_family_section:
-        view_family_section = get_view_family_type(doc, ViewFamily.Section)
+    view_family_section = get_preferred_section_view_type(doc)
 
     if create_3d_view and not view_family_3d:
         output.print_md("Could not find 3D view family type.")
@@ -663,6 +784,7 @@ try:
     all_element_ids = []
     total_section_views = 0
     last_3d_view = None
+    created_views = []
 
     for selected_family in selected_families:
         elements = families_dict.get(selected_family, [])
@@ -688,6 +810,7 @@ try:
         desired_3d_name = "3D - {}".format(view_base_name)
         section_views = []
         new_3d_view = None
+        created_3d_view = False
 
         with revit.Transaction("Create Mechanical Equipment Views - {}".format(selected_family)):
             if create_3d_view:
@@ -703,6 +826,7 @@ try:
                 else:
                     new_3d_view = View3D.CreateIsometric(
                         doc, view_family_3d.Id)
+                    created_3d_view = True
                     new_3d_view.Name = desired_3d_name
 
                     if template_view:
@@ -766,7 +890,7 @@ try:
                         t.BasisZ = sdef["bz"]
                         t.Origin = center
 
-                        # Section vertical extents follow adjacent levels with 1-inch offsets.
+                        # Section vertical extents use fixed 6-inch padding above/below element bbox.
                         p_bottom = XYZ(center.X, center.Y, section_bottom_z)
                         p_top = XYZ(center.X, center.Y, section_top_z)
                         local_bottom_y = t.Inverse.OfPoint(p_bottom).Y
@@ -808,8 +932,14 @@ try:
                 new_3d_view.SetSectionBox(section_box_3d)
                 new_3d_view.IsSectionBoxActive = True
             last_3d_view = new_3d_view
+            if created_3d_view:
+                created_views.append(new_3d_view)
 
         total_section_views += len(section_views)
+        if section_views:
+            created_views.extend(section_views)
+
+    hide_section_references_in_views(created_views)
 
     if last_3d_view:
         uidoc.ActiveView = last_3d_view
@@ -817,7 +947,7 @@ try:
     if all_element_ids:
         unique_ids = {}
         for eid in all_element_ids:
-            unique_ids[eid.IntegerValue] = eid
+            unique_ids[get_element_id_value(eid)] = eid
         ids_list = List[ElementId](list(unique_ids.values()))
         uidoc.Selection.SetElementIds(ids_list)
         uidoc.ShowElements(ids_list)

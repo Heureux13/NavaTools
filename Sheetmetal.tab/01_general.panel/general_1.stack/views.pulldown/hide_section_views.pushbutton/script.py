@@ -7,10 +7,10 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, ElementId, View
+from Autodesk.Revit.DB import FilteredElementCollector, ElementId, View, Viewport
 from Autodesk.Revit.UI import RevitCommandId, PostableCommand
 from System.Collections.Generic import List
-from pyrevit import revit, forms, script
+from pyrevit import revit, script
 import sys
 
 # Button info
@@ -25,6 +25,23 @@ Permanently hides section view markers/elements in selected views.
 doc = revit.doc
 uidoc = revit.uidoc
 active_view = doc.ActiveView
+
+
+def _get_element_id_value(element_id):
+    try:
+        return element_id.Value
+    except Exception:
+        pass
+
+    try:
+        return element_id.IntegerValue
+    except Exception:
+        pass
+
+    try:
+        return int(element_id)
+    except Exception:
+        return None
 
 
 def _safe_param_text(element, param_name):
@@ -60,6 +77,30 @@ def _is_section_view_element(element):
     return 'section' in combined
 
 
+def _is_own_section_reference(element, target_view):
+    # Keep the marker/reference that points to the same view being processed.
+    target_name = (getattr(target_view, 'Name', '') or '').strip().lower()
+    if not target_name:
+        return False
+
+    for pname in ['View Name', 'Type', 'Family and Type', 'Name']:
+        try:
+            value = _safe_param_text(element, pname)
+            if value and target_name in value:
+                return True
+        except Exception:
+            pass
+
+    try:
+        element_name = (getattr(element, 'Name', '') or '').strip().lower()
+        if element_name and target_name in element_name:
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
 def _zoom_extents():
     try:
         cmd_id = RevitCommandId.LookupPostableCommandId(PostableCommand.ZoomToFit)
@@ -68,51 +109,59 @@ def _zoom_extents():
         pass
 
 
-def _pick_target_views(document):
-    display_to_view = {}
-    for view in FilteredElementCollector(document).OfClass(View).ToElements():
-        try:
-            if view.IsTemplate:
-                continue
-        except Exception:
+def _is_valid_target_view(view):
+    if not view:
+        return False
+
+    try:
+        if view.IsTemplate:
+            return False
+    except Exception:
+        return False
+
+    try:
+        if str(view.ViewType) == 'DrawingSheet':
+            return False
+    except Exception:
+        pass
+
+    return True
+
+
+def _get_target_views_from_selection_or_active():
+    selected_ids = list(uidoc.Selection.GetElementIds())
+    selected_views = {}
+
+    for element_id in selected_ids:
+        elem = doc.GetElement(element_id)
+        if not elem:
             continue
 
         try:
-            if str(view.ViewType) == 'DrawingSheet':
+            if isinstance(elem, Viewport):
+                placed_view = doc.GetElement(elem.ViewId)
+                if _is_valid_target_view(placed_view):
+                    selected_views[_get_element_id_value(placed_view.Id)] = placed_view
                 continue
         except Exception:
             pass
 
-        name = getattr(view, 'Name', None)
-        if not name:
-            continue
+        try:
+            if isinstance(elem, View) and _is_valid_target_view(elem):
+                selected_views[_get_element_id_value(elem.Id)] = elem
+        except Exception:
+            pass
 
-        label = '{} [{}]'.format(name, view.ViewType)
-        display_to_view[label] = view
+    if selected_views:
+        return list(selected_views.values())
 
-    if not display_to_view:
-        return None
+    if _is_valid_target_view(active_view):
+        return [active_view]
 
-    selected = forms.SelectFromList.show(
-        sorted(display_to_view.keys(), key=lambda x: x.lower()),
-        title='Select Views',
-        multiselect=True,
-        button_name='Use Views'
-    )
-
-    if not selected:
-        return []
-
-    selected_views = []
-    for selected_name in selected:
-        view = display_to_view.get(selected_name)
-        if view:
-            selected_views.append(view)
-
-    return selected_views
+    return []
 
 
-target_views = _pick_target_views(doc)
+target_views = _get_target_views_from_selection_or_active()
 if not target_views:
     sys.exit(0)
 
@@ -122,9 +171,11 @@ for target_view in target_views:
     collector = FilteredElementCollector(doc, target_view.Id).WhereElementIsNotElementType()
     for element in collector:
         if _is_section_view_element(element):
+            if _is_own_section_reference(element, target_view):
+                continue
             section_ids.append(element.Id)
     if section_ids:
-        views_to_hide_ids[target_view.Id.IntegerValue] = section_ids
+        views_to_hide_ids[_get_element_id_value(target_view.Id)] = section_ids
 
 if not views_to_hide_ids:
     sys.exit(0)
@@ -136,7 +187,7 @@ for target_view in target_views:
 
 with revit.Transaction('Hide Section Views in Selected Views'):
     for target_view in target_views:
-        section_ids = views_to_hide_ids.get(target_view.Id.IntegerValue)
+        section_ids = views_to_hide_ids.get(_get_element_id_value(target_view.Id))
         if not section_ids:
             continue
         target_view.HideElements(List[ElementId](section_ids))
