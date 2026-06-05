@@ -2,7 +2,8 @@ title:
   en_us: Tagging
 layout:
  - tag_manuals
- - tag_devicescopy
+ - tag_copy
+ - tag_devices
  - tag_equipment
  - tag_devices
  - tag_duct

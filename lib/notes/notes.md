@@ -124,3 +124,6 @@
 | _value_k              | x                |           |         |               | segments and fittings |
 | _weight_support       |                  |           | x       |               | segments and fittings |
 
+
+
+nuknuw-1reQte-furkup
