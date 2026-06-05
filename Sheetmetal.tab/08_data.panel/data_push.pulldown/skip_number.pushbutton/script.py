@@ -25,6 +25,8 @@ parameters_to_skip = {
     PYT_SKIP_NUMBER,
 }
 
+number_parameter = RVT_ITEM_NUMBER
+
 # Code
 # ==================================================
 uidoc = __revit__.ActiveUIDocument
@@ -46,15 +48,18 @@ try:
         # Toggle parameters: set to 'skip' if not already, clear if already 'skip'
         for param_name in parameters_to_skip:
             try:
-                param = elem.LookupParameter(param_name)
-                if param is None or param.IsReadOnly:
+                skip_param = elem.LookupParameter(param_name)
+                num_param = elem.LookupParameter(number_parameter)
+                if skip_param is None or skip_param.IsReadOnly:
                     continue
 
-                current = (param.AsString() or '').strip().lower()
-                if current == 'skip':
-                    param.Set('')
+                current = (skip_param.AsString() or '').strip().lower()
+                if current == 'skipp':
+                    skip_param.Set('')
                 else:
-                    param.Set('skip')
+                    skip_param.Set('skip')
+                    if num_param and not num_param.IsReadOnly:
+                        num_param.Set('')
             except Exception:
                 pass
 
