@@ -24,7 +24,7 @@ from config.parameters_registry import (
 
 # Button info
 # ===================================================
-__title__ = "Select by Order Number"
+__title__ = "View Order Number"
 __doc__ = """
 Selects all ducts by accending order number in current view.
 """
@@ -173,6 +173,50 @@ def format_missing_ranges(numbers):
     return ", ".join(ranges)
 
 
+def get_duplicate_order_values(elements):
+    duplicates = {}
+
+    for element in elements:
+        value = get_param_display_value(element, PYT_NUMBER_ORDER)
+        if value == "None":
+            continue
+
+        key = str(value).strip()
+        if not key:
+            continue
+
+        duplicates.setdefault(key, []).append(element)
+
+    return {
+        order_value: order_elements
+        for order_value, order_elements in duplicates.items()
+        if len(order_elements) > 1
+    }
+
+
+def duplicate_order_sort_key(order_value):
+    text = str(order_value).strip()
+
+    try:
+        return (0, int(text), text)
+    except Exception:
+        pass
+
+    try:
+        return (0, int(float(text)), text)
+    except Exception:
+        pass
+
+    match = re.search(r"-?\d+", text)
+    if match:
+        try:
+            return (0, int(match.group(0)), text)
+        except Exception:
+            pass
+
+    return (1, float("inf"), text)
+
+
 # Main Code
 # ==================================================
 try:
@@ -260,6 +304,28 @@ try:
         )
     else:
         output.print_md("# Missing Whole Numbers: Unable to evaluate (no whole-number Order values found).")
+
+    duplicate_orders = get_duplicate_order_values(duct_run)
+    output.print_md("---")
+
+    if duplicate_orders:
+        output.print_md("# Duplicate Order Values")
+
+        for order_value in sorted(duplicate_orders.keys(), key=duplicate_order_sort_key):
+            duplicate_elements = duplicate_orders[order_value]
+            duplicate_id_links = ", ".join(
+                output.linkify(d.Id)
+                for d in duplicate_elements
+            )
+            output.print_md(
+                "### Order #: {} | Count: {} | IDs: {}".format(
+                    order_value,
+                    len(duplicate_elements),
+                    duplicate_id_links
+                )
+            )
+    else:
+        output.print_md("# Duplicate Order Values: None")
 
     # Final print statements
     print_disclaimer(output)
