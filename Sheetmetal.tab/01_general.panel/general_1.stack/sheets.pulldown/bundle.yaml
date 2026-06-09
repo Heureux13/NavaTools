@@ -1,3 +1,7 @@
 title:
   en_us: Sheets
 layout:
+ - create_like_sheets
+ - -----
+ - rename_sheet_number
+ - rename_sheets

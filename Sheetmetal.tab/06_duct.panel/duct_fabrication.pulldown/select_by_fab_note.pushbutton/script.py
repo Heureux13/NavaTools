@@ -24,8 +24,10 @@ from System.Windows.Forms import (
     TreeNode,
     CheckBox,
     FormStartPosition,
+    AnchorStyles,
 )
 from System.Collections.Generic import List
+from System.Drawing import Size
 import re
 import os
 
@@ -64,33 +66,45 @@ fab_notes_to_skip = {
 
 
 class EnhancedParamForm(Form):
-    def __init__(self, param_groups):
+    def __init__(self, param_groups, uidoc):
         Form.__init__(self)
         self.Text = "Select Ducts by Fabrication Notes"
         self.Width = 700
-        self.Height = 550
+        self.Height = 600
+        self.MinimumSize = Size(500, 400)
         self.StartPosition = FormStartPosition.CenterScreen
         self.param_groups = param_groups
+        self.uidoc = uidoc
 
         # Build hierarchical structure: base_name -> [variants]
         self.hierarchy = self._build_hierarchy(param_groups)
 
+        _MARGIN = 12
+        _BTN_H = 30
+        _BTN_TOP = self.ClientSize.Height - _MARGIN - _BTN_H
+        _SEARCH_H = 24
+        _inner_w = self.ClientSize.Width - _MARGIN * 2
+
         # Search box
         self.search_box = TextBox()
-        self.search_box.Top = 10
-        self.search_box.Left = 10
-        self.search_box.Width = 660
+        self.search_box.Top = _MARGIN
+        self.search_box.Left = _MARGIN
+        self.search_box.Width = _inner_w
+        self.search_box.Height = _SEARCH_H
         self.search_box.PlaceholderText = "Search..."
+        self.search_box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         self.search_box.TextChanged += self._filter_tree
         self.Controls.Add(self.search_box)
 
         # TreeView with checkboxes for expandable hierarchy
+        _tree_top = _MARGIN + _SEARCH_H + _MARGIN
         self.tree_view = TreeView()
-        self.tree_view.Top = 40
-        self.tree_view.Left = 10
-        self.tree_view.Width = 660
-        self.tree_view.Height = 360
+        self.tree_view.Top = _tree_top
+        self.tree_view.Left = _MARGIN
+        self.tree_view.Width = _inner_w
+        self.tree_view.Height = _BTN_TOP - _tree_top - _MARGIN
         self.tree_view.CheckBoxes = True
+        self.tree_view.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
         self.tree_view.AfterCheck += self._on_node_checked
         self.Controls.Add(self.tree_view)
 
@@ -100,21 +114,35 @@ class EnhancedParamForm(Form):
         # Select All button
         btn_all = Button()
         btn_all.Text = "Select All"
-        btn_all.Top = 410
-        btn_all.Left = 10
+        btn_all.Top = _BTN_TOP
+        btn_all.Left = _MARGIN
         btn_all.Width = 120
+        btn_all.Height = _BTN_H
+        btn_all.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
         btn_all.Click += self._on_select_all
         self.Controls.Add(btn_all)
 
         # Select Checked button
         btn_itemize = Button()
         btn_itemize.Text = "Select Checked"
-        btn_itemize.Top = 410
-        btn_itemize.Left = 140
+        btn_itemize.Top = _BTN_TOP
+        btn_itemize.Left = _MARGIN + 120 + 8
         btn_itemize.Width = 150
-        btn_itemize.DialogResult = DialogResult.Yes
+        btn_itemize.Height = _BTN_H
+        btn_itemize.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+        btn_itemize.Click += self._on_select_checked
         self.Controls.Add(btn_itemize)
-        self.AcceptButton = btn_itemize
+
+        # Close button
+        btn_close = Button()
+        btn_close.Text = "Close"
+        btn_close.Top = _BTN_TOP
+        btn_close.Left = _MARGIN + 120 + 8 + 150 + 8
+        btn_close.Width = 100
+        btn_close.Height = _BTN_H
+        btn_close.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+        btn_close.DialogResult = DialogResult.Cancel
+        self.Controls.Add(btn_close)
 
     def _build_hierarchy(self, param_groups):
         """Build hierarchy by grouping variants under base names"""
@@ -136,13 +164,15 @@ class EnhancedParamForm(Form):
 
             # Check if base name or any variant matches search
             base_matches = not search_filter or search_filter in base_name.lower()
-            variant_matches = [v for v in variants if search_filter is None or search_filter in v.lower()]
+            variant_matches = [
+                v for v in variants if search_filter is None or search_filter in v.lower()]
 
             if not base_matches and not variant_matches:
                 continue
 
             # Create parent node
-            total_count = sum(len(self.param_groups.get(v, [])) for v in variants)
+            total_count = sum(len(self.param_groups.get(v, []))
+                              for v in variants)
             parent_text = "{} ({} parts)".format(base_name, total_count)
             parent_node = TreeNode(parent_text)
             parent_node.Tag = ("parent", base_name)
@@ -175,6 +205,16 @@ class EnhancedParamForm(Form):
                     child_node.Checked = True
 
         self.tree_view.AfterCheck += self._on_node_checked
+
+    def _on_select_checked(self, sender, args):
+        """Select checked ducts in Revit without closing the form."""
+        ducts = self.get_checked_ducts()
+        if not ducts:
+            return
+        duct_ids = List[ElementId]()
+        for d in ducts:
+            duct_ids.Add(d.Id)
+        self.uidoc.Selection.SetElementIds(duct_ids)
 
     def _on_node_checked(self, sender, args):
         """When a parent is checked/unchecked, check/uncheck all children"""
@@ -339,37 +379,9 @@ try:
     if not param_groups:
         script.exit()
 
-    # Show form and get selection
-    form = EnhancedParamForm(param_groups)
-    if form.ShowDialog() != DialogResult.Yes:
-        script.exit()
-
-    selected_fab_notes = form.get_checked_values()
-    duct_run = form.get_checked_ducts()
-    if not selected_fab_notes or not duct_run:
-        script.exit()
-
-    # Select ducts in Revit
-    duct_ids = List[ElementId]()
-    for d in duct_run:
-        duct_ids.Add(d.Id)
-
-    if duct_ids.Count == 0:
-        output.print_md("**ERROR: Nothing to select!**")
-        script.exit()
-
-    # Select the ducts
-    uidoc.Selection.SetElementIds(duct_ids)
-
-    output.print_md("## Selected Fabrication Notes")
-    for fab_note in sorted(selected_fab_notes, key=natural_sort_key):
-        output.print_md("# {}".format(fab_note))
-
-    output.print_md("---")
-    output.print_md("# Total Elements: {}, {}".format(
-        len(duct_run),
-        output.linkify([d.Id for d in duct_run])
-    ))
+    # Show form — selection happens inside the form on each click
+    form = EnhancedParamForm(param_groups, uidoc)
+    form.ShowDialog()
 
 except Exception as e:
     output.print_md("**Error:** {}".format(str(e)))

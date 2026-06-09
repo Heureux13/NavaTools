@@ -1,0 +1,15 @@
+title:
+  en_us: Fabrication
+layout:
+  - number_runs
+  - tag_number_items
+  - -----
+  - select_by_fab_note
+  - -----
+  - select_by_number_order
+  - view_item_numbers
+  - -----
+  - check_number_fabrication_duplicates
+  - check_number_item_duplicates
+  - -----
+  - skip_number

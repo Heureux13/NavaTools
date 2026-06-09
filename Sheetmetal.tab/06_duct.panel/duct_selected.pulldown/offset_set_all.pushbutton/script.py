@@ -14,14 +14,13 @@ from ducts.revit_xyz import RevitXYZ
 from pyrevit import revit, script
 from Autodesk.Revit.DB import StorageType
 from config.parameters_registry import *
+import re
 
 # Button info
 # ======================================================================
-__title__ = 'Offset Data'
+__title__ = 'Offset Data All'
 __doc__ = '''
-Gives raw offset data
----
-Values are representative of raw vector formulas used in linear mathmatics, seeing (-) and (+) does not mean in/out, it is movement from vector origins
+Write to all offsets
 '''
 
 # Variables
@@ -336,7 +335,6 @@ for element in all_fittings:
                             # If parameter has a value, replace only numbers while
                             # preserving existing format (user may have edited text)
                             if current_value and current_value.strip():
-                                import re
                                 result = current_value
                                 # Extract all numbers from the new classification
                                 numbers = re.findall(

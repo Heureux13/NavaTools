@@ -1,3 +1,15 @@
 title:
   en_us: Views
 layout:
+ - section_limits
+ - -----
+ - align_section_views_h
+ - align_section_views_v
+ - ----
+ - align_titles_h
+ - ----
+ - create_views_scope
+ - ----
+ - hide_sction_views
+ - ----
+ - rename_views
