@@ -164,6 +164,11 @@ def get_label_group_key(label):
     return text
 
 
+def get_elevation_from_level(instance, doc_obj):
+    """Get the 'Elevation from Level' parameter value."""
+    return get_param_text(get_param_case_insensitive(instance, "Elevation from Level"))
+
+
 def build_bbm_catalog(instances, doc_obj):
     labels_catalog = {}
 
@@ -174,6 +179,7 @@ def build_bbm_catalog(instances, doc_obj):
         label = get_bbm_label_value(inst, doc_obj)
         family_name, type_name = get_type_identity(inst, doc_obj)
         elem_id_int = inst.Id.IntegerValue
+        elevation = get_elevation_from_level(inst, doc_obj)
 
         if label not in labels_catalog:
             labels_catalog[label] = []
@@ -182,6 +188,7 @@ def build_bbm_catalog(instances, doc_obj):
             "elem_id_int": elem_id_int,
             "family": family_name,
             "type": type_name,
+            "elevation": elevation,
         })
 
     for label in labels_catalog.keys():
@@ -286,6 +293,7 @@ class EquipmentByLabelPicker(Form):
                     family_name = row["family"]
                     type_name = row["type"]
                     elem_id_int = row["elem_id_int"]
+                    elevation = row["elevation"]
 
                     haystack = "{} {} {} {} {}".format(
                         group_key, label, family_name, type_name, elem_id_int
@@ -293,11 +301,11 @@ class EquipmentByLabelPicker(Form):
                     if search and search not in haystack:
                         continue
 
-                    item_text = "{} | {} | ID {}".format(
-                        family_name, type_name, elem_id_int)
+                    item_text = "{} | {} | ID {} | Elev: {}".format(
+                        family_name, type_name, elem_id_int, elevation)
                     item_node = TreeNode(item_text)
                     item_node.Tag = ("item", elem_id_int, label,
-                                     family_name, type_name)
+                                     family_name, type_name, elevation)
                     label_node.Nodes.Add(item_node)
 
                 if label_node.Nodes.Count > 0:
@@ -333,9 +341,9 @@ class EquipmentByLabelPicker(Form):
         if len(checked_items) == 0:
             self.lbl_selected.Text = "Selected: none"
         elif len(checked_items) == 1:
-            _, _, label, family_name, type_name = checked_items[0].Tag
-            self.lbl_selected.Text = "Selected: {} | {} | {}".format(
-                label, family_name, type_name)
+            _, _, label, family_name, type_name, elevation = checked_items[0].Tag
+            self.lbl_selected.Text = "Selected: {} | {} | {} | Elev: {}".format(
+                label, family_name, type_name, elevation)
         else:
             self.lbl_selected.Text = "Selected: {} equipment nodes".format(
                 len(checked_items))
@@ -360,13 +368,14 @@ class EquipmentByLabelPicker(Form):
         self.selected_element_ids = []
         self.selected_items = []
         for node in checked_items:
-            _, elem_id_int, label, family_name, type_name = node.Tag
+            _, elem_id_int, label, family_name, type_name, elevation = node.Tag
             self.selected_element_ids.append(int(elem_id_int))
             self.selected_items.append({
                 "elem_id_int": int(elem_id_int),
                 "label": label,
                 "family": family_name,
                 "type": type_name,
+                "elevation": elevation,
             })
 
 
@@ -412,10 +421,11 @@ try:
     output.print_md("## Index")
     for i, elem_id_int in enumerate(sorted_selected_ids, start=1):
         row = selected_by_id[elem_id_int]
-        output.print_md("{} | {} | {}".format(
+        output.print_md("{} | {} | {} | Elev: {}".format(
             format_index(i),
             row["label"],
             output.linkify(ElementId(elem_id_int)),
+            row["elevation"],
         ))
 
     output.print_md("## Actions")
