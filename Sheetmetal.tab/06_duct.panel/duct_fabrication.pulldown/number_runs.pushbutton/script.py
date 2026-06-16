@@ -20,7 +20,7 @@ import re
 
 # Button info
 # ===================================================
-__title__ = "Numbers Runs"
+__title__ = "Number Runs"
 __doc__ = """
 1, 2, 3... n. No matches will be considered.
 """

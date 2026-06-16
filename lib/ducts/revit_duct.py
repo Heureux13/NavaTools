@@ -573,7 +573,10 @@ class RevitDuct:
     @classmethod
     def all(cls, doc, view=None):
         """Return all duct elements wrapped as RevitDuct objects."""
-        elements = (FilteredElementCollector(doc, view.Id if view else None)
+        collector = (FilteredElementCollector(doc, view.Id)
+                     if view else FilteredElementCollector(doc))
+
+        elements = (collector
                     .OfCategory(BuiltInCategory.OST_FabricationDuctwork)
                     .WhereElementIsNotElementType()
                     .ToElements())

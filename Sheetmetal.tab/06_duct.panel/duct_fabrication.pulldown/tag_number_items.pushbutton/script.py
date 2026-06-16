@@ -283,6 +283,10 @@ t.Start()
 try:
     # Tag fabrication ducts (exclude certain families)
     for elem in fab_ducts:
+        elem_id_int = _eid_int(getattr(elem, "Id", None))
+        if elem_id_int is None:
+            continue
+
         # Only tag elements whose family is in families_to_tag
         try:
             fam_param = elem.LookupParameter(RVT_FAMILY)
@@ -296,13 +300,14 @@ try:
 
         # Skip elements with empty or disallowed item number values
         try:
-            item_param = _get_first_matching_parameter(elem, number_parameter_names)
+            item_param = _get_first_matching_parameter(
+                elem, number_parameter_names)
             if not item_param:
                 continue
             item_value = _get_parameter_value(item_param).lower()
             if not item_value or item_value in values_to_skip_norm:
                 # Remove any existing tags for this element
-                for existing_tag in elem_to_tags.get(elem.Id.IntegerValue, []):
+                for existing_tag in elem_to_tags.get(elem_id_int, []):
                     try:
                         doc.Delete(existing_tag.Id)
                         removed.append(elem)
@@ -312,7 +317,7 @@ try:
         except Exception:
             pass
 
-        existing_for_elem = list(elem_to_tags.get(elem.Id.IntegerValue, []))
+        existing_for_elem = list(elem_to_tags.get(elem_id_int, []))
         kept_existing_tag = None
         for existing_tag in existing_for_elem:
             tag_family_name = _get_tag_family_name(doc, existing_tag)
@@ -327,7 +332,7 @@ try:
                 pass
 
         # Check if already tagged with our tag family after pruning duplicates/conflicts
-        if kept_existing_tag is not None or elem.Id.IntegerValue in already_tagged_ids:
+        if kept_existing_tag is not None or elem_id_int in already_tagged_ids:
             already_tagged.append(elem)
             continue
 

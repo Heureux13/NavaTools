@@ -2,6 +2,12 @@ title:
   en_us: Fabrication
 layout:
   - number_runs
+  - number_view
+  - number_project
+  - -----
+  - number_view_dups
+  - number_project_dups
+  - -----
   - tag_number_items
   - -----
   - select_by_fab_note
