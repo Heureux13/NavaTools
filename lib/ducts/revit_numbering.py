@@ -317,9 +317,13 @@ class RevitNumbers(object):
                 continue
 
             try:
-                return int(value) if isinstance(value, (int, float)) else int(float(value))
+                if isinstance(value, (int, float)):
+                    return int(value)
+
+                cleaned_value = str(value).replace(",", "").strip()
+                return int(float(cleaned_value))
             except (ValueError, TypeError):
-                match = re.search(r'\d+', str(value))
+                match = re.search(r'\d+', str(value).replace(",", ""))
                 if match:
                     return int(match.group())
 
@@ -467,30 +471,29 @@ class RevitNumbers(object):
             next_start_number = int(first_start_number)
 
         results = []
-        processed_ids = set()
 
         for idx, start_duct in enumerate(sorted_ducts):
-            if start_duct.id in processed_ids:
-                continue
-
             try:
                 last_used_number, run_piece_count, visited_ids = self._number_run_simple(
                     start_duct,
                     next_start_number,
                     repeat_numbers=repeat_numbers,
                 )
-                processed_ids.update(visited_ids)
                 results.append(
                     (start_duct, next_start_number, last_used_number))
 
-                if run_piece_count > 500:
-                    next_start_number = self.round_up_to_nearest_1000(
-                        last_used_number + 1000)
-                else:
-                    next_start_number = self.round_up_to_nearest_100(
-                        last_used_number + 100)
-            except Exception:
-                pass
+                base_add = 10 + (run_piece_count // 50) * 10
+                next_start_number = self.round_up_to_nearest_10(
+                    last_used_number + base_add)
+            except Exception as ex:
+                order_text = self.get_order_number_text(start_duct)
+                self.output.print_md(
+                    "- ERROR processing order **{}** / duct **{}**: {}".format(
+                        order_text,
+                        start_duct.element.Id.IntegerValue,
+                        ex,
+                    )
+                )
 
         return results
 
@@ -819,7 +822,7 @@ class RevitNumbers(object):
                 st = storage_type
 
                 if st == StorageType.String:
-                    param.Set(str(number))
+                    param.Set("{:,}".format(int(number)))
                     updated = True
                     continue
                 if st == StorageType.Integer:
@@ -840,7 +843,10 @@ class RevitNumbers(object):
         # Query Revit connectors directly for immediate neighbors
         connected = []
         for connector in duct.get_connectors():
-            if not connector.IsConnected:
+            try:
+                if not connector.IsConnected:
+                    continue
+            except Exception:
                 continue
 
             for ref in list(connector.AllRefs):
@@ -932,9 +938,10 @@ class RevitNumbers(object):
         if length is None:
             signature.append("")
         else:
-            # Snap to 1/16" to avoid floating noise while still matching by length.
+            # Snap to nearest inch to avoid floating noise while still matching by length.
             length_value = float(length)
-            signature.append(round(length_value * 16.0) / 16.0)
+            rounded_length = round(length_value)
+            signature.append(rounded_length)
 
         angle = duct.angle
         if angle is None:

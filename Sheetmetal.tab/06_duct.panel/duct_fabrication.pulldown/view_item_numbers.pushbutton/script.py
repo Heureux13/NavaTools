@@ -81,6 +81,7 @@ def parse_item_number(value_text):
     text = (value_text or "").strip()
     if not text:
         return None
+    text = text.replace(",", "")
     try:
         num = float(text)
     except Exception:
@@ -214,7 +215,8 @@ class ItemNumberTreePicker(Form):
             bucket_label = "{}-{}".format(bucket_start, bucket_end)
             bucket_total = sum(len(numbers_map[n]) for n in numbers_map.keys())
 
-            bucket_node = TreeNode("{} ({} elements)".format(bucket_label, bucket_total))
+            bucket_node = TreeNode(
+                "{} ({} elements)".format(bucket_label, bucket_total))
             bucket_node.Tag = ("bucket", bucket_start, bucket_end)
 
             for item_number in sorted(numbers_map.keys()):
@@ -224,7 +226,8 @@ class ItemNumberTreePicker(Form):
                 if search and search not in haystack:
                     continue
 
-                item_node = TreeNode("{} ({} elements)".format(item_text, len(elems)))
+                item_node = TreeNode(
+                    "{} ({} elements)".format(item_text, len(elems)))
                 item_node.Tag = ("item", item_number)
                 bucket_node.Nodes.Add(item_node)
 
@@ -250,7 +253,8 @@ class ItemNumberTreePicker(Form):
             self.tree_view.AfterCheck += self._on_after_check
 
         count_selected = len(self.get_checked_item_numbers())
-        self.lbl_selected.Text = "Selected: {} item numbers".format(count_selected)
+        self.lbl_selected.Text = "Selected: {} item numbers".format(
+            count_selected)
 
     def get_checked_item_numbers(self):
         checked = []
@@ -262,7 +266,8 @@ class ItemNumberTreePicker(Form):
 
     def _on_ok_clicked(self, sender, args):
         if not self.get_checked_item_numbers():
-            TaskDialog.Show("Select Item Numbers", "Check at least one Item Number before clicking Select.")
+            TaskDialog.Show(
+                "Select Item Numbers", "Check at least one Item Number before clicking Select.")
             self.DialogResult = getattr(DialogResult, "None")
 
 
@@ -285,12 +290,14 @@ def get_item_number_for_elem(elem):
 try:
     ducts = collect_fab_ducts_in_view(doc, view)
     if not ducts:
-        TaskDialog.Show("No Ducts", "No fabrication ductwork found in this view.")
+        TaskDialog.Show(
+            "No Ducts", "No fabrication ductwork found in this view.")
         script.exit()
 
     buckets = build_item_number_groups(ducts)
     if not buckets:
-        TaskDialog.Show("No Item Numbers", "No numeric Item Number values found in this view.")
+        TaskDialog.Show("No Item Numbers",
+                        "No numeric Item Number values found in this view.")
         script.exit()
 
     form = ItemNumberTreePicker(buckets)
@@ -303,7 +310,8 @@ try:
 
     selected_elems = find_elements_for_item_numbers(buckets, selected_numbers)
     if not selected_elems:
-        TaskDialog.Show("No Matches", "No elements matched the selected Item Number values.")
+        TaskDialog.Show(
+            "No Matches", "No elements matched the selected Item Number values.")
         script.exit()
 
     selected_elems = sorted(
@@ -326,7 +334,8 @@ try:
             continue
 
     if selected_ids.Count == 0:
-        TaskDialog.Show("No Matches", "No valid element IDs were found from selected Item Numbers.")
+        TaskDialog.Show(
+            "No Matches", "No valid element IDs were found from selected Item Numbers.")
         script.exit()
 
     uidoc.Selection.SetElementIds(selected_ids)
@@ -334,16 +343,20 @@ try:
     selected_unique_numbers = sorted(set(selected_numbers))
 
     output.print_md("# Item Number Selection")
-    output.print_md("- Selected item numbers: {}".format(len(selected_numbers)))
+    output.print_md(
+        "- Selected item numbers: {}".format(len(selected_numbers)))
     output.print_md("- Selected elements: {}".format(selected_ids.Count))
     output.print_md("- Min item number: {}".format(selected_unique_numbers[0]))
-    output.print_md("- Max item number: {}".format(selected_unique_numbers[-1]))
+    output.print_md(
+        "- Max item number: {}".format(selected_unique_numbers[-1]))
 
     output.print_md("## Indexed Selection")
     for idx, elem in enumerate(unique_selected_elems, start=1):
         index_text = "{:06d}".format(idx)
-        item_number_value = get_param_value_by_names(elem, ["Item Number"]) or "(missing)"
-        output.print_md("{} | {} | Item Number: {}".format(index_text, output.linkify(elem.Id), item_number_value))
+        item_number_value = get_param_value_by_names(
+            elem, ["Item Number"]) or "(missing)"
+        output.print_md("{} | {} | Item Number: {}".format(
+            index_text, output.linkify(elem.Id), item_number_value))
 
 except Exception as exc:
     TaskDialog.Show("Error", "Script failed: {}".format(str(exc)))

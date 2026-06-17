@@ -83,7 +83,7 @@ try:
     try:
         output.print_md("- Starting transaction")
         with revit.Transaction("Number Ordered Duct Runs (View Dups)"):
-            output.print_md("- Running number_ordered_runs (duplicate mode)")
+            output.print_md("- Running number_ordered_runs (reuse mode)")
 
             results = numbering.number_ordered_runs(
                 ordered_ducts,
