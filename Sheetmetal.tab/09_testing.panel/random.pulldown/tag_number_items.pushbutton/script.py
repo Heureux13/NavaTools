@@ -172,7 +172,7 @@ if start_elem is None:
 
 start_duct = RevitDuct(doc, view, start_elem)
 
-numbering = RevitNumbers()
+numbering = RevitNumbers(allow_round=False)
 start_number = numbering.get_item_number(start_duct)
 
 if start_number is None:

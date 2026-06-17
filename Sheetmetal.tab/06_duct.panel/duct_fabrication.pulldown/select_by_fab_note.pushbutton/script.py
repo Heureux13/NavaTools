@@ -337,7 +337,7 @@ try:
             if item_val is None or item_val == "":
                 break  # No item number, skip this duct
             # Check if value is numeric
-            item_str = str(item_val).strip()
+            item_str = str(item_val).replace(",", "").strip()
             try:
                 num_val = float(item_str)
                 # Skip if item number is 0

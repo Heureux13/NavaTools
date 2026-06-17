@@ -24,7 +24,7 @@ from config.parameters_registry import (
 
 # Button info
 # ===================================================
-__title__ = "View Order Number"
+__title__ = "View Order Numbers"
 __doc__ = """
 Selects all ducts by accending order number in current view.
 """
@@ -238,7 +238,8 @@ try:
     if not duct_run:
         TaskDialog.Show(
             "No Selection",
-            "No ducts with a value in {} were found in current view.".format(PYT_NUMBER_ORDER)
+            "No ducts with a value in {} were found in current view.".format(
+                PYT_NUMBER_ORDER)
         )
         script.exit()
 
@@ -300,10 +301,12 @@ try:
             "# Whole Order Range: {} to {}".format(min_order, max_order)
         )
         output.print_md(
-            "# Missing Whole Numbers: {}".format(format_missing_ranges(missing_orders))
+            "# Missing Whole Numbers: {}".format(
+                format_missing_ranges(missing_orders))
         )
     else:
-        output.print_md("# Missing Whole Numbers: Unable to evaluate (no whole-number Order values found).")
+        output.print_md(
+            "# Missing Whole Numbers: Unable to evaluate (no whole-number Order values found).")
 
     duplicate_orders = get_duplicate_order_values(duct_run)
     output.print_md("---")

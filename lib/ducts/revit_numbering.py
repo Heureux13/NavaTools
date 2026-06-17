@@ -283,15 +283,14 @@ class RevitNumbers(object):
 
     def has_skip_value(self, duct):
         # Check if duct has a skip value in its number parameter or is a round boot taop
-        if not self.allow_round:
-            family = duct.family
-            family_lower = family.lower() if family else ""
+        family = duct.family
+        family_lower = family.lower() if family else ""
 
-            if family_lower in boot_families_to_skip:
-                sig = self._size_signature(duct.size)
-
-                if sig is not None and sig[0] == "round":
-                    return True
+        # Round boot taps are always skipped from numbering.
+        if family_lower in boot_families_to_skip:
+            sig = self._size_signature(duct.size)
+            if sig is not None and sig[0] == "round":
+                return True
 
         return self._has_control_value(duct,
                                        self.skip_check_parameters,
