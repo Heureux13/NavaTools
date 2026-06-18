@@ -13,3 +13,4 @@ layout:
  - hide_sction_views
  - ----
  - rename_views
+ - grid_lines_align
