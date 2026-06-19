@@ -9,6 +9,7 @@ layout:
  - align_titles_h
  - ----
  - create_views_scope
+ - create_3d_view
  - ----
  - hide_sction_views
  - ----
