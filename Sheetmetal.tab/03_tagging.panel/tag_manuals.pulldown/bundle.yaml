@@ -2,6 +2,9 @@ title:
   en_us: Manual
 layout:
   - tag_reversal
+  - -----
+  - align_v_center
+  - align_h_center
   - ----
   - tag_1_bod
   - tag_1_length
