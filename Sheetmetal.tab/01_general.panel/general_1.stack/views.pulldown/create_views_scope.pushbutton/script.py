@@ -33,7 +33,6 @@ Create views from selected scope boxes
 # Variables
 # ======================================================================
 doc = revit.doc
-source_view = revit.active_view
 output = script.get_output()
 
 
@@ -44,16 +43,17 @@ def get_element_id_value(element_id):
         return element_id.IntegerValue
 
 
-class ScopeBoxPickerForm(Form):
-    def __init__(self, scope_boxes):
+class MultiPickerForm(Form):
+    def __init__(self, title, action_text, elements, get_name, get_id, prechecked_ids=None):
         Form.__init__(self)
-        self.Text = "Select Scope Boxes"
+        self.Text = title
         self.Width = 560
         self.Height = 670
 
-        self.scope_boxes = sorted(
-            scope_boxes, key=lambda scope_box: scope_box.Name.lower())
-        self.checked_scope_ids = set()
+        self.elements = sorted(elements, key=lambda element: get_name(element).lower())
+        self.get_name = get_name
+        self.get_id = get_id
+        self.checked_ids = set(prechecked_ids or [])
 
         label = Label()
         label.Text = "Search"
@@ -95,7 +95,7 @@ class ScopeBoxPickerForm(Form):
         self.Controls.Add(btn_clear)
 
         btn_ok = Button()
-        btn_ok.Text = "Create Views"
+        btn_ok.Text = action_text
         btn_ok.Left = 320
         btn_ok.Top = 585
         btn_ok.Width = 95
@@ -116,17 +116,17 @@ class ScopeBoxPickerForm(Form):
 
     def _build_tree(self, filter_text=None):
         self.tree_view.Nodes.Clear()
-        checked_ids = self.checked_scope_ids
+        checked_ids = self.checked_ids
 
-        for scope_box in self.scope_boxes:
-            name = scope_box.Name
+        for element in self.elements:
+            name = self.get_name(element)
             if filter_text and filter_text not in name.lower():
                 continue
 
-            scope_id_value = get_element_id_value(scope_box.Id)
+            element_id_value = self.get_id(element)
             node = TreeNode(name)
-            node.Tag = scope_id_value
-            node.Checked = scope_id_value in checked_ids
+            node.Tag = element_id_value
+            node.Checked = element_id_value in checked_ids
             self.tree_view.Nodes.Add(node)
 
     def _on_filter_changed(self, sender, args):
@@ -134,26 +134,26 @@ class ScopeBoxPickerForm(Form):
         self._build_tree(filter_text if filter_text else None)
 
     def _on_node_checked(self, sender, args):
-        scope_id = args.Node.Tag
-        if scope_id is None:
+        element_id = args.Node.Tag
+        if element_id is None:
             return
 
         if args.Node.Checked:
-            self.checked_scope_ids.add(scope_id)
+            self.checked_ids.add(element_id)
         else:
-            self.checked_scope_ids.discard(scope_id)
+            self.checked_ids.discard(element_id)
 
     def _on_select_all(self, sender, args):
-        for scope_box in self.scope_boxes:
-            self.checked_scope_ids.add(get_element_id_value(scope_box.Id))
+        for element in self.elements:
+            self.checked_ids.add(self.get_id(element))
         self._build_tree((self.search_box.Text or "").strip().lower() or None)
 
     def _on_clear(self, sender, args):
-        self.checked_scope_ids.clear()
+        self.checked_ids.clear()
         self._build_tree((self.search_box.Text or "").strip().lower() or None)
 
-    def get_checked_scope_ids(self):
-        return list(self.checked_scope_ids)
+    def get_checked_ids(self):
+        return list(self.checked_ids)
 
 
 def can_duplicate_as_dependent(view):
@@ -186,6 +186,19 @@ def collect_scope_boxes(document):
     )
 
 
+def collect_selected_source_views():
+    selected_views = []
+
+    try:
+        for element in revit.get_selection():
+            if isinstance(element, View) and not element.IsTemplate and can_duplicate_as_dependent(element):
+                selected_views.append(element)
+    except Exception:
+        pass
+
+    return sorted(selected_views, key=lambda view: view.Name.lower())
+
+
 def duplicate_view_as_dependent(view):
     if not view.CanViewBeDuplicated(ViewDuplicateOption.AsDependent):
         raise Exception("View cannot be duplicated as dependent.")
@@ -193,19 +206,11 @@ def duplicate_view_as_dependent(view):
     return doc.GetElement(new_view_id)
 
 
-if not source_view:
-    TaskDialog.Show("Create Views", "No active view found.")
-    script.exit()
-
-if not isinstance(source_view, View) or source_view.IsTemplate:
-    TaskDialog.Show(
-        "Create Views", "Active view is not a valid non-template view.")
-    script.exit()
-
-if not can_duplicate_as_dependent(source_view):
+selected_source_views = collect_selected_source_views()
+if not selected_source_views:
     TaskDialog.Show(
         "Create Views",
-        "The active view cannot be duplicated as dependent."
+        "No valid views selected. In the Project Browser, select one or more non-template views that can be duplicated as dependent, then run the command again."
     )
     script.exit()
 
@@ -214,12 +219,19 @@ if not all_scope_boxes:
     TaskDialog.Show("Create Views", "No scope boxes found in this project.")
     script.exit()
 
-form = ScopeBoxPickerForm(all_scope_boxes)
-result = form.ShowDialog()
+scope_form = MultiPickerForm(
+    title="Select Scope Boxes",
+    action_text="Create Views",
+    elements=all_scope_boxes,
+    get_name=lambda scope_box: scope_box.Name,
+    get_id=lambda scope_box: get_element_id_value(scope_box.Id),
+)
+
+result = scope_form.ShowDialog()
 if result != DialogResult.OK:
     script.exit()
 
-selected_id_values = set(form.get_checked_scope_ids())
+selected_id_values = set(scope_form.get_checked_ids())
 if not selected_id_values:
     TaskDialog.Show("Create Views", "No scope boxes were selected.")
     script.exit()
@@ -238,31 +250,32 @@ created = []
 failed = []
 
 with revit.Transaction("Create Scope Box Views"):
-    for scope_box in selected_scope_boxes:
-        try:
-            dup_view = duplicate_view_as_dependent(source_view)
+    for source_view in selected_source_views:
+        for scope_box in selected_scope_boxes:
+            try:
+                dup_view = duplicate_view_as_dependent(source_view)
 
-            scope_param = dup_view.get_Parameter(
-                BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)
-            if not scope_param or scope_param.IsReadOnly:
-                doc.Delete(dup_view.Id)
-                failed.append(
-                    "{} (cannot set scope box)".format(scope_box.Name))
-                continue
+                scope_param = dup_view.get_Parameter(
+                    BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)
+                if not scope_param or scope_param.IsReadOnly:
+                    doc.Delete(dup_view.Id)
+                    failed.append(
+                        "{} - {} (cannot set scope box)".format(source_view.Name, scope_box.Name))
+                    continue
 
-            scope_param.Set(scope_box.Id)
+                scope_param.Set(scope_box.Id)
 
-            proposed_name = "{} - {}".format(source_view.Name, scope_box.Name)
-            unique_name = get_unique_view_name(proposed_name, existing_names)
-            dup_view.Name = unique_name
-            created.append((dup_view, scope_box.Name))
-        except Exception as err:
-            failed.append("{} ({})".format(scope_box.Name, err))
+                proposed_name = "{} - {}".format(source_view.Name, scope_box.Name)
+                unique_name = get_unique_view_name(proposed_name, existing_names)
+                dup_view.Name = unique_name
+                created.append((dup_view, source_view.Name, scope_box.Name))
+            except Exception as err:
+                failed.append("{} - {} ({})".format(source_view.Name, scope_box.Name, err))
 
 if created:
     output.print_md("# Created {} view(s)".format(len(created)))
-    for new_view, scope_name in created:
-        output.print_md("- {} -> {}".format(scope_name,
+    for new_view, source_name, scope_name in created:
+        output.print_md("- {} - {} -> {}".format(source_name, scope_name,
                         output.linkify(new_view.Id)))
 
 if failed:
