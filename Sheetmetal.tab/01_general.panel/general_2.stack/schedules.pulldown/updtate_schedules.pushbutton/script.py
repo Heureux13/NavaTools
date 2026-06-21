@@ -112,6 +112,9 @@ doc = revit.doc
 active_view = revit.active_view
 output = script.get_output()
 
+update_schedules = ['_master mep devices',
+                    '_master equipment list', '_master air terminal list']
+
 
 # Build SOURCE_HEADER_ALIASES from COLUMN_MAP
 # Maps Revit parameter names to Bluebeam CSV column names
@@ -396,6 +399,29 @@ def pick_schedules(document, current_view):
     if not selected:
         return []
     return [opt.schedule for opt in selected]
+
+
+def find_schedules_by_name(document, target_names):
+    """Return schedules matched by name (stripped, lowercased) in target_names order."""
+    target_keys = [name.strip().lower() for name in target_names]
+    lookup = {}
+    for schedule in FilteredElementCollector(document).OfClass(ViewSchedule):
+        try:
+            if schedule.IsTemplate or schedule.Name.startswith('<'):
+                continue
+        except Exception:
+            pass
+        key = schedule.Name.strip().lower()
+        if key in target_keys and key not in lookup:
+            lookup[key] = schedule
+    found = []
+    missing = []
+    for key, original_name in zip(target_keys, target_names):
+        if key in lookup:
+            found.append(lookup[key])
+        else:
+            missing.append(original_name)
+    return found, missing
 
 
 def normalize_header(text):
@@ -793,16 +819,45 @@ def get_import_rows(table_rows):
     return headers, data_rows
 
 
-file_path = pick_input_file()
-if not file_path:
-    script.exit()
+_config = script.get_config()
+_saved_path = getattr(_config, 'last_file_path', None)
+
+if _saved_path and os.path.isfile(_saved_path):
+    _choice = forms.alert(
+        'Last used file:\n{}\n\nUse the same file?'.format(_saved_path),
+        title='Select Source File',
+        yes=True,
+        no=True,
+        cancel=True,
+        warn_icon=False,
+    )
+    if _choice is None:  # Cancel
+        script.exit()
+    elif _choice:  # Yes
+        file_path = _saved_path
+    else:  # No — browse
+        file_path = pick_input_file()
+        if not file_path:
+            script.exit()
+        _config.last_file_path = file_path
+        script.save_config()
+else:
+    file_path = pick_input_file()
+    if not file_path:
+        script.exit()
+    _config.last_file_path = file_path
+    script.save_config()
 
 worksheet_name, table_rows = get_table_data(file_path)
 if not table_rows:
     output.print_md('No data found in the selected file.')
     script.exit()
 
-selected_schedules = pick_schedules(doc, active_view)
+selected_schedules, missing_schedule_names = find_schedules_by_name(
+    doc, update_schedules)
+if missing_schedule_names:
+    output.print_md(
+        '**Schedules not found in document:** {}'.format(', '.join(missing_schedule_names)))
 if not selected_schedules:
     script.exit()
 
