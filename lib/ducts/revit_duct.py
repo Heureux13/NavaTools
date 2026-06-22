@@ -619,3 +619,27 @@ class RevitDuct:
                 if ref_conn.Owner.Id != self.element.Id:
                     connected_elements.append(ref_conn.Owner)
         return connected_elements
+
+    def set_param(self, param_name, value):
+        """Set a parameter value, auto detect its type"""
+        p = self.element.LookupParameter(param_name)
+        if not p:
+            return False
+        if p.IsReadOnly:
+            return False
+
+        try:
+            storage_type = p.StorageType
+
+            if storage_type == DB.StorageType.String:
+                p.Set(str(value))
+            elif storage_type == DB.StorageType.Integer:
+                p.Set(int(value))
+            elif storage_type == DB.StorageType.Double:
+                p.Set(float(value))
+            else:
+                return False
+
+            return True
+        except Exception:
+            return False
