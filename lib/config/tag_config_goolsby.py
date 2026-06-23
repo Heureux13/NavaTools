@@ -1,43 +1,8 @@
 # -*- coding: utf-8 -*-
-# ======================================================================
-"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
-
-This code and associated documentation files may not be copied, modified,
-distributed, or used in any form without the prior written permission of
-the copyright holder."""
-# ======================================================================
 
 from config.parameters_registry import *
-from pyrevit import revit
-import importlib
 
 """Shared tag slot configuration used by fitting and joint tagging scripts."""
-
-USER_CONFIG_MODULES = {
-    'goolsby': 'config.tag_config_goolsby',
-}
-
-
-def _current_user_lower():
-    try:
-        return (revit.doc.Application.Username or "").strip().lower()
-    except Exception:
-        return ""
-
-
-def _load_user_candidate():
-    username = _current_user_lower()
-    module_name = USER_CONFIG_MODULES.get(username)
-    if not module_name:
-        return None
-    try:
-        mod = importlib.import_module(module_name)
-        return getattr(mod, "DEFAULT_TAG_SLOT_CANDIDATES", None)
-    except Exception:
-        return None
-
-
-
 
 # fmt: off
 # autopep8: off
@@ -333,10 +298,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DCT_Weight', 'Defaut'),
     ],
 }
-
-_user_candidates = _load_user_candidate()
-if isinstance(_user_candidates, dict):
-    DEFAULT_TAG_SLOT_CANDIDATES = _user_candidates
 
 DEFAULT_TAG_SKIP_PARAMETERS = {
     PYT_SKIP_TAG: ['skip'],
