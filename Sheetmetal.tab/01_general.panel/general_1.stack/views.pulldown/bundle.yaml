@@ -11,7 +11,7 @@ layout:
  - create_views_scope
  - create_3d_view
  - ----
- - hide_sction_views
+ - hide_section_views
  - ----
  - rename_views
  - grid_lines_align
