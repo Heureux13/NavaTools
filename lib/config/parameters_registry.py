@@ -281,6 +281,7 @@ RVT_UPPER_END_OBVERT_ELEVATION                      = 'Upper End Obvert Elevatio
 RVT_UPPER_END_TOP_ELEVATION                         = 'Upper End Top Elevation'
 RVT_UPPER_END_TOP_OF_INSULATION_ELEVATION           = 'Upper End Top of Insulation Elevation'
 RVT_URL                                             = 'URL'
+RVT_VIEW_NAME                                       = 'View Name'
 RVT_VELOCITY                                        = 'Velocity'
 RVT_VELOCITY_PRESSURE                               = 'Velocity Pressure'
 RVT_VENDOR                                          = 'Vendor'

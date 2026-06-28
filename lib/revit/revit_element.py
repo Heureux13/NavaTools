@@ -146,3 +146,53 @@ class RevitElement:
                 ids.Add(el.Id)
         if ids.Count > 0:
             uidoc.Selection.SetElementIds(ids)
+
+    @classmethod
+    def hide_elements_temp(cls, view, elements):
+        if not view or elements is None:
+            return 0
+
+        if isinstance(elements, ElementId) or hasattr(elements, "Id") or hasattr(elements, 'element'):
+            elements = [elements]
+        else:
+            try:
+                elements = list(elements)
+            except TypeError:
+                elements = [elements]
+
+        ids = List[ElementId]()
+        seen = set()
+
+        for el in elements:
+            if el is None:
+                continue
+
+            eid = None
+            if isinstance(el, ElementId):
+                eid = el
+            else:
+                wrapper = getattr(el, "element", None)
+                if wrapper is not None and hasattr(wrapper, "Id"):
+                    eid = wrapper.Id
+                elif hasattr(el, "Id"):
+                    eid = el.Id
+
+            if eid is None:
+                continue
+
+            key = eid.IntegerValue
+            if key in seen:
+                continue
+            seen.add(key)
+            ids.Add(eid)
+
+        if ids.Count == 0:
+            return 0
+
+        try:
+            view.HideElementsTemporary(ids)
+            return ids.Count
+        except Exception as ex:
+            raise
+            # log.debug("hide_elements_temp failed: %s", ex)
+            # return 0
