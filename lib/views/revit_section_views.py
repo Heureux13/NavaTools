@@ -7,90 +7,43 @@ distributed, or used in any form without the prior written permission of
 the copyright holder.
 ========================================================================="""
 
-from pyrevit import script, revit, forms, DB
+from pyrevit import script, revit
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
-    BoundingBoxXYZ,
     BuiltInCategory,
-    ElementId,
-    Category,
-    View3D,
-    ViewSection,
-    ViewFamily,
-    ViewFamilyType,
-    XYZ,
-    Transform,
-    View,
 )
-from System.Collections.Generic import List
 from config.parameters_registry import (
-    RVT_FAMILY,
-    RVT_FAMILY_AND_TYPE,
-    RVT_TYPE,
     RVT_VIEW_NAME,
 )
 from revit.revit_element import RevitElement
 
 # Variables
 # =======================================================================
-doc = revit.doc  # type: ignore[attr-defined]
-uidoc = revit.uidoc  # type: ignore[attr-defined]
-output = script.get_output()
 
 
 class SectionViews:
-    def __init__(self, doc=None, view=None, element=None):
+    TAG_CATEGORY = BuiltInCategory.OST_Viewers
+
+    def __init__(self, doc=None, view=None):
         self.doc = doc
         self.view = view
-        self.element = element
 
-    @staticmethod
-    def get_sections_on_view_old(doc, view):
-        sections = []
-        collector = (
+    def _collect_views(self, doc, view):
+        return (
             FilteredElementCollector(doc, view.Id)
-            .WhereElementIsNotElementType()
-        )
-        for elem in collector.ToElements():
-            try:
-                cat = elem.Category
-                if not cat or cat.Name != 'Views':
-                    continue
-            except Exception:
-                continue
-
-            # Confirm it is a section by checking name/family tokens.
-            tokens = []
-            try:
-                name_text = getattr(elem, 'Name', None)
-                if name_text:
-                    tokens.append(str(name_text).lower())
-            except Exception:
-                pass
-            for pname in (RVT_FAMILY, RVT_FAMILY_AND_TYPE, RVT_TYPE):
-                try:
-                    p = elem.LookupParameter(pname)
-                    if p:
-                        p_text = p.AsString() or p.AsValueString()
-                        if p_text:
-                            tokens.append(str(p_text).lower())
-                except Exception:
-                    pass
-            if 'section' in ' '.join(tokens):
-                sections.append(elem)
-
-        return sections
-
-    def get_sections_in_view(self, doc, view, key_name=None, keywords=None):
-        key_name = tuple((s or '').strip().lower() for s in (key_name or ()))
-        keywords = tuple((s or '').strip().lower() for s in (keywords or ()))
-
-        api_views = (
-            FilteredElementCollector(doc, view.Id)
-            .OfCategory(BuiltInCategory.OST_Viewers)
+            .OfCategory(self.TAG_CATEGORY)
             .WhereElementIsNotElementType()
             .ToElements()
         )
+
+    def _norm_tuple(self, values):
+        return tuple((s or '').strip().lower() for s in (values or ()))
+
+    def get_sections_in_view(self, doc, view, key_name=None, keywords=None):
+        key_name = self._norm_tuple(key_name)
+        keywords = self._norm_tuple(keywords)
+
+        api_views = self._collect_views(doc, view)
 
         views = []
 
