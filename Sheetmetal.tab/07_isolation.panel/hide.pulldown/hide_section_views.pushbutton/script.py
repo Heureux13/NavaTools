@@ -10,7 +10,7 @@ the copyright holder."""
 from pyrevit import revit, script
 from System.Collections.Generic import List
 from revit.revit_element import RevitElement
-from views.revit_section_views import SectionViews
+from revit.revit_views import RevitViews
 
 
 # Button info
@@ -39,7 +39,7 @@ trigger_keywords = (
 
 section_views = SectionViews(doc, plan_view, None)
 
-views_to_hide = section_views.get_sections_in_view(
+views_to_hide = section_views.get_views_in_view(
     doc,
     plan_view,
     key_name=trigger_views,

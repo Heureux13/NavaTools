@@ -119,18 +119,6 @@ class RevitElement:
                   param_name, self.id)
         return False
 
-    def select(self, uidoc, append=False):
-        """Select this element in the Revit UI."""
-        if not self.element:
-            return
-        if append:
-            current = list(uidoc.Selection.GetElementIds())
-            current.append(self.element.Id)
-            id_list = List[ElementId](current)
-        else:
-            id_list = List[ElementId]([self.element.Id])
-        uidoc.Selection.SetElementIds(id_list)
-
     # Selects many elements
     @classmethod
     def select_many(cls, uidoc, elements):
@@ -196,7 +184,7 @@ class RevitElement:
             raise
             # log.debug("hide_elements_temp failed: %s", ex)
             # return 0
-            
+
     @classmethod
     def hide_elements_perm(cls, view, elements):
         if not view or elements is None:
