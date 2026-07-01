@@ -11,6 +11,7 @@ the copyright holder."""
 from Autodesk.Revit.DB import Transaction
 from pyrevit import revit, script
 from ducts.revit_duct import RevitDuct
+from revit.revit_element import RevitElement
 from config.parameters_registry import (
     PYT_NUMBER_ORDER,
 )
@@ -28,6 +29,7 @@ Sets a new order number based on previous numbers.
 output = script.get_output()
 doc = revit.doc
 uidoc = revit.uidoc
+view = revit.view
 selected_ducts = RevitDuct.from_selection(uidoc, doc)
 
 ducts = RevitDuct.all(doc)
@@ -58,7 +60,8 @@ try:
         output.print_md("No ducts selected")
     else:
         for d in selected_ducts:
-            success = d.set_param(PYT_NUMBER_ORDER, str(new_num))
+            success = RevitElement(doc, view, d.element).set_param(
+                PYT_NUMBER_ORDER, str(new_num))
             if success:
                 pass
             else:
