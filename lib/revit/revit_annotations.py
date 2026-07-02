@@ -32,8 +32,8 @@ class RevitAnnotations:
             .WhereElementIsNotElementType()
             .ToElements()
         )
-
-    def _norm_tuple(self, values):
+    @staticmethod
+    def _norm_tuple(values):
         return tuple((s or '').strip().lower() for s in (values or ()))
 
     def get_all_annot(self, key_name=None, keywords=None):
