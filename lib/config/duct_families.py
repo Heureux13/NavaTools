@@ -74,7 +74,7 @@ FML_OVL_TO_ROUND                = 'Oval to Round'
 # autopep8: on
 
 
-duct_families = {
+all_duct_families = {
     # Square
     FML_SQR_90_ELBOW: 'Square',
     FML_SQR_ADJUSTABLE_ELBOW: 'Square',
@@ -100,9 +100,11 @@ duct_families = {
     FML_SQR_TEE: 'Square',
     FML_SQR_TRANSITION: 'Square',
     # Round
+    FML_RND_3_WAY: 'Round',
     FML_RND_3_WAY_BRANCH: 'Round',
     FML_RND_BOOT_SADDLE: 'Round',
     FML_RND_BOX_SADDLE: 'Round',
+    FML_RND_CANVAS: 'Round',
     FML_RND_CHINA_CAP: 'Round',
     FML_RND_CONICAL_TEE: 'Round',
     FML_RND_DAMPER_VOLUME: 'Round',
@@ -111,9 +113,15 @@ duct_families = {
     FML_RND_CROSS_TYPE_2: 'Round',
     FML_RND_DAMPER: 'Round',
     FML_RND_ELBOW_90_SR_STAMPED: 'Round',
+    FML_RND_ENDCAP: 'Round',
     FML_RND_GORED_ELBOW: 'Round',
+    FML_RND_OFFSET: 'Round',
+    FML_RND_REDNECK_REDUCER: 'Round',
     FML_RND_REDUCER: 'Round',
+    FML_RND_REDUCING_TEE: 'Round',
     FML_RND_ROOF_JACK: 'Round',
+    FML_RND_SADDLE: 'Round',
+    FML_RND_SADDLE_HANGER: 'Round',
     FML_RND_SPIRAL_DUCT: 'Round',
     FML_RND_WYE: 'Round',
     # Oval
@@ -125,4 +133,8 @@ duct_families = {
     FML_OVL_PIPE_LP: 'Oval',
     FML_OVL_REDUCER: 'Oval',
     FML_OVL_TO_ROUND: 'Oval',
+}
+
+fittings_families = {
+    FML_SQR_90_ELBOW
 }

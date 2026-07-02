@@ -1,0 +1,793 @@
+# -*- coding: utf-8 -*-
+"""=========================================================================
+Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder.
+========================================================================="""
+
+from Autodesk.Revit.DB import (
+    FilteredElementCollector,
+    ElementType,
+    FamilySymbol,
+    IndependentTag,
+    Reference,
+    TagMode,
+    TagOrientation,
+    ElementId,
+)
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
+from Autodesk.Revit.ApplicationServices import Application
+from enum import Enum
+
+from config.parameters_registry import RVT_FAMILY, RVT_TYPE, RVT_FAMILY_AND_TYPE
+from ducts.revit_xyz import RevitXYZ
+import re
+
+from revit.revit_element import RevitElement
+
+# Variables
+# =======================================================================
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+
+
+# Functions
+# =======================================================================
+def get_revit_year(app):
+    """Extract Revit year from Application.VersionName."""
+    name = app.VersionName
+    for n in name.split():
+        if n.isdigit():
+            return int(n)
+    return None
+
+
+# Classes
+# =======================================================================
+class TagConfig(object):
+    def __init__(self, names, tags, predicate=None, location_func=None):
+        # names: tuple/list of accepted family names (lowercase)
+        # tags: list of (tag, x_loc, z_offset)
+        # predicate: callable(RevitDuct) -> bool
+        # location_func: callable(RevitDuct, x_loc, z_offset) -> DB.XYZ or None
+        self.names = tuple(n.strip().lower() for n in names)
+        self.tags = tags
+        self.predicate = predicate if predicate else (lambda d: True)
+        self.location_func = location_func
+
+    def matches(self, fam_name):
+        return fam_name in self.names
+
+
+class RevitTagging:
+    def __init__(self, doc=None, view=None):
+        self.doc = doc or revit.doc
+        self.view = view or revit.active_view
+        self.last_place_tag_failure = None
+        # Prefer fabrication ductwork tag types, but keep a broader tag-type pool
+        # as a fallback because some projects expose loaded tag types as generic
+        # element types rather than FamilySymbol instances.
+        self.fabrication_tag_syms = list(
+            FilteredElementCollector(self.doc)
+            .WhereElementIsElementType()
+            .OfCategory(DB.BuiltInCategory.OST_FabricationDuctworkTags)
+            .ToElements()
+        )
+        all_tag_types = list(
+            FilteredElementCollector(self.doc)
+            .WhereElementIsElementType()
+            .ToElements()
+        )
+        self.tag_syms = []
+        seen_ids = set()
+        for symbol in self.fabrication_tag_syms + all_tag_types:
+            if symbol is None:
+                continue
+            try:
+                symbol_id = symbol.Id.IntegerValue
+            except Exception:
+                symbol_id = None
+            if symbol_id is not None and symbol_id in seen_ids:
+                continue
+            category_name = ''
+            try:
+                category_name = (symbol.Category.Name or '').strip().lower()
+            except Exception:
+                category_name = ''
+            if symbol in self.fabrication_tag_syms or 'tag' in category_name:
+                self.tag_syms.append(symbol)
+                if symbol_id is not None:
+                    seen_ids.add(symbol_id)
+        self._tag_data = self._iter_tag()
+
+   @staticmethod
+    def _clean(value):
+        return value.strip().lower()
+
+    def _iter_tag(self):
+        results = []
+        for tag in self.fabrication_tag_syms:
+            rvt_tag = RevitElement(self.doc, self.view, tag)
+            tag_family = rvt_tag.get_param(RVT_FAMILY, as_type="string")
+            tag_type = rvt_tag.get_param(RVT_TYPE, as_type="string")
+            tag_fam_n_type = rvt_tag.get_param(RVT_FAMILY_AND_TYPE, as_type="string")
+            results.append((tag, tag_family, tag_type, tag_fam_n_type))
+        return results
+
+    def get_label_exact(self, family_name, type_name):
+        fam_lower = self._clean(family_name)
+        typ_lower = self._clean(type_name)
+
+        for tag, tag_family, tag_type, tag_fam_n_type in self._tag_data:
+            if self._clean(tag_family or '') == fam_lower and self._clean(tag_type or '') == typ_lower:
+                return tag
+        raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
+
+    def _find_compatible_tag_type_id(self, tag_object, annotation_type):
+        """Return a valid type id for tag matching the requested tag symbol, if any."""
+        if tag_object is None or annotation_type is None:
+            return None
+
+        requested_id = getattr(annotation_type, "Id", annotation_type)
+        if requested_id is None:
+            return None
+
+        try:
+            valid_type_ids = list(tag_object.GetValidTypes() or [])
+        except Exception:
+            valid_type_ids = []
+
+        if not valid_type_ids:
+            return None
+
+        requested_int = None
+        try:
+            requested_int = requested_id.IntegerValue
+        except Exception:
+            requested_int = None
+
+        for valid_id in valid_type_ids:
+            try:
+                if requested_int is not None and valid_id.IntegerValue == requested_int:
+                    return valid_id
+            except Exception:
+                pass
+
+        requested_type = self.doc.GetElement(requested_id)
+        for tag, tag_family, tag_type, pool in self._tag_data:
+            if tag == (requested_type or annotation_type):
+                req_fam, req_typ, req_pool = tag_family, tag_type, pool
+                break
+        req_fam = req_fam.strip().lower()
+        req_typ = req_typ.strip().lower()
+        req_pool = req_pool.strip().lower()
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            if fam_name.strip().lower() == req_fam and type_name.strip().lower() == req_typ:
+                return valid_id
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            fam_name = fam_name.strip().lower()
+            type_name = type_name.strip().lower()
+            if req_typ and type_name == req_typ:
+                return valid_id
+            if req_fam and fam_name == req_fam and not req_typ:
+                return valid_id
+
+        for valid_id in valid_type_ids:
+            valid_type = self.doc.GetElement(valid_id)
+            fam_name, type_name, pool = self._tag_pool(valid_type)
+            fam_name = fam_name.strip().lower()
+            type_name = type_name.strip().lower()
+            pool = pool.strip().lower()
+            if req_fam and req_typ and req_fam in pool and req_typ in pool:
+                return valid_id
+            if req_typ and req_typ in pool:
+                return valid_id
+            if req_fam and req_fam in pool:
+                return valid_id
+            if req_pool and req_pool == pool:
+                return valid_id
+
+        return None
+
+    def already_tagged(self, elem, tag_fam_name):
+        if elem is None:
+            return False
+
+        tags = list(
+            FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(IndependentTag)
+            .ToElements()
+        )
+
+        revit_year = get_revit_year(app)
+
+        for itag in tags:
+            try:
+                tagged_elem_id = None
+
+                # Revit 2026+ uses GetTaggedLocalElementIds() method
+                if revit_year and revit_year >= 2026:
+                    tagged_elem_ids = itag.GetTaggedLocalElementIds()
+                    if not tagged_elem_ids:
+                        continue
+                    # Check if any of the tagged element IDs match our element
+                    for tid in tagged_elem_ids:
+                        if tid == elem.Id:
+                            tagged_elem_id = tid
+                            break
+                # Revit 2022-2025 uses TaggedLocalElementId property
+                else:
+                    tagged_elem_id = itag.TaggedLocalElementId
+
+                if tagged_elem_id and tagged_elem_id == elem.Id:
+                    # Get the tag's FamilySymbol to check family name
+                    tag_type_id = itag.GetTypeId()
+                    tag_type = self.doc.GetElement(tag_type_id)
+                    if tag_type and hasattr(tag_type, 'Family'):
+                        famname = (tag_type.Family.Name or "").strip().lower()
+                        if isinstance(tag_fam_name, str):
+                            tname = tag_fam_name.strip().lower()
+                        else:
+                            tname = str(tag_fam_name).strip().lower()
+                        if famname == tname:
+                            return True
+            except Exception:
+                continue
+        return False
+
+    def place_tag(self, element_or_ref, tag_symbol=None, point_xyz=None):
+        """
+        Create an IndependentTag attached to element or reference.
+        - element_or_ref: either a Revit Element or a Reference (face/element)
+        - tag_symbol: optional FamilySymbol to set type (pass symbol object)
+        - point_xyz: XYZ insertion point
+        Note: caller must open a Transaction before calling this method.
+        """
+        from Autodesk.Revit.DB import ElementId
+
+        self.last_place_tag_failure = None
+
+        if element_or_ref is None:
+            raise ValueError("element_or_ref is required")
+
+        # If caller passed an element wrapper (e.g. RevitDuct), accept .element
+        el_or_ref = getattr(element_or_ref, "element", element_or_ref)
+
+        # If el_or_ref is a Reference already, use it; otherwise build Reference(element)
+        if isinstance(el_or_ref, Reference):
+            ref = el_or_ref
+        else:
+            ref = Reference(el_or_ref)
+
+        tag = IndependentTag.Create(
+            self.doc,
+            self.view.Id,
+            ref,
+            False,
+            TagMode.TM_ADDBY_CATEGORY,
+            TagOrientation.Horizontal,
+            point_xyz,
+        )
+
+        if tag_symbol is not None and getattr(tag_symbol, "Id", None):
+            compatible_id = self._find_compatible_tag_type_id(tag, tag_symbol)
+            if compatible_id is not None:
+                try:
+                    tag.ChangeTypeId(compatible_id)
+                except Exception:
+                    self.last_place_tag_failure = "ChangeTypeId failed for requested tag type"
+                    try:
+                        self.doc.Delete(tag.Id)
+                    except Exception:
+                        pass
+                    return None
+            else:
+                self.last_place_tag_failure = "Requested tag type is not valid for this element"
+                try:
+                    self.doc.Delete(tag.Id)
+                except Exception:
+                    pass
+                return None
+
+        return tag
+
+    @staticmethod
+    def midpoint_location(d, x_loc, z_offset):
+        loc = d.element.Location
+        if hasattr(loc, "Curve") and loc.Curve:
+            pt = loc.Curve.Evaluate(x_loc, True)
+            return DB.XYZ(pt.X, pt.Y, pt.Z + z_offset)
+        # fallback to bbox center
+        v = getattr(d, "view", None) or revit.active_view
+        bbox = d.element.get_BoundingBox(v) if v else None
+        if bbox:
+            center = (bbox.Min + bbox.Max) / 2.0
+            return DB.XYZ(center.X, center.Y, center.Z + z_offset)
+        return None
+
+    def get_face_facing_view(self, element, prefer_point=None):
+        """
+        Return (Reference, centroid_XYZ) for the face of `element` that best faces
+        the current view (self.view). Optionally prefer faces near `prefer_point`.
+        Returns (None, None) if no suitable face found.
+
+        Notes:
+        - Uses Options.ComputeReferences = True so the returned Reference can be used
+        directly with IndependentTag.Create.
+        - This method handles GeometryInstance transforms.
+        """
+        from Autodesk.Revit.DB import Options, GeometryInstance, Solid, XYZ
+
+        if element is None:
+            return None, None
+
+        opt = Options()
+        opt.DetailLevel = getattr(self.view, "DetailLevel", None)
+        opt.ComputeReferences = True
+
+        try:
+            geom = element.get_Geometry(opt)
+        except Exception:
+            return None, None
+
+        world_dir = self.view.ViewDirection  # vector from view to model
+        # Use a list for mutability: [face, ndot, dist, centroid]
+        best = [None, 1.0, float("inf"), None]
+
+        def score_face(face, transform):
+            try:
+                tri = face.Triangulate()
+                verts = list(tri.Vertices)
+                if not verts:
+                    return
+                # centroid (in local coords); transform if needed
+                cx = sum(v.X for v in verts) / len(verts)
+                cy = sum(v.Y for v in verts) / len(verts)
+                cz = sum(v.Z for v in verts) / len(verts)
+                centroid = XYZ(cx, cy, cz)
+                if transform is not None:
+                    centroid = transform.OfPoint(centroid)
+
+                # approximate normal using first triangle
+                try:
+                    a, b, c = verts[0], verts[1], verts[2]
+                    ab = b - a
+                    ac = c - a
+                    n = ab.CrossProduct(ac)
+                    nlen = n.GetLength()
+                    if nlen == 0:
+                        ndot = 0.0
+                    else:
+                        ndot = n.Normalize().DotProduct(world_dir)
+                except Exception:
+                    ndot = 0.0
+
+                # prefer faces that face the view (ndot should be negative);
+                # smaller ndot (more negative) is better.
+                dist = (
+                    centroid.DistanceTo(prefer_point)
+                    if prefer_point is not None
+                    else 0.0
+                )
+                # choose face with minimal ndot; tie-breaker is smaller distance
+                if ndot < best[1] or (abs(ndot - best[1]) < 1e-6 and dist < best[2]):
+                    best[0] = face
+                    best[1] = ndot
+                    best[2] = dist
+                    best[3] = centroid
+            except Exception:
+                return
+
+        for g in geom:
+            if isinstance(g, GeometryInstance):
+                tr = g.Transform
+                try:
+                    inst_geo = g.GetInstanceGeometry()
+                except Exception:
+                    continue
+                for sg in inst_geo:
+                    if isinstance(sg, Solid) and sg.Volume > 0:
+                        for f in sg.Faces:
+                            score_face(f, tr)
+            else:
+                if isinstance(g, Solid) and g.Volume > 0:
+                    for f in g.Faces:
+                        score_face(f, None)
+
+        face, ndot, dist, centroid = best
+        if face is None:
+            return None, None
+
+        try:
+            return face.Reference, centroid
+        except Exception:
+            return None, centroid
+
+    def get_tag_point_on_face(
+        self, offset_ft=0.1, prefer_largest=True, preferred_direction=None
+    ):
+        """Return a (face, point_xyz) suitable for placing a tag.
+
+        - offset_ft: distance in feet to offset the tag point along the face normal so the tag is readable.
+        - prefer_largest: if True pick the largest face by area; otherwise pick the face whose normal
+          is closest to the preferred_direction (an XYZ) if provided, otherwise largest.
+
+        Returns (face, XYZ) or (None, None) if no usable face found.
+        """
+        try:
+            rxyz = RevitXYZ(self.element)
+            infos = rxyz.faces_info()
+            if not infos:
+                return (None, None)
+
+            # pick face
+            chosen = None
+            if preferred_direction is not None and not prefer_largest:
+                # choose face whose normal best aligns with preferred_direction
+                best = None
+                best_dot = -1.0
+                pd = preferred_direction
+                pd_mag = (pd.X**2 + pd.Y**2 + pd.Z**2) ** 0.5
+                if pd_mag == 0:
+                    pd = None
+                else:
+                    pd = XYZ(pd.X / pd_mag, pd.Y / pd_mag, pd.Z / pd_mag)
+
+                if pd is not None:
+                    for info in infos:
+                        n = info.get("normal")
+                        if n is None:
+                            continue
+                        mag = (n.X**2 + n.Y**2 + n.Z**2) ** 0.5
+                        if mag == 0:
+                            continue
+                        nu = XYZ(n.X / mag, n.Y / mag, n.Z / mag)
+                        dot = abs(nu.X * pd.X + nu.Y * pd.Y + nu.Z * pd.Z)
+                        if dot > best_dot:
+                            best_dot = dot
+                            best = info
+                    chosen = best
+
+            if chosen is None:
+                # fallback: largest area
+                infos_sorted = sorted(
+                    infos, key=lambda i: (i.get("area") or 0.0), reverse=True
+                )
+                chosen = infos_sorted[0] if infos_sorted else None
+
+            if not chosen:
+                return (None, None)
+
+            face = chosen.get("face")
+            centroid = chosen.get("centroid")
+            normal = chosen.get("normal")
+            if centroid is None or normal is None:
+                return (face, None)
+
+            # normalize normal
+            mag = (normal.X**2 + normal.Y**2 + normal.Z**2) ** 0.5
+            if mag == 0:
+                return (face, centroid)
+            nu = XYZ(normal.X / mag, normal.Y / mag, normal.Z / mag)
+
+            # compute offset point
+            px = centroid.X + nu.X * float(offset_ft)
+            py = centroid.Y + nu.Y * float(offset_ft)
+            pz = centroid.Z + nu.Z * float(offset_ft)
+            tag_point = XYZ(px, py, pz)
+            return (face, tag_point)
+        except Exception:
+            return (None, None)
+
+    def get_existing_tag_families(self, elem):
+        """Return lowercase family names of tags already placed on elem in this view."""
+        fams = set()
+        if elem is None:
+            return fams
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tagged_ids = None
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+
+                if not tagged_ids or elem.Id not in tagged_ids:
+                    continue
+
+                tag_type = self.doc.GetElement(itag.GetTypeId())
+                fam = getattr(tag_type, "Family", None)
+                fam_name = (fam.Name if fam else "").strip().lower()
+                if fam_name:
+                    fams.add(fam_name)
+            except Exception:
+                continue
+
+        return fams
+
+    def get_existing_tag_type_ids(self, elem):
+        """Return tag type ids already placed on elem in this view."""
+        type_ids = set()
+        if elem is None:
+            return type_ids
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tagged_ids = None
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+
+                if not tagged_ids or elem.Id not in tagged_ids:
+                    continue
+
+                tag_type_id = itag.GetTypeId()
+                if tag_type_id is None:
+                    continue
+
+                value = getattr(tag_type_id, "Value", None)
+                if value is not None:
+                    type_ids.add(int(value))
+                    continue
+
+                integer_value = getattr(tag_type_id, "IntegerValue", None)
+                if integer_value is not None:
+                    type_ids.add(int(integer_value))
+            except Exception:
+                continue
+
+        return type_ids
+
+    def build_existing_tag_family_map(self, elements=None):
+        """
+        Build a cache of existing tag families by tagged element id.
+
+        If `elements` is provided, only tags dependent on those elements are scanned.
+        This avoids collecting every tag in the active view and is much faster for
+        small selections.
+
+        Returns:
+            dict[int, set[str]]: {element_id_int: {family_name_lower, ...}, ...}
+        """
+        result = {}
+
+        if elements:
+            try:
+                tag_filter = DB.ElementClassFilter(DB.IndependentTag)
+            except Exception:
+                tag_filter = None
+
+            for elem in elements:
+                if elem is None or not getattr(elem, "Id", None):
+                    continue
+
+                try:
+                    if tag_filter is not None:
+                        dep_tag_ids = elem.GetDependentElements(tag_filter)
+                    else:
+                        dep_tag_ids = []
+                except Exception:
+                    dep_tag_ids = []
+
+                for tag_id in dep_tag_ids:
+                    itag = self.doc.GetElement(tag_id)
+                    if itag is None:
+                        continue
+
+                    # Keep only tags visible/owned by current view.
+                    try:
+                        owner_view_id = getattr(itag, "OwnerViewId", None)
+                        if owner_view_id and owner_view_id != self.view.Id:
+                            continue
+                    except Exception:
+                        pass
+
+                    try:
+                        tag_type = self.doc.GetElement(itag.GetTypeId())
+                        fam = getattr(tag_type, "Family", None)
+                        fam_name = (fam.Name if fam else "").strip().lower()
+                        if not fam_name:
+                            continue
+
+                        if hasattr(itag, "GetTaggedLocalElementIds"):
+                            tagged_ids = itag.GetTaggedLocalElementIds() or []
+                        elif hasattr(itag, "TaggedLocalElementId"):
+                            tagged_ids = [itag.TaggedLocalElementId]
+                        else:
+                            tagged_ids = []
+
+                        for tid in tagged_ids:
+                            if not tid:
+                                continue
+                            key = tid.IntegerValue if hasattr(
+                                tid, "IntegerValue") else int(tid)
+                            if key not in result:
+                                result[key] = set()
+                            result[key].add(fam_name)
+                    except Exception:
+                        continue
+
+            return result
+
+        tags = list(
+            DB.FilteredElementCollector(self.doc, self.view.Id)
+            .OfClass(DB.IndependentTag)
+            .ToElements()
+        )
+
+        for itag in tags:
+            try:
+                tag_type = self.doc.GetElement(itag.GetTypeId())
+                fam = getattr(tag_type, "Family", None)
+                fam_name = (fam.Name if fam else "").strip().lower()
+                if not fam_name:
+                    continue
+
+                if hasattr(itag, "GetTaggedLocalElementIds"):
+                    tagged_ids = itag.GetTaggedLocalElementIds() or []
+                elif hasattr(itag, "TaggedLocalElementId"):
+                    tagged_ids = [itag.TaggedLocalElementId]
+                else:
+                    tagged_ids = []
+
+                for tid in tagged_ids:
+                    if not tid:
+                        continue
+                    key = tid.IntegerValue if hasattr(
+                        tid, "IntegerValue") else int(tid)
+                    if key not in result:
+                        result[key] = set()
+                    result[key].add(fam_name)
+            except Exception:
+                continue
+
+        return result
+
+    def place_tag_at_center_with_rotation(self, element, tag_label=None, position="center"):
+        """
+        Place a tag along the element and rotate it to match the element's direction in the current view.
+
+        This method:
+        - Places the tag at the specified position along the element's curve (start, center, or end)
+        - Rotates the tag to align with the element's curve direction as it appears in the view
+        - Works with both plan views (horizontal rotation) and section views (vertical rotation)
+
+        Args:
+            element: Revit element to tag (e.g., fabrication duct)
+            tag_label: Optional FamilySymbol for the tag type
+            position: Where to place tag along the duct - "start", "center", or "end" (default: "center")
+
+        Returns:
+            IndependentTag object if successful, None if failed
+
+        Note: Caller must open a Transaction before calling this method.
+        """
+        import math
+        from Autodesk.Revit.DB import Line, ElementTransformUtils, XYZ
+
+        try:
+            # Get the curve location
+            loc = element.Location
+            if not loc or not hasattr(loc, "Curve") or not loc.Curve:
+                # Fallback to bounding box center if no curve
+                bbox = element.get_BoundingBox(self.view)
+                if not bbox:
+                    return None
+                center = (bbox.Min + bbox.Max) / 2.0
+                tag = self.place_tag(element, tag_label, center)
+                return tag
+
+            curve = loc.Curve
+
+            # Determine position along the curve based on parameter
+            # Use normalized parameters to keep tags within the duct bounds
+            position_lower = position.lower().strip()
+            if position_lower == "start":
+                # Near start (15% along curve to stay within bounds)
+                tag_point = curve.Evaluate(0.00, True)
+            elif position_lower == "end":
+                # Near end (85% along curve to stay within bounds)
+                tag_point = curve.Evaluate(1.00, True)
+            else:  # default to "center"
+                # Middle of the curve
+                tag_point = curve.Evaluate(0.5, True)
+
+            # Get the curve direction for rotation
+            dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+
+            # Place tag at the calculated point
+            tag = self.place_tag(element, tag_label, tag_point)
+
+            if not tag:
+                return None
+
+            # Rotate tag to match element direction as it appears in the current view
+            try:
+                # Compute view-aware angle directly from curve direction to avoid
+                # expensive connector traversal in RevitXYZ for each placed tag.
+                try:
+                    view_dir = self.view.ViewDirection
+                    view_up = self.view.UpDirection
+                except Exception:
+                    view_dir = XYZ(0, 0, 1)
+                    view_up = XYZ(0, 1, 0)
+
+                # right = view_dir x view_up
+                right_x = view_dir.Y * view_up.Z - view_dir.Z * view_up.Y
+                right_y = view_dir.Z * view_up.X - view_dir.X * view_up.Z
+                right_z = view_dir.X * view_up.Y - view_dir.Y * view_up.X
+
+                right_len = math.sqrt(
+                    right_x * right_x + right_y * right_y + right_z * right_z)
+                up_len = math.sqrt(view_up.X * view_up.X +
+                                   view_up.Y * view_up.Y + view_up.Z * view_up.Z)
+
+                if right_len > 1e-9 and up_len > 1e-9:
+                    right_x /= right_len
+                    right_y /= right_len
+                    right_z /= right_len
+
+                    up_x = view_up.X / up_len
+                    up_y = view_up.Y / up_len
+                    up_z = view_up.Z / up_len
+
+                    # Project duct direction onto view basis.
+                    duct_right = dir_vec.X * right_x + dir_vec.Y * right_y + dir_vec.Z * right_z
+                    duct_up = dir_vec.X * up_x + dir_vec.Y * up_y + dir_vec.Z * up_z
+
+                    angle_rad = math.atan2(duct_up, duct_right)
+
+                    # Skip effectively zero rotation to reduce API calls.
+                    if abs(angle_rad) > 1e-6:
+                        # Normalize view direction for rotation axis.
+                        view_dir_len = math.sqrt(view_dir.X * view_dir.X + view_dir.Y *
+                                                 view_dir.Y + view_dir.Z * view_dir.Z)
+                        if view_dir_len > 1e-9:
+                            axis_dir = XYZ(
+                                view_dir.X / view_dir_len,
+                                view_dir.Y / view_dir_len,
+                                view_dir.Z / view_dir_len)
+                        else:
+                            axis_dir = XYZ(0, 0, 1)
+
+                        tag_pos = tag.TagHeadPosition
+                        axis = Line.CreateBound(
+                            tag_pos,
+                            XYZ(tag_pos.X + axis_dir.X, tag_pos.Y +
+                                axis_dir.Y, tag_pos.Z + axis_dir.Z)
+                        )
+                        ElementTransformUtils.RotateElement(
+                            self.doc, tag.Id, axis, angle_rad)
+            except Exception:
+                # Tag placed but rotation failed - still return the tag
+                pass
+
+            return tag
+
+        except Exception:
+            return None
