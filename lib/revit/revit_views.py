@@ -30,11 +30,15 @@ default_coords = {
 class RevitViews:
     TAG_CATEGORY = BuiltInCategory.OST_Viewers
 
-    def __init__(self, doc=None, view=None):
+    def __init__(self,
+                 doc=None,
+                 view=None):
         self.doc = doc
         self.view = view
 
-    def _collect_views(self, doc, view):
+    def _collect_views(self,
+                       doc,
+                       view):
         return (
             FilteredElementCollector(doc, view.Id)
             .OfCategory(self.TAG_CATEGORY)
@@ -42,10 +46,17 @@ class RevitViews:
             .ToElements()
         )
 
-    def _norm_tuple(self, values):
+    def _norm_tuple(self,
+                    values):
+
         return tuple((s or '').strip().lower() for s in (values or ()))
 
-    def get_views_in_view(self, doc, view, key_name=None, keywords=None):
+    def get_views_in_view(self,
+                          doc,
+                          view,
+                          key_name=None,
+                          keywords=None):
+
         key_name = self._norm_tuple(key_name)
         keywords = self._norm_tuple(keywords)
 
@@ -66,8 +77,13 @@ class RevitViews:
 
         return views
 
-    def get_viewport_info(self, doc, view):
-        '''On sheet views, will take any selected views and return view id, view name, & center coordinates'''
+    def get_viewport_info(self,
+                          doc,
+                          view):
+
+        '''On sheet views, will take any selected views and
+        return view id, view name, & center coordinates'''
+
         elements = revit.get_selection().elements
         viewports = [e for e in elements if isinstance(e, Viewport)]
 
@@ -89,22 +105,27 @@ class RevitViews:
 
             viewport_info.append({
                 'viewport_id': vp.Id.IntegerValue,
-                'view_name': view_name,
-                'center': (center.X, center.Y, center.Z),
-                'width': width,
-                'height': height,
-                'max_point': max_point,
-                'min_point': min_point,
+                'view_name'  : view_name,
+                'center'     : (center.X, center.Y, center.Z),
+                'width'      : width,
+                'height'     : height,
+                'max_point'  : max_point,
+                'min_point'  : min_point,
             })
 
         return viewport_info
 
-    def move_viewport_to_xyz(self, doc, default_coords, x=None, y=None):
-        self.x = x if x is not None else default_coords['center'][0]
-        self.y = y if y is not None else default_coords['center'][1]
+    def move_viewport_to_xyz(self,
+                             doc,
+                             default_coords,
+                             x=None,
+                             y=None):
 
-        elements = revit.get_selection().elements
-        viewports = [e for e in elements if isinstance(e, Viewport)]
+        self.x  = x if x is not None else default_coords['center'][0]
+        self.y  = y if y is not None else default_coords['center'][1]
+
+        elements    = revit.get_selection().elements
+        viewports   = [e for e in elements if isinstance(e, Viewport)]
 
         with Transaction(doc, 'Move Viewports') as txn:
             txn.Start()

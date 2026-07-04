@@ -59,7 +59,9 @@ class TagConfig(object):
 
 
 class RevitTagging:
-    def __init__(self, doc=None, view=None):
+    def __init__(self,
+                 doc=None,
+                 view=None):
         self.doc = doc or revit.doc
         self.view = view or revit.active_view
         self.last_place_tag_failure = None
@@ -144,7 +146,8 @@ class RevitTagging:
             ts_name = RevitTagging._get_type_param_text(symbol, "Type")
         return fam_name.strip(), ts_name.strip(), (fam_name + " " + ts_name).strip()
 
-    def get_label(self, name_contains):
+    def get_label(self,
+                  name_contains):
         if not name_contains:
             raise ValueError("name_contains must be a non-empty string")
         needle = name_contains.lower()
@@ -155,7 +158,10 @@ class RevitTagging:
                 return ts
         raise LookupError("No label found with: " + name_contains)
 
-    def get_label_exact(self, family_name, type_name, allow_fallback=True):
+    def get_label_exact(self,
+                        family_name,
+                        type_name,
+                        allow_fallback=True):
         """Return the best matching FamilySymbol for family_name and type_name.
 
         Exact family+type is preferred. If that fails, fall back to substring
@@ -189,7 +195,9 @@ class RevitTagging:
         raise LookupError(
             "No label found with family '{}' and type '{}'".format(family_name, type_name))
 
-    def _find_compatible_tag_type_id(self, tag_object, annotation_type):
+    def _find_compatible_tag_type_id(self,
+                                     tag_object,
+                                     annotation_type):
         """Return a valid type id for tag matching the requested tag symbol, if any."""
         if tag_object is None or annotation_type is None:
             return None
@@ -259,7 +267,9 @@ class RevitTagging:
 
         return None
 
-    def already_tagged(self, elem, tag_fam_name):
+    def already_tagged(self,
+                       elem,
+                       tag_fam_name):
         if elem is None:
             return False
 
@@ -305,7 +315,10 @@ class RevitTagging:
                 continue
         return False
 
-    def place_tag(self, element_or_ref, tag_symbol=None, point_xyz=None):
+    def place_tag(self,
+                  element_or_ref,
+                  tag_symbol=None,
+                  point_xyz=None):
         """
         Create an IndependentTag attached to element or reference.
         - element_or_ref: either a Revit Element or a Reference (face/element)
@@ -362,7 +375,9 @@ class RevitTagging:
         return tag
 
     @staticmethod
-    def midpoint_location(d, x_loc, z_offset):
+    def midpoint_location(d,
+                          x_loc,
+                          z_offset):
         loc = d.element.Location
         if hasattr(loc, "Curve") and loc.Curve:
             pt = loc.Curve.Evaluate(x_loc, True)
@@ -375,10 +390,12 @@ class RevitTagging:
             return DB.XYZ(center.X, center.Y, center.Z + z_offset)
         return None
 
-    def get_face_facing_view(self, element, prefer_point=None):
+    def get_face_facing_view(self,
+                             element,
+                             prefer_point=None):
         """
         Return (Reference, centroid_XYZ) for the face of `element` that best faces
-        the current view (self.view). Optionally prefer faces near `prefer_point`.
+        the current view (self.view). Optionally prefer faces near `prefe/r_point`.
         Returns (None, None) if no suitable face found.
 
         Notes:
@@ -473,9 +490,10 @@ class RevitTagging:
         except Exception:
             return None, centroid
 
-    def get_tag_point_on_face(
-        self, offset_ft=0.1, prefer_largest=True, preferred_direction=None
-    ):
+    def get_tag_point_on_face(self,
+                              offset_ft=0.1,
+                              prefer_largest=True,
+                              preferred_direction=None):
         """Return a (face, point_xyz) suitable for placing a tag.
 
         - offset_ft: distance in feet to offset the tag point along the face normal so the tag is readable.
@@ -549,7 +567,8 @@ class RevitTagging:
         except Exception:
             return (None, None)
 
-    def get_existing_tag_families(self, elem):
+    def get_existing_tag_families(self,
+                                  elem):
         """Return lowercase family names of tags already placed on elem in this view."""
         fams = set()
         if elem is None:
@@ -583,7 +602,8 @@ class RevitTagging:
 
         return fams
 
-    def get_existing_tag_type_ids(self, elem):
+    def get_existing_tag_type_ids(self,
+                                  elem):
         """Return tag type ids already placed on elem in this view."""
         type_ids = set()
         if elem is None:
@@ -624,7 +644,8 @@ class RevitTagging:
 
         return type_ids
 
-    def build_existing_tag_family_map(self, elements=None):
+    def build_existing_tag_family_map(self,
+                                      elements=None):
         """
         Build a cache of existing tag families by tagged element id.
 
@@ -729,7 +750,10 @@ class RevitTagging:
 
         return result
 
-    def place_tag_at_center_with_rotation(self, element, tag_label=None, position="center"):
+    def place_tag_at_center_with_rotation(self,
+                                          element,
+                                          tag_label=None,
+                                          position="center"):
         """
         Place a tag along the element and rotate it to match the element's direction in the current view.
 

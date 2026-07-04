@@ -37,7 +37,7 @@ trigger_keywords = (
     'skip',
 )
 
-section_views = SectionViews(doc, plan_view, None)
+section_views = RevitViews(doc, plan_view)
 
 views_to_hide = section_views.get_views_in_view(
     doc,
