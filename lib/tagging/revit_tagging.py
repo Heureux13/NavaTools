@@ -829,8 +829,8 @@ class RevitTagging:
 
                 right_len = math.sqrt(
                     right_x * right_x + right_y * right_y + right_z * right_z)
-                up_len = math.sqrt(view_up.X * view_up.X +
-                                   view_up.Y * view_up.Y + view_up.Z * view_up.Z)
+                up_len    = math.sqrt(
+                    view_up.X * view_up.X + view_up.Y * view_up.Y + view_up.Z * view_up.Z)
 
                 if right_len > 1e-9 and up_len > 1e-9:
                     right_x /= right_len
@@ -843,15 +843,16 @@ class RevitTagging:
 
                     # Project duct direction onto view basis.
                     duct_right = dir_vec.X * right_x + dir_vec.Y * right_y + dir_vec.Z * right_z
-                    duct_up = dir_vec.X * up_x + dir_vec.Y * up_y + dir_vec.Z * up_z
+                    duct_up    = dir_vec.X * up_x + dir_vec.Y * up_y + dir_vec.Z * up_z
 
                     angle_rad = math.atan2(duct_up, duct_right)
 
                     # Skip effectively zero rotation to reduce API calls.
                     if abs(angle_rad) > 1e-6:
                         # Normalize view direction for rotation axis.
-                        view_dir_len = math.sqrt(view_dir.X * view_dir.X + view_dir.Y *
-                                                 view_dir.Y + view_dir.Z * view_dir.Z)
+                        view_dir_len = math.sqrt(
+                            view_dir.X * view_dir.X + view_dir.Y *
+                            view_dir.Y + view_dir.Z * view_dir.Z)
                         if view_dir_len > 1e-9:
                             axis_dir = XYZ(
                                 view_dir.X / view_dir_len,
@@ -873,6 +874,104 @@ class RevitTagging:
                 pass
 
             return tag
+
+        except Exception:
+            return None
+
+    def place_tag_rotated(self,
+                          element,
+                          tag_symbol,
+                          position):
+        try:
+            loc = element.Location
+
+            if not loc or not hasattr(loc, "Curve") or not loc.Curve:
+                bbox = element.get_BoundingBox(self.view)
+                if not bbox:
+                    return None
+                center = (bbox.Min + bbox.Max) / 2.0
+                tag = self.create_tag(element, tag_symbol, center)
+                return tag
+
+            curve = loc.Curve
+            position_lower = self._clean(position)
+            if position_lower == "start":
+                tag_point = curve.Evaluate(0.00, True)
+            elif position_lower == "end":
+                tag_point = curve.Evaluate(1.00, True)
+            else:
+                tag_point = curve.Evaluate(0.50, True)
+
+            dir_vec = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+
+            tag = self.create_tag(element, tag_symbol, tag_point)
+
+            if not tag:
+                return None
+
+            try:
+                try:
+                    view_dir = self.view.ViewDirection
+                    view_up  = self.view.UpDirection
+                except Exception:
+                    view_dir = XYZ(0, 0, 1)
+                    view_up  = XYZ(0, 1, 0)
+
+                right_x = view_dir.Y * view_up.Z - view_dir.Z * view_up.Y
+                right_y = view_dir.Z * view_up.X - view_dir.X * view_up.Z
+                right_z = view_dir.X * view_up.Y - view_dir.Y * view_up.X
+
+                right_len = math.sqrt(
+                    right_x * right_x + right_y * right_y + right_z * right_z)
+                up_len = math.sqrt(
+                    view_up.X * view_up.X + view_up.Y * view_up.Y + view_up.Z * view_up.Z)
+
+                if right_len > 1e-9 and up_len > 1e-9:
+                    right_x /= right_len
+                    right_y /= right_len
+                    right_z /= right_len
+
+                    up_x = view_up.X / up_len
+                    up_y = view_up.Y / up_len
+                    up_z = view_up.Z / up_len
+
+                    duct_right = (
+                            dir_vec.X * right_x + dir_vec.Y * right_y + dir_vec.Z * right_z)
+                    duct_up    = (
+                            dir_vec.X * up_x +dir_vec.Y * up_y + dir_vec.Z * up_z)
+
+                    angle_rad = math.atan2(duct_up, duct_right)
+
+                    if abs(angle_rad) > 1e-6:
+                        view_dir_len = math.sqrt(
+                            view_dir.X * view_dir.X + view_dir.Y *
+                            view_dir.Y * view_dir.Z * view_dir.Z)
+
+                        if viw_dir_len > 1e-9:
+                            axis_dir = XYZ(
+                                view_dir.X / view_dir_len,
+                                view_dir.Y / view_dir_len,
+                                view_dir.Z / view_dir_len,)
+                        else:
+                            axis_dir = XYZ(0, 0, 1)
+
+                        tag_pos = tag.TagHeadPosition
+                        axis    = Line.CreateBound(
+                            tag_pos,
+                            XYZ(tag_pos.X + axis_dir.X,
+                                tag_pos.Y + axis_dir.Y,
+                                tag_pos.Z + axis_dir.Z,)
+                        )
+                        ElementTransformUtils.RotateElement(
+                            self.doc,
+                            tag.Id,
+                            axis,
+                            angle_rad)
+
+                except Exception:
+                    pass
+
+                return tag
 
         except Exception:
             return None

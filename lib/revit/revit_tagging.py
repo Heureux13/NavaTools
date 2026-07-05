@@ -13,6 +13,7 @@ from Autodesk.Revit.DB import (
     ElementTransformUtils,
     FamilySymbol,
     IndependentTag,
+    Line,
     Reference,
     TagMode,
     TagOrientation,
@@ -22,19 +23,13 @@ from Autodesk.Revit.DB import (
 from Autodesk.Revit.UI import UIDocument
 from pyrevit import revit, forms, DB
 from Autodesk.Revit.ApplicationServices import Application
-from config.parameters_registry import RVT_FAMILY, RVT_TYPE, RVT_FAMILY_AND_TYPE
-from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, _load_user_candidate,
-from revit.revit_element import RevitElement
+from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, _load_user_candidate
 import math
 
 # Variables
 # =======================================================================
 app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
-
-
-# Functions
-# =======================================================================
 
 
 # Classes
@@ -115,11 +110,10 @@ class RevitTagging:
         results = []
 
         for tag in self.fabduct_symbols:
-            rvt_tag = RevitElement(self.doc, self.view, tag)
-            tag_family = rvt_tag.get_param(RVT_FAMILY, as_type="string")
-            tag_type = rvt_tag.get_param(RVT_TYPE, as_type="string")
-            tag_fam_n_type = rvt_tag.get_param(RVT_FAMILY_AND_TYPE, as_type="string")
-            results.append((tag, tag_family, tag_type, tag_fam_n_type))
+            fam_name       = self._clean(getattr(getattr(tag, "Family", None), "Name", None))
+            type_name      = self._clean(DB.Element.Name.GetValue(tag))
+            tag_fam_n_type = fam_name + " " + type_name
+            results.append((tag, fam_name, type_name, tag_fam_n_type))
         return results
 
 
@@ -139,8 +133,15 @@ class RevitTagging:
             if self._clean(tag_family or '') == fam_lower and self._clean(tag_type or '') == typ_lower:
                 return tag
 
-        raise LookupError("No label found with family '{}' and type '{}'".format(family_name, type_name))
+        raise LookupError(
+            "No label found with family '{}' and type '{}'"
+            .format(family_name, type_name))
 
+    def _get_tags_from_element(self,
+                               element):
+        if element is None:
+            return None
+        
 
     def get_tag_symbol_ids_from_slot_map(self, slot_map=None, slots=None):
         """Resolve config tag slots to loaded tag symbol type ids.
@@ -172,34 +173,136 @@ class RevitTagging:
 
     # Class methods
     # =======================================================================================
+    def midpoint_location(self,
+                           element,
+                           x_loc,
+                           z_offset):
+        """x must be a value between 0 and 1"""
+        ele = self._unwrap_element(element)
+        loc = ele.Location
+
+        if hasattr(loc, "Curve") and loc.Curve:
+            pt = loc.Curve.Evaluate(x_loc, True)
+            return DB.XYZ(pt.X, pt.Y, pt.Z + z_offset)
+
+        v = self.view
+        bbox = ele.get_BoundingBox(v) if v else None
+
+        if bbox:
+            center = (bbox.Min + bbox.Max) / 2.0
+
+            return DB.XYZ(center.X, center.Y, center.Z + z_offset)
+
+        return None
+
+    def get_tag_angle(self,
+              tag_element,):
+
+        ele   = self._unwrap_element(tag_element)
+        if ele is None:
+            return None
+
+        loc = getattr(ele, "Location", None)
+        curve = getattr(loc, "Curve", None)
+        if curve is None:
+            return None
+
+        start = curve.GetEndPoint(0)
+        end = curve.GetEndPoint(1)
+
+        dx = end.X - start.X
+        dy = end.Y - start.Y
+
+        deg = math.degrees(math.atan2(dy, dx)) % 360.0
+
+        # Fold 0..360 into 0..90
+        d180 = deg % 180.0
+        return min(d180, 180.0 - d180)
+
+    def rotate_tag(self,
+                   tag_element,
+                   element):
+
+        tag = self._unwrap_element(tag_element)
+        ele = self._unwrap_element(element)
+
+        if tag is None or ele is None:
+            return None
+
+        # compute safe tag angle (your function)
+        angle_deg = self.get_tag_angle(ele)
+
+        if angle_deg is None:
+            return tag
+        angle_rad = math.radians(angle_deg)
+
+        # rotation axis: vertical line through tag head
+        center = tag.TagHeadPosition
+        axis = Line.CreateBound(center, center + XYZ(0, 0, 1))
+
+        # rotate tag
+        return ElementTransformUtils.RotateElement(
+            self.doc,
+            tag.Id,
+            axis,
+            angle_rad
+        )
+
     def create_tag(self,
                    element,
                    tag_symbol,
-                   point_xyz):
-        ref = self._ref(element)
-        curve = element.Location.Curve
+                   orientation=None,
+                   rotate=False,
+                   x_loc=None,
+                   z_loc=None):
 
-        return IndependentTag.Create(
+        if x_loc is None:
+            x_loc = 0.5
+        if z_loc is None:
+            z_loc = 0.0
+
+        loc_point = self.midpoint_location(element, x_loc, z_loc)
+
+        if loc_point is None:
+            raise LookupError("No location found with x_loc, z_loc")
+
+        ref = self._ref(element)
+        ori = self._clean(orientation)
+
+        if ori == "vertical":
+            ori = TagOrientation.Vertical
+        elif ori == "model":
+            ori = TagOrientation.Model
+        else:
+            ori = TagOrientation.Horizontal
+
+        tag = IndependentTag.Create(
             self.doc,
             tag_symbol.Id,
             self.view.Id,
             ref,
             False,
-            TagOrientation.Horizontal,
-            point_xyz,
-        )
+            ori,
+            loc_point,
+            )
+        if rotate is None:
+            pass
+        if rotate:
+            self.rotate_tag(tag, element)
+
+        return tag
 
     def already_tagged(self,
                            element,
                            tag_symbol):
-        """Returns true if an element as a matching tag symbol"""
+        """Returns true if an element has a matching tag symbol"""
         element = self._unwrap_element(element)
-
         if element is None or tag_symbol is None:
             return False
 
         tags = self.tags
-        wanted_type_id = tag_symbol.GetTypeId()
+        wanted_type_id = tag_symbol.Id
+
 
         if wanted_type_id is None:
             return False
@@ -239,68 +342,27 @@ class RevitTagging:
        return symbol_ids
 
 
-    def midpoint_location(self,
-                           element,
-                           x_loc,
-                           z_offset):
-        ele = self._unwrap_element(element)
-        loc = ele.Location
 
-        if hasattr(loc, "Curve") and loc.Curve:
-            pt = loc.Curve.Evaluate(x_loc, True)
-            return DB.XYZ(pt.X, pt.Y, pt.Z + z_offset)
-
-        v = self.view
-        bbox = ele.get_BoundingBox(v) if v else None
-
-        if bbox:
-            center = (bbox.Min + bbox.Max) / 2.0
-
-            return DB.XYZ(center.X, center.Y, center.Z + z_offset)
-
-        return None
-
-    def get_tag_symbol_id_from_family_and_type(self,
-                                               family_name,
-                                               type_name):
-        tag_symbol = self._tag_symbol(family_name, type_name)
-        return self._id_to_int(self._get_symbol_id(tag_symbol))
-
-
-    def build_tag_symbol_id_map(self,
-                                slot_map=None):
+    def build_tag_symbol_id_map(self, slot_map=None):
         if slot_map is None:
             slot_map = _load_user_candidate() or DEFAULT_TAG_SLOT_CANDIDATES
 
+        # Precompute once from already-loaded tag data
+        symbol_lookup = {}
+        for tag, fam, typ, _ in self._tag_data:
+            key = (self._clean(fam), self._clean(typ))
+            sid = self._id_to_int(tag.Id)
+            if sid is not None:
+                symbol_lookup[key] = sid
+
         slot_dict = {}
+        for slot, candidates in slot_map.items():
+            ids = []
+            for family_name, type_name in candidates:
+                sid = symbol_lookup.get((self._clean(family_name), self._clean(type_name)))
+                if sid is not None:
+                    ids.append(sid)
+            slot_dict[slot] = ids
 
-        for slot, candidate in slot_map.items():
-            symbol_ids = []
-            for family_name, type_name in candidate:
-                try:
-                    symbol_id = self.get_tag_symbol_id_from_family_and_type(family_name, type_name)
-                    if symbol_id is not None:
-                        symbol_ids.append(symbol_id)
-                except Exception:
-                    continue
-            slot_dict[slot] = symbol_ids
+        return slot_dict
 
-        return
-
-    def place_tag_rotated(self,
-                          element,
-                          tag_symbol,
-                          position):
-
-        loc = element.Location
-
-        if not loc or not hasattr(loc, "Curve") or not loc.Curve:
-            bbox = element.get_BoundingBox(self.view)
-            if not bbox:
-                return None
-            center = (bbox.Min + bbox.Max) / 2.0
-            tag = self.create_tag(element, tag_symbol, center)
-            return tag
-
-        curve = loc.Curve
-        position_lower = self._clean(position)

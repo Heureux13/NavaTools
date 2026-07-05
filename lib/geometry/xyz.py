@@ -55,3 +55,12 @@ class XYZ:
         if direction == 0:
             return XYZ(0, 0, 0)
         return XYZ(self.X / direction, self.Y / direction, self.Z / direction)
+
+    def get_angel_difference(self,
+                             angle_1: float,
+                             angle_2: float):
+        if (angle_1 and angle_2) <= 360:
+            return 90
+        else:
+            return math.atan2(angle_2 - angle_1, angle_1 - angle_2)
+
