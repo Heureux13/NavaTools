@@ -137,39 +137,6 @@ class RevitTagging:
             "No label found with family '{}' and type '{}'"
             .format(family_name, type_name))
 
-    def _get_tags_from_element(self,
-                               element):
-        if element is None:
-            return None
-        
-
-    def get_tag_symbol_ids_from_slot_map(self, slot_map=None, slots=None):
-        """Resolve config tag slots to loaded tag symbol type ids.
-
-        Returns:
-            dict[str, set[int]]: {slot_name: {tag_type_id_int, ...}}
-        """
-        candidates_by_slot = slot_map or DEFAULT_TAG_SLOT_CANDIDATES
-        target_slots = slots if slots is not None else candidates_by_slot.keys()
-        resolved = {}
-
-        for slot in target_slots:
-            type_ids = set()
-            candidates = candidates_by_slot.get(slot, [])
-
-            for family_name, type_name in candidates:
-                try:
-                    symbol = self._tag_symbol(family_name, type_name)
-                    symbol_id = self._id_to_int(self._get_symbol_id(symbol))
-                    if symbol_id is not None:
-                        type_ids.add(symbol_id)
-                except Exception:
-                    continue
-
-            resolved[slot] = type_ids
-
-        return resolved
-
 
     # Class methods
     # =======================================================================================
@@ -252,7 +219,7 @@ class RevitTagging:
                    element,
                    tag_symbol,
                    orientation=None,
-                   rotate=False,
+                   rotate=True,
                    x_loc=None,
                    z_loc=None):
 
@@ -285,8 +252,7 @@ class RevitTagging:
             ori,
             loc_point,
             )
-        if rotate is None:
-            pass
+
         if rotate:
             self.rotate_tag(tag, element)
 
@@ -320,26 +286,25 @@ class RevitTagging:
         return False
 
 
-    def get_tag_symbol_id_from_element(self,
+    def get_tag_symbols_from_element(self,
                            element,):
        ele = self._unwrap_element(element)
        if ele is None:
-           return set()
+           return []
 
-       symbol_ids = set()
-       tags = self.tags
+       seen = {}
 
-       for tag in tags:
+       for tag in self.tags:
            try:
                tagged_ids = self._get_ele_id_from_tag(tag)
                if ele.Id in tagged_ids:
-                   symbol_id = self._id_to_int(tag.GetTypeId())
-                   if symbol_id is not None:
-                       symbol_ids.add(symbol_id)
+                   symbol = self.doc.GetElement(tag.GetTypeId())
+                   if symbol is not None:
+                       seen[symbol.Id] = symbol
            except Exception:
                 continue
 
-       return symbol_ids
+       return list(seen.values())
 
 
 

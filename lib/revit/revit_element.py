@@ -36,7 +36,10 @@ class RevitElement:
     def category(self):
         return self.element.Category.Name if self.element and self.element.Category else None
 
-    def get_param(self, param_name, as_type=None, unit=None):
+    def get_param(self,
+                  param_name,
+                  as_type=None,
+                  unit=None):
         if not self.element:
             return None
 
