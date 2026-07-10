@@ -95,10 +95,10 @@ except Exception:
     t.RollBack()
     raise
 
-output.print_md('## _UMI_PYT_Note0 update complete')
-output.print_md('- Selected: {}'.format(len(selected_ids)))
-output.print_md('- Updated: {}'.format(updated))
-output.print_md('- Unchanged: {}'.format(unchanged))
-output.print_md('- Missing parameter: {}'.format(missing))
-output.print_md('- Read-only: {}'.format(readonly))
-output.print_md('- Non-text parameter: {}'.format(wrong_type))
+# output.print_md('## _UMI_PYT_Note0 update complete')
+# output.print_md('- Selected: {}'.format(len(selected_ids)))
+# output.print_md('- Updated: {}'.format(updated))
+# output.print_md('- Unchanged: {}'.format(unchanged))
+# output.print_md('- Missing parameter: {}'.format(missing))
+# output.print_md('- Read-only: {}'.format(readonly))
+# output.print_md('- Non-text parameter: {}'.format(wrong_type))
