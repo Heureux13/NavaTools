@@ -12,10 +12,15 @@ from config.tag_config import (
     SLOT_EXT_BOT,
     SLOT_EXT_LEFT,
     SLOT_EXT_RIGHT,
+    RVT_ANGLE,
+    RVT_LENGTH,
     NDBS_D_TOP_EXTENSION,
     NDBS_D_LEFT_EXTENSION,
     NDBS_D_RIGHT_EXTENSION,
     NDBS_D_BOTTOM_EXTENSION,
+    NDBS_CONNECTOR0_END_CONDITION,
+    NDBS_CONNECTOR1_END_CONDITION,
+    NDBS_CONNECTOR2_END_CONDITION,
 )
 from revit.revit_element import RevitElement
 from Autodesk.Revit.DB import (
@@ -24,7 +29,7 @@ from Autodesk.Revit.DB import (
     BuiltInCategory,
     FabricationPart,
 )
-
+from collections import defaultdict
 import re
 
 
@@ -54,6 +59,12 @@ class RevitFittings:
             FilteredElementCollector(self.doc)
             .WhereElementIsNotElementType()
             .OfCategory(BuiltInCategory.OST_MEPFabrication)
+            .ToElements()
+        )
+        self.collected_grds = list(
+            FilteredElementCollector(self.doc)
+            .WhereElementIsNotElementType()
+            .OfCategory(BuiltInCategory.OST_DuctTerminal)
             .ToElements()
         )
 
@@ -110,5 +121,54 @@ class RevitFittings:
     def tag_fab_element(self,
                         fab_element,
                         tag_element,):
+
+    def create_family_map(self):
+        groups = defaultdict(list)
+
+        for fab_element in self.collected_ducts:
+            family_name = self._family(fab_element)
+            groups[family_name].append(fab_element)
+
+        return groups
+
+    def create_group(self):
+        gropus = defaultdict(list)
+
+        for elbow in
         ...
+    def create_duct_map(self,):
+        groups = defaultdict(list)
+        family_map = self.create_family_map()
+        elbows = family_map["elbows"]
+
+        for fab_element in self.collected_ducts:
+            family_name = self._family(fab_element)
+            ext_bottom  = self._get_param(fab_element, NDBS_D_BOTTOM_EXTENSION)
+            ext_top     = self._get_param(fab_element, NDBS_D_TOP_EXTENSION)
+            ext_right   = self._get_param(fab_element, NDBS_D_RIGHT_EXTENSION)
+            ext_left    = self._get_param(fab_element, NDBS_D_LEFT_EXTENSION)
+            angle       = self._get_param(fab_element, RVT_ANGLE)
+            length      = self._get_param(fab_element, RVT_LENGTH)
+            conn_0      = self._get_param(fab_element, NDBS_CONNECTOR0_END_CONDITION)
+            conn_1      = self._get_param(fab_element, NDBS_CONNECTOR1_END_CONDITION)
+            conn_2      = self._get_param(fab_element, NDBS_CONNECTOR2_END_CONDITION)
+            groups[family_name].append(fab_element.Id)
+
+        return groups
+
+    def tag_elbows(self):
+        ...
+    def tag_straights(self):
+        ...
+    def tag_reducers(self):
+        ...
+    def tag_transitions(self):
+        ...
+    def tag_offsets(self):
+        ...
+    def tag_endcaps(self):
+        ...
+    def
+
+
     # TODO: build a map that separates them by family, that would speed up the parameter check.
