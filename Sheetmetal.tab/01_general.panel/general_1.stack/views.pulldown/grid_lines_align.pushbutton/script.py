@@ -59,27 +59,41 @@ def _get_element_id_value(element_id):
 
 
 def _get_target_views_from_selection():
-    selected_ids = list(uidoc.Selection.GetElementIds())
-    if not selected_ids:
+    try:
+        selected_elements = list(revit.get_selection().elements)
+    except Exception:
+        selected_elements = []
+
+    if not selected_elements:
+        try:
+            selected_ids = list(uidoc.Selection.GetElementIds())
+        except Exception:
+            selected_ids = []
+
+        for element_id in selected_ids:
+            elem = doc.GetElement(element_id)
+            if elem:
+                selected_elements.append(elem)
+
+    if not selected_elements:
         return []
 
     views_by_id = {}
-    for element_id in selected_ids:
-        elem = doc.GetElement(element_id)
+    for elem in selected_elements:
         if not elem:
             continue
 
         try:
             if isinstance(elem, DB.Viewport):
                 placed_view = doc.GetElement(elem.ViewId)
-                if placed_view:
+                if placed_view and _is_supported_view(placed_view):
                     views_by_id[_get_element_id_value(placed_view.Id)] = placed_view
                 continue
         except Exception:
             pass
 
         try:
-            if isinstance(elem, DB.View):
+            if isinstance(elem, DB.View) and _is_supported_view(elem):
                 views_by_id[_get_element_id_value(elem.Id)] = elem
         except Exception:
             pass
