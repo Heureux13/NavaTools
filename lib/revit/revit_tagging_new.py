@@ -195,6 +195,7 @@ class RevitTagging:
 
         if tag is None or ele is None:
             return None
+        
 
         # compute safe tag angle (your function)
         angle_deg = self.get_tag_angle(ele)

@@ -169,9 +169,11 @@ SLOT_ALL = (
 DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_ACCESS_PANEL: [
         ('_Tag.DCT_AccessPanel', 'Center'),
+        ('_Tag.DCT_AccessPanel', 'Default'),
     ],
     SLOT_BOD: [
         ('_Tag.DCT_BOD', 'Center'),
+        ('_Tag.DCT_BOD', 'Default'),
     ],
     SLOT_BOD_LEFT: [
         ('_Tag.DCT_BOD', 'Left'),
@@ -181,21 +183,25 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_CANVAS: [
         ('_Tag.DCT_Canvas', 'Center'),
+        ('_Tag.DCT_Canvas', 'Default'),
     ],
     SLOT_CONDENSER: [
         ('_Tag.EQP_Condenser', 'Black'),
     ],
     SLOT_DAMPER_CONTROL: [
         ('_Tag.DEV_DamperControl', 'Center'),
+        ('_Tag.DEV_DamperControl', 'Default'),
     ],
     SLOT_DAMPER_FIRE: [
         ('_Tag.DEV_DamperFire', 'Center'),
     ],
     SLOT_DAMPER_VOLUME: [
         ('_Tag.DEV_DamperVolume', 'Center'),
+        ('_Tag.DEV_DamperVolume', 'Default'),
     ],
     SLOT_DEGREE: [
         ('_Tag.DCT_Degree', 'Center'),
+        ('_Tag.DCT_Degree', 'Default'),
     ],
     SLOT_ENDCAP_SD: [
         ('_Tag.DCT_Endcap', 'S&D'),
@@ -226,9 +232,11 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_GRD: [
         ('_Tag.DEV_GRD', 'CFM'),
+        ('_Tag.DEV_GRD', 'Label'),
     ],
     SLOT_GRD_CFM: [
         ('_Tag.DEV_GRD', 'Center'),
+        ('_Tag.DEV_GRD', 'CFM'),
     ],
     SLOT_HEAT_PUMP: [
         ('_Tag.EQP_HeatPump', 'Black'),
@@ -271,9 +279,11 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_MAN_BARS: [
         ('_Tag.DEV_ManBars', 'Center'),
+        ('_Tag.DEV_ManBars', 'Default'),
     ],
     SLOT_NOTE: [
         ('_Tag.DCT_Note', '1 note'),
+        ('_Tag.DCT_Note', 'Notes'),
     ],
     SLOT_NUMBER_BLUEBEAM: [
         ('_Tag.DCT_NumberBluebeam', 'Center'),
@@ -286,9 +296,11 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_OFFSET: [
         ('_Tag.DCT_Offset', 'Center'),
+        ('_Tag.DCT_Offset', 'Default'),
     ],
     SLOT_SIZE: [
         ('_Tag.DCT_Size', 'Center'),
+        ('_Tag.DCT_Size', 'Default'),
     ],
     SLOT_SIZE_LEFT: [
         ('_Tag.DCT_Size', 'Left'),
@@ -330,7 +342,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQP_VRF', 'BlackNote'),
     ],
     SLOT_WEIGHT: [
-        ('_Tag.DCT_Weight', 'Defaut'),
+        ('_Tag.DCT_Weight', 'Default'),
     ],
 }
 
