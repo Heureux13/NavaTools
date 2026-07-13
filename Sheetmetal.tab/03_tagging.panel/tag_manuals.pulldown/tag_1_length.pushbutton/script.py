@@ -10,12 +10,8 @@ the copyright holder."""
 # Imports
 # ==================================================
 from System.Collections.Generic import List
-from constants.print_outputs import print_disclaimer
 from tagging.revit_tagging import RevitTagging
-from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
-from revit.revit_element import RevitElement
-from ducts.revit_duct import RevitDuct
-from ducts.revit_xyz import RevitXYZ
+from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 

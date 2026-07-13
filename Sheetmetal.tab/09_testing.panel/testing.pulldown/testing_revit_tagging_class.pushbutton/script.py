@@ -14,11 +14,11 @@ from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
 
 # Button info
 # ======================================================================
-__title__ = '0123456789'
+__title__ = 'sandbox for new tagging'
 __author__ = ''
-__doc__ = '''
+__doc__ = """
 Sandbox for testing Revit Tagging Class.
-'''
+"""
 
 # Variables
 # ======================================================================

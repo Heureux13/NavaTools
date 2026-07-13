@@ -9,15 +9,23 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from System.Collections.Generic import List
-from constants.print_outputs import print_disclaimer
-from tagging.revit_tagging import RevitTagging
-from tagging.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_BOD
-from revit.revit_element import RevitElement
-from ducts.revit_duct import RevitDuct
-from ducts.revit_xyz import RevitXYZ
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
+
+try:
+    from System.Collections.Generic import List
+except Exception as e:
+    script.exit()
+
+try:
+    from tagging.revit_tagging import RevitTagging
+except Exception as e:
+    script.exit()
+
+try:
+    from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_BOD
+except Exception as e:
+    script.exit()
 
 # Button info
 # ==================================================
@@ -31,9 +39,12 @@ Tags with BOD tag at center of duct
 app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
-output = script.get_output()
-view = revit.active_view
-tagger = RevitTagging(doc=doc, view=view)
+
+try:
+    view = revit.active_view
+    tagger = RevitTagging(doc=doc, view=view)
+except Exception as e:
+    script.exit()
 
 # Helper function for version-compatible ElementId access
 
@@ -68,6 +79,7 @@ if not selected_ids:
         "No elements selected. Please select elements to tag.", exitscript=True)
 
 selected_elements = [doc.GetElement(eid) for eid in selected_ids]
+
 existing_tag_map = tagger.build_existing_tag_family_map(
     selected_elements)
 
@@ -132,13 +144,13 @@ try:
                         existing_tag_map[elem_key] = set()
                     existing_tag_map[elem_key].add(tag_fam_name_norm)
             else:
-                failed.append((elem, "Tag placement returned None"))
+                reason = tagger.last_place_tag_failure or "unknown"
+                failed.append((elem, "Tag placement returned None: {}".format(reason)))
 
         except Exception as e:
             failed.append((elem, "Error: {}".format(str(e))))
 
     t.Commit()
 except Exception as e:
-    output.print_md("**Transaction error:** {}".format(e))
     t.RollBack()
     script.exit()

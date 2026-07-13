@@ -14,10 +14,7 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 # ======================================================================
 __title__ = 'Set View Location'
 __doc__ = '''
-Set selected viewport(s) center on an active sheet.
-
-Target center:
-(-0.0064048997808098251, 0.0030527024873521214, 0.39626736111096306)
+Set view port to hard coded location
 '''
 
 # Variables

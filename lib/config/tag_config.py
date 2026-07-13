@@ -47,6 +47,7 @@ SLOT_CANVAS                 = 'CANVAS'
 SLOT_ENDCAP_SD              = 'ENDCAP_SD'
 SLOT_ENDCAP_TDF             = 'ENDCAP_TDF'
 SLOT_OFFSET                 = 'OFFSET'
+SLOT_REDUCER                = 'REDUCER'
 SLOT_TAP                    = 'TAP'
 SLOT_TRANSITION             = 'TRANSITION'
 SLOT_STACK                  = 'STACK'
@@ -142,6 +143,7 @@ SLOT_ALL = (
     SLOT_NUMBER_FABRICATION,
     SLOT_NUMBER_SLEEVE,
     SLOT_OFFSET,
+    SLOT_REDUCER,
     SLOT_SPLIT,
     SLOT_TAP,
     SLOT_TRANSITION,
@@ -194,6 +196,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_DAMPER_FIRE: [
         ('_Tag.DEV_DamperFire', 'Center'),
+        ('_Tag.DEV_DamperLife', 'Default'),
     ],
     SLOT_DAMPER_VOLUME: [
         ('_Tag.DEV_DamperVolume', 'Center'),
@@ -214,21 +217,25 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_EXT_BOT: [
         ('_Tag.DCT_ElbowExtension', 'Bottom'),
+        ('_Tag.DCT_Extensions', 'Bottom'),
     ],
     SLOT_EXT_LEFT: [
         ('_Tag.DCT_ElbowExtension', 'Left'),
+        ('_Tag.DCT_Extensions', 'Left'),
     ],
     SLOT_EXT_RIGHT: [
         ('_Tag.DCT_ElbowExtension', 'Right'),
+        ('_Tag.DCT_Extensions', 'Right'),
     ],
     SLOT_EXT_TOP: [
         ('_Tag.DCT_ElbowExtension', 'Top'),
+        ('_Tag.DCT_Extensions', 'Top'),
     ],
     SLOT_FAN: [
         ('_Tag.EQP_Fan', 'Black'),
     ],
     SLOT_FAN_NOTE: [
-        ('_Tag.EQP_Fan', 'BlackNote'),
+        ('_Tag.EQP_Fan', 'Note Default'),
     ],
     SLOT_GRD: [
         ('_Tag.DEV_GRD', 'CFM'),
@@ -242,28 +249,29 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQP_HeatPump', 'Black'),
     ],
     SLOT_HEAT_PUMP_NOTE: [
-        ('_Tag.EQP_HeatPump', 'BlackNote'),
+        ('_Tag.EQP_HeatPump', 'Note Default'),
     ],
     SLOT_HEATER: [
         ('_Tag.EQP_Heater', 'Black'),
     ],
     SLOT_HEATER_NOTE: [
-        ('_Tag.EQP_Heater', 'BlackNote'),
+        ('_Tag.EQP_Heater', 'Note Default'),
     ],
     SLOT_HOOD: [
         ('_Tag.EQP_Hood', 'Black'),
     ],
     SLOT_HOOD_NOTE: [
-        ('_Tag.EQP_Hood', 'BlackNote'),
+        ('_Tag.EQP_Hood', 'Note Default'),
     ],
     SLOT_HUMIDIFIER: [
         ('_Tag.EQP_Humidifier', 'Black'),
     ],
     SLOT_HUMIDIFIER_NOTE: [
-        ('_Tag.EQP_Humidifier', 'BlackNote'),
+        ('_Tag.EQP_Humidifier', 'Note Default'),
     ],
     SLOT_LENGTH: [
         ('_Tag.DCT_Length', 'Center'),
+        ('_Tag.DCT_Length', 'Default'),
     ],
     SLOT_LENGTH_LEFT: [
         ('_Tag.DCT_Length', 'Left'),
@@ -275,7 +283,7 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DEV_Louvers', 'Black'),
     ],
     SLOT_LOUVER_NOTE: [
-        ('_Tag.DEV_Louvers', 'Black w/ note0'),
+        ('_Tag.DEV_Louvers', 'Note Default'),
     ],
     SLOT_MAN_BARS: [
         ('_Tag.DEV_ManBars', 'Center'),
@@ -293,10 +301,14 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_NUMBER_SLEEVE: [
         ('_Tag.DCT_NumberSleeve', 'Green'),
+        ('_Tag.DCT_NumberSleeve', 'Duct Penetration'),
     ],
     SLOT_OFFSET: [
         ('_Tag.DCT_Offset', 'Center'),
-        ('_Tag.DCT_Offset', 'Default'),
+        ('_Tag.DCT_Offset', 'RND 1.00'),
+    ],
+    SLOT_REDUCER: [
+        ('_Tag.DCT_Reducer', 'Default'),
     ],
     SLOT_SIZE: [
         ('_Tag.DCT_Size', 'Center'),
@@ -315,25 +327,27 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.EQP_Split', 'Black'),
     ],
     SLOT_SPLIT_NOTE: [
-        ('_Tag.EQP_Split', 'BlackNote'),
+        ('_Tag.EQP_Split', 'Note Default'),
     ],
     SLOT_TAP: [
         ('_Tag.DCT_Tap', 'Center'),
+        ('_Tag.DCT_Tap', 'Default'),
     ],
     SLOT_TRANSITION: [
         ('_Tag.DCT_Transition', 'Center'),
+        ('_Tag.DCT_Transition', 'RND 1.00'),
     ],
     SLOT_UNIT: [
         ('_Tag.EQP_Unit', 'Black'),
     ],
     SLOT_UNIT_NOTE: [
-        ('_Tag.EQP_Unit', 'BlackNote'),
+        ('_Tag.EQP_Unit', 'Note Default'),
     ],
     SLOT_VALVE: [
         ('_Tag.EQP_Valve', 'Black'),
     ],
     SLOT_VALVE_NOTE: [
-        ('_Tag.EQP_Valve', 'BlackNote'),
+        ('_Tag.EQP_Valve', 'Note Default'),
     ],
     SLOT_VRF: [
         ('_Tag.EQP_VRF', 'Black'),

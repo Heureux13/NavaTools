@@ -57,8 +57,8 @@ class XYZ:
         return XYZ(self.X / direction, self.Y / direction, self.Z / direction)
 
     def get_angel_difference(self,
-                             angle_1: float,
-                             angle_2: float):
+                             angle_1,
+                             angle_2):
         if (angle_1 and angle_2) <= 360:
             return 90
         else:

@@ -13,7 +13,7 @@ from System.Collections.Generic import List
 
 # Button info
 # ======================================================================
-__title__ = 'Select Ducts in Box'
+__title__ = 'Select Ducts in Scope Box'
 __doc__ = '''
 Select MEP ducts inside selected scope boxes.
 

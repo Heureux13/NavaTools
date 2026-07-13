@@ -10,7 +10,7 @@ the copyright holder."""
 # Imports
 # ==================================================
 from pyrevit import DB, revit, script
-from tagging.tag_config import *
+from config.tag_config import *
 
 # Button info
 # ==================================================

@@ -9,14 +9,22 @@ the copyright holder."""
 
 # Imports
 # ==================================================
-from System.Collections.Generic import List
-from constants.print_outputs import print_disclaimer
-from tagging.revit_tagging import RevitTagging
-from revit.revit_element import RevitElement
-from ducts.revit_duct import RevitDuct
-from tagging.revit_tagging_fittings import Fittings
+import traceback
 from pyrevit import DB, revit, script
-from Autodesk.Revit.DB import ElementId, Transaction
+output = script.get_output()
+
+try:
+    from System.Collections.Generic import List
+    from constants.print_outputs import print_disclaimer
+    from tagging.revit_tagging import RevitTagging
+    from revit.revit_element import RevitElement
+    from ducts.revit_duct import RevitDuct
+    from tagging.revit_tagging_fittings import Fittings
+    from Autodesk.Revit.DB import ElementId, Transaction
+except Exception:
+    output.print_md("# Import failed")
+    output.print_md("```text\n{}\n```".format(traceback.format_exc()))
+    raise
 
 # Button info
 # ==================================================
@@ -36,12 +44,18 @@ SKIP_VERTICAL_ELBOW_EXTENSION_TAGS = False
 app = __revit__.Application  # type: Application
 uidoc = __revit__.ActiveUIDocument  # type: UIDocument
 doc = revit.doc  # type: Document
-output = script.get_output()
 view = revit.active_view
-tagger = RevitTagging(doc=doc, view=view)
+try:
+    tagger = RevitTagging(doc=doc, view=view)
 
-Fittings.skip_vertical_movement_on_extensions = SKIP_VERTICAL_ELBOW_EXTENSION_TAGS
-fittings = Fittings(doc=doc, view=view, tagger=tagger)
+    output.print_md("line 43 of script")
+
+    Fittings.skip_vertical_movement_on_extensions = SKIP_VERTICAL_ELBOW_EXTENSION_TAGS
+    fittings = Fittings(doc=doc, view=view, tagger=tagger)
+except Exception:
+    output.print_md("# Setup failed")
+    output.print_md("```text\n{}\n```".format(traceback.format_exc()))
+    raise
 
 
 def _fmt_length(value):

@@ -1,11 +1,11 @@
 title:
   en_us: Sheetmetal
+invisible: true
 layout:
   - 01_general
   - 02_checks
   - 03_tagging
   - 04_equipment
-  #- 05_devices
   - 06_duct
   - 07_isolation
   - 08_data
