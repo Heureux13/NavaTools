@@ -12,7 +12,7 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 
 # Button info
 # ======================================================================
-__title__ = 'Set View Location'
+__title__ = 'Set XYZ Viewport'
 __doc__ = '''
 Set view port to hard coded location
 '''
@@ -25,9 +25,9 @@ doc = revit.doc
 uidoc = revit.uidoc
 
 TARGET_CENTER = XYZ(
-    -0.0064048997808098251,
-    0.0030527024873521214,
-    0.39626736111096306,
+    -0.2442573465208780,
+    0.0447767298351720,
+    0.2004105892519640,
 )
 
 
