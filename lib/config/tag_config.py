@@ -169,6 +169,40 @@ SLOT_ALL = (
 
 
 DEFAULT_TAG_SLOT_CANDIDATES = {
+    # Devices
+    SLOT_DAMPER_CONTROL: [
+        ('_Tag.DEV_DamperControl', 'Center'),
+        ('_Tag.DEV_DamperControl', 'Default'),
+    ],
+    SLOT_DAMPER_FIRE: [
+        ('_Tag.DEV_DamperFire', 'Center'),
+        ('_Tag.DEV_DamperLife', 'Default'),
+    ],
+    SLOT_DAMPER_VOLUME: [
+        ('_Tag.DEV_DamperVolume', 'Center'),
+        ('_Tag.DEV_DamperVolume', 'Default'),
+    ],
+    SLOT_GRD: [
+        ('_Tag.DEV_GRD', 'CFM'),
+        ('_Tag.DEV_GRD', 'Label'),
+    ],
+    SLOT_GRD_CFM: [
+        ('_Tag.DEV_GRD', 'Center'),
+        ('_Tag.DEV_GRD', 'CFM'),
+    ],
+    SLOT_LOUVER: [
+        ('_Tag.DEV_Louvers', 'Black'),
+    ],
+    SLOT_LOUVER_NOTE: [
+        ('_Tag.DEV_Louvers', 'Note Default'),
+    ],
+    SLOT_MAN_BARS: [
+        ('_Tag.DEV_ManBars', 'Center'),
+        ('_Tag.DEV_ManBars', 'Default'),
+    ],
+
+
+    # Ductwork
     SLOT_ACCESS_PANEL: [
         ('_Tag.DCT_AccessPanel', 'Center'),
         ('_Tag.DCT_AccessPanel', 'Default'),
@@ -187,21 +221,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DCT_Canvas', 'Center'),
         ('_Tag.DCT_Canvas', 'Default'),
     ],
-    SLOT_CONDENSER: [
-        ('_Tag.EQP_Condenser', 'Black'),
-    ],
-    SLOT_DAMPER_CONTROL: [
-        ('_Tag.DEV_DamperControl', 'Center'),
-        ('_Tag.DEV_DamperControl', 'Default'),
-    ],
-    SLOT_DAMPER_FIRE: [
-        ('_Tag.DEV_DamperFire', 'Center'),
-        ('_Tag.DEV_DamperLife', 'Default'),
-    ],
-    SLOT_DAMPER_VOLUME: [
-        ('_Tag.DEV_DamperVolume', 'Center'),
-        ('_Tag.DEV_DamperVolume', 'Default'),
-    ],
     SLOT_DEGREE: [
         ('_Tag.DCT_Degree', 'Center'),
         ('_Tag.DCT_Degree', 'Default'),
@@ -211,9 +230,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_ENDCAP_TDF: [
         ('_Tag.DCT_Endcap', 'TDF'),
-    ],
-    SLOT_EQUIPMENT_PAD: [
-        ('_Tag.EQP_EquipmentPad', 'Black'),
     ],
     SLOT_EXT_BOT: [
         ('_Tag.DCT_ElbowExtension', 'Bottom'),
@@ -231,44 +247,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
         ('_Tag.DCT_ElbowExtension', 'Top'),
         ('_Tag.DCT_Extensions', 'Top'),
     ],
-    SLOT_FAN: [
-        ('_Tag.EQP_Fan', 'Black'),
-    ],
-    SLOT_FAN_NOTE: [
-        ('_Tag.EQP_Fan', 'Note Default'),
-    ],
-    SLOT_GRD: [
-        ('_Tag.DEV_GRD', 'CFM'),
-        ('_Tag.DEV_GRD', 'Label'),
-    ],
-    SLOT_GRD_CFM: [
-        ('_Tag.DEV_GRD', 'Center'),
-        ('_Tag.DEV_GRD', 'CFM'),
-    ],
-    SLOT_HEAT_PUMP: [
-        ('_Tag.EQP_HeatPump', 'Black'),
-    ],
-    SLOT_HEAT_PUMP_NOTE: [
-        ('_Tag.EQP_HeatPump', 'Note Default'),
-    ],
-    SLOT_HEATER: [
-        ('_Tag.EQP_Heater', 'Black'),
-    ],
-    SLOT_HEATER_NOTE: [
-        ('_Tag.EQP_Heater', 'Note Default'),
-    ],
-    SLOT_HOOD: [
-        ('_Tag.EQP_Hood', 'Black'),
-    ],
-    SLOT_HOOD_NOTE: [
-        ('_Tag.EQP_Hood', 'Note Default'),
-    ],
-    SLOT_HUMIDIFIER: [
-        ('_Tag.EQP_Humidifier', 'Black'),
-    ],
-    SLOT_HUMIDIFIER_NOTE: [
-        ('_Tag.EQP_Humidifier', 'Note Default'),
-    ],
     SLOT_LENGTH: [
         ('_Tag.DCT_Length', 'Center'),
         ('_Tag.DCT_Length', 'Default'),
@@ -278,16 +256,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_LENGTH_RIGHT: [
         ('_Tag.DCT_Length', 'Right'),
-    ],
-    SLOT_LOUVER: [
-        ('_Tag.DEV_Louvers', 'Black'),
-    ],
-    SLOT_LOUVER_NOTE: [
-        ('_Tag.DEV_Louvers', 'Note Default'),
-    ],
-    SLOT_MAN_BARS: [
-        ('_Tag.DEV_ManBars', 'Center'),
-        ('_Tag.DEV_ManBars', 'Default'),
     ],
     SLOT_NOTE: [
         ('_Tag.DCT_Note', '1 note'),
@@ -323,12 +291,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_STACK: [
         ('_Tag.DCT_Stack', '3_Center'),
     ],
-    SLOT_SPLIT: [
-        ('_Tag.EQP_Split', 'Black'),
-    ],
-    SLOT_SPLIT_NOTE: [
-        ('_Tag.EQP_Split', 'Note Default'),
-    ],
     SLOT_TAP: [
         ('_Tag.DCT_Tap', 'Center'),
         ('_Tag.DCT_Tap', 'Default'),
@@ -336,6 +298,54 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_TRANSITION: [
         ('_Tag.DCT_Transition', 'Center'),
         ('_Tag.DCT_Transition', 'RND 1.00'),
+    ],
+    SLOT_WEIGHT: [
+        ('_Tag.DCT_Weight', 'Default'),
+    ],
+
+
+    # Equipment
+    SLOT_CONDENSER: [
+        ('_Tag.EQP_Condenser', 'Black'),
+    ],
+    SLOT_EQUIPMENT_PAD: [
+        ('_Tag.EQP_EquipmentPad', 'Black'),
+    ],
+    SLOT_FAN: [
+        ('_Tag.EQP_Fan', 'Black'),
+    ],
+    SLOT_FAN_NOTE: [
+        ('_Tag.EQP_Fan', 'Note Default'),
+    ],
+    SLOT_HEAT_PUMP: [
+        ('_Tag.EQP_HeatPump', 'Black'),
+    ],
+    SLOT_HEAT_PUMP_NOTE: [
+        ('_Tag.EQP_HeatPump', 'Note Default'),
+    ],
+    SLOT_HEATER: [
+        ('_Tag.EQP_Heater', 'Black'),
+    ],
+    SLOT_HEATER_NOTE: [
+        ('_Tag.EQP_Heater', 'Note Default'),
+    ],
+    SLOT_HOOD: [
+        ('_Tag.EQP_Hood', 'Black'),
+    ],
+    SLOT_HOOD_NOTE: [
+        ('_Tag.EQP_Hood', 'Note Default'),
+    ],
+    SLOT_HUMIDIFIER: [
+        ('_Tag.EQP_Humidifier', 'Black'),
+    ],
+    SLOT_HUMIDIFIER_NOTE: [
+        ('_Tag.EQP_Humidifier', 'Note Default'),
+    ],
+    SLOT_SPLIT: [
+        ('_Tag.EQP_Split', 'Black'),
+    ],
+    SLOT_SPLIT_NOTE: [
+        ('_Tag.EQP_Split', 'Note Default'),
     ],
     SLOT_UNIT: [
         ('_Tag.EQP_Unit', 'Black'),
@@ -354,9 +364,6 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_VRF_NOTE: [
         ('_Tag.EQP_VRF', 'BlackNote'),
-    ],
-    SLOT_WEIGHT: [
-        ('_Tag.DCT_Weight', 'Default'),
     ],
 }
 
@@ -427,68 +434,6 @@ FML_OVL_TO_ROUND                = 'Oval to Round'
 # fmt: on
 # autopep8: on
 
-
-all_duct_families = {
-    # Square
-    FML_SQR_90_ELBOW: 'Square',
-    FML_SQR_ADJ_ELBOW: 'Square',
-    FML_SQR_BIRD_SCREEN: 'Square',
-    FML_SQR_BOOT_SADDLE: 'Square',
-    FML_SQR_BOOT_TAP: 'Square',
-    FML_SQR_BOOT_TAP_W_DAMPER: 'Square',
-    FML_SQR_CANVAS: 'Square',
-    FML_SQR_CONICAL_TAP: 'Square',
-    FML_SQR_CONICAL_TAP_W_DAMPER: 'Square',
-    FML_SQR_DROP_CHEEK: 'Square',
-    FML_SQR_ENDCAP: 'Square',
-    FML_SQR_MAN_BAR: 'Square',
-    FML_SQR_OGEE: 'Square',
-    FML_SQR_OFFSET: 'Square',
-    FML_SQR_PANTS: 'Square',
-    FML_SQR_RADIUS_CLUSTER: 'Square',
-    FML_SQR_RADIUS_ELBOW: 'Square',
-    FML_SQR_ROOF_CURB: 'Square',
-    FML_SQR_TO_RND: 'Square',
-    FML_SQR_STRAIGHT: 'Square',
-    FML_SQR_TDF_ENDCAP: 'Square',
-    FML_SQR_TEE: 'Square',
-    FML_SQR_TRANSITION: 'Square',
-    # Round
-    FML_RND_3_WAY: 'Round',
-    FML_RND_3_WAY_BRANCH: 'Round',
-    FML_RND_BOOT_SADDLE: 'Round',
-    FML_RND_BOX_SADDLE: 'Round',
-    FML_RND_CANVAS: 'Round',
-    FML_RND_CHINA_CAP: 'Round',
-    FML_RND_CONICAL_TEE: 'Round',
-    FML_RND_DAMPER_VOLUME: 'Round',
-    FML_RND_COUPLING: 'Round',
-    FML_RND_COUPLING_FITTING: 'Round',
-    FML_RND_CROSS_TYPE_2: 'Round',
-    FML_RND_DAMPER: 'Round',
-    FML_RND_ELBOW_90_SR_STAMPED: 'Round',
-    FML_RND_ENDCAP: 'Round',
-    FML_RND_GORED_ELBOW: 'Round',
-    FML_RND_OFFSET: 'Round',
-    FML_RND_REDNECK_REDUCER: 'Round',
-    FML_RND_REDUCER: 'Round',
-    FML_RND_REDUCING_TEE: 'Round',
-    FML_RND_ROOF_JACK: 'Round',
-    FML_RND_SADDLE: 'Round',
-    FML_RND_SADDLE_HANGER: 'Round',
-    FML_RND_STRAIGHT: 'Round',
-    FML_RND_WYE: 'Round',
-    # Oval
-    FML_OVL_ENDCAP: 'Oval',
-    FML_OVL_CONICAL_TAP_HARD: 'Oval',
-    FML_OVL_COUPLING: 'Oval',
-    FML_OVL_ELBOW_EASY: 'Oval',
-    FML_OVL_ELBOW_HARD: 'Oval',
-    FML_OVL_STRAIGHT: 'Oval',
-    FML_OVL_REDUCER: 'Oval',
-    FML_OVL_TO_ROUND: 'Oval',
-}
-
 DUCT_FAMILY_TAG_SLOTS = {
     # Square
     FML_SQR_90_ELBOW: [SLOT_EXT_TOP, SLOT_EXT_BOT, SLOT_DEGREE],
@@ -546,16 +491,3 @@ DEFAULT_PARAMETER_HIERARCHY = [
 
 WRITE_PARAMETER = BBM_LABEL
 
-STRAIGHT_JOINT_FAMILIES = {
-    'round duct',
-    'spiral duct',
-    'spiral tube',
-    'straight',
-    'tube',
-}
-
-DEFAULT_JOINT_TAG_SLOTS = [
-    SLOT_BOD,
-    SLOT_LENGTH,
-    SLOT_SIZE,
-]

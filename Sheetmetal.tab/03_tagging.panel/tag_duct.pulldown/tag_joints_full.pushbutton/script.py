@@ -20,8 +20,6 @@ from ducts.revit_duct import (
 from ducts.revit_xyz import RevitXYZ
 from tagging.tag_config import (
     DEFAULT_TAG_SLOT_CANDIDATES,
-    STRAIGHT_JOINT_FAMILIES,
-    DEFAULT_JOINT_TAG_SLOTS,
     SLOT_BOD,
     SLOT_LENGTH,
     SLOT_SIZE,
@@ -57,12 +55,25 @@ non_fatal_warnings = []
 missing_tag_labels = set()
 slot_resolution_cache = {}
 
+DEFAULT_JOINT_TAG_SLOTS = [
+    SLOT_BOD,
+    SLOT_LENGTH,
+    SLOT_SIZE,
+]
+
+
 TAG_SLOT_CANDIDATES = {
     slot: list(candidates)
     for slot, candidates in DEFAULT_TAG_SLOT_CANDIDATES.items()
 }
 
-straight_joint_families = set(STRAIGHT_JOINT_FAMILIES)
+straight_joint_families = {
+    'round duct',
+    'spiral duct',
+    'spiral tube',
+    'straight',
+    'tube',
+}
 
 full_run_tag_slots = list(DEFAULT_JOINT_TAG_SLOTS)
 SHORT_LENGTH_ONLY_RATIO = 0.25
