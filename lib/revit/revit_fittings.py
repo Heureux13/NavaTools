@@ -22,6 +22,7 @@ from config.tag_config import (
     NDBS_CONNECTOR1_END_CONDITION,
     NDBS_CONNECTOR2_END_CONDITION,
 )
+from config.duct_families import *
 from revit.revit_element import RevitElement
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
@@ -67,6 +68,28 @@ class RevitFittings:
             .OfCategory(BuiltInCategory.OST_DuctTerminal)
             .ToElements()
         )
+        self.duct_map = self.create_duct_map()
+
+        self.straights = {}
+        self.elbows = {}
+        self.reducers = {}
+        self.ogees = {}
+        self.square_rounds = {}
+        self.taps = {}
+        self.offsets = {}
+        self.transitions = {}
+        self.endcaps = {}
+        self.dampers_volueme = {}
+        self.canvas = {}
+        self.access_panel = {}
+        self.man_bars = {}
+
+        for element_id, data in self.duct_map.items():
+            family = data['family']
+
+            if family == "elbows":
+                self.elbows[element_id] = data
+
 
     @staticmethod
     def _clean(value):
@@ -104,8 +127,8 @@ class RevitFittings:
 
     def _skip_fab_element(self,
                           fab_element):
-        value = self._get_param(self, PYT_SKIP_TAG)
-        if value is None
+        value = self._get_param(fab_element, PYT_SKIP_TAG)
+        if value is None:
             return None
         return self._clean(value) in {self._clean(v) for v in skip_values}
 
@@ -131,30 +154,24 @@ class RevitFittings:
 
         return groups
 
-    def create_group(self):
-        gropus = defaultdict(list)
-
-        for elbow in
-        ...
-    def create_duct_map(self,):
-        groups = defaultdict(list)
-        family_map = self.create_family_map()
-        elbows = family_map["elbows"]
+    def create_duct_map(self):
+        element_map = {}
 
         for fab_element in self.collected_ducts:
-            family_name = self._family(fab_element)
-            ext_bottom  = self._get_param(fab_element, NDBS_D_BOTTOM_EXTENSION)
-            ext_top     = self._get_param(fab_element, NDBS_D_TOP_EXTENSION)
-            ext_right   = self._get_param(fab_element, NDBS_D_RIGHT_EXTENSION)
-            ext_left    = self._get_param(fab_element, NDBS_D_LEFT_EXTENSION)
-            angle       = self._get_param(fab_element, RVT_ANGLE)
-            length      = self._get_param(fab_element, RVT_LENGTH)
-            conn_0      = self._get_param(fab_element, NDBS_CONNECTOR0_END_CONDITION)
-            conn_1      = self._get_param(fab_element, NDBS_CONNECTOR1_END_CONDITION)
-            conn_2      = self._get_param(fab_element, NDBS_CONNECTOR2_END_CONDITION)
-            groups[family_name].append(fab_element.Id)
+            element_id = fab_element.Id
 
-        return groups
+            element_map[element_id] = {
+                "family": self._family(fab_element),
+                "ext_bottom": self._get_param(fab_element, NDBS_D_BOTTOM_EXTENSION),
+                "ext_top": self._get_param(fab_element, NDBS_D_TOP_EXTENSION),
+                "ext_right": self._get_param(fab_element, NDBS_D_RIGHT_EXTENSION),
+                "ext_left": self._get_param(fab_element, NDBS_D_LEFT_EXTENSION),
+                "object": fab_element
+            }
+
+        return element_map
+
+
 
     def tag_elbows(self):
         ...
