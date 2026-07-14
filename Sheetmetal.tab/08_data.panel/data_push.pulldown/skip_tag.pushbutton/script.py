@@ -51,7 +51,7 @@ try:
                     continue
 
                 current = (param.AsString() or '').strip().lower()
-                if current == 'skip':
+                if current == 'skipp':
                     param.Set('')
                 else:
                     param.Set('skip')
