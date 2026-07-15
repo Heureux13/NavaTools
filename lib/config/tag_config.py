@@ -433,44 +433,6 @@ FML_OVL_TO_ROUND                = 'Oval to Round'
 # fmt: on
 # autopep8: on
 
-DUCT_FAMILY_TAG_SLOTS = {
-    # Square
-    FML_SQR_90_ELBOW:            [SLOT_EXT_TOP, SLOT_EXT_BOT, SLOT_DEGREE],
-    FML_SQR_ADJ_ELBOW:           [SLOT_EXT_TOP, SLOT_EXT_BOT, SLOT_DEGREE],
-    FML_SQR_RADIUS_ELBOW:        [SLOT_DEGREE],
-    FML_SQR_TEE:                 [SLOT_EXT_LEFT, SLOT_EXT_RIGHT, SLOT_EXT_BOT],
-    FML_SQR_OFFSET:              [SLOT_OFFSET],
-    FML_SQR_TRANSITION:          [SLOT_TRANSITION],
-    FML_SQR_ENDCAP:              [SLOT_ENDCAP_SD],
-    FML_SQR_TDF_ENDCAP:          [SLOT_ENDCAP_TDF],
-    FML_SQR_CANVAS:              [SLOT_CANVAS],
-    FML_SQR_BOOT_TAP:            [SLOT_TAP],
-    FML_SQR_BOOT_TAP_W_DAMPER:   [SLOT_DAMPER_VOLUME],
-    FML_SQR_CONICAL_TAP:         [SLOT_TAP],
-    FML_SQR_CONICAL_TAP_W_DAMPER: [SLOT_DAMPER_VOLUME],
-    FML_SQR_MAN_BAR:             [SLOT_MAN_BARS],
-
-    # Round
-    FML_RND_ELBOW_90_SR_STAMPED: [SLOT_DEGREE],
-    FML_RND_GORED_ELBOW:         [SLOT_DEGREE],
-    FML_RND_OFFSET:              [SLOT_OFFSET],
-    FML_RND_REDUCER:             [SLOT_OFFSET],
-    FML_RND_REDUCING_TEE:        [SLOT_EXT_LEFT, SLOT_EXT_RIGHT],
-    FML_RND_ENDCAP:              [SLOT_ENDCAP_SD],
-    FML_RND_DAMPER_VOLUME:       [SLOT_DAMPER_VOLUME],
-    FML_RND_DAMPER:              [SLOT_DAMPER_FIRE],
-    FML_RND_CANVAS:              [SLOT_CANVAS],
-    FML_RND_BOOT_SADDLE:         [SLOT_TAP],
-
-    # Oval
-    FML_OVL_ELBOW_EASY:          [SLOT_DEGREE],
-    FML_OVL_ELBOW_HARD:          [SLOT_DEGREE],
-    FML_OVL_REDUCER:             [SLOT_OFFSET],
-    FML_OVL_ENDCAP:              [SLOT_ENDCAP_SD],
-    FML_OVL_CONICAL_TAP_HARD:    [SLOT_TAP],
-}
-
-
 _user_candidates = _load_user_candidate()
 if isinstance(_user_candidates, dict):
     DEFAULT_TAG_SLOT_CANDIDATES = _user_candidates
