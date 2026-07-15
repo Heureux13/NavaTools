@@ -213,6 +213,7 @@ second_tag = list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_GRD_CFM, []))
 FLOW_PARAMETER_NAMES = (
     RVT_AIRFLOW,
     RVT_FLOW,
+    "Price-Design Airflow",
 )
 
 order_parameters = list(DEFAULT_PARAMETER_HIERARCHY)

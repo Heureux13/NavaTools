@@ -184,11 +184,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     ],
     SLOT_GRD: [
         ('_Tag.DEV_GRD', 'CFM'),
-        ('_Tag.DEV_GRD', 'Label'),
     ],
     SLOT_GRD_CFM: [
         ('_Tag.DEV_GRD', 'Center'),
-        ('_Tag.DEV_GRD', 'CFM'),
+        ('_Tag.DEV_GRD', 'Label'),
     ],
     SLOT_LOUVER: [
         ('_Tag.DEV_Louvers', 'Black'),
@@ -448,7 +447,7 @@ DUCT_FAMILY_TAG_SLOTS = {
     FML_SQR_BOOT_TAP:            [SLOT_TAP],
     FML_SQR_BOOT_TAP_W_DAMPER:   [SLOT_DAMPER_VOLUME],
     FML_SQR_CONICAL_TAP:         [SLOT_TAP],
-    FML_SQR_CONICAL_TAP_W_DAMPER:[SLOT_DAMPER_VOLUME],
+    FML_SQR_CONICAL_TAP_W_DAMPER: [SLOT_DAMPER_VOLUME],
     FML_SQR_MAN_BAR:             [SLOT_MAN_BARS],
 
     # Round
@@ -490,4 +489,3 @@ DEFAULT_PARAMETER_HIERARCHY = [
 ]
 
 WRITE_PARAMETER = BBM_LABEL
-
