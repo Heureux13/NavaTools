@@ -53,7 +53,7 @@ if not selected_elements:
 
 # Get source view before deleting anything
 source_view = uidoc.ActiveView
-if source_view is None or source_view.ViewType != ViewType.ThreeD:
+# if source_view is None or source_view.ViewType != ViewType.ThreeD:
     for view in FilteredElementCollector(doc).OfClass(View):
         if view.ViewType == ViewType.ThreeD and not view.IsTemplate:
             source_view = view
@@ -133,10 +133,10 @@ if combined_min is None:
         '**Error:** Could not get bounding box - all elements returned None')
     script.exit()
 
-output.print_md('BBox Min: ({:.2f}, {:.2f}, {:.2f})'.format(
-    combined_min.X, combined_min.Y, combined_min.Z))
-output.print_md('BBox Max: ({:.2f}, {:.2f}, {:.2f})'.format(
-    combined_max.X, combined_max.Y, combined_max.Z))
+# output.print_md('BBox Min: ({:.2f}, {:.2f}, {:.2f})'.format(
+#     combined_min.X, combined_min.Y, combined_min.Z))
+# output.print_md('BBox Max: ({:.2f}, {:.2f}, {:.2f})'.format(
+#     combined_max.X, combined_max.Y, combined_max.Z))
 
 # Expand bounding box by 2 feet (24 inches)
 expansion = 2.0  # feet, Revit API uses feet by default
@@ -176,9 +176,9 @@ with revit.Transaction('Set View'):
 
 # Verify section box was applied
 applied_box = view_3d.GetSectionBox()
-output.print_md('Section box applied - Min: ({:.2f}, {:.2f}, {:.2f}) Max: ({:.2f}, {:.2f}, {:.2f})'.format(
-    applied_box.Min.X, applied_box.Min.Y, applied_box.Min.Z,
-    applied_box.Max.X, applied_box.Max.Y, applied_box.Max.Z))
+# output.print_md('Section box applied - Min: ({:.2f}, {:.2f}, {:.2f}) Max: ({:.2f}, {:.2f}, {:.2f})'.format(
+#     applied_box.Min.X, applied_box.Min.Y, applied_box.Min.Z,
+#     applied_box.Max.X, applied_box.Max.Y, applied_box.Max.Z))
 
 # Switch to the view AFTER transaction is closed
 uidoc.ActiveView = view_3d
@@ -193,8 +193,8 @@ try:
             break
     if active_ui_view:
         active_ui_view.ZoomToFit()
-        output.print_md(
-            'ZoomToFit called on view: **{}**'.format(view_3d.Name))
+        # output.print_md(
+        #     'ZoomToFit called on view: **{}**'.format(view_3d.Name))
     else:
         output.print_md('**Warning:** Could not find UIView for this view')
 except Exception as e:

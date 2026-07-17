@@ -506,13 +506,13 @@ if not first_tag_symbol and not second_tag_symbol:
         )
     )
     script.exit()
-placed = []
-failed = []
+placed         = []
+failed         = []
 already_tagged = []
-skipped = []
-value_changes = []
-tags_deleted = []
-tags_added = []
+skipped        = []
+value_changes  = []
+tags_deleted   = []
+tags_added     = []
 
 # Check how many tags already exist in the view
 existing_tags = list(

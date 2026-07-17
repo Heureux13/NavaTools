@@ -256,11 +256,11 @@ with revit.Transaction('Set Grid Bubbles Outside (Top/Left Only)'):
             updated_views += 1
             updated_grids += updated_in_view
 
-output.print_md(
-    'Updated {} grid(s) across {} view(s); top/left ends are {}" outside, right/bottom are flush, and bubbles are top/left only.'.format(
-        updated_grids, updated_views, 0.5
-    )
-)
+# output.print_md(
+#     'Updated {} grid(s) across {} view(s); top/left ends are {}" outside, right/bottom are flush, and bubbles are top/left only.'.format(
+#         updated_grids, updated_views, 0.5
+#     )
+# )
 if skipped_views:
     output.print_md('Views with no visible grids: {}'.format(
         ', '.join(skipped_views)))
