@@ -106,6 +106,7 @@ SLOT_SIZE                   = 'SIZE'
 SLOT_SIZE_LEFT              = 'SIZE_LEFT'
 SLOT_SIZE_RIGHT             = 'SIZE_RIGHT'
 SLOT_WEIGHT                 = 'WEIGHT'
+SLOT_WEIGHT_PER_FOOT        = "WEIGHT_PER_FOOT"
 
 # fmt: on
 # autopep8: on
@@ -155,6 +156,7 @@ SLOT_ALL = (
     SLOT_VALVE,
     SLOT_VRF,
     SLOT_WEIGHT,
+    SLOT_WEIGHT_PER_FOOT,
     SLOT_CONDENSER_NOTE,
     SLOT_FAN_NOTE,
     SLOT_HEAT_PUMP_NOTE,
@@ -301,7 +303,10 @@ DEFAULT_TAG_SLOT_CANDIDATES = {
     SLOT_WEIGHT: [
         ('_Tag.DCT_Weight', 'Default'),
     ],
-
+    SLOT_WEIGHT_PER_FOOT: [
+        ('_Tag.DCT_WeightPerFoot', 'Default'),
+        ('_Tag.PIP_WeightPerFoot', 'Default'),
+    ],
 
     # Equipment
     SLOT_CONDENSER: [
