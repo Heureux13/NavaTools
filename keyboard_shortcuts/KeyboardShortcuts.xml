@@ -8,7 +8,7 @@
   <ShortcutItem CommandName="Type Properties" CommandId="ID_EDIT_TYPE" Shortcuts="ET" Paths="Create&gt;Properties; Modify&gt;Properties" />
   <ShortcutItem CommandName="Properties" CommandId="ID_TOGGLE_PROPERTIES_PALETTE" Shortcuts="PP#Ctrl+1#VP" Paths="Create&gt;Properties; View&gt;Windows; Modify&gt;Properties; Contextual Tabs&gt;Properties" />
   <ShortcutItem CommandName="Family Category and Parameters" CommandId="ID_OBJECTS_FAMILYHOST" Paths="Create&gt;Properties; Modify&gt;Properties" />
-  <ShortcutItem CommandName="Family Types" CommandId="ID_FAMILY_TYPE" Shortcuts="FT" Paths="Create&gt;Properties; Modify&gt;Properties" />
+  <ShortcutItem CommandName="Family Types" CommandId="ID_FAMILY_TYPE" Paths="Create&gt;Properties; Modify&gt;Properties" />
   <ShortcutItem CommandName="Solid Extrusion" CommandId="ID_OBJECTS_EXTRUSION" Paths="Create&gt;Forms" />
   <ShortcutItem CommandName="Solid Blend" CommandId="ID_OBJECTS_BLEND" Paths="Create&gt;Forms" />
   <ShortcutItem CommandName="Solid Revolve" CommandId="ID_OBJECTS_REVOLUTION" Paths="Create&gt;Forms" />
@@ -22,7 +22,7 @@
   <ShortcutItem CommandName="Model Line; Model Line; Boundary Line; Rebar Line" CommandId="ID_OBJECTS_CURVE" Shortcuts="LI" Paths="Create&gt;Model; Create&gt;Detail; Create&gt;Draw; Modify&gt;Draw; Contextual Tabs&gt;Draw" />
   <ShortcutItem CommandName="Place a Component" CommandId="ID_OBJECTS_FAMSYM" Shortcuts="CM" Paths="Create&gt;Model; Architecture&gt;Build; Structure&gt;Model; Systems&gt;Model" />
   <ShortcutItem CommandName="Model Group:Place Model Group" CommandId="ID_OBJECTS_PLACE_GROUP" Paths="Create&gt;Model; Architecture&gt;Model; Structure&gt;Model" />
-  <ShortcutItem CommandName="Model Group:Create Group; Detail Group:Create Group" CommandId="ID_EDIT_GROUP" Shortcuts="GRQ" Paths="Create&gt;Model; Annotate&gt;Detail; Modify&gt;Create; Create&gt;Detail; Architecture&gt;Model; Structure&gt;Model" />
+  <ShortcutItem CommandName="Model Group:Create Group; Detail Group:Create Group" CommandId="ID_EDIT_GROUP" Shortcuts="GP" Paths="Create&gt;Model; Annotate&gt;Detail; Modify&gt;Create; Create&gt;Detail; Architecture&gt;Model; Structure&gt;Model" />
   <ShortcutItem CommandName="Model Text" CommandId="ID_OBJECTS_MODELTEXT" Paths="Create&gt;Model; Architecture&gt;Model; Structure&gt;Model" />
   <ShortcutItem CommandName="Opening" CommandId="ID_OBJECTS_OPENING" Paths="Create&gt;Model" />
   <ShortcutItem CommandName="Control" CommandId="ID_OBJECTS_CONTROL" Paths="Create&gt;Control" />
@@ -32,7 +32,7 @@
   <ShortcutItem CommandName="Cable Tray Connector; Cable Tray Connector" CommandId="ID_RBS_ADD_CABLETRAY_CONNECTOR" Paths="Create&gt;Connectors" />
   <ShortcutItem CommandName="Conduit Connector; Conduit Connector" CommandId="ID_RBS_ADD_CONDUIT_CONNECTOR" Paths="Create&gt;Connectors" />
   <ShortcutItem CommandName="Reference Line; Reference Line" CommandId="ID_OBJECTS_REFERENCE_CURVE" Paths="Create&gt;Datum; Create&gt;Draw; Modify&gt;Draw" />
-  <ShortcutItem CommandName="Reference Plane; Reference Plane" CommandId="ID_OBJECTS_CLINE" Shortcuts="RP#RAA" Paths="Create&gt;Datum; Create&gt;Draw; Modify&gt;Draw; Architecture&gt;Work Plane; Structure&gt;Work Plane; Steel&gt;Work Plane; Systems&gt;Work Plane; Analyze&gt;Work Plane; Contextual Tabs&gt;Work Plane" />
+  <ShortcutItem CommandName="Reference Plane; Reference Plane" CommandId="ID_OBJECTS_CLINE" Shortcuts="RP#RAA" Paths="Create&gt;Datum; Create&gt;Work Plane; Create&gt;Draw; Modify&gt;Draw; Architecture&gt;Work Plane; Structure&gt;Work Plane; Steel&gt;Work Plane; Systems&gt;Work Plane; Analyze&gt;Work Plane; Contextual Tabs&gt;Work Plane" />
   <ShortcutItem CommandName="Set; Set Work Plane" CommandId="ID_SKETCH_PLANE_TOOL" Paths="Create&gt;Work Plane; Modify&gt;Work Plane; Architecture&gt;Work Plane; Structure&gt;Work Plane; Steel&gt;Work Plane; Systems&gt;Work Plane; Analyze&gt;Work Plane; Contextual Tabs&gt;Work Plane" />
   <ShortcutItem CommandName="Set:Pick a Plane; Edit Work Plane:Pick a Plane" CommandId="ID_PICK_WORKPLANE" Shortcuts="PK" Paths="Create&gt;Work Plane; Modify&gt;Work Plane; Architecture&gt;Work Plane; Structure&gt;Work Plane; Steel&gt;Work Plane; Systems&gt;Work Plane; Analyze&gt;Work Plane; Contextual Tabs&gt;Work Plane; " />
   <ShortcutItem CommandName="Show Work Plane" CommandId="ID_SKETCH_GRID_VIS" Paths="Create&gt;Work Plane; Modify&gt;Work Plane; Architecture&gt;Work Plane; Structure&gt;Work Plane; Steel&gt;Work Plane; Systems&gt;Work Plane; Analyze&gt;Work Plane; Contextual Tabs&gt;Work Plane" />
@@ -49,7 +49,7 @@
   <ShortcutItem CommandName="Coordination Model:Autodesk Docs" CommandId="ID_COORDINATIONMODEL_ADD_AUTODESKDOCS" Paths="Insert&gt;Link; Contextual Tabs&gt;Coordination Model" />
   <ShortcutItem CommandName="Link PDF" CommandId="ID_LINK_PDF" Paths="Insert&gt;Link" />
   <ShortcutItem CommandName="Link Image" CommandId="ID_LINK_IMAGE" Paths="Insert&gt;Link" />
-  <ShortcutItem CommandName="Manage Links" CommandId="ID_LINKED_DWG" Paths="Insert&gt;Link; Manage&gt;Manage Project; Contextual Tabs&gt;Image; Contextual Tabs&gt;Coordination; Contextual Tabs&gt;Link" />
+  <ShortcutItem CommandName="Manage Links" CommandId="ID_LINKED_DWG" Shortcuts="MALI" Paths="Insert&gt;Link; Manage&gt;Manage Project; Contextual Tabs&gt;Image; Contextual Tabs&gt;Coordination; Contextual Tabs&gt;Link" />
   <ShortcutItem CommandName="Import CAD" CommandId="ID_FILE_IMPORT" Paths="Insert&gt;Import" />
   <ShortcutItem CommandName="Import gbXML" CommandId="ID_ABS_IMPORT_GBXML" Paths="Insert&gt;Import" />
   <ShortcutItem CommandName="Import PDF" CommandId="ID_OBJECTS_RASTER_PDF" Paths="Insert&gt;Import" />
@@ -75,7 +75,7 @@
   <ShortcutItem CommandName="Detail Group:Place Detail Group" CommandId="ID_OBJECTS_PLACE_DETAIL_GROUP" Paths="Annotate&gt;Detail; Create&gt;Detail" />
   <ShortcutItem CommandName="Symbol" CommandId="ID_OBJECTS_FAM_ANN_INST" Paths="Annotate&gt;Detail; Create&gt;Detail; Annotate&gt;Symbol" />
   <ShortcutItem CommandName="Masking Region; Masking Region" CommandId="ID_MASKING_REGION" Paths="Annotate&gt;Detail; Create&gt;Detail" />
-  <ShortcutItem CommandName="Filled Region; Filled Region" CommandId="ID_OBJECTS_FILLED_REGION" Shortcuts="FERE" Paths="Annotate&gt;Detail; Create&gt;Detail" />
+  <ShortcutItem CommandName="Filled Region; Filled Region" CommandId="ID_OBJECTS_FILLED_REGION" Paths="Annotate&gt;Detail; Create&gt;Detail" />
   <ShortcutItem CommandName="Text" CommandId="ID_OBJECTS_TEXT_NOTE" Shortcuts="TX" Paths="Annotate&gt;Text; Create&gt;Text; Quick Access Toolbar" />
   <ShortcutItem CommandName="Check Spelling" CommandId="ID_CHECK_SPELLING" Paths="Annotate&gt;Text; Create&gt;Text; Contextual Tabs&gt;Text" />
   <ShortcutItem CommandName="Find/ Replace" CommandId="ID_FIND_REPLACE" Shortcuts="FR" Paths="Annotate&gt;Text; Create&gt;Text; Contextual Tabs&gt;Text" />
@@ -84,7 +84,7 @@
   <ShortcutItem CommandName="3D View; Default 3D View" CommandId="ID_VIEW_DEFAULT_3DVIEW" Paths="View&gt;Create; Quick Access Toolbar" />
   <ShortcutItem CommandName="3D View:Camera; Default 3D View:Camera" CommandId="ID_VIEW_NEW_3DVIEW" Paths="View&gt;Create; Quick Access Toolbar" />
   <ShortcutItem CommandName="3D View:Walkthrough; Default 3D View:Walkthrough" CommandId="ID_VIEW_NEW_WALKTHROUGH" Paths="View&gt;Create; Quick Access Toolbar" />
-  <ShortcutItem CommandName="Section" CommandId="ID_VIEW_NEW_SECTION" Shortcuts="CRSE" Paths="View&gt;Create; Quick Access Toolbar" />
+  <ShortcutItem CommandName="Section" CommandId="ID_VIEW_NEW_SECTION" Shortcuts="CRSEC" Paths="View&gt;Create; Quick Access Toolbar" />
   <ShortcutItem CommandName="Plan Region; Plan Views:Plan Region" CommandId="ID_NEW_PLAN_REGION" Paths="View&gt;Create" />
   <ShortcutItem CommandName="Plan Views:Floor Plan; Floor Plan" CommandId="ID_VIEW_NEW_PLAN" Paths="View&gt;Create" />
   <ShortcutItem CommandName="Plan Views:Reflected Ceiling Plan" CommandId="ID_VIEW_NEW_RCP" Paths="View&gt;Create" />
@@ -151,16 +151,177 @@
   <ShortcutItem CommandName="Macro Security" CommandId="ID_TOOLS_MACROSECURITY" Paths="Manage&gt;Macros" />
   <ShortcutItem CommandName="Dynamo" CommandId="ID_VISUAL_PROGRAMMING_DYNAMO" Paths="Manage&gt;Visual Programming" />
   <ShortcutItem CommandName="Dynamo Player" CommandId="ID_PLAYLIST_DYNAMO" Paths="Manage&gt;Visual Programming" />
+  <ShortcutItem CommandName="External Tools:Navisworks 2024" CommandId="2c0e1f44-77d9-4745-aa8a-4657534613c8" Paths="Add-Ins&gt;External" />
+  <ShortcutItem CommandName="External Tools:Navisworks SwitchBack 2024" CommandId="8a5a1f39-580e-4e6d-9f0f-7d16241f1a95" Paths="Add-Ins&gt;External" />
   <ShortcutItem CommandName="Transmit model(s)" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%eTransmit%eTransmit" Paths="Add-Ins&gt;eTransmit" />
   <ShortcutItem CommandName="Help" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%eTransmit%eTransmitHelp" Paths="Add-Ins&gt;eTransmit" />
   <ShortcutItem CommandName="About" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%eTransmit%eTransmitAbout" Paths="Add-Ins&gt;eTransmit" />
+  <ShortcutItem CommandName="Create PDF" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%CreatePDF" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Change Settings" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%ChangeSettings" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Split3D:Create 3D PDF" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%splitButton3D%Create 3D PDF" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Split3D:Create U3D" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%splitButton3D%Create U3D" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Split3D:Copy 3D to Clipboard" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%splitButton3D%Copy 3D to Clipboard" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Split3D:3D PDF Settings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%splitButton3D%3D PDF Settings" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="Show Log" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%showLog" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="How Do I" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%help" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="About" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%Bluebeam%about" Paths="Add-Ins&gt;Bluebeam" />
+  <ShortcutItem CommandName="AutoSection Box" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Auto-Section Box" Shortcuts="BX" Paths="Add-Ins&gt;COINS Section Box" />
+  <ShortcutItem CommandName="Toggle" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Toggle Section Box" Paths="Add-Ins&gt;COINS Section Box" />
+  <ShortcutItem CommandName="Grow" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Grow Section Box" Paths="Add-Ins&gt;COINS Section Box" />
+  <ShortcutItem CommandName="Shrink" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Shrink Section Box" Paths="Add-Ins&gt;COINS Section Box" />
+  <ShortcutItem CommandName="Quick AutoSection" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Quick Auto-Section" Paths="Add-Ins&gt;COINS Section Box" />
+  <ShortcutItem CommandName="Section BoxResize Settings" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%COINS Section Box%Section Box Resize Settings" Paths="Add-Ins&gt;COINS Section Box" />
   <ShortcutItem CommandName="Convert RFAto FormIt" CommandId="CustomCtrl_%CustomCtrl_%Add-Ins%FormIt Converter%Convert RFA to FormIt" Paths="Add-Ins&gt;FormIt Converter" />
-  <ShortcutItem CommandName="RevitPythonShell:InteractivePython Shell" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%RevitPythonShell%splitButtonRevitPythonShell%RevitPythonShell" Paths="Add-Ins&gt;RevitPythonShell" />
-  <ShortcutItem CommandName="RevitPythonShell:Non-modalShell" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%RevitPythonShell%splitButtonRevitPythonShell%NonModalRevitPythonShell" Paths="Add-Ins&gt;RevitPythonShell" />
-  <ShortcutItem CommandName="RevitPythonShell:Configure..." CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%RevitPythonShell%splitButtonRevitPythonShell%Configure" Paths="Add-Ins&gt;RevitPythonShell" />
-  <ShortcutItem CommandName="RevitPythonShell:Deploy RpsAddin" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Add-Ins%RevitPythonShell%splitButtonRevitPythonShell%DeployRpsAddin" Paths="Add-Ins&gt;RevitPythonShell" />
   <ShortcutItem CommandName="Launch Content Catalog:Launch as app" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Content Catalog%Content Catalog%betaSplit%betaApp" Paths="Content Catalog&gt;Content Catalog" />
   <ShortcutItem CommandName="Launch Content Catalog:Launch in browser" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Content Catalog%Content Catalog%betaSplit%betaBrowser" Paths="Content Catalog&gt;Content Catalog" />
+  <ShortcutItem CommandName="Log Out" CommandId="CustomCtrl_%CustomCtrl_%Dalux%BIM%Log out" Paths="Dalux&gt;BIM" />
+  <ShortcutItem CommandName="Change Project" CommandId="CustomCtrl_%CustomCtrl_%Dalux%BIM%ChangeProject" Paths="Dalux&gt;BIM" />
+  <ShortcutItem CommandName="Upload" CommandId="CustomCtrl_%CustomCtrl_%Dalux%BIM%Upload" Paths="Dalux&gt;BIM" />
+  <ShortcutItem CommandName="Comments" CommandId="CustomCtrl_%CustomCtrl_%Dalux%BIM%Comments" Paths="Dalux&gt;BIM" />
+  <ShortcutItem CommandName="Model Validation" CommandId="CustomCtrl_%CustomCtrl_%Dalux%BIM%ModelValidation" Paths="Dalux&gt;BIM" />
+  <ShortcutItem CommandName="Save" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Quick Save Selection&#xA;in Sesion" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="Add" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Quick Add to Current&#xA;in Sesion Selection" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="Restore" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Restore Current&#xA;in Sesion Selection" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="PreFilter" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Pre&#xA;Filter" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="SelectionExpander" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Selection&#xA;Expander" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="FilterByParameter" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%FilterBy&#xA;Parameter" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="FilterMore" CommandId="CustomCtrl_%CustomCtrl_%JOTools%Selection%Filter&#xA;More" Paths="JOTools&gt;Selection" />
+  <ShortcutItem CommandName="SplitButton Cloud Content:FamilyBrowser" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Families%SplitButton Cloud Content%Family Browser" Paths="[N] Accelerate&gt;Families" />
+  <ShortcutItem CommandName="SplitButton Cloud Content:CloudContent" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Families%SplitButton Cloud Content%Cloud Content" Paths="[N] Accelerate&gt;Families" />
+  <ShortcutItem CommandName="Align to Path" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Families%AlignToPath" Paths="[N] Accelerate&gt;Families" />
+  <ShortcutItem CommandName="Rectangular Array" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Families%Rectangular Array" Paths="[N] Accelerate&gt;Families" />
+  <ShortcutItem CommandName="Space/Room Array" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Families%Space/Room Array" Paths="[N] Accelerate&gt;Families" />
+  <ShortcutItem CommandName="SplitButton Filter Elements:FilterElements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Find &amp; Select%SplitButton Filter Elements%Filter Elements" Paths="[N] Accelerate&gt;Find &amp; Select" />
+  <ShortcutItem CommandName="SplitButton Filter Elements:Quick FilterElements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Find &amp; Select%SplitButton Filter Elements%Quick Filter Elements" Paths="[N] Accelerate&gt;Find &amp; Select" />
+  <ShortcutItem CommandName="LiveSelection" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Find &amp; Select%FilterElemsNX" Paths="[N] Accelerate&gt;Find &amp; Select" />
+  <ShortcutItem CommandName="UnhideElements" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Find &amp; Select%Unhide Elements" Paths="[N] Accelerate&gt;Find &amp; Select" />
+  <ShortcutItem CommandName="ColorElements" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%ColorElements" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="EditParam." CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Edit Parameter Values" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="SplitButton Renumber Elements:QuickRenumber" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%SplitButton Renumber Elements%Renumber Elements" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="SplitButton Renumber Elements:Renumber" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%SplitButton Renumber Elements%ACRenumberElements" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Find &amp;Replace" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%ACFindAndReplace" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Combine:Combine" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Combine%Combine Parameter Values" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Combine:Batch Combine" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Combine%Batch Combine Parameter Values" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Match" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Match Parameter Values" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Transfer" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Transfer Calculated Values" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Create 3D Zone" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Create 3D Zone" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Write Parameters" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Write Parameters" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="Write All Setup" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Data%Write All Setup" Paths="[N] Accelerate&gt;Data" />
+  <ShortcutItem CommandName="UpdateNow" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Update Project%Automatic Update" Paths="[N] Accelerate&gt;Update Project" />
+  <ShortcutItem CommandName="Manage" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Update Project%ConfigureSettings" Paths="[N] Accelerate&gt;Update Project" />
+  <ShortcutItem CommandName="Sheets&amp; Views" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Sheets &amp; Views%Manage Sheets &amp; Views" Paths="[N] Accelerate&gt;Sheets &amp; Views" />
+  <ShortcutItem CommandName="AdjustSection Box" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Sheets &amp; Views%Adjust Section Box" Paths="[N] Accelerate&gt;Sheets &amp; Views" />
+  <ShortcutItem CommandName="Section" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Sheets &amp; Views%ACSectionFromElement" Paths="[N] Accelerate&gt;Sheets &amp; Views" />
+  <ShortcutItem CommandName="SectionSettings" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Sheets &amp; Views%ACSectionSettings" Paths="[N] Accelerate&gt;Sheets &amp; Views" />
+  <ShortcutItem CommandName="ManageProject" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Project%Manage Project" Paths="[N] Accelerate&gt;Project" />
+  <ShortcutItem CommandName="NewProject" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Project%New Project" Paths="[N] Accelerate&gt;Project" />
+  <ShortcutItem CommandName="Batch Export" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Print Export%Publish" Paths="[N] Accelerate&gt;Print Export" />
+  <ShortcutItem CommandName="Print SetManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Print Export%PrintSetManager" Paths="[N] Accelerate&gt;Print Export" />
+  <ShortcutItem CommandName="SplitButton Quick PDF Export:Quick PDFExport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Print Export%SplitButton Quick PDF Export%Quick PDF Export" Paths="[N] Accelerate&gt;Print Export" />
+  <ShortcutItem CommandName="SplitButton Quick PDF Export:QuickPrint" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Accelerate%Print Export%SplitButton Quick PDF Export%Quick Print" Paths="[N] Accelerate&gt;Print Export" />
+  <ShortcutItem CommandName="Link &amp; Sync" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Collaboration%IFC" Paths="[N] Accelerate&gt;Collaboration" />
+  <ShortcutItem CommandName="Provisionfor Voids" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Collaboration%ProvisionForVoids" Paths="[N] Accelerate&gt;Collaboration" />
+  <ShortcutItem CommandName="NaviateAssistant" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%AI%NaviateAssistant" Paths="[N] Accelerate&gt;AI" />
+  <ShortcutItem CommandName="Help" CommandId="CustomCtrl_%CustomCtrl_%[N] Accelerate%Help%Naviate Help" Paths="[N] Accelerate&gt;Help" />
+  <ShortcutItem CommandName="WarningHandler" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Warning Handler" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="ProjectCleanup" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%ProjectCleanup" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="StyleSweep" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%ACStyleSweep" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="CADTracker" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%CAD Tracker" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="View FilterManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%View Filter Manager" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="View TemplateManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%ACViewTemplateManager" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="AdvancedParam. Manager" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%AdvancedParameterManager" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="ParameterTransfer" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Parameter Transfer" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="ParameterConfiguration" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%ParameterConfiguration" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="SplitButton Basepoint Explorer:BasepointExplorer" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%SplitButton Basepoint Explorer%Basepoint Explorer" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="SplitButton Basepoint Explorer:BasepointExport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%SplitButton Basepoint Explorer%Basepoint Export" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="ResaveFamilies" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Resave Families" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="Add TypeImages" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Add Type Images" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="ColorizeTabs" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%ACColorizeTabs" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="Exit" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Exit Manage Project" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="RemoveSchemas" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%RemoveSchemas" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="UpdateSchemas" CommandId="CustomCtrl_%CustomCtrl_%[N] Manage Project%Manage Project%Update Schemas" Paths="[N] Manage Project&gt;Manage Project" />
+  <ShortcutItem CommandName="SplitButton Create Views:Create Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%SplitButton Create Views%Create Views" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="SplitButton Create Views:Quick Dependent Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%SplitButton Create Views%Quick Dependent Views" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="DuplicateViews" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%ACDuplicateViews" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="TypeSymbols" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%Type Symbols" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="View &amp; Sheetfrom Settings" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%ACSheetViewManager" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="RoomElevations" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%ACRoomElevation" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="Room ElevationsSettings" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Views%ACRoomElevationsSettings" Paths="[N] Sheets &amp; Views&gt;Create Views" />
+  <ShortcutItem CommandName="AlignViews" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Views%ACAlignViews" Paths="[N] Sheets &amp; Views&gt;Manage Views" />
+  <ShortcutItem CommandName="ApplyCrop Region" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Views%Apply Crop Region" Paths="[N] Sheets &amp; Views&gt;Manage Views" />
+  <ShortcutItem CommandName="LegendManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Views%Legend Manager" Paths="[N] Sheets &amp; Views&gt;Manage Views" />
+  <ShortcutItem CommandName="Tag Settings" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Documentation%ACTagSettings" Paths="[N] Sheets &amp; Views&gt;Documentation" />
+  <ShortcutItem CommandName="SplitButton ACTagSelect:Tag Select" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Documentation%SplitButton ACTagSelect%ACTagSelect" Paths="[N] Sheets &amp; Views&gt;Documentation" />
+  <ShortcutItem CommandName="SplitButton ACTagSelect:Tag SelectLinked" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Documentation%SplitButton ACTagSelect%ACTagSelectLinked" Paths="[N] Sheets &amp; Views&gt;Documentation" />
+  <ShortcutItem CommandName="Tag All" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Documentation%ACTagAll" Paths="[N] Sheets &amp; Views&gt;Documentation" />
+  <ShortcutItem CommandName="DimensionGrids" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Documentation%ACDimensionGrids" Paths="[N] Sheets &amp; Views&gt;Documentation" />
+  <ShortcutItem CommandName="Create Sheets" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Sheets%Create Sheets" Paths="[N] Sheets &amp; Views&gt;Create Sheets" />
+  <ShortcutItem CommandName="CreateEmpty Sheets" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Sheets%Create Empty Sheets" Paths="[N] Sheets &amp; Views&gt;Create Sheets" />
+  <ShortcutItem CommandName="TypeDrawings" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Create Sheets%Type Drawings" Paths="[N] Sheets &amp; Views&gt;Create Sheets" />
+  <ShortcutItem CommandName="PlaceViews" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Sheets%ACPlaceViews" Paths="[N] Sheets &amp; Views&gt;Manage Sheets" />
+  <ShortcutItem CommandName="Edit SheetParameters" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Sheets%Edit Sheet Parameters" Paths="[N] Sheets &amp; Views&gt;Manage Sheets" />
+  <ShortcutItem CommandName="RevisionManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Manage Sheets%Revision Manager" Paths="[N] Sheets &amp; Views&gt;Manage Sheets" />
+  <ShortcutItem CommandName="Exit" CommandId="CustomCtrl_%CustomCtrl_%[N] Sheets &amp; Views%Exit%Exit Manage Sheets &amp; Views" Paths="[N] Sheets &amp; Views&gt;Exit" />
+  <ShortcutItem CommandName="Export/Import" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%Export Import%ACExtract" Paths="[N] Link &amp; Sync&gt;Export Import" />
+  <ShortcutItem CommandName="Imprint" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%Export Import%ACImprint" Paths="[N] Link &amp; Sync&gt;Export Import" />
+  <ShortcutItem CommandName="Create Table" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%Export Import%ACCreateTable" Paths="[N] Link &amp; Sync&gt;Export Import" />
+  <ShortcutItem CommandName="TransferSettings" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%Transfer / Sync%Transfer Settings" Paths="[N] Link &amp; Sync&gt;Transfer / Sync" />
+  <ShortcutItem CommandName="Scope BoxSync" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%Transfer / Sync%Scope Box Sync" Paths="[N] Link &amp; Sync&gt;Transfer / Sync" />
+  <ShortcutItem CommandName="Export IFC" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%IFC Utilities%ExportIFC" Paths="[N] Link &amp; Sync&gt;IFC Utilities" />
+  <ShortcutItem CommandName="LayerStandard" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%IFC Utilities%IFCLayerStandard" Paths="[N] Link &amp; Sync&gt;IFC Utilities" />
+  <ShortcutItem CommandName="GlobalIFC Class" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%IFC Utilities%IFCClass" Paths="[N] Link &amp; Sync&gt;IFC Utilities" />
+  <ShortcutItem CommandName="CreateParameters" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%IFC Utilities%CreateIFCParams" Paths="[N] Link &amp; Sync&gt;IFC Utilities" />
+  <ShortcutItem CommandName="Exit" CommandId="CustomCtrl_%CustomCtrl_%[N] Link &amp; Sync%IFC Utilities%Exit IFC" Paths="[N] Link &amp; Sync&gt;IFC Utilities" />
+  <ShortcutItem CommandName="Fil." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Filter Elements" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Sec." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Section Box" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="3D Zone" CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Create 3D Zone" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Ele." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Relative Elevations" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Coo." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Shared Coordinates" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="QPr." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Quick Print" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Mpv." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%Match Parameter Values" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Ren." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%ACRenumberElements" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Mtn." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%ACMoveToNearest" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="F&amp;R." CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%ACFindAndReplace" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="Sum" CommandId="CustomCtrl_%CustomCtrl_%[N] Modify%Naviate%ACSumParameters" Paths="[N] Modify&gt;Naviate" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Top" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Center" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Bottom" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Left" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Middle" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Right" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Distribute Horizontally" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Align Reference" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="." CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Distribute Vertically" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="Elbow Length:" CommandId="CustomCtrl_%CustomCtrl_%[N] Align Options%Naviate Align Options%Elbow Length" Paths="[N] Align Options&gt;Naviate Align Options" />
+  <ShortcutItem CommandName="Status Parameter" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Projects%cmdSize1" Paths="[N] PfV&gt;Projects" />
+  <ShortcutItem CommandName="Both" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Structural%radioGroup%tglBoth" Paths="[N] PfV&gt;Structural" />
+  <ShortcutItem CommandName="Structural" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Structural%radioGroup%tglStructural" Paths="[N] PfV&gt;Structural" />
+  <ShortcutItem CommandName="Architectural" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Structural%radioGroup%tglNonStructural" Paths="[N] PfV&gt;Structural" />
+  <ShortcutItem CommandName="Parameter" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Group Modes%radioGroup%SM_Manual" Paths="[N] PfV&gt;Group Modes" />
+  <ShortcutItem CommandName="Selection" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Group Modes%radioGroup%SM_Selection" Paths="[N] PfV&gt;Group Modes" />
+  <ShortcutItem CommandName="All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdAll" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Wall" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdWalls" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Floor" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdFloors" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Ceiling" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdCeilings" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Roof" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdRoofs" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Beam" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Building Targets%rbgdBuilding%cmdFraming" Paths="[N] PfV&gt;Building Targets" />
+  <ShortcutItem CommandName="Pipe" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%cmdPipes" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%cmdDucts" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Conduit" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%bfConduits" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="CableTray" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%bfTrays" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Doors" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%bfDoors" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Windows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%rbgdService%bfWindows" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Top / Front" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%cmdSize1" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Side" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%cmdSize2" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Bottom / Back" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provision Targets%cmdSize3" Paths="[N] PfV&gt;Provision Targets" />
+  <ShortcutItem CommandName="Create" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%cmdRunProvisions" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Synchronize" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%cmdSynchronizeProvisions" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Import" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%cmdCopyProvisions" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Schedules" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%CreateProvisionSchedules" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Provisions visibility:ShowProvisions" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%Provisions visibility%ShowPfV" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Provisions visibility:HideProvisions" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] PfV%Provisions%Provisions visibility%HidePfV" Paths="[N] PfV&gt;Provisions" />
+  <ShortcutItem CommandName="Help" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Help%Help" Paths="[N] PfV&gt;Help" />
+  <ShortcutItem CommandName="Exit" CommandId="CustomCtrl_%CustomCtrl_%[N] PfV%Exit%cndExitProvisions" Paths="[N] PfV&gt;Exit" />
   <ShortcutItem CommandName="ShowPane" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Pane%Fab Properties On" Shortcuts="SPAN" Paths="[N] Fabrication&gt;Pane" />
   <ShortcutItem CommandName="HidePane" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Pane%Fab Properties Off" Shortcuts="HPAN" Paths="[N] Fabrication&gt;Pane" />
   <ShortcutItem CommandName="Bloom" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Routing%Bloom" Shortcuts="BB#ZZ" Paths="[N] Fabrication&gt;Fab Routing" />
@@ -179,15 +340,17 @@
   <ShortcutItem CommandName="Reroute Under/Over" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Routing%Reroute Under/Over" Shortcuts="RRO" Paths="[N] Fabrication&gt;Fab Routing" />
   <ShortcutItem CommandName="RotateFitting" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%FAB-Rotate Fitting" Shortcuts="R0" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="RotateFitting 180" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%FAB-Rotate Fitting 180" Shortcuts="R1" Paths="[N] Fabrication&gt;Fab Modify" />
-  <ShortcutItem CommandName="HealPipes" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Heal Pipes" Paths="[N] Fabrication&gt;Fab Modify" />
+  <ShortcutItem CommandName="HealFab" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Heal Fab" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="AutoBreak" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Auto Break" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="ConduitRun Break" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Conduit Run Break" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="ConduitTurn Break" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Conduit Turn Break" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="SetSlope" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Set Slope" Shortcuts="SSL" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="AccessoryAlign" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Accessory Align" Shortcuts="AA" Paths="[N] Fabrication&gt;Fab Modify" />
-  <ShortcutItem CommandName="Disconnect" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Disconnect" Paths="[N] Fabrication&gt;Fab Modify" />
-  <ShortcutItem CommandName="QuickRehost" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Quick Rehost" Paths="[N] Fabrication&gt;Fab Modify" />
+  <ShortcutItem CommandName="QuickReconnect" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Quick Reconnect" Paths="[N] Fabrication&gt;Fab Modify" />
+  <ShortcutItem CommandName="Disconnect:DisconnectAll" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%FabDisconnect%Disconnect All" Paths="[N] Fabrication&gt;Fab Modify" />
+  <ShortcutItem CommandName="Disconnect:Disconnect" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%FabDisconnect%Disconnect" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="Fab Rehost:FabRehost" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Rehost%FabReHost" Paths="[N] Fabrication&gt;Fab Modify" />
+  <ShortcutItem CommandName="Fab Rehost:QuickRehost" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Rehost%Quick Rehost" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="Fab Rehost:CopyRehost" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Rehost%CopyRehost" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="Fab Rehost:Copy RehostPlus" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Modify%Rehost%CopyRehostPlus" Paths="[N] Fabrication&gt;Fab Modify" />
   <ShortcutItem CommandName="MoveConnect Fab" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Connect Align%Fabrication Connect" Shortcuts="FC" Paths="[N] Fabrication&gt;Fab Connect Align" />
@@ -255,6 +418,7 @@
   <ShortcutItem CommandName="ImportExclusions" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Manage%Import Exclusions" Paths="[N] Fabrication&gt;Fab Manage" />
   <ShortcutItem CommandName="ExportExclusions" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Manage%Export Exclusions" Paths="[N] Fabrication&gt;Fab Manage" />
   <ShortcutItem CommandName="About/Licensing" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Manage%About/ Licensing" Paths="[N] Fabrication&gt;Fab Manage" />
+  <ShortcutItem CommandName="SettingsManager" CommandId="CustomCtrl_%CustomCtrl_%[N] Fabrication%Fab Manage%Settings Manager" Paths="[N] Fabrication&gt;Fab Manage" />
   <ShortcutItem CommandName="Bloom" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Bloom%Bloom" Paths="[N] MEP&gt;Bloom" />
   <ShortcutItem CommandName="ElbowUp" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Elbow Up" Paths="[N] MEP&gt;Routing" />
   <ShortcutItem CommandName="ElbowDown" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Elbow Down" Paths="[N] MEP&gt;Routing" />
@@ -264,10 +428,10 @@
   <ShortcutItem CommandName="ElbowDown 45" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Elbow Down 45 Degrees" Paths="[N] MEP&gt;Routing" />
   <ShortcutItem CommandName="RerouteUnder/Over" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Reroute Under/Over" Paths="[N] MEP&gt;Routing" />
   <ShortcutItem CommandName="RerouteAround" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Reroute Around" Paths="[N] MEP&gt;Routing" />
-  <ShortcutItem CommandName="Empty" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Route To" Paths="[N] MEP&gt;Routing" />
-  <ShortcutItem CommandName="Empty" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Kick 90" Paths="[N] MEP&gt;Routing" />
-  <ShortcutItem CommandName="Empty" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Roll into Main" Paths="[N] MEP&gt;Routing" />
-  <ShortcutItem CommandName="Empty" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Auto Routing" Paths="[N] MEP&gt;Routing" />
+  <ShortcutItem CommandName="Route ToMEP" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Route To" Paths="[N] MEP&gt;Routing" />
+  <ShortcutItem CommandName="Kick 90MEP" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Kick 90" Paths="[N] MEP&gt;Routing" />
+  <ShortcutItem CommandName="Roll IntoMain MEP" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Roll into Main" Paths="[N] MEP&gt;Routing" />
+  <ShortcutItem CommandName="Auto RoutingMEP" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Routing%Auto Routing" Paths="[N] MEP&gt;Routing" />
   <ShortcutItem CommandName="Tap" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Connect Align%Connect with Tap" Paths="[N] MEP&gt;Connect Align" />
   <ShortcutItem CommandName="MoveConnect" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Connect Align%Move Connect" Paths="[N] MEP&gt;Connect Align" />
   <ShortcutItem CommandName="MoveC'nct Align" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Connect Align%Move Connect Align" Paths="[N] MEP&gt;Connect Align" />
@@ -277,22 +441,25 @@
   <ShortcutItem CommandName="Align Branch Plus Tools:AlignBranch+Up" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Connect Align%AlignBranchPlus%Align Branch Plus Up" Paths="[N] MEP&gt;Connect Align" />
   <ShortcutItem CommandName="Rotate Fitting:RotateFitting" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Rotate Fitting%Rotate Fitting" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="Rotate Fitting:RotateFitting 180" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Rotate Fitting%Rotate Fitting 180" Paths="[N] MEP&gt;Modify" />
-  <ShortcutItem CommandName="Disconnect" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Disconnect" Paths="[N] MEP&gt;Modify" />
+  <ShortcutItem CommandName="Disconnect:Disconnect" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%MepDisconnect%Disconnect" Paths="[N] MEP&gt;Modify" />
+  <ShortcutItem CommandName="Disconnect:DisconnectAll" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%MepDisconnect%Disconnect All" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="DeleteSystem" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Delete System" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="SetSlope" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Set Slope" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="AccessoryAlign" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Accessory Align" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="AutoBreak" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Auto Break" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="Split" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Split" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="SplitWith Gap" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Split With Gap" Paths="[N] MEP&gt;Modify" />
-  <ShortcutItem CommandName="VerticalCT Trim" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Vertical Cable Tray Trim" Paths="[N] MEP&gt;Modify" />
+  <ShortcutItem CommandName="Vertical Cable Tray:VerticalCT Routing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%VerticalCT%Vertical Cable Tray Routing" Paths="[N] MEP&gt;Modify" />
+  <ShortcutItem CommandName="Vertical Cable Tray:VerticalCT Trim" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Modify%VerticalCT%Vertical Cable Tray Trim" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="FlipMultiple" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Flip Multiple" Paths="[N] MEP&gt;Modify" />
   <ShortcutItem CommandName="SnoopRun" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Modify%Snoop Run" Paths="[N] MEP&gt;Modify" />
-  <ShortcutItem CommandName="tooltip tooltip:Quick BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%QuickBOMCommand" Paths="[N] MEP&gt;MEP Data" />
-  <ShortcutItem CommandName="tooltip tooltip:Custom BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%CustomBOM" Paths="[N] MEP&gt;MEP Data" />
-  <ShortcutItem CommandName="tooltip tooltip:BOM Options" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Selection BOM-Options" Paths="[N] MEP&gt;MEP Data" />
-  <ShortcutItem CommandName="tooltip tooltip:AddTo BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Add To BOM" Paths="[N] MEP&gt;MEP Data" />
-  <ShortcutItem CommandName="tooltip tooltip:RemoveFrom BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Remove From BOM" Paths="[N] MEP&gt;MEP Data" />
-  <ShortcutItem CommandName="tooltip tooltip:ShowAssigned BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Show Assigned To BOM" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:QuickBOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%QuickBOMCommand" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:Custom BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%CustomBOM" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:BOM Options" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Selection BOM-Options" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:AddTo BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Add To BOM" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:RemoveFrom BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Remove From BOM" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="BOM Commands:ShowAssigned BOM" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Selection BOM%Show Assigned To BOM" Paths="[N] MEP&gt;MEP Data" />
+  <ShortcutItem CommandName="AdvancedRenumber" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Advanced Renumber" Paths="[N] MEP&gt;MEP Data" />
   <ShortcutItem CommandName="DataSync" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%Data Sync" Paths="[N] MEP&gt;MEP Data" />
   <ShortcutItem CommandName="DataFlow" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Data%DataFlow" Paths="[N] MEP&gt;MEP Data" />
   <ShortcutItem CommandName="DataTransfer" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%Electrical%Data Transfer" Paths="[N] MEP&gt;Electrical" />
@@ -305,64 +472,191 @@
   <ShortcutItem CommandName="Copy MonitorPlus:Manager" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusManage%CopyMonitorPlusManager" Paths="[N] MEP&gt;Copy Monitor" />
   <ShortcutItem CommandName="Copy MonitorPlus:Color Toggle" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusManage%CopyMonitorPlusColorToggle" Paths="[N] MEP&gt;Copy Monitor" />
   <ShortcutItem CommandName="Copy MonitorPlus:Update Host" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusManage%CopyMonitorPlusUpdateHost" Paths="[N] MEP&gt;Copy Monitor" />
-  <ShortcutItem CommandName="FakeCopy:CM+ CopyCopy" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusCopy%CopyMonitorPlusFakeCopy" Paths="[N] MEP&gt;Copy Monitor" />
+  <ShortcutItem CommandName="Copy Monitor +:Setting CopyCopy" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusCopy%CM Plus" Paths="[N] MEP&gt;Copy Monitor" />
   <ShortcutItem CommandName="Update:CM+ UpdateUpdate" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%[N] MEP%Copy Monitor%CMPlusUpdate%CopyMonitorPlusFakeUpdate" Paths="[N] MEP&gt;Copy Monitor" />
   <ShortcutItem CommandName="About/Licensing" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Support%About / Licensing" Paths="[N] MEP&gt;MEP Support" />
   <ShortcutItem CommandName="Purge Schemasby GUIDs" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Support%PurgeSchemasByGuidCommand" Paths="[N] MEP&gt;MEP Support" />
   <ShortcutItem CommandName="Update TS Schemas" CommandId="CustomCtrl_%CustomCtrl_%[N] MEP%MEP Support%Update Tag Settings Schemas" Paths="[N] MEP&gt;MEP Support" />
-  <ShortcutItem CommandName="Place:Extra Tools&amp; Settings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%Selector%pullDownToolPlaceSelector%Nonica.OpenWebsite.Open" Paths="NonicaTab FREE&gt;Selector" />
-  <ShortcutItem CommandName="Place:Default.(Only NonicaTab PRO)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%Selector%pullDownToolPlaceSelector%AlphaCommand" Paths="NonicaTab FREE&gt;Selector" />
-  <ShortcutItem CommandName="Place:Beta(Only NonicaTab PRO)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%Selector%pullDownToolPlaceSelector%BetaCommand" Paths="NonicaTab FREE&gt;Selector" />
-  <ShortcutItem CommandName="Place:Gamma.(Only NonicaTab PRO)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%Selector%pullDownToolPlaceSelector%GammaCommand" Paths="NonicaTab FREE&gt;Selector" />
-  <ShortcutItem CommandName="Place:Color Elementsby Parameter" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace1%Run1" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace1%DynSel" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace1%PNG" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace1%DetSel1" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place2:Create WallFinish by Room" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace2%Run2" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place2:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace2%DynSel2" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place2:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace2%PNG23" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place2: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace2%DetSel2" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place3:Create FloorFinish by Room" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace3%Run3" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place3:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace3%DynSel3" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place3:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace3%PNG33" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place3: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace3%DetSel3" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place4:SuperAlign" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace4%Run4" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place4:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace4%DynSel4" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place4:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace4%PNG43" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place4: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace4%DetSel4" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place5:Joinin Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace5%Run5" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place5:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace5%DynSel5" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place5:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace5%PNG53" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place5: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace5%DetSel5" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place6:ExtendedTo 3D View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace6%Run6" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place6:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace6%DynSel6" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place6:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace6%PNG63" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place6: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace6%DetSel6" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place7:Rotate Boxto Face" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace7%Run7" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place7:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace7%DynSel7" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place7:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace7%PNG73" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place7: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace7%DetSel7" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place8:Numberer" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace8%Run8" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place8:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace8%DynSel8" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place8:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace8%PNG83" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place8: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace8%DetSel8" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place9:ReNamer" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace9%Run9" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place9:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace9%DynSel9" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place9:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace9%PNG93" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place9: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace9%DetSel9" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place10:Duplicator" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace10%Run10" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place10:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace10%DynSel10" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place10:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace10%PNG103" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place10: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace10%DetSel10" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place11:Color Tabsby Project" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace11%Run11" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place11:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace11%DynSel11" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place11:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace11%PNG113" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place11: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace11%DetSel11" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place12:A.I.Connector" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace12%Run12" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place12:Set up Button/Script" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace12%DynSel12" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place12:Set up Icon" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace12%PNG123" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Place12: Set up Details" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%NonicaTab FREE%NonicaTab FREE. Limited Features%pullDownToolPlace12%DetSel12" Paths="NonicaTab FREE&gt;NonicaTab FREE. Limited Features" />
-  <ShortcutItem CommandName="Create Buttons" CommandId="CustomCtrl_%CustomCtrl_%pyRevit Bundles Creator%Button creation%Button Creator" Paths="pyRevit Bundles Creator&gt;Button creation" />
+  <ShortcutItem CommandName="Websites:Fieldwire" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Websites%fieldwire" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Websites:Procore" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Websites%procore" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Websites:Timesheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Websites%timesheets" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Websites:Sharepoint" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Websites%umi_sharepoint" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Reload" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%reload" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Update" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%update" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Sync" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%sync" Shortcuts="SYNC" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Families:Import Tag Families" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Families%import_tag_families" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Families:Rename Families" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Families%rename_families" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Sheets:Create Duplicate Sheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Sheets%create_like_sheets" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Sheets:Rename Sheet #" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Sheets%rename_sheet_number" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Sheets:Rename Sheets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Sheets%rename_sheets" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Section Limits" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%section_limits" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Align Views Horizontally" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%align_section_views_h" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Align Views Vertically" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%align_section_views_v" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Align Titles Horizontally" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%align_titles_h" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Create Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%create_views_scope" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Create 3D View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%create_3d_view" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Hide Section Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%hide_section_views" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Rename Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%rename_views" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Views:Align Grid Lines" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Views%grid_lines_align" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Parameters:Copy Parameter Value" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Parameters%copy_parameter_value" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Parameters:Find Parameter Value" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Parameters%find_parameter_value" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Parameters:Create Project Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Parameters%parameters" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Schedules:Schedule Ceiling Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Schedules%update_ceiling_schedule" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Schedules:Populate Schedule" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Schedules%updtate_schedules" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Legends:Placeholder" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%Legends%legends_templet" Paths="Sheetmetal&gt;General" />
+  <ShortcutItem CommandName="Other:Check Ref Level" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Other%check_reference_level" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Equipment:Workset Mechanical Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Equipment%check_mech_equipment_workset" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Devices:Check GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Devices%check_grd" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Duct:Straight Duct - Long" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Duct%check_duct_long" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Duct:Straight Duct - Short" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Duct%check_duct_short" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Duct:Check Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Duct%check_duct_offsets" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Duct:Check Taps" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%Duct%check_duct_taps" Paths="Sheetmetal&gt;Checks" />
+  <ShortcutItem CommandName="Manual:Reverse Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_reversal" Shortcuts="TGG" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Vertical Center Align" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%align_v_center" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Horizontal Center Align" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%align_h_center" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:1 BOD" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_1_bod" Shortcuts="TCC" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:1 length" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_1_length" Shortcuts="TVV" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:1 size" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_1_size" Shortcuts="TXX" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 BOD/Length 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_bod_length_0" Shortcuts="TDD" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 BOD/Length 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_bod_length_1" Shortcuts="TEE" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 Length/Size  0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_length_size_0" Shortcuts="TSS" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 Length/Size 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_length_size_1" Shortcuts="TWW" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 Size/BOD 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_size_bod_0" Shortcuts="TAA" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:2 Size/BOD 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_2_size_bod_1" Shortcuts="TQQ" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:3 Length/BOD/Size 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_3_bod_length_size_0" Shortcuts="TFF" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:3 Lenght/BOD/Size 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_3_bod_length_size_1" Shortcuts="TRR" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Tag Sleeves 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_sleeves_0" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Tag Sleeves 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_sleeves_1" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Remove Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_removal" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Manual:Change Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Manual%tag_change" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Copy:Copy Dimensions" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Copy%copy_dimensions" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Copy:Copy MEP Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Copy%copy_tags_duct" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Copy:Copy Room Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Copy%copy_tags_room" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Devices:Tag Louvers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Devices%tag_louvers" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Devices:Tag Fire Dampers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Devices%tag_dampers_fire" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Devices:Tag Dampers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Devices%tag_dampers" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Devices:Tag GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Devices%tag_grds" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Devices:Tag Manbars" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Devices%tag_manbars" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Equipment:Tag Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Equipment%tag_equipment" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Equipment:Tag Equipment Pads" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Equipment%tag_equipment_pad" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Fittings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_fittings" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Elbows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_duct_elbows" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Endcaps" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_duct_endcaps" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_duct_offsets" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Reducers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_duct_reducers" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Joints Full" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_joints_full" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Joints Short" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_joints_short" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Joints Short All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_joints_short_all" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Duct:Tag Pen Sleeves" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%Duct%tag_number_sleeves" Paths="Sheetmetal&gt;Tagging" />
+  <ShortcutItem CommandName="Filter:Find Equipment by BBM Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%Filter%find_equipment" Paths="Sheetmetal&gt;Equipment" />
+  <ShortcutItem CommandName="Select:Create Equipment Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%Select%create_equipment_views" Paths="Sheetmetal&gt;Equipment" />
+  <ShortcutItem CommandName="Select:Create Equipment Views smaller" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%Select%create_equipment_views_small" Paths="Sheetmetal&gt;Equipment" />
+  <ShortcutItem CommandName="Select:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%Select%select_templet" Paths="Sheetmetal&gt;Equipment" />
+  <ShortcutItem CommandName="Selected:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%Selected%selected_templet" Paths="Sheetmetal&gt;Equipment" />
+  <ShortcutItem CommandName="Filter:Select by Fab Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Filter%select_by_fab_duct" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Filter:Isolate by Non-Fab" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Filter%select_by_non_fab_duct" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Accessories" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%accessories" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Elbows Radius" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%elbows_radius" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Elbows Round" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%elbows_round" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Elbows Square" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%elbows_square" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Flex" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%flex" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%offsets" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Sleeve Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%sleeve_duct" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Spiral" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%spiral" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:S&amp;D" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%s_d" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:TDF" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%tdf" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Tee Radius" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%tees_round" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Tee Square" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%tees_square" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Select:Unconnected" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Select%unconnected" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Length Total" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%length_total" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Reverse Offset" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%offset_reverse" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Offset Data All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%offset_set_all" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Offset Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%offset_set_parameters" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%selected_templet" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Selected:Total Weight" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Selected%weight_metal" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Select Run (Same Height)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%all_runs" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Duct Pressure" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%duct_pressure_calculator" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Hanger weight on all runs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%hangers_on_all" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Hangers on Run" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%hangers_on_run" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Hangers on Select" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%hangers_on_select" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Runs:Select Run" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Runs%select_run" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Number Runs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%number_runs" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Number View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%number_view" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Number Project" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%number_project" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Number View Dups" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%number_view_dups" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Number Project Dups" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%number_project_dups" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Tag Item Number All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%tag_number_items" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:View Order Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%view_number_order" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:View Item Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%view_number_item" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Check Fabrication Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%check_number_fabrication_duplicates" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Check Item Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%check_number_item_duplicates" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Select by Fab Note" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%select_by_fab_note" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Set Order Number" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%set_order_number" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Fabrication:Skip Number" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%Fabrication%skip_number" Paths="Sheetmetal&gt;Duct" />
+  <ShortcutItem CommandName="Hide:Hide by Service" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_by_service" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hide GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_grds" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hide Hangers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_hangers" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hide Links" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_links" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hides Number Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_number_tags" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hide Section View Markers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_section_views" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Hide:Hide Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Hide%hide_tags" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate by MEP" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_all" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate Mechanical Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_mech_equipment" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate Straights" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_straights" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate Vertical Straights" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_vertical_straights" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate Elbows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_elbows" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_grds" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Isolate:Isolate by Matchlines" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Isolate%isolate_matchlines" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate EA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_ea" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate OA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_oa" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate RA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_ra" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate ReA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_rea" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate SA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_sa" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate TA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_ta" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate ToA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_toa" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Services:Isolate by Service" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%Services%isolate_by_service" Paths="Sheetmetal&gt;Isolate" />
+  <ShortcutItem CommandName="Pull:Select View References" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Pull%change_matchlines" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Pull:Clean" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Pull%clean" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Pull:Basic Info" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Pull%get_info" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Pull:Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Pull%parameters" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Pull:XYZ" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Pull%xyz" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Set Aspect Ratio" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%aspect_ratio" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Add fab note" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%fab_note_area" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Free Leader" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%free_leader" Shortcuts="FEE" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Number GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%number_grd" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Refresh Label Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%refresh_label" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Refresh Label Data All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%refresh_label_all" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Rooms - Create Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%room_create_label" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Rooms - Update w/ Excel" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%room_excel_update" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Rooms - List w/ Ceilings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%room_tag_list" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Skip Tag" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%skip_tag" Shortcuts="STT" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Push:Set Sleeve Type" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%Push%sleeve_duct" Shortcuts="SVV" Paths="Sheetmetal&gt;Data" />
+  <ShortcutItem CommandName="Testing:clean viewport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%clean_viewport" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Get Scope Box Size" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%get_scope_box_size" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Get Viewport XYZ" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%get_xyz_viewport" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Bullshit" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%just_bullshit" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Move Scope Box" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%move_scope_box_to" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Select Ducts in Scope Box" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%set_guide_lines" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Set XYZ Viewport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%set_xyz_viewport" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%templet" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Testing:sandbox for new tagging" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Testing%testing_revit_tagging_class" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:VAV Clearance" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%clearance_vav" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Create BBM Schedules" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%create_bbm_schedule" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Ginger Rename" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%ginger_rename" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Scope Box Rename" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%rename_scope_box" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Testing Populate Schedule Rooms" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%schedule_rooms" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Set to Sheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%set_to_sheet" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Skip GRD Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%skip_grd_duct" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Hide Fab Tags in Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%tags_hide" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Unhide Fab Tags in Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%tags_unhide" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Tag Item Number All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%tag_number_items" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Random:Update Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Random%update_label" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Board 2.00&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%board_200" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Board 2(1.50&quot;)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%board_2_150" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Liner 0.50&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%liner_050" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Wrap 2.00&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%wrap_200" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Wrap 2.50&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%wrap_250" Paths="Sheetmetal&gt;Testing" />
+  <ShortcutItem CommandName="Goolsby:Wrap 2(2.50&quot;)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%Goolsby%wrap_2_250" Paths="Sheetmetal&gt;Testing" />
   <ShortcutItem CommandName="Search" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Search" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="Spy:Find All Loaded Assemblies" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Spy%Find All Loaded Assemblies" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="Spy:List Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Spy%List Elements" Paths="pyRevit&gt;pyRevit" />
@@ -376,7 +670,7 @@
   <ShortcutItem CommandName="Wiki" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Wiki" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="Blog" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Blog" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="Repo" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Repo" Paths="pyRevit&gt;pyRevit" />
-  <ShortcutItem CommandName="apidocs.co" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%apidocs" Paths="pyRevit&gt;pyRevit" />
+  <ShortcutItem CommandName="apidocs" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%apidocs" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="emojis" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%emojis" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="rpw" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%rpw Docs" Paths="pyRevit&gt;pyRevit" />
   <ShortcutItem CommandName="Icons8" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%pyRevit%Icons8" Paths="pyRevit&gt;pyRevit" />
@@ -386,7 +680,7 @@
   <ShortcutItem CommandName="Tab Coloring" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%Tab Coloring" Paths="pyRevit&gt;Toggles" />
   <ShortcutItem CommandName="Highlight 2D" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%Override 2D" Paths="pyRevit&gt;Toggles" />
   <ShortcutItem CommandName="Minify Revit UI ●" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%MinifyUI" Paths="pyRevit&gt;Toggles" />
-  <ShortcutItem CommandName="Imported" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%Imported" Paths="pyRevit&gt;Toggles" />
+  <ShortcutItem CommandName="Importer" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%Imported" Paths="pyRevit&gt;Toggles" />
   <ShortcutItem CommandName="Section Box ●" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%SectionBox" Paths="pyRevit&gt;Toggles" />
   <ShortcutItem CommandName="Sync Views" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%Sync Views" Paths="pyRevit&gt;Toggles" />
   <ShortcutItem CommandName="Synchronize ●" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Toggles%sync" Paths="pyRevit&gt;Toggles" />
@@ -394,14 +688,12 @@
   <ShortcutItem CommandName="Pick:Pick ●" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Pick%Pick" Shortcuts="QQ" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Pick:Pick Detail Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Pick%Pick Detail Elements" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Pick:Pick Model Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Pick%Pick Model Elements" Paths="pyRevit&gt;Selection" />
-  <ShortcutItem CommandName="Pick:Pick Elements by Parameter Value" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Pick%Pick Elements by Parametervalue" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="SetWorkset ●" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Selection%Set Workset" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Isolate ●" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Selection%Isolate" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Filter:Discard Grouped Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Discard Grouped Elements" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Filter:Discard Pinned Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Discard Pinned Elements" Paths="pyRevit&gt;Selection" />
-  <ShortcutItem CommandName="Filter:Keep Editable" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Keep Editable" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Filter:Elements Hosted On Linked Model" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Keep Elements Hosted On Linked Model" Paths="pyRevit&gt;Selection" />
-  <ShortcutItem CommandName="Filter:Keep Mirrored ●" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Keep Mirrored" Paths="pyRevit&gt;Selection" />
+  <ShortcutItem CommandName="Filter:Keep Mirrored" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Keep Mirrored" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Filter:Keep Painted Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Filter%Keep Painted Elements" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Select:Add Tagged Elements" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Select%Add Tagged Elements" Paths="pyRevit&gt;Selection" />
   <ShortcutItem CommandName="Select:Find And Select Entities Without Dimensions" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Selection%Select%Find And Select Entities Without Dimensions" Paths="pyRevit&gt;Selection" />
@@ -441,7 +733,6 @@
   <ShortcutItem CommandName="Analyse:Get Parking Count In Current View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Analyse%Get Parking Count In Current View" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Inspect:Triangles count per family type" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Count Faces" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Inspect:Count lines of selected style" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Count Lines Of Selected Style" Paths="pyRevit&gt;Analysis" />
-  <ShortcutItem CommandName="Inspect:Custom Properties ●" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Custom Properties" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Inspect:Find all attached constraints" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Find All Attached Constraints" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Inspect:Find identical room numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Find Identical Room Numbers" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Inspect:Find monitored Revit links" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%Find Monitored Revit Link" Paths="pyRevit&gt;Analysis" />
@@ -455,10 +746,8 @@
   <ShortcutItem CommandName="Inspect:Lists Family Sizes" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Analysis%Inspect%ListFamilySizeCreator" Paths="pyRevit&gt;Analysis" />
   <ShortcutItem CommandName="Match:Match ●" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match" Paths="pyRevit&gt;Modify" />
   <ShortcutItem CommandName="Match:Match paint" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match Paint" Paths="pyRevit&gt;Modify" />
-  <ShortcutItem CommandName="Match:Match properties ●" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match Properties" Paths="pyRevit&gt;Modify" />
+  <ShortcutItem CommandName="Match:Match properties" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match Properties" Paths="pyRevit&gt;Modify" />
   <ShortcutItem CommandName="Match:Compare properties" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Compare Properties" Paths="pyRevit&gt;Modify" />
-  <ShortcutItem CommandName="Match:Match History Clipboard" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match History Clipboard" Paths="pyRevit&gt;Modify" />
-  <ShortcutItem CommandName="Match:Match Value Picker" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Match%Match Value Picker" Paths="pyRevit&gt;Modify" />
   <ShortcutItem CommandName="Patterns:MakePattern" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Patterns%Make Pattern" Paths="pyRevit&gt;Modify" />
   <ShortcutItem CommandName="Patterns:Batch import PAT files" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Modify%Patterns%Batch Import PAT Files" Paths="pyRevit&gt;Modify" />
   <ShortcutItem CommandName="Overkill" CommandId="CustomCtrl_%CustomCtrl_%pyRevit%Modify%Overkill" Paths="pyRevit&gt;Modify" />
@@ -567,7 +856,6 @@
   <ShortcutItem CommandName="Family:Family QuickCheck" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Family QuickCheck" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Family:Convert ACIS Solid to FreeForm" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Convert ACIS Solid to FreeForm" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Family:Convert Family To Face Host Based" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Convert Family To Face Host Based" Paths="pyRevit&gt;Project" />
-  <ShortcutItem CommandName="Family:Convert Imported 3D CAD" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Convert Imported 3D CAD" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Family:Export Family Config" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Export Family Config" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Family:Import Family Config" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Import Family Config" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Family:Wipe Family Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Family%Wipe Family Parameters" Paths="pyRevit&gt;Project" />
@@ -592,196 +880,6 @@
   <ShortcutItem CommandName="Wipe:Remove Empty Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Wipe%Wipe Empty Tags" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Wipe:Wipe ArrowHeads type" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Wipe%Wipe Arrowheads Types" Paths="pyRevit&gt;Project" />
   <ShortcutItem CommandName="Wipe:Wipe All Project Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%pyRevit%Project%Wipe%Wipe All Project Parameters" Paths="pyRevit&gt;Project" />
-  <ShortcutItem CommandName="Websites:Fieldwire" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%websites%fieldwire" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Websites:Procore" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%websites%procore" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Websites:Timesheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%websites%timesheets" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Websites:Sharepoint" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%websites%umi_sharepoint" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Reload" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%reload" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Update" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%update" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Sync" CommandId="CustomCtrl_%CustomCtrl_%Sheetmetal%General%sync" Shortcuts="SYNC" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Families:Import Tag Families" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%families%import_tag_families" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Families:Rename Families" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%families%rename_families" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Sheets:Create Duplicate Sheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%sheets%create_like_sheets" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Sheets:Rename Sheet #" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%sheets%rename_sheet_number" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Sheets:Rename Sheets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%sheets%rename_sheets" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Section Limits" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%section_limits" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Align Views Horizontally" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%align_section_views_h" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Align Views Vertically" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%align_section_views_v" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Align Titles Horizontally" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%align_titles_h" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Create Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%create_views_scope" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Create 3D View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%create_3d_view" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Hide Section Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%hide_section_views" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Rename Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%rename_views" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Views:Align Grid Lines" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%views%grid_lines_align" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Parameters:Copy Parameter Value" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%parameters%copy_parameter_value" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Parameters:Find Parameter Value" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%parameters%find_parameter_value" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Parameters:Create Project Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%parameters%parameters" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Schedules:Schedule Ceiling Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%schedules%update_ceiling_schedule" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Schedules:Populate Schedule" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%schedules%updtate_schedules" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Legends:Placeholder" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%General%legends%legends_templet" Paths="Sheetmetal&gt;General" />
-  <ShortcutItem CommandName="Other:Check Ref Level" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_other%check_reference_level" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Equipment:Workset Mechanical Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_equipment%check_mech_equipment_workset" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Devices:Check GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_devices%check_grd" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Duct:Straight Duct - Long" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_duct%check_duct_long" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Duct:Straight Duct - Short" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_duct%check_duct_short" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Duct:Check Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_duct%check_duct_offsets" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Duct:Check Taps" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Checks%check_duct%check_duct_taps" Paths="Sheetmetal&gt;Checks" />
-  <ShortcutItem CommandName="Manual:Reverse Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_reversal" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Vertical Center Align" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%align_v_center" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Horizontal Center Align" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%align_h_center" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:1 BOD" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_1_bod" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:1 length" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_1_length" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:1 size" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_1_size" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 BOD/Length 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_bod_length_0" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 BOD/Length 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_bod_length_1" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 Length/Size  0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_length_size_0" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 Length/Size 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_length_size_1" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 Size/BOD 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_size_bod_0" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:2 Size/BOD 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_2_size_bod_1" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:3 Length/BOD/Size 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_3_bod_length_size_0" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:3 Lenght/BOD/Size 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_3_bod_length_size_1" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Tag Sleeves 0" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_sleeves_0" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Tag Sleeves 1" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_sleeves_1" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Remove Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_removal" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Manual:Change Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_manuals%tag_change" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Copy:Copy Dimensions" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_copy%copy_dimensions" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Copy:Copy MEP Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_copy%copy_tags_duct" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Copy:Copy Room Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_copy%copy_tags_room" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Devices:Tag Louvers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_devices%tag_louvers" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Devices:Tag Fire Dampers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_devices%tag_dampers_fire" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Devices:Tag Dampers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_devices%tag_dampers" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Devices:Tag GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_devices%tag_grds" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Devices:Tag Manbars" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_devices%tag_manbars" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Equipment:Tag Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_equipment%tag_equipment" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Equipment:Tag Equipment Pads" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_equipment%tag_equipment_pad" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Fittings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_fittings" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Elbows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_duct_elbows" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Endcaps" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_duct_endcaps" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_duct_offsets" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Reducers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_duct_reducers" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Joints Full" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_joints_full" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Joints Short" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_joints_short" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Joints Short All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_joints_short_all" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Duct:Tag Pen Sleeves" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Tagging%tag_duct%tag_number_sleeves" Paths="Sheetmetal&gt;Tagging" />
-  <ShortcutItem CommandName="Filter:Find Equipment by BBM Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%equipment_filter%find_equipment" Paths="Sheetmetal&gt;Equipment" />
-  <ShortcutItem CommandName="Select:Create Equipment Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%equipment_select%create_equipment_views" Paths="Sheetmetal&gt;Equipment" />
-  <ShortcutItem CommandName="Select:Create Equipment Views smaller" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%equipment_select%create_equipment_views_small" Paths="Sheetmetal&gt;Equipment" />
-  <ShortcutItem CommandName="Select:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%equipment_select%select_templet" Paths="Sheetmetal&gt;Equipment" />
-  <ShortcutItem CommandName="Selected:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Equipment%equipment_selected%selected_templet" Paths="Sheetmetal&gt;Equipment" />
-  <ShortcutItem CommandName="Filter:Select by Fab Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_filter%select_by_fab_duct" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Filter:Isolate by Non-Fab" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_filter%select_by_non_fab_duct" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Accessories" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%accessories" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Elbows Radius" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%elbows_radius" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Elbows Round" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%elbows_round" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Elbows Square" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%elbows_square" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Flex" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%flex" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Offsets" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%offsets" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Sleeve Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%sleeve_duct" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Spiral" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%spiral" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:S&amp;D" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%s_d" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:TDF" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%tdf" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Tee Radius" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%tees_round" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Tee Square" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%tees_square" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Select:Unconnected" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_select%unconnected" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Length Total" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%length_total" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Reverse Offset" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%offset_reverse" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Offset Data All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%offset_set_all" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Offset Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%offset_set_parameters" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%selected_templet" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Selected:Total Weight" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_selected%weight_metal" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Select Run (Same Height)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%all_runs" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Duct Pressure" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%duct_pressure_calculator" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Hanger weight on all runs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%hangers_on_all" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Hangers on Run" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%hangers_on_run" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Hangers on Select" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%hangers_on_select" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Runs:Select Run" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_runs%select_run" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Number Runs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%number_runs" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Number View" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%number_view" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Number Project" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%number_project" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Number View Dups" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%number_view_dups" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Number Project Dups" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%number_project_dups" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Tag Item Number All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%tag_number_items" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:View Order Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%view_number_order" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:View Item Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%view_number_item" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Check Fabrication Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%check_number_fabrication_duplicates" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Check Item Numbers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%check_number_item_duplicates" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Select by Fab Note" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%select_by_fab_note" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Set Order Number" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%set_order_number" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Fabrication:Skip Number" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Duct%duct_fabrication%skip_number" Paths="Sheetmetal&gt;Duct" />
-  <ShortcutItem CommandName="Hide:Hide by Service" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_by_service" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hide GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_grds" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hide Hangers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_hangers" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hide Links" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_links" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hides Number Tags" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_number_tags" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hide Section View Markers" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_section_views" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Hide:Hide Annotations" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%hide%hide_tags" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate by MEP" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_all" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate Mechanical Equipment" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_mech_equipment" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate Straights" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_straights" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate Vertical Straights" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_vertical_straights" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate Elbows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_elbows" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_grds" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate by Matchlines" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_matchlines" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Select by Fab Notes" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_by_fab_note" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate by Item Number" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_by_item_number" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate by Offset" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_by_offset" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate by Selection" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_by_selection" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Isolate:Isolate Elbows" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%isolate%isolate_endcaps" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate EA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_ea" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate OA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_oa" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate RA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_ra" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate ReA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_rea" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate SA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_sa" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate TA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_ta" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate ToA" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_toa" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Services:Isolate by Service" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Isolate%service%isolate_by_service" Paths="Sheetmetal&gt;Isolate" />
-  <ShortcutItem CommandName="Pull:Select View References" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_pull%change_matchlines" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Pull:Clean" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_pull%clean" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Pull:Basic Info" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_pull%get_info" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Pull:Parameters" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_pull%parameters" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Pull:XYZ" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_pull%xyz" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Set Aspect Ratio" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%aspect_ratio" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Add fab note" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%fab_note_area" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Free Leader" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%free_leader" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Number GRDs" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%number_grd" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Refresh Label Data" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%refresh_label" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Refresh Label Data All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%refresh_label_all" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Rooms - Create Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%room_create_label" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Rooms - Update w/ Excel" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%room_excel_update" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Rooms - List w/ Ceilings" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%room_tag_list" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Skip Tag" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%skip_tag" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Push:Set Sleeve Type" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Data%data_push%sleeve_duct" Paths="Sheetmetal&gt;Data" />
-  <ShortcutItem CommandName="Testing:Move Scope Box" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%create_scope_box" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Get Scope Box Size" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%get_scope_box_size" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Bullshit" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%just_bullshit" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Move Grids" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%move_grids" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:moves viewport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%move_viewport" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Select Ducts in Box" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%set_guide_lines" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Set View Location" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%set_view_location" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%templet" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:0123456789" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%testing_revit_tagging_class" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:1 BODdddddddd" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%tiredkdkdkdkdkd" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Testing:clean viewport" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%testing%viewport_clean" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:VAV Clearance" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%clearance_vav" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Create BBM Schedules" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%create_bbm_schedule" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Ginger Rename" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%ginger_rename" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Scope Box Rename" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%rename_scope_box" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Testing Populate Schedule Rooms" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%schedule_rooms" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Set to Sheet" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%set_to_sheet" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Skip GRD Duct" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%skip_grd_duct" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Hide Fab Tags in Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%tags_hide" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Unhide Fab Tags in Views" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%tags_unhide" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Tag Item Number All" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%tag_number_items" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Random:Update Label" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%random%update_label" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Board 2.00&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%board_200" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Board 2(1.50&quot;)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%board_2_150" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Liner 0.50&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%liner_050" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Wrap 2.00&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%wrap_200" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Wrap 2.50&quot;" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%wrap_250" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Goolsby:Wrap 2(2.50&quot;)" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Testing%goolsby%wrap_2_250" Paths="Sheetmetal&gt;Testing" />
-  <ShortcutItem CommandName="Filter:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Devices%devices_filter%filter_templet" Paths="Sheetmetal&gt;Devices" />
-  <ShortcutItem CommandName="Select:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Devices%devices_select%select_templet" Paths="Sheetmetal&gt;Devices" />
-  <ShortcutItem CommandName="Selected:Testing" CommandId="CustomCtrl_%CustomCtrl_%CustomCtrl_%Sheetmetal%Devices%devices_selected%selected_templet" Paths="Sheetmetal&gt;Devices" />
   <ShortcutItem CommandName="Paste; Paste from Clipboard" CommandId="ID_EDIT_PASTE" Paths="Modify&gt;Clipboard" />
   <ShortcutItem CommandName="Paste:Aligned to Selected Levels" CommandId="ID_EDIT_PASTE_ALIGNED_LEVEL_BY_NAME" Paths="Modify&gt;Clipboard" />
   <ShortcutItem CommandName="Paste:Aligned to Selected Views" CommandId="ID_EDIT_PASTE_ALIGNED_VIEWS_BY_NAME" Paths="Modify&gt;Clipboard" />
@@ -895,7 +993,7 @@
   <ShortcutItem CommandName="Steel Connection Automation" CommandId="ID_STEEL_PLAYLIST_DYNAMO" Paths="Structure&gt;Connection; Steel&gt;Connection" />
   <ShortcutItem CommandName="Show warnings in views" CommandId="ID_TOGGLE_STRUCTCONNECTIONS_SHOW_WARNINGS" Paths="Structure&gt;Connection; Steel&gt;Connection" />
   <ShortcutItem CommandName="Structural Foundation: Isolated" CommandId="ID_OBJECTS_ISOLATED_FOOTING" Paths="Structure&gt;Foundation" />
-  <ShortcutItem CommandName="Structural Foundation: Wall" CommandId="ID_OBJECTS_CONTINUOUS_FOOTING" Shortcuts="FWWA" Paths="Structure&gt;Foundation" />
+  <ShortcutItem CommandName="Structural Foundation: Wall" CommandId="ID_OBJECTS_CONTINUOUS_FOOTING" Shortcuts="FT" Paths="Structure&gt;Foundation" />
   <ShortcutItem CommandName="Slab; Structural Foundation: Slab" CommandId="ID_OBJECTS_FOOTING_SLAB" Paths="Structure&gt;Foundation" />
   <ShortcutItem CommandName="Structural Rebar" CommandId="ID_REBAR_PLACE" Paths="Structure&gt;Reinforcement; Contextual Tabs&gt;Reinforcement" />
   <ShortcutItem CommandName="Structural Area Reinforcement" CommandId="ID_REBAR_SYSTEM_SKETCH" Paths="Structure&gt;Reinforcement" />
@@ -939,7 +1037,7 @@
   <ShortcutItem CommandName="Duct Fitting" CommandId="ID_RBS_MECHANICAL_FITTING" Shortcuts="DF" Paths="Systems&gt;HVAC" />
   <ShortcutItem CommandName="Duct Accessory" CommandId="ID_RBS_MECHANICAL_ACCESSORY" Shortcuts="DA" Paths="Systems&gt;HVAC" />
   <ShortcutItem CommandName="Convert to Flex Duct" CommandId="ID_RBS_MECHANICAL_CONVERTTOFLEX" Shortcuts="CV" Paths="Systems&gt;HVAC" />
-  <ShortcutItem CommandName="Flex Duct" CommandId="ID_RBS_MECHANICAL_FLEX" Shortcuts="FD" Paths="Systems&gt;HVAC" />
+  <ShortcutItem CommandName="Flex Duct" CommandId="ID_RBS_MECHANICAL_FLEX" Shortcuts="FD#FDD" Paths="Systems&gt;HVAC" />
   <ShortcutItem CommandName="Air Terminal" CommandId="ID_RBS_MECHANICAL_DIFFUSER" Shortcuts="AT" Paths="Systems&gt;HVAC" />
   <ShortcutItem CommandName="Multi-Point Routing" CommandId="ID_FABRICATION_PART_START_MPR" Shortcuts="MR" Paths="Systems&gt;Fabrication" />
   <ShortcutItem CommandName="MEP Fabrication Ductwork Stiffener" CommandId="ID_RBS_FABRICATION_DUCTWORK_STIFFENER" Paths="Systems&gt;MEP Detailing" />
@@ -1644,8 +1742,8 @@
   <ShortcutItem CommandName="One Segment" CommandId="ID_TEXT_LEADER_ONESEG" Paths="Contextual Tabs&gt;Leader" />
   <ShortcutItem CommandName="Two Segments" CommandId="ID_TEXT_LEADER_TWOSEG" Paths="Contextual Tabs&gt;Leader" />
   <ShortcutItem CommandName="Curved" CommandId="ID_TEXT_LEADER_ARC" Paths="Contextual Tabs&gt;Leader" />
-  <ShortcutItem CommandName="Edit Group" CommandId="ID_EDITGROUP_GROUP_EDIT" Shortcuts="EGR" Paths="Contextual Tabs&gt;Group" />
-  <ShortcutItem CommandName="Ungroup" CommandId="ID_EDITGROUP_UNGROUP" Shortcuts="RGR" Paths="Contextual Tabs&gt;Group" />
+  <ShortcutItem CommandName="Edit Group" CommandId="ID_EDITGROUP_GROUP_EDIT" Shortcuts="EG" Paths="Contextual Tabs&gt;Group" />
+  <ShortcutItem CommandName="Ungroup" CommandId="ID_EDITGROUP_UNGROUP" Shortcuts="UG" Paths="Contextual Tabs&gt;Group" />
   <ShortcutItem CommandName="Link" CommandId="ID_REPLACE_GROUP_WITH_LINK" Shortcuts="LG" Paths="Contextual Tabs&gt;Group" />
   <ShortcutItem CommandName="Attached Detail Groups" CommandId="Dialog_ElementGroup_EditGroupNew:Control_ElementGroup_EditGroupAttachDetail" Paths="Contextual Tabs&gt;Group" />
   <ShortcutItem CommandName="Detach from Model Group" CommandId="Dialog_ElementGroup_EditGroupNew:Control_ElementGroup_EditGroupDetachDetail" Paths="Contextual Tabs&gt;Group" />
@@ -2069,6 +2167,7 @@
   <ShortcutItem CommandName="DWF/DWFx" CommandId="ID_EXPORT_DWF" Paths="Application Menu&gt; Export" />
   <ShortcutItem CommandName="FBX" CommandId="ID_EXPORT_FBX" Paths="Application Menu&gt; Export" />
   <ShortcutItem CommandName="Family Types" CommandId="ID_EXPORT_FAM_TYPES" Paths="Application Menu&gt; Export" />
+  <ShortcutItem CommandName="NWC" CommandId="ID_EXPORT_NAVISWORKS" Paths="Application Menu&gt; Export" />
   <ShortcutItem CommandName="gbXML" CommandId="ID_EXPORT_GBXML" Paths="Application Menu&gt; Export" />
   <ShortcutItem CommandName="ODBC Database" CommandId="ID_FILE_EXPORT_ODBC" Paths="Application Menu&gt; Export" />
   <ShortcutItem CommandName="Walkthrough" CommandId="ID_RM_ANIMATION" Paths="Application Menu&gt; Export &gt;Images and Animations" />
@@ -2149,7 +2248,7 @@
   <ShortcutItem CommandName="Increase/Decrease Focal Length" CommandId="ID_SET_FOCAL_LENGTH" Paths="Steering Wheel" />
   <ShortcutItem CommandName="Create Rectangular Bolt Pattern" CommandId="ID_EXT_ENTITY_BOLT_RECT" />
   <ShortcutItem CommandName="Zoom Out(2x)" CommandId="ID_ZOOM_OUT_X2" Shortcuts="ZO#ZV" Paths="Navigation Bar" />
-  <ShortcutItem CommandName="Isolate Category" CommandId="ID_TEMPHIDE_ISOLATECAT" Shortcuts="ESC" Paths="View Control Bar" />
+  <ShortcutItem CommandName="Isolate Category" CommandId="ID_TEMPHIDE_ISOLATECAT" Shortcuts="IC" Paths="View Control Bar" />
   <ShortcutItem CommandName="Structural Wall:Partial Ellipse" CommandId="ID_WALL_STRUCT_PARTIAL_ELLIPSE" Paths="Contextual Tabs&gt;Draw" />
   <ShortcutItem CommandName="New File Default Template 5" CommandId="ID_FILE_NEW_WITH_TEMPLATE5" />
   <ShortcutItem CommandName="Create Contour - Fillet Arc" CommandId="ID_EXT_ENTITY_CONTOUR_ARC_FILLET" />
@@ -2189,7 +2288,7 @@
   <ShortcutItem CommandName="Set Front to Current View" CommandId="ID_SET_FRONT_TO_CURRENT_VIEW" Paths="View Cube" />
   <ShortcutItem CommandName="New File Default Template 4" CommandId="ID_FILE_NEW_WITH_TEMPLATE4" />
   <ShortcutItem CommandName="Create Steel Plate - Rectangle" CommandId="ID_EXT_ENTITY_PLATE_RECT" />
-  <ShortcutItem CommandName="Isolate Element" CommandId="ID_TEMPHIDE_ISOLATE" Shortcuts="ESE" Paths="View Control Bar" />
+  <ShortcutItem CommandName="Isolate Element" CommandId="ID_TEMPHIDE_ISOLATE" Shortcuts="HI" Paths="View Control Bar" />
   <ShortcutItem CommandName="Endpoints" CommandId="ID_SNAP_OVERRIDE_END" Shortcuts="SE" Paths="Snaps" />
   <ShortcutItem CommandName="Hide Element" CommandId="ID_TEMPHIDE_HIDE" Shortcuts="GEE" Paths="View Control Bar" />
   <ShortcutItem CommandName="Select All Rebar in Host" CommandId="ID_SELECT_IN_HOST_ALL_REBAR" Paths="Context Menu" />

@@ -77,11 +77,13 @@ class Fittings:
         'elbow 90 degree',
         'tee',
         'elbow 90 sr - stamped',
+        "90° elbow",
     }
 
     square_elbow_families = {
         'elbow',
         'elbow 90 degree',
+        '90° elbow',
     }
 
     family_to_angle_skip = {
@@ -97,6 +99,7 @@ class Fittings:
             'elbow 90 degree',
             'gored elbow',
             'radius elbow',
+            '90° elbow',
         ),
         'reducers': (
             'reducer',
@@ -404,6 +407,7 @@ class Fittings:
             "drop cheek":                     s._tag_cfg(s.SLOT_SIZE),
             "elbow":                          s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
             "elbow 90 degree":                s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
+            "90° elbow":                      s._tag_cfg(s.SLOT_EXT_BOT, s.SLOT_EXT_TOP, s.SLOT_DEGREE),
             "end cap":                        s._tag_cfg(s.SLOT_ENDCAP_SD),
             "fire damper - type b":           s._tag_cfg(s.SLOT_DAMPER_FIRE),
             "gored elbow":                    s._tag_cfg(s.SLOT_DEGREE),
