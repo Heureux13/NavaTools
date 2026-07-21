@@ -24,7 +24,7 @@ from importlib import import_module
 
 # Button info
 # ======================================================================
-__title__ = 'Weight Per Foot'
+__title__ = 'Weight Per Foot Dry'
 __doc__ = '''
 Collects Fabrication Ductwork and Fabrication Pipework,
 calculates Weight / Length (lbs/ft),
