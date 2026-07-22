@@ -198,6 +198,34 @@ DAMPER_FAMILIES = [
     DEV_ACCESS_DOOR
 ]
 
+CANVAS_FAMILIES = [
+    SQR_CANVAS,
+    RND_CANVAS,
+]
+
+
+OFFSET_FAMILIES = [
+    SQR_OFFSET,
+    SQR_OGEE,
+    SQR_TO_RND,
+    SQR_TRANSITION,
+    RND_OFFSET,
+    RND_REDUCER,
+    OVL_REDUCER,
+    OVL_TO_ROUND,
+]
+
+ACCESS_DOOR_FAMILIES = [
+    DEV_ACCESS_DOOR,
+    DEV_ACCESS_DOOR_RND,
+]
+
+ENDCAP_FAMILIES = [
+    SQR_ENDCAP_SND,
+    SQR_ENDCAP_TDF,
+    RND_ENDCAP,
+    OVL_ENDCAP,
+]
 FITTING_FAMILIES = [
     # Square
     SQR_ELBOW_90,
@@ -256,7 +284,17 @@ HANGER_FAMILIES = [
     HNG_RND_STRUT,
 ]
 
-ACCESS_DOOR_FAMILIES = [
-    DEV_ACCESS_DOOR,
-    DEV_ACCESS_DOOR_RND,
+TDF_CONNECTOR_VALUES = [
+    'TDF',
+    'TDC',
+]
+
+SND_CONNECTORS = [
+    'snd',
+    'SNDC',
+    'S&D',
+    'slip and drive',
+    'slip n drive',
+    'slip drive',
+    'slip/drive'
 ]

@@ -106,6 +106,7 @@ PYT_SLEEVE_VALUE                                    = '_UMI_PYT_SleeveValue'
 PYT_WEIGHT_PER_FOOT                                 = '_UMI_PYT_WeightPerFoot'
 PYT_WEIGHT_RUN                                      = '_UMI_PYT_WeightRun'
 PYT_WEIGHT_SUPPORT                                  = '_UMI_PYT_WeightSupport'
+PYT_WEIGHT_SECTION                                  = '_UMI_PYT_WeightSection'
 # fmt: on
 # autopep8: on
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """=========================================================================
-Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+Copyright (c) 2026 Jose Francisco Nava Perez. All rights reserved.
 
 This code and associated documentation files may not be copied, modified,
 distributed, or used in any form without the prior written permission of
@@ -8,6 +8,8 @@ the copyright holder.
 ========================================================================="""
 from config.tag_config import (
     DUCT_FAMILY_TAG_SLOTS,
+    PYT_SKIP_TAG,
+    PYT_OFFSET_VALUE,
     SLOT_EXT_TOP,
     SLOT_EXT_BOT,
     SLOT_EXT_LEFT,
@@ -23,7 +25,7 @@ from config.tag_config import (
     NDBS_CONNECTOR2_END_CONDITION,
 )
 from config.duct_families import *
-from revit.revit_element import RevitElement
+from revit.revit_element import RevitElement, script
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
     IndependentTag,
@@ -38,11 +40,14 @@ skip_values = {"skip"}
 
 elbow_extensions_values = {
     # EXTENSION: (TDF value, S&D value)
-    NDBS_D_TOP_EXTENSION: (6, 6),
-    NDBS_D_LEFT_EXTENSION: (6, 6),
-    NDBS_D_RIGHT_EXTENSION: (6, 6),
-    NDBS_D_BOTTOM_EXTENSION: (6, 6),
+    NDBS_D_TOP_EXTENSION:       (6, 6),
+    NDBS_D_LEFT_EXTENSION:      (6, 6),
+    NDBS_D_RIGHT_EXTENSION:     (6, 6),
+    NDBS_D_BOTTOM_EXTENSION:    (6, 6),
 }
+
+tdf_extension_value = 6
+snd_extension_value = 6
 
 angle_values = {
     RVT_ANGLE: (90, 45),
@@ -50,6 +55,18 @@ angle_values = {
 
 
 class RevitFittings:
+
+    DUCT_PARAMETERS = {
+        "ext_bottom":   NDBS_D_BOTTOM_EXTENSION,
+        "ext_top":      NDBS_D_TOP_EXTENSION,
+        "ext_right":    NDBS_D_RIGHT_EXTENSION,
+        "ext_left":     NDBS_D_LEFT_EXTENSION,
+        "angle":        RVT_ANGLE,
+        "conn_0":       NDBS_CONNECTOR0_END_CONDITION,
+        "conn_1":       NDBS_CONNECTOR1_END_CONDITION,
+        "conn_2":       NDBS_CONNECTOR2_END_CONDITION,
+        "offset":       PYT_OFFSET_VALUE,
+    }
 
     def __init__(self,
                  doc,
@@ -70,25 +87,100 @@ class RevitFittings:
         )
         self.duct_map = self.create_duct_map()
 
+        family_map = self.create_family_map()
+
         self.straights = {}
+        for fam in STRAIGHT_FAMILIES:
+            self.straights.update(family_map.get(fam, {}))
+
         self.elbows = {}
-        self.reducers = {}
-        self.ogees = {}
-        self.square_rounds = {}
+        self.elbows_other = {}
+        self.elbows_90 = {}
+        self.elbows_45 = {}
+        self.elbows_no_match = {}
+        self.elbows_tdf = {}
+        self.elbows_snd = {}
+        self.elbows_mix_con = {}
+        self.elbows_detag = {}
+
+                for fam in ELBOW_FAMILIES:
+            self.elbows.update(family_map.get(fam, {}))
+
+        # Create dicts for elbows 45, 90, and anything else
+        for element_id, data in self.elbows.items():
+            angle = data.get("angle")
+
+            try:
+                angle = float(angle)
+            except (TypeError, ValueError):
+                self.elbows_no_match[element_id] = data
+                continue
+
+            if abs(angle - 90) < 0.5:
+                self.elbows_90[element_id] = data
+            elif abs(angle - 45) < 0.5:
+                self.elbows_45[element_id] = data
+            else:
+                self.elbows_other[element_id] = data
+
+        # Create dicts for elbows who's connectors are not 6"
+        for element_id, data in self.elbows.items():
+            conn_0 = self._clean(data.get("conn_0"))
+            conn_1 = self._clean(data.get("conn_1"))
+
+            if conn_0 == conn_1:
+                if conn_0 in TDF_CONNECTOR_VALUES:
+                    if conn_0 == tdf_extension_value:
+                        self.elbows_tdf[element_id] = data
+                if conn_0 in SND_CONNECTORS:
+                    if conn_0 == snd_extension_value:
+                        self.elbows_snd[element_id] = data
+
+            else:
+                self.elbows_mix_con[element_id] = data
+
+        for element_id, data, in self.elbows_tdf.items():
+            bottom_extension = data.get("bottom_extension")
+            top_extension = data.get("top_extension")
+
+            try:
+                bottom_extension = float(bottom_extension)
+                top_extension = float(top_extension)
+            except (TypeError, ValueError):
+                self.elbows_no_match[element_id] = data
+
+                if bottom_extension == tdf_extension_value:
+                    self.elbows_detag[element_id] = data
+                else:
+                    self.elbows_tag[element_id] = data
+
+
+
+
+
         self.taps = {}
+        for fam in TAP_FAMILIES:
+            self.taps.update(family_map.get(fam, {}))
+
         self.offsets = {}
-        self.transitions = {}
+        for fam in OFFSET_FAMILIES:
+            self.offsets.update(family_map.get(fam, {}))
+
         self.endcaps = {}
-        self.dampers_volueme = {}
+        for fam in ENDCAP_FAMILIES:
+            self.endcaps.update(family_map.get(fam, {}))
+
         self.canvas = {}
+        for fam in CANVAS_FAMILIES:
+            self.canvas.update(family_map.get(fam, {}))
+
         self.access_panel = {}
-        self.man_bars = {}
+        for fam in ACCESS_DOOR_FAMILIES:
+            self.access_panel.update(family_map.get(fam, {}))
 
-        for element_id, data in self.duct_map.items():
-            family = data['family']
-
-            if family == "elbows":
-                self.elbows[element_id] = data
+        self.dampers = {}
+        for fam in DAMPER_FAMILIES:
+            self.dampers.update(family_map.get(fam, {}))
 
 
     @staticmethod
@@ -132,6 +224,12 @@ class RevitFittings:
             return None
         return self._clean(value) in {self._clean(v) for v in skip_values}
 
+    def angle_matches(self, value, target, tol=0.5):
+        try:
+            return abs(float(value) - target) <= tol
+        except (TypeError, ValueError):
+            return False
+
 
     def check_parameter(self,
                         fab_element,):
@@ -144,13 +242,13 @@ class RevitFittings:
     def tag_fab_element(self,
                         fab_element,
                         tag_element,):
+        ...
 
     def create_family_map(self):
-        groups = defaultdict(list)
+        groups = defaultdict(dict)
 
-        for fab_element in self.collected_ducts:
-            family_name = self._family(fab_element)
-            groups[family_name].append(fab_element)
+        for element_id, data in self.duct_map.items():
+            groups[data["family"]][element_id] = data
 
         return groups
 
@@ -158,16 +256,15 @@ class RevitFittings:
         element_map = {}
 
         for fab_element in self.collected_ducts:
-            element_id = fab_element.Id
-
-            element_map[element_id] = {
+            element_data = {
                 "family": self._family(fab_element),
-                "ext_bottom": self._get_param(fab_element, NDBS_D_BOTTOM_EXTENSION),
-                "ext_top": self._get_param(fab_element, NDBS_D_TOP_EXTENSION),
-                "ext_right": self._get_param(fab_element, NDBS_D_RIGHT_EXTENSION),
-                "ext_left": self._get_param(fab_element, NDBS_D_LEFT_EXTENSION),
-                "object": fab_element
+                "object": fab_element,
             }
+
+            for key, param_name in self.DUCT_PARAMETERS.items():
+                element_data[key] = self._get_param(fab_element, param_name)
+
+            element_map[fab_element.Id] = element_data
 
         return element_map
 
@@ -175,17 +272,21 @@ class RevitFittings:
 
     def tag_elbows(self):
         ...
+
     def tag_straights(self):
         ...
+
     def tag_reducers(self):
         ...
+
     def tag_transitions(self):
         ...
+
     def tag_offsets(self):
         ...
+
     def tag_endcaps(self):
         ...
-    def
 
 
     # TODO: build a map that separates them by family, that would speed up the parameter check.
