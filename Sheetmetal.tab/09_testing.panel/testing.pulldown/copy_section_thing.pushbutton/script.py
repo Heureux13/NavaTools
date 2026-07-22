@@ -24,8 +24,7 @@ from System.Collections.Generic import List
 # ======================================================================
 __title__ = 'Copy Section'
 __doc__ = '''
-Use selected section view and copy it by a chosen spacing and direction.
-Prompts for copy count (max 30), spacing, and direction.
+Select 
 '''
 
 # Variables

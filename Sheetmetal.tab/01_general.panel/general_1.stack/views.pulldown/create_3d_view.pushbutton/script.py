@@ -53,7 +53,7 @@ if not selected_elements:
 
 # Get source view before deleting anything
 source_view = uidoc.ActiveView
-# if source_view is None or source_view.ViewType != ViewType.ThreeD:
+if source_view is None or source_view.ViewType != ViewType.ThreeD:
     for view in FilteredElementCollector(doc).OfClass(View):
         if view.ViewType == ViewType.ThreeD and not view.IsTemplate:
             source_view = view
@@ -71,7 +71,7 @@ for vft in FilteredElementCollector(doc).OfClass(ViewFamilyType):
         if param is not None and param.AsString() == TEMPLATE_TYPE_NAME:
             target_type_id = vft.Id
             break
-    except:
+    except BaseException:
         pass
 
 # Find existing view and ensure source is not the view we're deleting
@@ -125,7 +125,7 @@ for element in selected_elements:
                     max(combined_max.Y, bbox.Max.Y),
                     max(combined_max.Z, bbox.Max.Z)
                 )
-    except:
+    except BaseException:
         pass
 
 if combined_min is None:
@@ -171,7 +171,7 @@ with revit.Transaction('Set View'):
             cat = doc.Settings.Categories.get_Item(bic)
             if cat is not None:
                 view_3d.SetCategoryHidden(cat.Id, False)
-        except:
+        except BaseException:
             pass
 
 # Verify section box was applied

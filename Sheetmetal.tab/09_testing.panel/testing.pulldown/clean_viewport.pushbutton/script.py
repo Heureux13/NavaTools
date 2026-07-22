@@ -11,10 +11,10 @@ from pyrevit import DB, forms, revit, script
 
 # Button info
 # ======================================================================
-__title__ = 'clean viewport'
+__title__ = 'Clean Viewport'
 __doc__ = '''
 Moves north and west grid bubbles  1/4 inch away from view crop
-removes south and east bubble and sets line ends to view crop edge 
+removes south and east bubble and sets line ends to view crop edge
 '''
 
 # Variables

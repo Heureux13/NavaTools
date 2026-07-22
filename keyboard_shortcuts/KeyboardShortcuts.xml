@@ -937,7 +937,7 @@
   <ShortcutItem CommandName="Offset" CommandId="ID_OFFSET" Shortcuts="OF" Paths="Modify&gt;Modify" />
   <ShortcutItem CommandName="Copy" CommandId="ID_EDIT_MOVE_COPY" Shortcuts="CWW" Paths="Modify&gt;Modify" />
   <ShortcutItem CommandName="Mirror - Pick Axis" CommandId="ID_EDIT_MIRROR" Shortcuts="MM" Paths="Modify&gt;Modify" />
-  <ShortcutItem CommandName="Rotate" CommandId="ID_EDIT_ROTATE" Shortcuts="RO" Paths="Modify&gt;Modify" />
+  <ShortcutItem CommandName="Rotate" CommandId="ID_EDIT_ROTATE" Shortcuts="RWT" Paths="Modify&gt;Modify" />
   <ShortcutItem CommandName="Mirror - Draw Axis" CommandId="ID_EDIT_MIRROR_LINE" Shortcuts="DM" Paths="Modify&gt;Modify" />
   <ShortcutItem CommandName="Trim/Extend to Corner" CommandId="ID_TRIM_EXTEND_CORNER" Shortcuts="TR#TE#TEC" Paths="Modify&gt;Modify" />
   <ShortcutItem CommandName="Split Element" CommandId="ID_SPLIT" Shortcuts="SL" Paths="Modify&gt;Modify" />
