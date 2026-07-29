@@ -26,6 +26,12 @@ output = script.get_output()
 HALF_INCH_PAPER_FT = 0.5 / 12.00
 EPS = 1e-9
 
+# Toggle which bubble locations are allowed to remain visible.
+SHOW_TOP_BUBBLES = True
+SHOW_BOTTOM_BUBBLES = True
+SHOW_LEFT_BUBBLES = True
+SHOW_RIGHT_BUBBLES = True
+
 
 def element_id_int(element_id):
     try:
@@ -191,19 +197,38 @@ def build_outside_grid_line(view, line, offset):
     return DB.Line.CreateBound(new_start_world, new_end_world)
 
 
-def show_only_top_left_bubbles(view, grid, line, offset):
+def show_selected_bubbles(view, grid, line, offset):
     crop_box = view.CropBox
     to_local = crop_box.Transform.Inverse
 
     min_x = crop_box.Min.X - offset
+    max_x = crop_box.Max.X
+    min_y = crop_box.Min.Y
     max_y = crop_box.Max.Y + offset
     tol = max(1e-6, offset * 0.01)
 
     for datum_end, point_index in ((DB.DatumEnds.End0, 0), (DB.DatumEnds.End1, 1)):
         end_local = to_local.OfPoint(line.GetEndPoint(point_index))
-        is_left = abs(end_local.X - min_x) <= tol
-        is_top = abs(end_local.Y - max_y) <= tol
-        should_show = is_left or is_top
+        sides = []
+
+        if abs(end_local.X - min_x) <= tol:
+            sides.append('left')
+        elif abs(end_local.X - max_x) <= tol:
+            sides.append('right')
+
+        if abs(end_local.Y - min_y) <= tol:
+            sides.append('bottom')
+        elif abs(end_local.Y - max_y) <= tol:
+            sides.append('top')
+
+        should_show = any(
+            (side == 'top' and SHOW_TOP_BUBBLES) or
+            (side == 'bottom' and SHOW_BOTTOM_BUBBLES) or
+            (side == 'left' and SHOW_LEFT_BUBBLES) or
+            (side == 'right' and SHOW_RIGHT_BUBBLES)
+            for side in sides
+        )
+
         try:
             if should_show:
                 grid.ShowBubbleInView(datum_end, view)
@@ -249,7 +274,7 @@ with revit.Transaction('Set Grid Bubbles Outside (Top/Left Only)'):
                 DB.DatumEnds.End1, view, DB.DatumExtentType.ViewSpecific)
             grid.SetCurveInView(
                 DB.DatumExtentType.ViewSpecific, view, new_line)
-            show_only_top_left_bubbles(view, grid, new_line, offset_model_ft)
+            show_selected_bubbles(view, grid, new_line, offset_model_ft)
             updated_in_view += 1
 
         if updated_in_view > 0:
