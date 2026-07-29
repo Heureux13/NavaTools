@@ -1,6 +1,6 @@
 title:
   en_us: Testing
 layout:
-  - testing
-  - random
-  - goolsby
+  - 01_testing
+  - 02_random
+  - 03_goolsby
