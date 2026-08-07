@@ -2,6 +2,8 @@ title:
   en_us: Views
 layout:
  - section_limits
+ - clean_viewport
+ - copy_section_symbol
  - -----
  - align_section_views_h
  - align_section_views_v
@@ -15,3 +17,6 @@ layout:
  - ----
  - rename_views
  - grid_lines_align
+ - ----
+ - xyz_get_viewport
+ - xyz_set_viewport
