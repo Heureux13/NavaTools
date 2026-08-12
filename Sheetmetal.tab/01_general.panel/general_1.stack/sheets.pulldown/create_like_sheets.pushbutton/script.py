@@ -26,20 +26,25 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 
+# Button info
+# ======================================================================
+__title__ = 'Create Sheet'
+__doc__ = '''
+0. Select views in project browser
+1. Select what sheet you want to use as a templet
+2. Select what view templet you want to use
+3. Select a prefix of what to call the sheets, it will take
+the ending of your selected views ending.
+EX: View name is Area B1, your prefix is, SH-01-, it will
+create a new sheet and number it SH-01-B1
+'''
+
 # SheetCollection is a native Revit 2024+ feature
 try:
     from Autodesk.Revit.DB import SheetCollection
     _SHEET_COLLECTION_API = True
 except Exception:
     _SHEET_COLLECTION_API = False
-
-
-# Button info
-# ======================================================================
-__title__ = 'Create Duplicate Sheet'
-__doc__ = '''
-Select target views and reference sheets, then create new sheets with view locations matched by scope box.
-'''
 
 
 # Variables
@@ -710,6 +715,23 @@ def set_view_template_if_requested(target_view, template_id):
             pass
 
 
+def tighten_annotation_crop(view):
+    if view is None:
+        return
+    try:
+        crop_manager = view.GetCropRegionShapeManager()
+        if crop_manager is None:
+            return
+        if not hasattr(crop_manager, 'GetCropShape'):
+            return
+        crop_shape = crop_manager.GetCropShape()
+        if crop_shape is None or not crop_shape.Count:
+            return
+        crop_manager.SetAnnotationCropShape(crop_shape)
+    except Exception:
+        pass
+
+
 with revit.Transaction('Create Sheets'):
     for target_view in selected_views:
         sheet = None
@@ -768,6 +790,7 @@ with revit.Transaction('Create Sheets'):
 
             new_vp = Viewport.Create(doc, sheet.Id, target_view.Id, center)
             apply_viewport_layout(source_vp, new_vp)
+            tighten_annotation_crop(target_view)
 
             created.append((sheet, target_view))
         except Exception as err:

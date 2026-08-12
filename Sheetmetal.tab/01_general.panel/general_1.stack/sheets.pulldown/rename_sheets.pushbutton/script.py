@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
-__title__   = "Rename Sheets"
-__doc__     = """
-****************************************************************
-Description:
+from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
+from System.Collections.Generic import List
+import clr
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
+from Autodesk.Revit.DB import *
 
+__title__ = "Rename Sheets"
+__doc__ = """
 Select sheets to rename. You can then give them a prefix and/or suffix,
 and also replace a word in the sheet names with another word.
-****************************************************************
 """
 
-from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-import clr
-from System.Collections.Generic import List
 
-app   = __revit__.Application
+app = __revit__.Application
 uidoc = __revit__.ActiveUIDocument
-doc   = revit.doc
+doc = revit.doc
 
 # Get Sheets - Selected in Project Browser
 sel_el_ids = uidoc.Selection.GetElementIds()
@@ -39,21 +37,20 @@ if not sel_sheets:
 if not sel_sheets:
     forms.alert("No Sheets Selected. Please Try Again.", exitscript=True)
 
-from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
-components = [Label("Add prefix:"),                      TextBox("prefix"),
-              Label("Word you want to replace:"),       TextBox("find"),
-              Label("Replacement for that word:"),      TextBox("replace"),
-              Label("Add suffix:"),                     TextBox("suffix"),
-              Separator(),                              Button("Rename Sheets")]
+components = [Label("Add prefix:"), TextBox("prefix"),
+              Label("Word you want to replace:"), TextBox("find"),
+              Label("Replacement for that word:"), TextBox("replace"),
+              Label("Add suffix:"), TextBox("suffix"),
+              Separator(), Button("Rename Sheets")]
 
 form = FlexForm("Rename Sheets", components)
 form.show()
 
 user_inputs = form.values
-prefix      = user_inputs["prefix"]
-find        = user_inputs["find"]
-replace     = user_inputs["replace"]
-suffix      = user_inputs["suffix"]
+prefix = user_inputs["prefix"]
+find = user_inputs["find"]
+replace = user_inputs["replace"]
+suffix = user_inputs["suffix"]
 
 # start transaction to make changes in project
 t = Transaction(doc, "Rename Sheets")
@@ -69,7 +66,7 @@ for sheet in sel_sheets:
             sheet.Name = new_name
             print("{} -> {}".format(old_name, new_name))
             break
-        except:
+        except BaseException:
             new_name += "*"
 
 t.Commit()

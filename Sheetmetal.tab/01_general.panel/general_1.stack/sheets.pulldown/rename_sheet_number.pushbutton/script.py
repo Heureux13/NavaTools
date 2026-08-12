@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# ======================================================================
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+# ======================================================================
+
 from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
 from System.Collections.Generic import List
 import clr
@@ -19,8 +27,8 @@ and also replace text in the sheet numbers with other text.
 """
 
 
-app = __revit__.Application
 uidoc = __revit__.ActiveUIDocument
+app = __revit__.Application
 doc = revit.doc
 
 # Get Sheets - Selected in Project Browser

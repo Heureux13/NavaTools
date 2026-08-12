@@ -24,10 +24,11 @@ output = script.get_output()
 doc = revit.doc
 uidoc = revit.uidoc
 
-TARGET_CENTER = XYZ(
-    -0.2442573465208780,
-    0.0447767298351720,
-    0.2004105892519640,
+# Target top-left corner of the viewport rectangle on the sheet.
+TARGET_TOP_LEFT = XYZ(
+    -1.568398,
+    1.205570,
+    0,
 )
 
 
@@ -48,15 +49,27 @@ for eid in sel_ids:
 if not viewports:
     forms.alert('Select at least one viewport on the sheet.', exitscript=True)
 
-with revit.Transaction('Set Viewport Center Location'):
+with revit.Transaction('Set Viewport Top-Left Corner'):
     for viewport in viewports:
-        viewport.SetBoxCenter(TARGET_CENTER)
+        outline = viewport.GetBoxOutline()
+        min_pt = outline.MinimumPoint
+        max_pt = outline.MaximumPoint
+        width = max_pt.X - min_pt.X
+        height = max_pt.Y - min_pt.Y
+
+        target_center = XYZ(
+            TARGET_TOP_LEFT.X + (width / 2.0),
+            TARGET_TOP_LEFT.Y - (height / 2.0),
+            0,
+        )
+
+        viewport.SetBoxCenter(target_center)
 
 # output.print_md(
-#     'Moved {} viewport(s) to center: ({:.16f}, {:.16f}, {:.16f})'.format(
+#     'Moved {} viewport(s) to top-left corner: ({:.6f}, {:.6f}, {:.6f})'.format(
 #         len(viewports),
-#         TARGET_CENTER.X,
-#         TARGET_CENTER.Y,
-#         TARGET_CENTER.Z,
+#         TARGET_TOP_LEFT.X,
+#         TARGET_TOP_LEFT.Y,
+#         TARGET_TOP_LEFT.Z,
 #     )
 # )

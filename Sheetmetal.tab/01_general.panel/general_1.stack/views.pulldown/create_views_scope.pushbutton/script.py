@@ -9,31 +9,30 @@ the copyright holder."""
 
 from pyrevit import revit, script
 from Autodesk.Revit.UI import TaskDialog
-from Autodesk.Revit.DB import (
-    BuiltInCategory,
-    BuiltInParameter,
-    FilteredElementCollector,
-    View,
-    ViewDuplicateOption,
-)
+from Autodesk.Revit.DB import *
 from System.Windows.Forms import Button, DialogResult, Form, Label, TextBox, TreeNode, TreeView
 import clr
 
+# Variables
+# ======================================================================
+uidoc = __revit__.ActiveUIDocument
+app = __revit__.Application
+doc = revit.doc
+output = script.get_output()
 clr.AddReference("System.Windows.Forms")
-
 
 # Button info
 # ======================================================================
 __title__ = 'Create Views'
 __doc__ = '''
-Create views from selected scope boxes
+Creates new views from scope boxes as dependents
+
+0. Select a View that contains one of more scope boxes in it
+1. Select the scope boxes you want to create views for
 '''
 
-
-# Variables
-# ======================================================================
-doc = revit.doc
-output = script.get_output()
+# methods
+# =====================================================================
 
 
 def get_element_id_value(element_id):

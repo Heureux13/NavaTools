@@ -7,7 +7,10 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from pyrevit import script
+from Autodesk.Revit.DB import Transaction
+from pyrevit import script, revit
+from revit.revit_tagging_new import RevitTagging
+from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
 
 # Button info
 # ======================================================================

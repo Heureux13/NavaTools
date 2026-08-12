@@ -8,13 +8,14 @@ the copyright holder."""
 # ======================================================================
 
 from pyrevit import DB, forms, revit, script
+from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 
 # Button info
 # ======================================================================
-__title__ = 'Clean Viewport'
+__title__ = 'Set Viewport + Clean Grid'
 __doc__ = '''
-Moves north and west grid bubbles  1/4 inch away from view crop
-removes south and east bubble and sets line ends to view crop edge
+Places selected viewports by top-left sheet corner and cleans visible grid bubbles
+around the crop for each affected view using equal spacing from all crop edges.
 '''
 
 # Variables
@@ -26,7 +27,10 @@ output = script.get_output()
 HALF_INCH_PAPER_FT = 0.5 / 12.00
 EPS = 1e-9
 
-# Toggle which bubble locations are allowed to remain visible.
+TARGET_TOP_LEFT = XYZ(-1.568398,
+                      1.205570,
+                      0,)
+
 SHOW_TOP_BUBBLES = True
 SHOW_BOTTOM_BUBBLES = True
 SHOW_LEFT_BUBBLES = True
@@ -60,11 +64,18 @@ def get_view_scale(view):
     return 1.0
 
 
+def get_selected_viewports():
+    selected = []
+    for eid in uidoc.Selection.GetElementIds():
+        element = doc.GetElement(eid)
+        if isinstance(element, Viewport):
+            selected.append(element)
+    return selected
+
+
 def get_selected_target_views():
     target_by_id = {}
-    selected_ids = list(uidoc.Selection.GetElementIds())
-
-    for selected_id in selected_ids:
+    for selected_id in uidoc.Selection.GetElementIds():
         element = doc.GetElement(selected_id)
         if element is None:
             continue
@@ -91,16 +102,12 @@ def get_selected_target_views():
 def is_supported_view(view):
     if view is None:
         return False
-
     if view.IsTemplate:
         return False
-
     if view.ViewType == DB.ViewType.DrawingSheet:
         return False
-
     if not view.CropBoxActive:
         return False
-
     return True
 
 
@@ -175,8 +182,6 @@ def build_outside_grid_line(view, line, offset):
     mid_y = (p0_local.Y + p1_local.Y) * 0.5
     mid_z = (p0_local.Z + p1_local.Z) * 0.5
 
-    # Expand the crop bounds equally on all four sides so top, left, bottom,
-    # and right all keep the same spacing away from the crop edge.
     min_x = crop_box.Min.X - offset
     max_x = crop_box.Max.X + offset
     min_y = crop_box.Min.Y - offset
@@ -184,8 +189,7 @@ def build_outside_grid_line(view, line, offset):
     if min_x >= max_x or min_y >= max_y:
         return None
 
-    clipped = clip_line_to_rect(
-        mid_x, mid_y, dir_x, dir_y, min_x, max_x, min_y, max_y)
+    clipped = clip_line_to_rect(mid_x, mid_y, dir_x, dir_y, min_x, max_x, min_y, max_y)
     if clipped is None:
         return None
 
@@ -239,20 +243,48 @@ def show_selected_bubbles(view, grid, line, offset):
             pass
 
 
-target_views = [v for v in get_selected_target_views() if is_supported_view(v)]
-if not target_views:
-    forms.alert(
-        'Select one or more viewports (or views) with active crop regions, then run again.',
-        title='Clean Viewport',
+def set_viewport_top_left(viewport, target_top_left):
+    outline = viewport.GetBoxOutline()
+    min_pt = outline.MinimumPoint
+    max_pt = outline.MaximumPoint
+    width = max_pt.X - min_pt.X
+    height = max_pt.Y - min_pt.Y
+
+    target_center = XYZ(
+        target_top_left.X + (width / 2.0),
+        target_top_left.Y - (height / 2.0),
+        0,
     )
-    script.exit()
+
+    viewport.SetBoxCenter(target_center)
+
+
+active_view = revit.active_view
+if not isinstance(active_view, ViewSheet):
+    forms.alert(
+        'Active view must be a sheet. Open a sheet and try again.',
+        exitscript=True,
+    )
+
+selected_viewports = get_selected_viewports()
+if not selected_viewports:
+    forms.alert('Select at least one viewport on the sheet.', exitscript=True)
 
 updated_grids = 0
 updated_views = 0
 skipped_views = []
 
-with revit.Transaction('Set Grid Bubbles Outside (Top/Left Only)'):
-    for view in target_views:
+with revit.Transaction('Set Viewport + Clean Grid'):
+    affected_views = []
+    for viewport in selected_viewports:
+        view = doc.GetElement(viewport.ViewId)
+        if view is not None and is_supported_view(view):
+            affected_views.append(view)
+
+    if not affected_views:
+        affected_views = [v for v in get_selected_target_views() if is_supported_view(v)]
+
+    for view in affected_views:
         offset_model_ft = HALF_INCH_PAPER_FT * get_view_scale(view)
         grids = get_visible_grids(view)
         if not grids:
@@ -269,12 +301,9 @@ with revit.Transaction('Set Grid Bubbles Outside (Top/Left Only)'):
             if new_line is None:
                 continue
 
-            grid.SetDatumExtentType(
-                DB.DatumEnds.End0, view, DB.DatumExtentType.ViewSpecific)
-            grid.SetDatumExtentType(
-                DB.DatumEnds.End1, view, DB.DatumExtentType.ViewSpecific)
-            grid.SetCurveInView(
-                DB.DatumExtentType.ViewSpecific, view, new_line)
+            grid.SetDatumExtentType(DB.DatumEnds.End0, view, DB.DatumExtentType.ViewSpecific)
+            grid.SetDatumExtentType(DB.DatumEnds.End1, view, DB.DatumExtentType.ViewSpecific)
+            grid.SetCurveInView(DB.DatumExtentType.ViewSpecific, view, new_line)
             show_selected_bubbles(view, grid, new_line, offset_model_ft)
             updated_in_view += 1
 
@@ -282,11 +311,14 @@ with revit.Transaction('Set Grid Bubbles Outside (Top/Left Only)'):
             updated_views += 1
             updated_grids += updated_in_view
 
-# output.print_md(
-#     'Updated {} grid(s) across {} view(s); top/left ends are {}" outside, right/bottom are flush, and bubbles are top/left only.'.format(
-#         updated_grids, updated_views, 0.5
-#     )
-# )
+    doc.Regenerate()
+
+    for viewport in selected_viewports:
+        set_viewport_top_left(viewport, TARGET_TOP_LEFT)
+
+# output.print_md('## Done')
+# output.print_md('- Viewports moved by top-left sheet corner.')
+# output.print_md('- Grid lines and bubbles cleaned with equal spacing on all sides.')
+
 if skipped_views:
-    output.print_md('Views with no visible grids: {}'.format(
-        ', '.join(skipped_views)))
+    output.print_md('Views with no visible grids: {}'.format(', '.join(skipped_views)))
