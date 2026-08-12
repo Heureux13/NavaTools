@@ -29,7 +29,7 @@ Sets a new order number based on previous numbers.
 output = script.get_output()
 doc = revit.doc
 uidoc = revit.uidoc
-view = revit.view
+view = revit.active_view
 selected_ducts = RevitDuct.from_selection(uidoc, doc)
 
 ducts = RevitDuct.all(doc)

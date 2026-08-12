@@ -35,11 +35,12 @@ Tags Item Number
 # ==================================================
 
 
-def _find_tag_symbol(doc, target_name):
-    """Return the first fabrication duct tag whose name contains target_name."""
-    if not target_name:
+def _find_tag_symbol(doc, family_name, type_name):
+    """Return the fabrication duct tag with the exact family and type names."""
+    if not family_name or not type_name:
         return None
-    needle = target_name.strip().lower()
+    target_family = family_name.strip().lower()
+    target_type = type_name.strip().lower()
     symbols = (
         FilteredElementCollector(doc)
         .OfCategory(BuiltInCategory.OST_FabricationDuctworkTags)
@@ -50,8 +51,10 @@ def _find_tag_symbol(doc, target_name):
         fam = getattr(sym, "Family", None)
         fam_name = fam.Name if fam else ""
         type_name = getattr(sym, "Name", "") or ""
-        label = (fam_name + " " + type_name).lower()
-        if needle in label:
+        if (
+            fam_name.strip().lower() == target_family
+            and type_name.strip().lower() == target_type
+        ):
             return sym
     return None
 
@@ -172,6 +175,8 @@ families_to_tag = {
     "boot tap",
     "transition",
     "elbow - 90 degree",
+    "90° elbow",
+    "adjustable elbow",
     "elbow",
     "drop cheeck",
     "ogee",
@@ -190,10 +195,11 @@ number_parameter_names = [
 ]
 
 annotation_to_use = [
-    "_Tag.DCT_NumberDuct",
+    ("_Tag.DCT_Number", "Small"),
 ]
 
-tag_names = list(annotation_to_use)
+tag_names = ["{}: {}".format(family, type_name)
+             for family, type_name in annotation_to_use]
 
 values_to_skip = {
     "0",
@@ -210,15 +216,22 @@ values_to_skip_norm = {v.strip().lower() for v in values_to_skip if v}
 tag_symbol = None
 target_tag_name = None
 candidate_tag_family_names = set()
-for candidate in tag_names:
-    matched_symbol = _find_tag_symbol(doc, candidate)
+for candidate_family, candidate_type in annotation_to_use:
+    try:
+        matched_symbol = tagger.get_label_exact(
+            candidate_family,
+            candidate_type,
+            allow_fallback=False,
+        )
+    except LookupError:
+        matched_symbol = None
     if matched_symbol and matched_symbol.Family:
         candidate_tag_family_names.add(
             (matched_symbol.Family.Name or "").strip().lower()
         )
     if matched_symbol and not tag_symbol:
         tag_symbol = matched_symbol
-        target_tag_name = candidate
+        target_tag_name = "{}: {}".format(candidate_family, candidate_type)
 
 if not tag_symbol:
     output.print_md(

@@ -58,7 +58,9 @@ match_parameters = {
 number_families = {
     "drop cheek",
     "elbow",
+    "adjustable elbow",
     "elbow - 90 degree",
+    "90° elbow",
     "end cap",
     "offset",
     "ogee",
@@ -142,6 +144,9 @@ class RevitNumbers(object):
         self.allow_oval                 = allow_oval
 # fmt:on
 # autopep8: on
+
+    def _clean(self, text):
+        return " ".join(text.split()).lower()
 
     def round_up_to_nearest_10(self, number):
         # Round up to the nearest 10
@@ -909,14 +914,14 @@ class RevitNumbers(object):
         family = duct.family
         if not family:
             return False
-        return family.lower() in self.number_families
+        return self._clean(family) in self.number_families
 
     def is_traversable(self, duct):
         # Checks if we can traverse through the duct
         family = duct.family
         if not family:
             return False
-        family_lower = family.lower()
+        family_lower = self._clean(family)
         return family_lower in self.allow_but_not_number or self.is_numberable(duct)
 
     def get_match_signature(self, duct):
