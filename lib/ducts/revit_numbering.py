@@ -333,6 +333,29 @@ class RevitNumbers(object):
 
         return None
 
+    def clear_item_number(self, duct):
+        # Clear all configured item-number parameters.
+        updated = False
+
+        for param in self.get_number_parameters(duct):
+            if param.IsReadOnly:
+                continue
+
+            try:
+                if param.StorageType == StorageType.String:
+                    param.Set("")
+                elif param.StorageType == StorageType.Integer:
+                    param.Set(0)
+                elif param.StorageType == StorageType.Double:
+                    param.Set(0.0)
+                else:
+                    continue
+                updated = True
+            except Exception:
+                continue
+
+        return updated
+
     def get_order_numbers(self, view_obj=None, scope="view"):
         # Return RevitDuct items with a value in PYT_NUMBER_ORDER.
         # NOTE: PYT_NUMBER_ORDER is read-only sequencing input. It is never written.
@@ -515,7 +538,9 @@ class RevitNumbers(object):
         start_family = start_duct.family.lower() if start_duct.family else ""
         start_is_branch = start_family in self.branch_start_families
 
-        if (self.is_numberable(start_duct) or start_is_branch) and not self.has_skip_value(start_duct):
+        if self.has_skip_value(start_duct):
+            self.clear_item_number(start_duct)
+        elif self.is_numberable(start_duct) or start_is_branch:
             assigned_number, current_number, previous_signature = self.assign_number_by_signature(
                 start_duct,
                 current_number,
@@ -575,7 +600,9 @@ class RevitNumbers(object):
             branch_filter_size = branch_duct.size_out if branch_family in self.branch_start_families else None
             sub_branches = []
 
-            if not self.has_skip_value(branch_duct):
+            if self.has_skip_value(branch_duct):
+                self.clear_item_number(branch_duct)
+            else:
                 self.set_item_number(branch_duct, branch_start)
                 modified_ducts.append(branch_duct)
                 piece_count += 1
@@ -655,6 +682,7 @@ class RevitNumbers(object):
 
             if family_lower in self.branch_start_families:
                 if self.has_skip_value(duct):
+                    self.clear_item_number(duct)
                     continue
 
                 if not allow_store_families:
@@ -662,7 +690,9 @@ class RevitNumbers(object):
                     continue
 
             if self.is_numberable(duct) or family_lower in self.branch_start_families:
-                if not self.has_skip_value(duct):
+                if self.has_skip_value(duct):
+                    self.clear_item_number(duct)
+                else:
                     assigned_number, current_number, current_signature = self.assign_number_by_signature(
                         duct,
                         current_number,
@@ -702,7 +732,9 @@ class RevitNumbers(object):
 
         if not skip_start_numbering:
             start_family = start_duct.family.lower() if start_duct.family else ""
-            if (self.is_numberable(start_duct) or start_family in self.branch_start_families) and not self.has_skip_value(start_duct):
+            if self.has_skip_value(start_duct):
+                self.clear_item_number(start_duct)
+            elif self.is_numberable(start_duct) or start_family in self.branch_start_families:
                 assigned_number, current_number, previous_signature = self.assign_number_by_signature(
                     start_duct,
                     current_number,
@@ -754,7 +786,9 @@ class RevitNumbers(object):
 
             visited.add(duct.id)
 
-            if self.is_numberable(duct) and not self.has_skip_value(duct):
+            if self.has_skip_value(duct):
+                self.clear_item_number(duct)
+            elif self.is_numberable(duct):
                 assigned_number, current_number, previous_signature = self.assign_number_by_signature(
                     duct,
                     current_number,
