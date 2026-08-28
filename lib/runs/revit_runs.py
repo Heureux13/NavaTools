@@ -414,7 +414,7 @@ class RevitRuns(object):
                         num = self.get_item_number(conn)
                         if num is not None and num > 0:
                             return (num, conn)
-
+                        
         for conn in connected:
             num = self.get_item_number(conn)
             if num is not None and num > 0:
