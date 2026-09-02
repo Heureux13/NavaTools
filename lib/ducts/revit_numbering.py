@@ -437,12 +437,14 @@ class RevitNumbers(object):
                             ordered_ducts,
                             first_start_number=None,
                             repeat_numbers=False,
+                            reset_per_order=False,
                             ):
         # Number runs by PYT_NUMBER_ORDER from low to high.
         # NOTE: PYT_NUMBER_ORDER is only used to determine run order.
         #       This method modifies item numbers only.
         # Start at the lowest order number (or override with first_start_number).
-        # After each run: next_start = round_up_to_nearest_100(last_used + 100).
+        # After each run:  nnext_start = round_up_to_nearest_100(last_used + 100).
+        # When reset_per_order=True, a new PYT_NUMBER_ORDER value resets numbering to 1.
         if not ordered_ducts:
             return []
 
@@ -487,20 +489,27 @@ class RevitNumbers(object):
             return []
 
         ordered_pairs.sort(key=lambda x: x[0])
-        sorted_ducts = [duct for _, duct in ordered_pairs]
 
         if first_start_number is None:
             first_ordered_duct = ordered_pairs[0][1]
             existing_item = self.get_item_number(first_ordered_duct)
-            next_start_number = existing_item if existing_item is not None else ordered_pairs[
-                0][0]
+            if reset_per_order:
+                next_start_number = 1
+            else:
+                next_start_number = existing_item if existing_item is not None else ordered_pairs[
+                    0][0]
         else:
             next_start_number = int(first_start_number)
 
+        current_order_value = None
         results = []
 
-        for idx, start_duct in enumerate(sorted_ducts):
+        for order_value, start_duct in ordered_pairs:
             try:
+                if reset_per_order and order_value != current_order_value:
+                    current_order_value = order_value
+                    next_start_number = int(first_start_number) if first_start_number is not None else 1
+
                 last_used_number, run_piece_count, visited_ids = self._number_run_simple(
                     start_duct,
                     next_start_number,

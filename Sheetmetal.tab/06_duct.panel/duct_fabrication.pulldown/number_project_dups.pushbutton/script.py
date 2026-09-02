@@ -93,6 +93,7 @@ try:
             results = numbering.number_ordered_runs(
                 ordered_ducts,
                 repeat_numbers=True,
+                reset_per_order=True,
             )
         output.print_md("- Numbering complete (transaction)")
     except Exception as ex:

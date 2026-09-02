@@ -195,7 +195,44 @@ def _prompt_for_target_views(document):
     return [opt.item for opt in selected_options]
 
 
-def collect_matching_tags_in_view(document, view, selected_type_id_values):
+def get_tag_instance_family_and_type(tag, document):
+    family_name = "(Unknown Family)"
+    type_name = "(Unknown Type)"
+    type_id_value = None
+
+    try:
+        tag_type = document.GetElement(tag.GetTypeId())
+        if tag_type:
+            fam = getattr(tag_type, 'Family', None)
+            if fam and fam.Name:
+                family_name = fam.Name
+            if getattr(tag_type, 'Name', None):
+                type_name = tag_type.Name
+            type_id_value = _get_element_id_value(tag_type.Id)
+    except Exception:
+        pass
+
+    if family_name == "(Unknown Family)" or type_name == "(Unknown Type)":
+        try:
+            symbol = getattr(tag, 'Symbol', None)
+            if symbol:
+                fam = getattr(symbol, 'Family', None)
+                if fam and fam.Name:
+                    family_name = fam.Name
+                if getattr(symbol, 'Name', None):
+                    type_name = symbol.Name
+                if type_id_value is None:
+                    type_id_value = _get_element_id_value(symbol.Id)
+        except Exception:
+            pass
+
+    return family_name, type_name, type_id_value
+
+
+def collect_matching_tags_in_view(document,
+                                  view,
+                                  selected_type_id_values,
+                                  selected_keys=None):
     matching_ids = []
     tags = (
         DB.FilteredElementCollector(document, view.Id)
@@ -206,7 +243,16 @@ def collect_matching_tags_in_view(document, view, selected_type_id_values):
     for tag in tags:
         try:
             tag_type_id_value = _get_element_id_value(tag.GetTypeId())
-            if tag_type_id_value not in selected_type_id_values:
+            if tag_type_id_value in selected_type_id_values:
+                matched = True
+            else:
+                fam_name, typ_name, symbol_type_id = get_tag_instance_family_and_type(tag, document)
+                matched = (
+                    symbol_type_id in selected_type_id_values
+                    or (selected_keys is not None and (fam_name, typ_name) in selected_keys)
+                )
+
+            if not matched:
                 continue
             if not tag.CanBeHidden(view):
                 continue
@@ -250,6 +296,7 @@ def select_tag_families_and_types(by_family):
             self.StartPosition = FormStartPosition.CenterScreen
             self._all_nodes = []
             self._by_family = options_by_family
+            self._selection_snapshot = set()
 
             label_search = Label()
             label_search.Text = "Search:"
@@ -320,31 +367,66 @@ def select_tag_families_and_types(by_family):
                 self.tree_view.Nodes.Add(parent)
                 self._all_nodes.append(parent)
 
+        def _collect_checked_keys_from_nodes(self, roots):
+            selected = set()
+
+            def _walk(node):
+                if node.Checked and node.Tag and node.Tag[0] != "family":
+                    selected.add(node.Tag)
+                for child in node.Nodes:
+                    _walk(child)
+
+            for root in roots:
+                _walk(root)
+            return selected
+
+        def _restore_checked_state(self, roots, selected_keys):
+            def _walk(node):
+                if node.Tag and node.Tag[0] != "family":
+                    node.Checked = node.Tag in selected_keys
+                for child in node.Nodes:
+                    _walk(child)
+
+                if node.Tag and node.Tag[0] == "family":
+                    node.Checked = any(child.Checked for child in node.Nodes)
+
+            for root in roots:
+                _walk(root)
+
         def _filter_tree(self, sender, args):
             text = (self.search_box.Text or "").lower()
-            self.tree_view.Nodes.Clear()
+            # Read checked state from the live tree (which may already be a
+            # filtered copy), not from the stale original _all_nodes.
+            current_selection = self._collect_checked_keys_from_nodes(self.tree_view.Nodes)
+            self.tree_view.BeginUpdate()
+            try:
+                self.tree_view.Nodes.Clear()
 
-            for parent in self._all_nodes:
-                parent_matches = (not text) or (text in parent.Text.lower())
-                matching_children = []
-                for child in parent.Nodes:
-                    if (not text) or (text in child.Text.lower()):
-                        matching_children.append(child)
+                for parent in self._all_nodes:
+                    parent_matches = (not text) or (text in parent.Text.lower())
+                    matching_children = []
+                    for child in parent.Nodes:
+                        if parent_matches or (text in child.Text.lower()):
+                            matching_children.append(child)
 
-                if not parent_matches and not matching_children:
-                    continue
+                    if not parent_matches and not matching_children:
+                        continue
 
-                parent_copy = TreeNode(parent.Text)
-                parent_copy.Tag = parent.Tag
-                parent_copy.Checked = parent.Checked
+                    parent_copy = TreeNode(parent.Text)
+                    parent_copy.Tag = parent.Tag
+                    parent_copy.Checked = parent.Checked
 
-                for child in matching_children:
-                    child_copy = TreeNode(child.Text)
-                    child_copy.Tag = child.Tag
-                    child_copy.Checked = child.Checked
-                    parent_copy.Nodes.Add(child_copy)
+                    for child in matching_children:
+                        child_copy = TreeNode(child.Text)
+                        child_copy.Tag = child.Tag
+                        child_copy.Checked = child.Checked
+                        parent_copy.Nodes.Add(child_copy)
 
-                self.tree_view.Nodes.Add(parent_copy)
+                    self.tree_view.Nodes.Add(parent_copy)
+
+                self._restore_checked_state(self.tree_view.Nodes, current_selection)
+            finally:
+                self.tree_view.EndUpdate()
 
         def _check_node_recursive(self, node, checked):
             node.Checked = checked
@@ -366,17 +448,7 @@ def select_tag_families_and_types(by_family):
             self.tree_view.AfterCheck += self._on_node_checked
 
         def get_checked_keys(self):
-            selected = set()
-
-            def _walk(node):
-                if node.Checked and node.Tag and node.Tag[0] != "family":
-                    selected.add(node.Tag)
-                for child in node.Nodes:
-                    _walk(child)
-
-            for root in self.tree_view.Nodes:
-                _walk(root)
-            return selected
+            return self._collect_checked_keys_from_nodes(self.tree_view.Nodes)
 
     picker = TagSelectionForm(by_family)
     if picker.ShowDialog() == DialogResult.OK:
@@ -415,7 +487,7 @@ view_results = []
 
 with revit.Transaction('Hide fabrication duct tags in selected views'):
     for view in selected_views:
-        ids_to_hide = collect_matching_tags_in_view(doc, view, selected_type_id_values)
+        ids_to_hide = collect_matching_tags_in_view(doc, view, selected_type_id_values, selected_keys)
         if not ids_to_hide:
             view_results.append((_view_display_name(view), 0, 'No matching tags found'))
             continue
