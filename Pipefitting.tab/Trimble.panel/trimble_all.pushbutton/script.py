@@ -41,7 +41,7 @@ Places markers on selected pipes.
 output = script.get_output()
 
 BY_FAMILY = False
-DEBUG = True
+DEBUG = False
 ACCEPTED_FAMILIES = {
     'Pipe - PVC DWV Schedule 40 (PE x PE) - 20ft': 'schedule_40',
     'Pipe - CPVC Schedule 80 (PE x PE) - 20ft': 'schedule_80',
