@@ -11,6 +11,7 @@ from Autodesk.Revit.DB import (
     BuiltInCategory,
     ElementId,
     ElementTransformUtils,
+    FamilyInstance,
     FamilySymbol,
     FabricationPart,
     FilteredElementCollector,
@@ -25,7 +26,7 @@ from System.Collections.Generic import List
 
 # Button info
 # ======================================================================
-__title__ = 'Follow Pipe'
+__title__ = 'All'
 __doc__ = '''
 Places markers on selected pipes.
 '''
@@ -35,7 +36,19 @@ Places markers on selected pipes.
 output = script.get_output()
 BY_FAMILY = False
 
-output.print_md('line 34')
+DEBUG = False
+
+
+def debug_print(message):
+    """Print a message only when DEBUG is enabled."""
+    if DEBUG:
+        output.print_md(message)
+
+
+ACCEPTED_FAMILIES = {
+    'Pipe - PVC DWV Schedule 40 (PE x PE) - 20ft',
+    'Pipe - CPVC Schedule 80 (PE x PE) - 20ft',
+}
 
 
 def get_fabrication_pipe_radius(pipe):
@@ -87,35 +100,69 @@ def get_bimrx_point_symbol():
     raise ValueError('The BIMrx_Point family is not loaded in this model.')
 
 
+def get_existing_point_locations():
+    """Return XYZ locations of all existing BIMrx_Point instances in the model."""
+    instances = (FilteredElementCollector(revit.doc)
+                 .OfClass(FamilyInstance)
+                 .OfCategory(BuiltInCategory.OST_GenericModel))
+
+    locations = []
+    for instance in instances:
+        if instance.Symbol.Family.Name == 'BIMrx_Point':
+            bounding_box = instance.get_BoundingBox(None)
+            origin = instance.Location.Point
+            if bounding_box is None:
+                locations.append(origin)
+            else:
+                locations.append(XYZ(origin.X, origin.Y, bounding_box.Max.Z))
+
+    return locations
+
+
+def point_already_exists(target_point, existing_locations, tolerance=0.01):
+    """Check whether a point already exists near the target location."""
+    for existing_point in existing_locations:
+        if existing_point.DistanceTo(target_point) <= tolerance:
+            return True
+    return False
+
+
 def create_pipe_points(pipes):
     """Create a BIMrx_Point instance at each pipe bottom point."""
-    output.print_md('Searching for BIMrx_Point type...')
+    debug_print('Searching for BIMrx_Point type...')
     point_symbol = get_bimrx_point_symbol()
-    output.print_md('BIMrx_Point type found: {}'.format(point_symbol.Id))
+    debug_print('BIMrx_Point type found: {}'.format(point_symbol.Id))
     created_count = 0
     created_ids = List[ElementId]()
+    existing_locations = get_existing_point_locations()
     transaction = Transaction(revit.doc, 'Create Pipe Bottom Points')
     transaction.Start()
-    output.print_md('Transaction started.')
+    debug_print('Transaction started.')
 
     if not point_symbol.IsActive:
         point_symbol.Activate()
         revit.doc.Regenerate()
 
     for pipe in pipes:
-        output.print_md('Getting pipe level...')
+        debug_print('Getting pipe level...')
         level = revit.doc.GetElement(pipe.LevelId)
         if not isinstance(level, Level):
             raise ValueError('The pipe does not have a valid reference level.')
 
-        output.print_md('Calculating pipe points...')
+        debug_print('Calculating pipe points...')
         for point in get_point(pipe):
+            if point_already_exists(point, existing_locations):
+                debug_print(
+                    'Skipping point at {}: already exists.'.format(point)
+                )
+                continue
+
             level_relative_point = XYZ(
                 point.X,
                 point.Y,
                 point.Z - level.Elevation,
             )
-            output.print_md('Placing point at {}'.format(level_relative_point))
+            debug_print('Placing point at {}'.format(level_relative_point))
             instance = revit.doc.Create.NewFamilyInstance(
                 level_relative_point,
                 point_symbol,
@@ -136,7 +183,7 @@ def create_pipe_points(pipes):
             )
             revit.doc.Regenerate()
             moved_bounding_box = instance.get_BoundingBox(None)
-            output.print_md(
+            debug_print(
                 'Target Z: {:.6f}; bounding-box top Z: {:.6f}; '
                 'instance origin Z: {:.6f}'.format(
                     point.Z,
@@ -145,6 +192,7 @@ def create_pipe_points(pipes):
                 )
             )
             created_ids.Add(instance.Id)
+            existing_locations.append(point)
             created_count += 1
 
     transaction.Commit()
@@ -156,26 +204,28 @@ def create_pipe_points(pipes):
 
 selected_pipes = []
 
-output.print_md('Before reading selection')
-selected_ids = revit.uidoc.Selection.GetElementIds()
-output.print_md('Selection IDs read: {}'.format(selected_ids.Count))
+debug_print('Collecting fabrication pipes from active view...')
+view_pipes = list(
+    FilteredElementCollector(revit.doc, revit.active_view.Id)
+    .OfClass(FabricationPart)
+    .WhereElementIsNotElementType()
+)
+debug_print('Fabrication parts found in view: {}'.format(len(view_pipes)))
 
-for element_id in selected_ids:
-    element = revit.doc.GetElement(element_id)
-    output.print_md('Selected type: {}'.format(element.GetType().FullName))
-
-    if (isinstance(element, FabricationPart)
-            and isinstance(element.Location, LocationCurve)):
-        selected_pipes.append(element)
+for element in view_pipes:
+    if isinstance(element.Location, LocationCurve):
+        element_type = revit.doc.GetElement(element.GetTypeId())
+        if element_type.FamilyName in ACCEPTED_FAMILIES:
+            selected_pipes.append(element)
 
 
-output.print_md('Selected pipes: {}'.format(len(selected_pipes)))
+debug_print('Selected pipes: {}'.format(len(selected_pipes)))
 if not selected_pipes:
-    raise ValueError('Select at least one MEP pipe before running Follow Pipe.')
+    raise ValueError('No matching MEP pipes found in the active view.')
 
-output.print_md('Finding BIMrx_Point type...')
+debug_print('Finding BIMrx_Point type...')
 created_count, created_ids = create_pipe_points(selected_pipes)
-output.print_md(
+debug_print(
     'Created BIMrx_Point instances: {}'.format(
         ', '.join(str(element_id) for element_id in created_ids)
     )
