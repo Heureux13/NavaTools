@@ -9,8 +9,8 @@ the copyright holder."""
 
 """Runs automatically  at Revit startup to keep this extension up to date"""
 
-import subprocess
 
+import subprocess
 NavaTools = 'MyTools'
 
 try:
