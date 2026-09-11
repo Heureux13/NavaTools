@@ -23,16 +23,11 @@ try:
     )
     out, err = p.communicate()
 
-    out_text = out.decode('utf-8', errors='ignore').strip()
-    err_text = err.decode('utf-8', errors='ignore').strip()
-
-    if out_text:
-        logger.info(out_text)
-    if err_text:
-        logger.warning(err_text)
-
     if p.returncode != 0:
-        logger.warning('git pull failed with code %s', p.returncode)
+        err_text = (err or b'').decode('utf-8', errors='ignore').strip()
+        if not err_text:
+            err_text = (out or b'').decode('utf-8', errors='ignore').strip()
+        logger.warning('NavaTools auto-update failed (code %s): %s', p.returncode, err_text)
 
 except Exception as ex:
-    logger.warning('startup update exception: %s', ex)
+    logger.warning('NavaTools auto-update exception: %s', ex)
