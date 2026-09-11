@@ -13,6 +13,10 @@ import subprocess
 from pyrevit import script
 
 logger = script.get_logger()
+logger.info('Running git pull in: %s', EXT_DIR)
+logger.info('git stdout: %s', out_text)
+logger.warning('git stderr: %s', err_text)
+logger.warning('git pull failed with code: %s', p.returncode)
 
 EXT_DIR = os.path.dirname(__file__)
 
