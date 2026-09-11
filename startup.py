@@ -8,16 +8,27 @@ the copyright holder."""
 # ======================================================================
 
 """Runs automatically  at Revit startup to keep this extension up to date"""
-
-
+import os
 import subprocess
-NavaTools = 'NavaTools'
+from pyrevit import script
+
+logger = script.get_logger()
+
+EXT_DIR = os.path.dirname(__file__)
 
 try:
-    subprocess.Popen(
-        ['pyrevit', 'extension', 'update', NavaTools],
-        creationflags=subprocess.CREATE_NO_WINDOW
+    p = subprocess.Popen(
+        ['git', '-C', EXT_DIR, 'pull', '--ff-only'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
     )
+    out, err = p.communicate()
 
-except Exception:
-    pass
+    if out:
+        logger.info(out.decode('utf-8', errors='ignore').strip())
+    if err:
+        logger.warning(err.decode('utf-8', errors='ignore').strip())
+    if p.returncode != 0:
+        logger.warning('Auto-update failed (exit %s).', p.returncode)
+except Exception as ex:
+    logger.warning('Auto-update error: %s', ex)
