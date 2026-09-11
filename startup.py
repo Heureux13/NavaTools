@@ -13,11 +13,6 @@ import subprocess
 from pyrevit import script
 
 logger = script.get_logger()
-logger.info('Running git pull in: %s', EXT_DIR)
-logger.info('git stdout: %s', out_text)
-logger.warning('git stderr: %s', err_text)
-logger.warning('git pull failed with code: %s', p.returncode)
-
 EXT_DIR = os.path.dirname(__file__)
 
 try:
@@ -28,11 +23,16 @@ try:
     )
     out, err = p.communicate()
 
-    if out:
-        logger.info(out.decode('utf-8', errors='ignore').strip())
-    if err:
-        logger.warning(err.decode('utf-8', errors='ignore').strip())
+    out_text = out.decode('utf-8', errors='ignore').strip()
+    err_text = err.decode('utf-8', errors='ignore').strip()
+
+    if out_text:
+        logger.info(out_text)
+    if err_text:
+        logger.warning(err_text)
+
     if p.returncode != 0:
-        logger.warning('Auto-update failed (exit %s).', p.returncode)
+        logger.warning('git pull failed with code %s', p.returncode)
+
 except Exception as ex:
-    logger.warning('Auto-update error: %s', ex)
+    logger.warning('startup update exception: %s', ex)
