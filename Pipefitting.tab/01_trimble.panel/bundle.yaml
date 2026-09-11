@@ -1,0 +1,5 @@
+title:
+  en_us: Trimble
+layout:
+  - trimble_all
+  - trimble_select
