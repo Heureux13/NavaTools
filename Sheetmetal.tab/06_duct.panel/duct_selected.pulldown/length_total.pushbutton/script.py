@@ -15,7 +15,7 @@ from ducts.revit_duct import RevitDuct
 
 __title__ = "Length Total"
 __doc__ = """
-Returns length for duct(s) selected"""
+Returns length for duct(s) selected."""
 
 # Variables
 # ==================================================

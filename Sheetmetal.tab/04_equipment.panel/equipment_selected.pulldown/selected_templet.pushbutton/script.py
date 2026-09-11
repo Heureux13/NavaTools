@@ -13,8 +13,7 @@ from pyrevit import script
 # ======================================================================
 __title__ = 'Testing'
 __doc__ = """
-Gives raw offset data and writes to parameters
-"""
+Gives raw offset data and writes to parameters."""
 
 # Variables
 # ======================================================================

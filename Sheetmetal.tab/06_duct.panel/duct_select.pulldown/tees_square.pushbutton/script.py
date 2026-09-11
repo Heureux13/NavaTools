@@ -20,8 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Tee Square"
 __doc__ = """
-Selects all square tees
-"""
+Selects all square tees."""
 
 # Variables
 # ==================================================

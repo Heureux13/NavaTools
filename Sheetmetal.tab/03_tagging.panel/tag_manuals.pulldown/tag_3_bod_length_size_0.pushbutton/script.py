@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 # ==================================================
 __title__ = "3 Length/BOD/Size 0"
 __doc__ = """
-Tag selected elements with BOD, Length, and Size tags
-"""
+Tag selected elements with BOD, Length, and Size tags."""
 
 # Variables
 # ==================================================

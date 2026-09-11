@@ -27,7 +27,7 @@ from System.Collections.Generic import List
 __title__ = 'Copy MEP Tags'
 __doc__ = """
 Select all matching MEP Tags in active view,
-then copy/paste them into selected views"""
+then copy/paste them into selected views."""
 
 # Variables
 # ======================================================================

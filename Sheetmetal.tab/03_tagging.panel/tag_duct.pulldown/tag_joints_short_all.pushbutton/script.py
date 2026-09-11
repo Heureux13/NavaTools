@@ -22,8 +22,7 @@ from constants.print_outputs import print_disclaimer
 __title__ = "Tag Joints Short All"
 __doc__ = """
 Tag all short straight duct with length.
-Will skip tag if stack is found
-"""
+Will skip tag if stack is found."""
 
 # Variables
 # ==================================================

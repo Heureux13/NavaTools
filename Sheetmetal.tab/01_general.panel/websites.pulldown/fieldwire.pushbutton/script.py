@@ -20,8 +20,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Fieldwire"
 __doc__ = """
-Shortcut to the Fieldwire website
-"""
+Shortcut to the Fieldwire website."""
 
 # Variables
 # ==================================================
@@ -36,11 +35,12 @@ CONFIG_DIR = os.path.dirname(CONFIG_FILE)
 if not os.path.exists(CONFIG_DIR):
     try:
         os.makedirs(CONFIG_DIR)
-    except:
+    except BaseException:
         pass
 
 # Class
 # =====================================================================
+
 
 class FieldwireForm(Form):
     def __init__(self):
@@ -148,7 +148,7 @@ class FieldwireForm(Form):
             try:
                 with open(CONFIG_FILE, 'r') as f:
                     projects = json.load(f)
-            except:
+            except BaseException:
                 pass
         return projects
 
@@ -163,12 +163,12 @@ class FieldwireForm(Form):
         project_name = self.show_input_dialog("Enter project name:", "Add Project")
         if not project_name:
             return
-        
+
         # Get project ID
         project_id = self.show_input_dialog("Enter Fieldwire project ID:", "Add Project")
         if not project_id:
             return
-        
+
         self.projects[project_name] = project_id
         self.save_projects()
         self.refresh_combo()
@@ -193,20 +193,20 @@ class FieldwireForm(Form):
         dlg.Text = title
         dlg.Width = 400
         dlg.Height = 150
-        
+
         lbl = Label()
         lbl.Text = prompt
         lbl.Top = 20
         lbl.Left = 20
         lbl.Width = 350
         dlg.Controls.Add(lbl)
-        
+
         txt = TextBox()
         txt.Top = 50
         txt.Left = 20
         txt.Width = 350
         dlg.Controls.Add(txt)
-        
+
         btn_ok = Button()
         btn_ok.Text = "OK"
         btn_ok.Top = 85
@@ -215,7 +215,7 @@ class FieldwireForm(Form):
         btn_ok.DialogResult = DialogResult.OK
         dlg.Controls.Add(btn_ok)
         dlg.AcceptButton = btn_ok
-        
+
         if dlg.ShowDialog() == DialogResult.OK:
             return txt.Text
         return None

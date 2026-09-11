@@ -19,8 +19,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Flex"
 __doc__ = """
-Find flex longer than 60 inches
-"""
+Find flex longer than 60 inches."""
 
 # Variables
 # ==================================================

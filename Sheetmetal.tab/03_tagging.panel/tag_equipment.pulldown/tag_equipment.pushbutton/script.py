@@ -51,8 +51,7 @@ from config.parameters_registry import BBM_SUBJECT, PYT_NOTE_0
 # =================================================
 __title__ = "Tag Equipment"
 __doc__ = """
-
-"""
+placeholder, needs updating."""
 
 # Subject -> equipment slot mapping.
 # fmt: off

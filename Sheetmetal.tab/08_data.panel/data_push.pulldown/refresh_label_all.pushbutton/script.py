@@ -28,7 +28,7 @@ Type Mark -> Mark -> _UMI_PYT_Label
 
 Last non-empty value in the hierarchy wins.
 Applies to air terminals, mechanical equipment, MEP duct,
-fabrication ductwork (including stiffeners), and fabrication hangers"""
+fabrication ductwork (including stiffeners), and fabrication hangers."""
 
 # Variables
 # ======================================================================

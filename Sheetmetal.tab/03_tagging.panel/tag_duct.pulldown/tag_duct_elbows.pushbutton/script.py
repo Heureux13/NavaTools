@@ -22,8 +22,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 # ==================================================
 __title__ = "Tag Elbows"
 __doc__ = """
-Tag all fitting with assosiated label
-"""
+Tag all fitting with assosiated label."""
 
 # Rule toggles
 # ==================================================

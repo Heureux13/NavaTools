@@ -18,7 +18,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Workset Mechanical Equipment"
 __doc__ = """
-Toggle isolation and report worksets for MEP elements in the active view"""
+Toggle isolation and report worksets for MEP elements in the active view."""
 
 # Variables
 # ==================================================

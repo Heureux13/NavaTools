@@ -14,7 +14,7 @@ from pyrevit import revit, script
 # ======================================================================
 __title__ = 'Schedule Ceiling Data'
 __doc__ = """
-Lists all ceilings in the project with room/space and height data"""
+Lists all ceilings in the project with room/space and height data."""
 
 # Variables
 # ======================================================================

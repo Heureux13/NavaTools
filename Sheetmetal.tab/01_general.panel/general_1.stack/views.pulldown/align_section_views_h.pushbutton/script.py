@@ -22,10 +22,9 @@ from Autodesk.Revit.DB import (
 __title__ = 'Align Views Horizontally'
 __doc__ = """
 Select 2+ section viewports on an active sheet, then run.
-  - Aligns viewports vertically so their floor levels line up
-  - Equally spaces viewports horizontally (outer bounds preserved)
-  - Places every viewport title 0.5" below the largest view
-"""
+  - Aligns viewports vertically so their floor levels line up.
+  - Equally spaces viewports horizontally (outer bounds preserved).
+  - Places every viewport title 0.5" below the largest view."""
 
 # Constants
 # ======================================================================

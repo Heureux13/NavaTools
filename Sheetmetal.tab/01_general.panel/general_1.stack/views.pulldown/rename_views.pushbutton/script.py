@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
-__title__   = "Rename Views"
-__doc__     = """
-****************************************************************
-Description:
+# ======================================================================
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
 
-You can select views in the Project Browser or if no views are selected 
-a selection dialog will appear. You can then give them a prefix and/or suffix 
-and also replace a word in the view names with another word.
-****************************************************************
-"""
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+# ======================================================================
+
 
 # Imports
 # ==================================================
-from Autodesk.Revit.DB import *
-from pyrevit import revit, forms, DB
-from Autodesk.Revit.UI import UIDocument
-from Autodesk.Revit.ApplicationServices import Application
-
-#.NET Imports
-# ==================================================
-import clr
+from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
 from System.Collections.Generic import List
-
+import clr
+from Autodesk.Revit.ApplicationServices import Application
+from Autodesk.Revit.UI import UIDocument
+from pyrevit import revit, forms, DB
+from Autodesk.Revit.DB import *
+__title__ = "Rename Views"
+__doc__ = """
+You can select views in the Project Browser or if no views are selected
+a selection dialog will appear. You can then give them a prefix and/or suffix
+and also replace a word in the view names with another word."""
 
 # Variables
 # ==================================================
-app   = __revit__.Application #type: Application
-uidoc = __revit__.ActiveUIDocument #type: UIDocument
-doc   = revit.doc #type: Document
-view  = revit.active_view
+app = __revit__.Application  # type: Application
+uidoc = __revit__.ActiveUIDocument  # type: UIDocument
+doc = revit.doc  # type: Document
+view = revit.active_view
 
 # Main Code
 # ==================================================
@@ -48,27 +48,26 @@ if not sel_views:
 
 # User entered values
 # https://revitpythonwrapper.readthedocs.io/en/latest/
-from rpw.ui.forms import (FlexForm, Label, TextBox, Separator, Button)
-components = [Label("Add prefix:"),                      TextBox("prefix"),
-              Label("Word you want to replace:"),       TextBox("find"),
-              Label("Replacement for that word:"),      TextBox("replace"),
-              Label("Add suffix:"),                     TextBox("suffix"),
-              Separator(),                              Button("Rename Views")]
+components = [Label("Add prefix:"), TextBox("prefix"),
+              Label("Word you want to replace:"), TextBox("find"),
+              Label("Replacement for that word:"), TextBox("replace"),
+              Label("Add suffix:"), TextBox("suffix"),
+              Separator(), Button("Rename Views")]
 
 form = FlexForm("Rename Views", components)
 form.show()
 
 user_inputs = form.values
-prefix      = user_inputs["prefix"]
-find        = user_inputs["find"]
-replace     = user_inputs["replace"]
-suffix      = user_inputs["suffix"]
+prefix = user_inputs["prefix"]
+find = user_inputs["find"]
+replace = user_inputs["replace"]
+suffix = user_inputs["suffix"]
 
 
 # start transaction to make changes in project
 t = Transaction(doc, "Rename Views")
 
-t.Start() 
+t.Start()
 
 for view in sel_views:
 
@@ -77,16 +76,15 @@ for view in sel_views:
     new_name = prefix + old_name.replace(find, replace) + suffix
 
     # rename views - ensure unique view names
-    
+
     for i in range(20):
         try:
             view.Name = new_name
             print("{} -> {}".format(old_name, new_name))
             break
-        except:
+        except BaseException:
             new_name += "*"
 
 t.Commit()
 
 print("Done!")
-

@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate TA"
 __doc__ = """
-Isolate Transfer Air
-"""
+Isolate Transfer Air."""
 
 # Variables
 # ==================================================

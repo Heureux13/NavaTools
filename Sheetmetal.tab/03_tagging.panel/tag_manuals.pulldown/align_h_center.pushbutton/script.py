@@ -16,7 +16,7 @@ __title__ = 'Horizontal Center Align'
 __doc__ = """
 Align selected annotations by horizontal center line and
 space them with a fixed 1/32" horizontal gap.
-Sets Angle to 90 before alignment"""
+Sets Angle to 90 before alignment."""
 
 # Variables
 # ======================================================================

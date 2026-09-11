@@ -17,8 +17,7 @@ from config.parameters_registry import *
 # =================================================
 __title__ = "Set Sleeve Type"
 __doc__ = """
-Sets `_type` to `sleeve` on selected elements
-"""
+Sets `_type` to `sleeve` on selected elements."""
 
 # Parameters to set
 parameters_to_set = {

@@ -20,8 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Tee Radius"
 __doc__ = """
-Selects all round tees
-"""
+Selects all round tees."""
 
 # Variables
 # ==================================================

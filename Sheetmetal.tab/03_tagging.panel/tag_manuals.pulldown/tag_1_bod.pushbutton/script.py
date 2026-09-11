@@ -31,8 +31,7 @@ except Exception as e:
 # ==================================================
 __title__ = "1 BOD"
 __doc__ = """
-Tags with BOD tag at center of duct
-"""
+Tags with BOD tag at center of duct."""
 
 # Variables
 # ==================================================

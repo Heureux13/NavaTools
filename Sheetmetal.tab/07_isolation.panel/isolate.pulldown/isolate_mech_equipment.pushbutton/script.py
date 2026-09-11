@@ -18,8 +18,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Isolate Mechanical Equipment"
 __doc__ = """
-Isolate all mechanical equipment (ducts, pipes, terminals, fittings, equipment)
-"""
+Isolate all mechanical equipment (ducts, pipes, terminals, fittings, equipment)."""
 
 # Variables
 # ==================================================

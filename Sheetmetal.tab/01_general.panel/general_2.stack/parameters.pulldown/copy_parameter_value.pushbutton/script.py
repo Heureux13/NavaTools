@@ -22,7 +22,7 @@ from System.Collections.Generic import List
 # ======================================================================
 __title__ = 'Copy Parameter Value'
 __doc__ = """
-Copy legacy _offset values into PYT offset parameters"""
+Copy legacy _offset values into PYT offset parameters."""
 
 # Configuration
 # ======================================================================

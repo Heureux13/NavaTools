@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate by Service"
 __doc__ = """
-Isolates view to show only fabrication elements with selected services
-"""
+Isolates view to show only fabrication elements with selected services.S"""
 
 # Variables
 # ==================================================

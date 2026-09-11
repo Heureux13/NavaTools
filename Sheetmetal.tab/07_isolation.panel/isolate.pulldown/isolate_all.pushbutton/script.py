@@ -19,7 +19,7 @@ from config.parameters_registry import RVT_CLEARANCE_ZONE, RVT_FAMILY, RVT_TYPE
 # ===================================================
 __title__ = "Isolate by MEP"
 __doc__ = """
-Toggle isolation of walls, ducts, pipes, steel beams, and floors"""
+Toggle isolation of walls, ducts, pipes, steel beams, and floors."""
 
 # Variables
 # ==================================================

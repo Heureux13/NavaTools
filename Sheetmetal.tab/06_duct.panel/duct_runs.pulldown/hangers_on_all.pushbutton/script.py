@@ -21,7 +21,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Hanger weight on all runs"
 __doc__ = """
-Assigns weight on all hangers and runs"""
+Assigns weight on all hangers and runs."""
 
 # Variables
 # ==================================================

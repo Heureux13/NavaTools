@@ -17,8 +17,7 @@ from config.parameters_registry import *
 # =================================================
 __title__ = "Skip Tag"
 __doc__ = """
-Sets parameters to skip selected elements when tagging
-"""
+Sets parameters to skip selected elements when tagging."""
 
 # Parameters to set to 'skip'
 parameters_to_skip = {

@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Spiral"
 __doc__ = """
-Selects all spiral straight duct
-"""
+Selects all spiral straight duct."""
 
 # Variables
 # ==================================================

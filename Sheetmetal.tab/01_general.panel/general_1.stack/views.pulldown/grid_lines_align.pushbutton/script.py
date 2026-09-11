@@ -14,9 +14,8 @@ from pyrevit import revit, script, forms, DB
 __title__ = 'Align Grid Lines'
 __doc__ = """
 In the active section/elevation view, align visible grid extents so:
-- bottom is flush with view bottom
-- top is 1'-0" above view top
-"""
+- bottom is flush with view bottom.
+- top is 1'-0" above view top."""
 
 # Variables
 # ======================================================================

@@ -22,8 +22,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 # ==================================================
 __title__ = "Tag Offsets"
 __doc__ = """
-Tag all fitting with assosiated label
-"""
+Tag all fitting with assosiated label."""
 
 # Revit context
 # ==================================================

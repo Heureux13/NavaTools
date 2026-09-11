@@ -19,21 +19,21 @@ from rpw.ui.forms import FlexForm, Label, TextBox, Separator, Button
 # ======================================================================
 __title__ = 'Ginger Rename'
 __doc__ = """
-Follow the instructions
-"""
+Follow the instructions."""
 
 # Variables
 # ======================================================================
-doc = __revit__.ActiveUIDocument.Document #type:Document
+doc = __revit__.ActiveUIDocument.Document  # type:Document
 app = __revit__.Application
-output = script.get_output() # pyRevit Output Menu
+output = script.get_output()  # pyRevit Output Menu
+
 
 def get_rename_parameters():
     components = [
-        Label("Prefix:"),   TextBox("prefix",   Text=""),
-        Label("Find:"),     TextBox("find",     Text=""),
-        Label("Replace:"),  TextBox("replace",  Text=""),
-        Label("Suffix:"),   TextBox("suffix",   Text=""),
+        Label("Prefix:"), TextBox("prefix", Text=""),
+        Label("Find:"), TextBox("find", Text=""),
+        Label("Replace:"), TextBox("replace", Text=""),
+        Label("Suffix:"), TextBox("suffix", Text=""),
         Separator(),
         Button("OK"),
     ]
@@ -44,12 +44,13 @@ def get_rename_parameters():
     if not values:
         forms.alert("No Values Entered", exitscript=True)
 
-    PREFIX  = values["prefix"]
-    FIND    = values["find"]
+    PREFIX = values["prefix"]
+    FIND = values["find"]
     REPLACE = values["replace"]
-    SUFFIX  = values["suffix"]
+    SUFFIX = values["suffix"]
 
     return PREFIX, FIND, REPLACE, SUFFIX
+
 
 # 1. Select Views
 selected_views = forms.select_views()
@@ -62,7 +63,7 @@ PREFIX, FIND, REPLACE, SUFFIX = get_rename_parameters()
 
 # 3. Change view names
 name_changes = []
-dont_allow   = r'\\:{\}[]|;<>?`~'
+dont_allow = r'\\:{\}[]|;<>?`~'
 
 t = Transaction(doc, "Name Swapper")
 t.Start()

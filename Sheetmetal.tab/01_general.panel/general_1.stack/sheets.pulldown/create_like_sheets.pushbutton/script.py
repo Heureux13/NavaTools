@@ -36,8 +36,7 @@ __doc__ = """
 3. Select a prefix of what to call the sheets, it will take
 the ending of your selected views ending.
 EX: View name is Area B1, your prefix is, SH-01-, it will
-create a new sheet and number it SH-01-B1
-"""
+create a new sheet and number it SH-01-B1."""
 
 # SheetCollection is a native Revit 2024+ feature
 try:

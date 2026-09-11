@@ -17,8 +17,7 @@ from revit.revit_views import RevitViews
 # ======================================================================
 __title__ = 'Hide Section View Markers'
 __doc__ = """
-Hides section view markers not in triggers
-"""
+Hides section view markers not in triggers."""
 
 # Variables
 # ======================================================================

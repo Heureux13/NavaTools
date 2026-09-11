@@ -20,7 +20,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = 'Straight Duct - Short'
 __doc__ = """
-Selects straight duct that is shorter than 12""""
+Selects straight duct that is shorter than 12"."""
 
 # Variables
 # ==================================================

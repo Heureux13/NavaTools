@@ -18,7 +18,7 @@ import sys
 # ===================================================
 __title__ = "Hide Annotations"
 __doc__ = """
-Hides annotation elements by family in the active view"""
+Hides annotation elements by family in the active view."""
 
 # Variables
 # ==================================================

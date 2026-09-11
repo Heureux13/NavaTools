@@ -30,8 +30,7 @@ except Exception:
 # ==================================================
 __title__ = "Tag Fittings"
 __doc__ = """
-Tag all fitting with assosiated label
-"""
+Tag all fitting with assosiated label."""
 
 # Rule toggles
 # ==================================================

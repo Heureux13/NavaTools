@@ -15,8 +15,7 @@ from pyrevit import DB, revit, script
 # ==================================================
 __title__ = "Remove Annotations"
 __doc__ = """
-Removes annotations on selected items
-"""
+Removes annotations on selected items."""
 
 # Variables
 # ==================================================

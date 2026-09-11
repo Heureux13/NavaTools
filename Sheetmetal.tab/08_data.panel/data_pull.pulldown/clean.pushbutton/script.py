@@ -12,8 +12,7 @@ from System.Collections.Generic import List
 # =================================================
 __title__ = "Clean"
 __doc__ = """
-Takes selected and filters everything out except non-fab duct
-"""
+Takes selected and filters everything out except non-fab duct."""
 
 # Variables
 # ===================================================

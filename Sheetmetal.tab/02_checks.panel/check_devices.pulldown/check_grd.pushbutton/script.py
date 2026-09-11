@@ -26,7 +26,7 @@ from config.parameters_registry import *
 # =================================================
 __title__ = "Check GRDs"
 __doc__ = """
-Prints out quantity and labels of GRDs in the current view"""
+Prints out quantity and labels of GRDs in the current view."""
 
 # Parameters to check for GRDs
 # ==================================================

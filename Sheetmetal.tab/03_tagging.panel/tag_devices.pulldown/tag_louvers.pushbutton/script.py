@@ -40,8 +40,7 @@ except ImportError:
 # =================================================
 __title__ = "Tag Louvers"
 __doc__ = """
-Tags all air terminals in the current view
-"""
+Tags all air terminals in the current view."""
 
 # Helpers
 # ==================================================

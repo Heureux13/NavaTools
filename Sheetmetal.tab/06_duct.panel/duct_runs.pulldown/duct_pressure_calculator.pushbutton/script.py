@@ -15,7 +15,7 @@ from constants.delete import leakage_summary
 __title__ = 'Duct Pressure'
 __doc__ = """
 Calculate SMACNA allowable duct leakage values from leakage class, test pressure,
-surface area, and measured leakage"""
+surface area, and measured leakage."""
 
 
 output = script.get_output()

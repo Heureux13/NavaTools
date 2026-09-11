@@ -20,7 +20,7 @@ from System.Collections.Generic import List
 # ======================================================================
 __title__ = 'Find Parameter Value'
 __doc__ = """
-Find MEP elements with specified parameter and filter by value"""
+Find MEP elements with specified parameter and filter by value."""
 
 # Configuration
 # ======================================================================

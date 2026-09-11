@@ -9,6 +9,6 @@ import webbrowser
 
 __title__ = "Sharepoint"
 __doc__ = """
-Takes you to the United Mechanical sharepoint"""
+Takes you to the United Mechanical sharepoint."""
 
 webbrowser.open("https://unitedmech0.sharepoint.com/sites/BIMDepartment/SitePages/Home.aspx")

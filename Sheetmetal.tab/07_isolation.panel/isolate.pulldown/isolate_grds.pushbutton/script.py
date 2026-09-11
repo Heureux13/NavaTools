@@ -18,8 +18,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Isolate GRDs"
 __doc__ = """
-Isolate GRDs
-"""
+Isolate GRDs."""
 
 # Variables
 # ==================================================

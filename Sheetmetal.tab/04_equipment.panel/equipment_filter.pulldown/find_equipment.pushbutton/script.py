@@ -33,7 +33,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Find Equipment by BBM Label"
 __doc__ = """
-Tree picker for Mechanical Equipment grouped by BBM label"""
+Tree picker for Mechanical Equipment grouped by BBM label."""
 
 
 # Revit context

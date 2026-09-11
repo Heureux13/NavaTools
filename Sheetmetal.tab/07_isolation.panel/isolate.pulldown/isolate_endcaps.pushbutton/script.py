@@ -18,7 +18,7 @@ from ducts.revit_duct import RevitDuct
 # ===================================================
 __title__ = "Isolate Elbows"
 __doc__ = """
-Toggle isolation to show only elbow duct elements"""
+Toggle isolation to show only elbow duct elements."""
 
 # Variables
 # ==================================================

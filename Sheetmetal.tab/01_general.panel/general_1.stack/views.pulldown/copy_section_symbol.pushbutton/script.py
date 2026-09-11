@@ -24,8 +24,7 @@ from System.Collections.Generic import List
 # ======================================================================
 __title__ = 'Copy Section'
 __doc__ = """
-Select 
-"""
+Placeholder, update later."""
 
 # Variables
 # ======================================================================

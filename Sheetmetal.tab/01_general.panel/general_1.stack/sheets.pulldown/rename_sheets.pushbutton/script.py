@@ -10,7 +10,7 @@ from Autodesk.Revit.DB import *
 __title__ = "Rename Sheets"
 __doc__ = """
 Select sheets to rename. You can then give them a prefix and/or suffix,
-and also replace a word in the sheet names with another word"""
+and also replace a word in the sheet names with another word."""
 
 
 app = __revit__.Application

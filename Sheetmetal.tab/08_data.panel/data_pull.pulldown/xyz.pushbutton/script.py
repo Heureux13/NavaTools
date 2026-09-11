@@ -16,8 +16,7 @@ from ducts.revit_xyz import RevitXYZ
 # ===================================================
 __title__ = "XYZ"
 __doc__ = """
-Gets the XYZ Coordinates for Revit elements
-"""
+Gets the XYZ Coordinates for Revit elements.S"""
 
 # Variables
 # ==================================================

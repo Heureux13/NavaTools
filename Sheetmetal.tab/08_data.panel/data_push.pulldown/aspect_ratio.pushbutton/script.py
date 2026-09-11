@@ -18,8 +18,7 @@ from pyrevit import revit, script
 # =================================================
 __title__ = "Set Aspect Ratio"
 __doc__ = """
-Gives a rounded duct ratio
-"""
+Gives a rounded duct ratio.S"""
 
 
 # Code

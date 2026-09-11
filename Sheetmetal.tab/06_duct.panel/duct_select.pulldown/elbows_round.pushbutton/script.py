@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Elbows Round"
 __doc__ = """
-Select all round elbows
-"""
+Select all round elbows."""
 
 # Variables
 # ==================================================

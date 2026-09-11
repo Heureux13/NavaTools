@@ -20,7 +20,7 @@ from config.parameters_registry import (
 # ======================================================================
 __title__ = 'Set Order Number'
 __doc__ = """
-Sets a new order number based on previous numbers"""
+Sets a new order number based on previous numbers."""
 
 # Variables
 # ======================================================================

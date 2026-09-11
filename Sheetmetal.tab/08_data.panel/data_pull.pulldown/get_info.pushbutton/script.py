@@ -18,8 +18,7 @@ from config.parameters_registry import *
 # =================================================
 __title__ = "Basic Info"
 __doc__ = """
-Shows basic information of selected paramters
-"""
+Shows basic information of selected paramters."""
 
 # Variables
 # ==================================================

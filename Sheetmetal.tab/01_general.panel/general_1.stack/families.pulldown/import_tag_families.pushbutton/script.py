@@ -22,8 +22,7 @@ from System.Windows.Forms import DialogResult, FolderBrowserDialog
 # ======================================================================
 __title__ = 'Import Tag Families'
 __doc__ = """
-Import all annotation/tag family
-"""
+Import all annotation/tag family."""
 
 # Variables
 # ======================================================================

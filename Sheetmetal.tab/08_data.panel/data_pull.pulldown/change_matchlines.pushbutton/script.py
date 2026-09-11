@@ -21,7 +21,7 @@ __title__ = "Select View References"
 __doc__ = """
 Shows all view references in the current view grouped by their target floor.
 Select the groups you want to change, and they'll be selected in Revit so you
-can batch-edit them in the Properties panel"""
+can batch-edit them in the Properties panel."""
 
 # Variables
 # ==================================================

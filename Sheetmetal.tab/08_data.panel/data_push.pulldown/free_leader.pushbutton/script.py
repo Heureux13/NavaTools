@@ -16,7 +16,7 @@ from Autodesk.Revit.DB import Transaction, IndependentTag, BuiltInCategory
 # =================================================
 __title__ = "Free Leader"
 __doc__ = """
-Take what ever annotation you have selected and it will add leader line and make it free end"""
+Take what ever annotation you have selected and it will add leader line and make it free end."""
 
 # Code
 # ==================================================

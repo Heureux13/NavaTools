@@ -23,8 +23,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Select by Fab Duct"
 __doc__ = """
-Selects all fabrication duct, and filters them down by parameters to select
-"""
+Selects all fabrication duct, and filters them down by parameters to select."""
 
 # Variables
 # ==================================================

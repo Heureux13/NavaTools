@@ -16,10 +16,9 @@ from config.parameters_registry import *
 __title__ = 'Reverse Offset'
 __doc__ = """
 Reverses the offset direction by:
-- Swapping TU ↔ TD (and UP ↔ DN as legacy)
-- Flipping vertical arrows: ↑ ↔ ↓ (and horizontal → ↔ ← if present)
-- Keeping numbers intact
-"""
+- Swapping TU ↔ TD (and UP ↔ DN as legacy).
+- Flipping vertical arrows: ↑ ↔ ↓ (and horizontal → ↔ ← if present).
+- Keeping numbers intact."""
 
 # Variables
 # ======================================================================

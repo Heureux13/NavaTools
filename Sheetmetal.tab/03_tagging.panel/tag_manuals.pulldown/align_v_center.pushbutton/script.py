@@ -14,7 +14,7 @@ from pyrevit import DB, forms, revit
 __title__ = 'Vertical Center Align'
 __doc__ = """
 Align selected annotations by vertical center line and
-space them with a fixed 1/32" vertical gap"""
+space them with a fixed 1/32" vertical gap."""
 
 # Variables
 # ======================================================================

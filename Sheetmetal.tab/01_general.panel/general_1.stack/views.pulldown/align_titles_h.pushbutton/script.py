@@ -19,9 +19,8 @@ from Autodesk.Revit.DB import (
 __title__ = 'Align Titles Horizontally'
 __doc__ = """
 Select 2+ viewports on an active sheet, then run.
-  - Aligns viewport titles to one horizontal line (same Y)
-  - Does not move section views
-"""
+  - Aligns viewport titles to one horizontal line (same Y).
+  - Does not move section views."""
 
 # Variables
 # ======================================================================

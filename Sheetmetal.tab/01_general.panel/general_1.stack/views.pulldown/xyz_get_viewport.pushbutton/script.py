@@ -14,7 +14,7 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 # ======================================================================
 __title__ = 'Get Viewport XYZ'
 __doc__ = """
-Print selected viewport center, size, and corner coordinates"""
+Print selected viewport center, size, and corner coordinates."""
 
 # Variables
 # ======================================================================

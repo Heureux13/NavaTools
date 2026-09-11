@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate SA"
 __doc__ = """
-Isolate Supply Air
-"""
+Isolate Supply Air."""
 
 # Variables
 # ==================================================

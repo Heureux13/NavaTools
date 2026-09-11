@@ -24,6 +24,12 @@ except Exception:
     UnitTypeId = None
     SpecTypeId = None
 
+# Button info
+# ======================================================================
+__title__ = 'Populate Schedule'
+__doc__ = """
+Import Excel or CSV data and populate an existing editable Revit schedule."""
+
 # Import Bluebeam column mapping
 lib_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'lib')
 if lib_path not in sys.path:
@@ -96,13 +102,6 @@ def _com_index(obj, *indices):
         'Item', _INVOKE_GET, None, obj,
         System.Array[System.Object](list(indices))
     )
-
-
-# Button info
-# ======================================================================
-__title__ = 'Populate Schedule'
-__doc__ = """
-Import Excel or CSV data and populate an existing editable Revit schedule"""
 
 
 # Variables

@@ -16,8 +16,7 @@ from pyrevit import revit, output, script
 # =================================================
 __title__ = "Sync"
 __doc__ = """
-Asks if you want to sync and save every hour
-"""
+Single press button to sync and save."""
 
 # Variables
 # ======================================================================================

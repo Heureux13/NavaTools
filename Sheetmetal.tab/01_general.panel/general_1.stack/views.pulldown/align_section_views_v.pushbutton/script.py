@@ -19,10 +19,9 @@ from Autodesk.Revit.DB import (
 __title__ = 'Align Views Vertically'
 __doc__ = """
 Select 2+ section viewports on an active sheet, then run.
-  - Aligns viewports horizontally so their level lines share the same U
-  - Equally spaces viewports vertically (outer bounds preserved)
-  - Places every viewport title 0.5" below its view, left-aligned to the largest
-"""
+  - Aligns viewports horizontally so their level lines share the same U.
+  - Equally spaces viewports vertically (outer bounds preserved).
+  - Places every viewport title 0.5" below its view, left-aligned to the largest."""
 
 # Constants
 # ======================================================================

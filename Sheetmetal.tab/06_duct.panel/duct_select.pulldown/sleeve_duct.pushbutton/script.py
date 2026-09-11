@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Sleeve Duct"
 __doc__ = """
-Selects MEP ducts where `_type` is `sleeve`
-"""
+Selects MEP ducts where `_type` is `sleeve`."""
 
 # Variables
 # ==================================================

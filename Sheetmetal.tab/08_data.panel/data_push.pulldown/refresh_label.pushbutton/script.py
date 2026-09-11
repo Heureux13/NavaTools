@@ -23,7 +23,7 @@ __doc__ = """
 Refresh _UMI_BBM_Label from hierarchy:
 Type Mark -> Mark -> _UMI_PYT_Label
 
-Last non-empty value in the hierarchy wins"""
+Last non-empty value in the hierarchy wins."""
 
 # Variables
 # ======================================================================

@@ -38,8 +38,7 @@ from System.Windows.Forms import (
 # ======================================================================
 __title__ = 'Create Equipment Views smaller'
 __doc__ = """
-Select a Mechanical Equipment family and create optional 3D and section views
-"""
+Select a Mechanical Equipment family and create optional 3D and section views."""
 
 # Main Script
 # ======================================================================

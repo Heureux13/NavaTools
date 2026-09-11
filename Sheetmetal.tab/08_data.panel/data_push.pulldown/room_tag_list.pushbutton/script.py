@@ -21,7 +21,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Rooms - List w/ Ceilings"
 __doc__ = """
-Lists all room tags in the active view"""
+Lists all room tags in the active view."""
 
 # Variables
 # ==================================================

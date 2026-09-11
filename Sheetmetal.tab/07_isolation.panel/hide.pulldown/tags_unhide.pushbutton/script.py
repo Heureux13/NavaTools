@@ -15,7 +15,7 @@ from System.Collections.Generic import List
 __title__ = 'Unhide Fab Tags in Views'
 __doc__ = """
 Open a menu of all MEP Fabrication Ductwork Tag types.
-Pick tag types and views, then unhide matching hidden tags in those views"""
+Pick tag types and views, then unhide matching hidden tags in those views."""
 
 # Variables
 # ======================================================================

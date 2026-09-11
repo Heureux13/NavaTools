@@ -22,8 +22,7 @@ __doc__ = """
 Selects straight duct/spiral longer than:
 TDF     = 56"
 S&D     = 59"
-Spiral  = 120"
-"""
+Spiral  = 120" """
 
 # Variables
 # ==================================================

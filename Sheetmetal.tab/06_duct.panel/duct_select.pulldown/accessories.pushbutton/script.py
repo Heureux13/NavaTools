@@ -17,8 +17,7 @@ from collections import Counter
 
 __title__ = "Accessories"
 __doc__ = """
-Selects all end caps and taps
-"""
+Selects all end caps and taps."""
 
 # Imports
 # ==================================================

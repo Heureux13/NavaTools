@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Elbows Radius"
 __doc__ = """
-Select all radius elbows
-"""
+Select all radius elbows."""
 
 # Variables
 # ==================================================

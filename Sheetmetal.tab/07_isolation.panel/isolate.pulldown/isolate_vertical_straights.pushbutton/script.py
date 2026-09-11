@@ -19,7 +19,7 @@ from ducts.revit_xyz import RevitXYZ
 # ===================================================
 __title__ = "Isolate Vertical Straights"
 __doc__ = """
-Toggle isolation to show only vertical straight duct elements"""
+Toggle isolation to show only vertical straight duct elements."""
 
 # Variables
 # ==================================================

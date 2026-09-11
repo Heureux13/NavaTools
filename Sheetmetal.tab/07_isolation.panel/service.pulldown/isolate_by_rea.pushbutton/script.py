@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate ReA"
 __doc__ = """
-Isolate Releaf Exhaust Air
-"""
+Isolate Releaf Exhaust Air.S"""
 
 # Variables
 # ==================================================

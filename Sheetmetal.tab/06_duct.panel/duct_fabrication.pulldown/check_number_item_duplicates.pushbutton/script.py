@@ -18,7 +18,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Check Item Numbers"
 __doc__ = """
-Gives a list of all duct with the same item number"""
+Gives a list of all duct with the same item number."""
 
 # Variables
 # ==================================================

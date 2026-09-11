@@ -15,7 +15,7 @@ from config.parameters_registry import PYT_NOTE_0
 # ======================================================================
 __title__ = 'Board 2.00"'
 __doc__ = """
-Set _UMI_PYT_Note0 to Liner 1.00" on selected elements"""
+Set _UMI_PYT_Note0 to Liner 1.00" on selected elements."""
 
 # Variables
 # ======================================================================

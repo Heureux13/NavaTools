@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate ToA"
 __doc__ = """
-Isolate Treated Outside Air
-"""
+Isolate Treated Outside Air."""
 
 # Variables
 # ==================================================

@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Unconnected"
 __doc__ = """
-Select all duct with an open connector
-"""
+Select all duct with an open connector."""
 
 # Variables
 # ==================================================

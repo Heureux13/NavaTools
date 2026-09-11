@@ -29,8 +29,7 @@ from config.parameters_registry import (
 # =================================================
 __title__ = "Tag Item Number All"
 __doc__ = """
-Tags Item Number
-"""
+Tags Item Number."""
 
 # Helpers
 # ==================================================

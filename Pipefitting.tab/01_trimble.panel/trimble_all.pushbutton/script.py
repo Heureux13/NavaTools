@@ -33,7 +33,7 @@ from pipefitting.sizes.pvc_sizes import SCHEDULE_40, SCHEDULE_80
 # ======================================================================
 __title__ = 'All'
 __doc__ = """
-Places markers on selected pipes"""
+Places markers on all pipes in view."""
 
 # Variables
 # ======================================================================

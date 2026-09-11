@@ -27,9 +27,8 @@ __title__ = 'Create Views'
 __doc__ = """
 Creates new views from scope boxes as dependents
 
-0. Select a View that contains one of more scope boxes in it
-1. Select the scope boxes you want to create views for
-"""
+0. Select a View that contains one of more scope boxes in it.
+1. Select the scope boxes you want to create views for."""
 
 # methods
 # =====================================================================

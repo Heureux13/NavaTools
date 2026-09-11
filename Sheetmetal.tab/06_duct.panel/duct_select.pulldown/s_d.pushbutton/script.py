@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "S&D"
 __doc__ = """
-Selects all S&D straight duct
-"""
+Selects all S&D straight duct."""
 
 # Variables
 # ==================================================

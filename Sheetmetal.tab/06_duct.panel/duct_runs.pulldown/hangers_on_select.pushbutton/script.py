@@ -19,8 +19,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Hangers on Select"
 __doc__ = """
-Total weight of selected duct / amount of hangers
-"""
+Total weight of selected duct / amount of hangers."""
 
 # Variables
 # ==================================================

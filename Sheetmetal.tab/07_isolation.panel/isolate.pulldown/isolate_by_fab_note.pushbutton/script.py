@@ -32,8 +32,7 @@ import re
 # ===================================================
 __title__ = "Select by Fab Notes"
 __doc__ = """
-Select fabrication duct by Fabrication Notes parameter
-"""
+Select fabrication duct by Fabrication Notes parameter."""
 
 # Variables
 # ==================================================

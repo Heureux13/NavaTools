@@ -18,8 +18,7 @@ from config.parameters_registry import *
 # ======================================================================
 __title__ = 'Offset Data'
 __doc__ = """
-Writes offset data for all fittings
-"""
+Writes offset data for all fittings."""
 
 # Variables
 # ======================================================================

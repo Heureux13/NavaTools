@@ -22,8 +22,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 # ==================================================
 __title__ = "1 size"
 __doc__ = """
-Tags with size tag at start of duct
-"""
+Tags with size tag at start of duct."""
 
 # Variables
 # ==================================================

@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import ElementId, Transaction
 # ==================================================
 __title__ = "Tag Sleeves 0"
 __doc__ = """
-Tag all sleeve ducts in active view with BOD/Size tags
-"""
+Tag all sleeve ducts in active view with BOD/Size tags."""
 
 # Variables
 # ==================================================

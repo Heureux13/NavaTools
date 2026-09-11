@@ -18,13 +18,8 @@ from Autodesk.Revit.DB import *
 
 __title__ = "Rename Sheet #"
 __doc__ = """
-****************************************************************
-Description:
-
 Select sheets to rename. You can then give them a prefix and/or suffix,
-and also replace text in the sheet numbers with other text.
-****************************************************************
-"""
+and also replace text in the sheet numbers with other text."""
 
 
 uidoc = __revit__.ActiveUIDocument

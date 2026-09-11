@@ -20,8 +20,7 @@ from Autodesk.Revit.DB import *
 # # ======================================================================
 __title__ = "Elbows Square"
 __doc__ = """
-Selects all square elbows
-"""
+Selects all square elbows."""
 
 # Variables
 # ==================================================

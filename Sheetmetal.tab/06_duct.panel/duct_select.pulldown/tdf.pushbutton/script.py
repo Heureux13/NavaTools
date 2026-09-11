@@ -19,8 +19,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "TDF"
 __doc__ = """
-Selects all TDF straight duct
-"""
+Selects all TDF straight duct."""
 
 # Variables
 # ==================================================

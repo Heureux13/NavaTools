@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Isolate RA"
 __doc__ = """
-Isolate Return Air
-"""
+Isolate Return Air."""
 
 # Variables
 # ==================================================

@@ -34,8 +34,7 @@ import os
 # ===================================================
 __title__ = "Isolate by Item Number"
 __doc__ = """
-Isolate by Fab Notes with Item Number
-"""
+Isolate by Fab Notes with Item Number."""
 
 # Variables
 # ==================================================

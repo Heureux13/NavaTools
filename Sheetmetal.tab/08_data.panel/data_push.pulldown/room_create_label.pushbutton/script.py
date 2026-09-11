@@ -27,8 +27,7 @@ import math
 # ===================================================
 __title__ = "Rooms - Create Label"
 __doc__ = """
-Selects all Room Tags in the active view
-"""
+Selects all Room Tags in the active view."""
 
 # Variables
 # ==================================================

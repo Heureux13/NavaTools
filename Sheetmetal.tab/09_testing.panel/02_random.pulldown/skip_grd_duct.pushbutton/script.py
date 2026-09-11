@@ -23,7 +23,7 @@ from Autodesk.Revit.DB import (
 __title__ = "Skip GRD Duct"
 __doc__ = """
 Find GRD-connected ductwork (excluding work tap families)
-and set Item Number to "skip""""
+and set Item Number to "skip."""
 
 # Variables
 # ==================================================

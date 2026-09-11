@@ -18,8 +18,7 @@ from Autodesk.Revit.DB import FilteredElementCollector, ViewType, BoundingBoxXYZ
 # ======================================================================
 __title__ = 'Create 3D View'
 __doc__ = """
-Creats a 3D view of selected elements
-"""
+Creats a 3D view of selected elements."""
 
 # Configuration
 # ======================================================================

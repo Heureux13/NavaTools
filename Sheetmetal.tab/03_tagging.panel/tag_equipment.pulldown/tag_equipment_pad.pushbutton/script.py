@@ -24,7 +24,7 @@ from config.parameters_registry import *
 # ======================================================================
 __title__ = 'Tag Equipment Pads'
 __doc__ = """
-Tags only equipment pads in the active view with _umi_equi_pad and updates value from equipment pad height to _make"""
+Tags only equipment pads in the active view with _umi_equi_pad and updates value from equipment pad height to _make."""
 
 # Variables
 # ======================================================================

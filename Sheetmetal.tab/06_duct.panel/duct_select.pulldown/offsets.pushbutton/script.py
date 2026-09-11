@@ -16,7 +16,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Offsets"
 __doc__ = """
-Select fabrication offset fittings in the active view and print a summary"""
+Select fabrication offset fittings in the active view and print a summary."""
 
 # Variables
 # ==================================================

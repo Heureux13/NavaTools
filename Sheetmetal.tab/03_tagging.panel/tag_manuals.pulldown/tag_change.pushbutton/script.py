@@ -38,7 +38,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Change Annotations"
 __doc__ = """
-Change one annotation type to another using a two-step tree picker"""
+Change one annotation type to another using a two-step tree picker."""
 
 
 # Revit context

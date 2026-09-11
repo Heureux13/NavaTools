@@ -14,8 +14,7 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 # ======================================================================
 __title__ = 'Set XYZ Viewport'
 __doc__ = """
-Set view port to hard coded location
-"""
+Set view port to hard coded location."""
 
 # Variables
 # ======================================================================

@@ -30,8 +30,7 @@ except Exception:
 # ======================================================================
 __title__ = 'Set to Sheet'
 __doc__ = """
-Take view and center it on sheet
-"""
+Take view and center it on sheet."""
 
 
 # Variables

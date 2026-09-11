@@ -18,7 +18,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Check Fabrication Numbers"
 __doc__ = """
-Gives a list of all duct with the same fabrication number"""
+Gives a list of all duct with the same fabrication number."""
 
 # Variables
 # ==================================================

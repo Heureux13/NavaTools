@@ -16,8 +16,7 @@ from config.tag_config import *
 # ==================================================
 __title__ = "Reverse Tags"
 __doc__ = """
-Switches tags based on dictionary mapping (Left ↔ Right)
-"""
+Switches tags based on dictionary mapping (Left ↔ Right)."""
 
 # Variables
 # ==================================================

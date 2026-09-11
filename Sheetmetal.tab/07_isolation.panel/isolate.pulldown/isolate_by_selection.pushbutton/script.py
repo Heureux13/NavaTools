@@ -18,7 +18,7 @@ import sys
 # ===================================================
 __title__ = "Isolate by Selection"
 __doc__ = """
-Isolates the active view to only selected categories"""
+Isolates the active view to only selected categories."""
 
 # Variables
 # ==================================================

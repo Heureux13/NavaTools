@@ -23,7 +23,7 @@ import sys
 # ===================================================
 __title__ = "Hide Hangers"
 __doc__ = """
-Hides all fabrication hangers in active view"""
+Hides all fabrication hangers in active view."""
 
 # Variables
 # ==================================================

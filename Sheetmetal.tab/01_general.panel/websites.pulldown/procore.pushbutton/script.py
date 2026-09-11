@@ -9,8 +9,7 @@ the copyright holder."""
 import webbrowser
 __title__ = "Procore"
 __doc__ = """
-Takes you to the Procore site
-"""
+Takes you to the Procore site."""
 
 
 webbrowser.open("https://app.procore.com/account/select_company/")

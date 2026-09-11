@@ -12,15 +12,15 @@ from pyrevit import revit, DB, forms, script
 # Button info
 # ======================================================================
 __title__ = 'Section Limits'
-__doc__ = """Set the top and bottom elevation of selected Section views
+__doc__ = """
+Set the top and bottom elevation of selected Section views
 relative to a chosen level with a custom offset above and below.
 
 Usage:
-1. Open a Section view OR select viewports on a sheet, then run this tool
-2. Pick a reference level
-3. Enter how far above the level for the TOP
-4. Enter how far below the level for the BOTTOM
-"""
+1. Open a Section view OR select viewports on a sheet, then run this tool.
+2. Pick a reference level.
+3. Enter how far above the level for the TOP.
+4. Enter how far below the level for the BOTTOM."""
 
 # Variables
 # ======================================================================
