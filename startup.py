@@ -11,12 +11,12 @@ the copyright holder."""
 
 
 import subprocess
-NavaTools = 'MyTools'
+NavaTools = 'NavaTools'
 
 try:
     subprocess.Popen(
         ['pyrevit', 'extension', 'update', NavaTools],
-        creationFlags=subprocess.CREATE_NO_WINDOW
+        creationflags=subprocess.CREATE_NO_WINDOW
     )
 
 except Exception:
