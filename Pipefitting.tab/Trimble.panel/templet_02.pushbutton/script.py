@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+# ======================================================================
+"""Copyright (c) 2025 Jose Francisco Nava Perez. All rights reserved.
+
+This code and associated documentation files may not be copied, modified,
+distributed, or used in any form without the prior written permission of
+the copyright holder."""
+# ======================================================================
+
+from Autodesk.Revit.DB import Transaction
+from pyrevit import script, revit
+from revit.revit_tagging_new import RevitTagging
+from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
+
+# Button info
+# ======================================================================
+__title__ = 'Testing 02'
+__doc__ = '''
+Gives raw offset data and writes to parameters
+'''
+
+# Variables
+# ======================================================================
+
+output = script.get_output()
+
+output.print_md('Testing script is running.')
