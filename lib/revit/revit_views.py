@@ -81,8 +81,8 @@ class RevitViews:
                           doc,
                           view):
 
-        '''On sheet views, will take any selected views and
-        return view id, view name, & center coordinates'''
+        """On sheet views, will take any selected views and
+        return view id, view name, & center coordinates"""
 
         elements = revit.get_selection().elements
         viewports = [e for e in elements if isinstance(e, Viewport)]

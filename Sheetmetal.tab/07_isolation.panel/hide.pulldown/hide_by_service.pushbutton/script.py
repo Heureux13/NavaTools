@@ -17,8 +17,7 @@ import sys
 # ===================================================
 __title__ = "Hide by Service"
 __doc__ = """
-Hides fabrication elements with selected services in the active view.
-"""
+Hides fabrication elements with selected services in the active view"""
 
 # Variables
 # ==================================================

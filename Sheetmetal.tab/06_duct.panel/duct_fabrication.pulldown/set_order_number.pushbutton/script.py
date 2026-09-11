@@ -19,9 +19,8 @@ from config.parameters_registry import (
 # Button info
 # ======================================================================
 __title__ = 'Set Order Number'
-__doc__ = '''
-Sets a new order number based on previous numbers.
-'''
+__doc__ = """
+Sets a new order number based on previous numbers"""
 
 # Variables
 # ======================================================================

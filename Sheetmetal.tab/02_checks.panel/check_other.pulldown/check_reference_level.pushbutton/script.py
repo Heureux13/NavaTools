@@ -20,8 +20,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "Check Ref Level"
 __doc__ = """
-Collect MEP elements in current view, show a popup to pick reference levels, and select matching elements.
-"""
+Collect MEP elements in current view, show a popup to pick reference levels, and select matching elements"""
 
 # Variables
 # ==================================================

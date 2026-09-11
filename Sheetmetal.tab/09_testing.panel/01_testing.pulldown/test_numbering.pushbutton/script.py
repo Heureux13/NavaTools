@@ -22,9 +22,8 @@ import ducts.revit_numbering as numbering_module
 # Button info
 # ======================================================================
 __title__ = 'Test Numbering'
-__doc__ = '''
-Test Numbering
-'''
+__doc__ = """
+Test Numbering."""
 
 # Variables
 # ======================================================================

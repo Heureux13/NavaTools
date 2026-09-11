@@ -19,9 +19,8 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Find Parameter Value'
-__doc__ = '''
-Find MEP elements with specified parameter and filter by value.
-'''
+__doc__ = """
+Find MEP elements with specified parameter and filter by value"""
 
 # Configuration
 # ======================================================================

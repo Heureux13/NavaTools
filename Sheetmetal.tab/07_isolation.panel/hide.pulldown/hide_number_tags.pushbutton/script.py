@@ -15,9 +15,8 @@ from revit.revit_annotations import RevitAnnotations
 # Button info
 # ======================================================================
 __title__ = 'Hides Number Tags'
-__doc__ = '''
-Temporarily hides all tags who's family is '_Tag.DCT_NumberDuct'.
-'''
+__doc__ = """
+Temporarily hides all tags who's family is '_Tag.DCT_NumberDuct'"""
 
 # Variables
 # ======================================================================

@@ -24,8 +24,7 @@ from config.parameters_registry import *
 __title__ = "Number GRDs"
 __doc__ = """
 Numbers all air terminals in the current view by level.
-Writes numbers to the _# parameter in format like 1-0001.
-"""
+Writes numbers to the _# parameter in format like 1-0001"""
 
 # Helpers
 # ==================================================

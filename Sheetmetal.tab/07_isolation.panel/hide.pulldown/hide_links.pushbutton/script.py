@@ -25,8 +25,7 @@ import os
 # ===================================================
 __title__ = "Hide Links"
 __doc__ = """
-Hide or unhide selected Revit links in the active view.
-"""
+Hide or unhide selected Revit links in the active view"""
 
 # Variables
 # ==================================================

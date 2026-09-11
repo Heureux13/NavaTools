@@ -24,9 +24,8 @@ if lib_path not in sys.path:
 
 
 __title__ = 'Create BBM Schedules'
-__doc__ = '''
-Create a schedule with all Bluebeam Map (BBM_) parameters from parameters_registry.
-'''
+__doc__ = """
+Create a schedule with all Bluebeam Map (BBM_) parameters from parameters_registry"""
 
 doc = revit.doc
 output = script.get_output()

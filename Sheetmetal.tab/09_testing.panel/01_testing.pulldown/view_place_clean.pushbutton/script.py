@@ -13,10 +13,9 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 # Button info
 # ======================================================================
 __title__ = 'Set Viewport + Clean Grid'
-__doc__ = '''
+__doc__ = """
 Places selected viewports by top-left sheet corner and cleans visible grid bubbles
-around the crop for each affected view using equal spacing from all crop edges.
-'''
+around the crop for each affected view using equal spacing from all crop edges."""
 
 # Variables
 # ======================================================================

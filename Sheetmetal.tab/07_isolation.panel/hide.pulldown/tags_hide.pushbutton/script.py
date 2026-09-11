@@ -13,10 +13,9 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Hide Fab Tags in Views'
-__doc__ = '''
+__doc__ = """
 Open a menu of all MEP Fabrication Ductwork Tag types.
-Pick tag types and views, then hide placed matching tags in those views.
-'''
+Pick tag types and views, then hide placed matching tags in those views"""
 
 # Variables
 # ======================================================================

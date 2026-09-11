@@ -18,9 +18,9 @@ from rpw.ui.forms import FlexForm, Label, TextBox, Separator, Button
 # Button info
 # ======================================================================
 __title__ = 'Ginger Rename'
-__doc__ = '''
+__doc__ = """
 Follow the instructions
-'''
+"""
 
 # Variables
 # ======================================================================

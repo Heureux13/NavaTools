@@ -22,8 +22,7 @@ import sys
 # ===================================================
 __title__ = "Hide GRDs"
 __doc__ = """
-Hides all GRDs (air terminals) in active view.
-"""
+Hides all GRDs (air terminals) in active view"""
 
 # Variables
 # ==================================================

@@ -14,12 +14,12 @@ from config.parameters_registry import *
 # Button info
 # ======================================================================
 __title__ = 'Reverse Offset'
-__doc__ = '''
+__doc__ = """
 Reverses the offset direction by:
 - Swapping TU ↔ TD (and UP ↔ DN as legacy)
 - Flipping vertical arrows: ↑ ↔ ↓ (and horizontal → ↔ ← if present)
 - Keeping numbers intact
-'''
+"""
 
 # Variables
 # ======================================================================

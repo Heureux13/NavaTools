@@ -18,8 +18,7 @@ from ducts.revit_duct import RevitDuct
 # ===================================================
 __title__ = "Isolate Straights"
 __doc__ = """
-Toggle isolation to show only straight duct elements.
-"""
+Toggle isolation to show only straight duct elements"""
 
 # Variables
 # ==================================================

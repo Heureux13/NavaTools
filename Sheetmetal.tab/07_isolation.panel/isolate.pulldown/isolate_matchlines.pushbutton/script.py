@@ -17,8 +17,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Isolate by Matchlines"
 __doc__ = """
-Toggle isolation of matchlines and view references in the current view.
-"""
+Toggle isolation of matchlines and view references in the current view"""
 
 # Variables
 # ==================================================

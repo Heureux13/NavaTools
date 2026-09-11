@@ -26,9 +26,9 @@ except ImportError:
 # Button info
 # ======================================================================
 __title__ = 'Tag Pen Sleeves'
-__doc__ = '''
+__doc__ = """
 Will calculte the size for sleeves, number them, and tag them. so long as they have the _type paramter value of "sleeve"
-'''
+"""
 
 # Variables
 # ======================================================================

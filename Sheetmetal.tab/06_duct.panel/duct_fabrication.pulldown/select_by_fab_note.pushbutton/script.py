@@ -36,8 +36,7 @@ import os
 # ===================================================
 __title__ = "Select by Fab Note"
 __doc__ = """
-Select by Fab Notes with Item Number
-"""
+Select by Fab Notes with Item Number."""
 
 # Variables
 # ==================================================

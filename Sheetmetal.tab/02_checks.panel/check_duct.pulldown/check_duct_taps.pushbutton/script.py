@@ -18,8 +18,7 @@ from geometry.size import Size
 # =================================================
 __title__ = "Check Taps"
 __doc__ = """
-Lists all taps with any connectors that use the word tap.
-"""
+Lists all taps with any connectors that use the word tap"""
 
 
 # Parameters to check for taps (case-insensitive)

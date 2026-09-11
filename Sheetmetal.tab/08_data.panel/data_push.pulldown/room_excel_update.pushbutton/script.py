@@ -24,8 +24,7 @@ import codecs
 # ===================================================
 __title__ = "Rooms - Update w/ Excel"
 __doc__ = """
-Lists all room tags in the active view.
-"""
+Lists all room tags in the active view"""
 
 # Variables
 # ==================================================

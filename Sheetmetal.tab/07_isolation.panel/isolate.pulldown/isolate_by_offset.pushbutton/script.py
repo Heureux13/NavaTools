@@ -16,8 +16,7 @@ from System.Collections.Generic import List
 # ===================================================
 __title__ = "Isolate by Offset"
 __doc__ = """
-Isolate fabrication offset fittings in the active view.
-"""
+Isolate fabrication offset fittings in the active view"""
 
 # Variables
 # ==================================================

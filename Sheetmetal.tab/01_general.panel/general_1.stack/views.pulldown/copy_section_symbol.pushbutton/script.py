@@ -23,9 +23,9 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Copy Section'
-__doc__ = '''
+__doc__ = """
 Select 
-'''
+"""
 
 # Variables
 # ======================================================================

@@ -16,9 +16,8 @@ import sys
 # Button info
 # ======================================================================
 __title__ = 'Hide Section Views'
-__doc__ = '''
-Permanently hides section view markers/elements in selected views.
-'''
+__doc__ = """
+Permanently hides section view markers/elements in selected views"""
 
 # Variables
 # ======================================================================

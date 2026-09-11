@@ -29,9 +29,9 @@ except Exception:
 # Button info
 # ======================================================================
 __title__ = 'Set to Sheet'
-__doc__ = '''
+__doc__ = """
 Take view and center it on sheet
-'''
+"""
 
 
 # Variables

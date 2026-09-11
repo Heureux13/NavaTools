@@ -21,8 +21,7 @@ __title__ = "Select Run (Same Height)"
 __doc__ = """
 Select all ducts in a run at the same height.
 Select a duct, click button, and all connected ducts 
-at the same elevation will be selected.
-"""
+at the same elevation will be selected"""
 
 # Code
 # ==================================================

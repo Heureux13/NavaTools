@@ -12,9 +12,9 @@ from pyrevit import script
 # Button info
 # ======================================================================
 __title__ = 'Testing'
-__doc__ = '''
+__doc__ = """
 Gives raw offset data and writes to parameters
-'''
+"""
 
 # Variables
 # ======================================================================

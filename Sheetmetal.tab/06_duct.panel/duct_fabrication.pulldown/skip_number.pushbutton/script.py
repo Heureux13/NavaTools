@@ -17,8 +17,7 @@ from config.parameters_registry import *
 # =================================================
 __title__ = "Skip Number"
 __doc__ = """
-Sets parameters to 'skip' for selected elements
-"""
+Sets parameters to 'skip' for selected elements."""
 
 # Parameters to set to 'skip'
 parameters_to_skip = {

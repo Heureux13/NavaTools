@@ -13,9 +13,9 @@ from Autodesk.Revit.DB import Viewport, ViewSheet, XYZ
 # Button info
 # ======================================================================
 __title__ = 'Set XYZ Viewport'
-__doc__ = '''
+__doc__ = """
 Set view port to hard coded location
-'''
+"""
 
 # Variables
 # ======================================================================

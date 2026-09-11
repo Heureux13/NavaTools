@@ -15,9 +15,9 @@ from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
 # Button info
 # ======================================================================
 __title__ = 'Testing'
-__doc__ = '''
-Gives raw offset data and writes to parameters
-'''
+__author__ = 'Jose Francisco Nava Perez'
+__doc__ = """
+Gives raw offset data and writes to parameters."""
 
 # Variables
 # ======================================================================

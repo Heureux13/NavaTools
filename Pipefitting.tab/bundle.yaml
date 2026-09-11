@@ -1,6 +1,6 @@
 title:
   en_us: Pipefitting
-invisible: true
+invisible: false
 layout:
   - 01_trimble
   - 02_testing

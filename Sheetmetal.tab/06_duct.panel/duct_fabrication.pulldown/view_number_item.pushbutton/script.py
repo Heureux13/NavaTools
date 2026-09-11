@@ -36,8 +36,7 @@ clr.AddReference("System.Windows.Forms")
 # ===================================================
 __title__ = "View Item Numbers"
 __doc__ = """
-View Item Number values in the active view using a tree grouped by 100 ranges.
-"""
+View Item Number values in the active view using a tree grouped by 100 ranges."""
 
 
 # Revit context

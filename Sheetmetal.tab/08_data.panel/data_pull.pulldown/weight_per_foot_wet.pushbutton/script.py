@@ -25,11 +25,10 @@ from importlib import import_module
 # Button info
 # ======================================================================
 __title__ = 'Weight Per Foot Wet'
-__doc__ = '''
+__doc__ = """
 Collects Fabrication Ductwork and Fabrication Pipework,
 calculates wet Weight / Length (lbs/ft),
-and writes the result into _UMI_PYT_WeightPerFoot.
-'''
+and writes the result into _UMI_PYT_WeightPerFoot"""
 
 # Variables
 # ======================================================================

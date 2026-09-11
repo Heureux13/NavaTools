@@ -22,14 +22,13 @@ from config.parameters_registry import (
 # Button info
 # ======================================================================
 __title__ = 'Refresh Label Data All'
-__doc__ = '''
+__doc__ = """
 Refresh _UMI_BBM_Label from hierarchy:
 Type Mark -> Mark -> _UMI_PYT_Label
 
 Last non-empty value in the hierarchy wins.
 Applies to air terminals, mechanical equipment, MEP duct,
-fabrication ductwork (including stiffeners), and fabrication hangers.
-'''
+fabrication ductwork (including stiffeners), and fabrication hangers"""
 
 # Variables
 # ======================================================================

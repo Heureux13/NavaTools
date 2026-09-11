@@ -1,6 +1,6 @@
 title:
   en_us: Sheetmetal
-invisible: true
+invisible: false
 layout:
   - 01_general
   - 02_checks

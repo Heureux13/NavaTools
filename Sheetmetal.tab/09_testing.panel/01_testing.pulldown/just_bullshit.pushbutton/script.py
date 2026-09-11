@@ -12,9 +12,8 @@ from pyrevit import script
 # Button info
 # ======================================================================
 __title__ = 'Bullshit'
-__doc__ = '''
-Nava's extravaganza nonsense.
-'''
+__doc__ = """
+Nava's extravaganza nonsense."""
 
 # Variables
 # ======================================================================

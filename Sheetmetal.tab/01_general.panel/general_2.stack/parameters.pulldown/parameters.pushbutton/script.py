@@ -10,10 +10,9 @@ the copyright holder."""
 # Button info
 # ======================================================================
 __title__ = 'Create Project Parameters'
-__doc__ = '''
+__doc__ = """
 Create project parameters from shared parameters using the project parameter map.
-Map sections determine both which parameter names are processed and parameter group assignment.
-'''
+Map sections determine both which parameter names are processed and parameter group assignment"""
 
 from Autodesk.Revit.DB import (
     BuiltInCategory,

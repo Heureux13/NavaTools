@@ -24,10 +24,9 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Copy Room Tags'
-__doc__ = '''
+__doc__ = """
 Select all matching Room Tags in active view,
-then copy/paste them into selected views.
-'''
+then copy/paste them into selected views"""
 
 # Variables
 # ======================================================================

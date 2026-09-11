@@ -17,8 +17,7 @@ from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_LENGTH
 __title__ = 'sandbox for new tagging'
 __author__ = ''
 __doc__ = """
-Sandbox for testing Revit Tagging Class.
-"""
+Sandbox for testing Revit Tagging Class."""
 
 # Variables
 # ======================================================================

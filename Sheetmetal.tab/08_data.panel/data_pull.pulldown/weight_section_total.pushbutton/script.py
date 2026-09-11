@@ -24,11 +24,10 @@ from Autodesk.Revit.DB import (
 # Button info
 # ======================================================================
 __title__ = 'Section Weights Sum'
-__doc__ = '''
+__doc__ = """
 Pick one or more views, collect fabrication ductwork + pipework,
 sum element Weight per view,
-and write that value to _UMI_PYT_WeightSection on each view.
-'''
+and write that value to _UMI_PYT_WeightSection on each view"""
 
 
 # Variables

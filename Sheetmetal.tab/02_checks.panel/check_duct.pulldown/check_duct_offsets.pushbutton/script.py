@@ -16,8 +16,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Check Offsets"
 __doc__ = """
-Gives values of all offset fittings.
-"""
+Gives values of all offset fittings"""
 
 # Variables
 # ==================================================

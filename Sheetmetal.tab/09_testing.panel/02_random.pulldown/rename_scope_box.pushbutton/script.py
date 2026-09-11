@@ -12,9 +12,9 @@ from pyrevit import script, DB, forms, revit
 # Button info
 # ======================================================================
 __title__ = 'Scope Box Rename'
-__doc__ = '''
+__doc__ = """
 Select scope boxes and rename based on lettering: Area [?]01
-'''
+"""
 
 # Variables
 # ======================================================================

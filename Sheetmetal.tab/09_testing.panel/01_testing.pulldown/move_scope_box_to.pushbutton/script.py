@@ -13,7 +13,8 @@ from Autodesk.Revit.DB import XYZ, Transaction, ElementTransformUtils
 # Button info
 # ======================================================================
 __title__ = 'Move Scope Box'
-__doc__ = 'Moves selected scope box to new coordinates'
+__doc__ = """
+Moves selected scope box to new coordinates."""
 
 # Variables
 # ======================================================================

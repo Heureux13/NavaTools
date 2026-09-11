@@ -24,10 +24,9 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Copy Dimensions'
-__doc__ = '''
+__doc__ = """
 Select matching dimensions in the active view,
-then copy/paste them into selected views.
-'''
+then copy/paste them into selected views"""
 
 # Variables
 # ======================================================================

@@ -15,9 +15,8 @@ from ducts.revit_numbering import RevitNumbers
 # Button info
 # ======================================================================
 __title__ = 'Number View Dups'
-__doc__ = '''
-testing out new number duct system
-'''
+__doc__ = """
+testing out new number duct system."""
 
 # Variables
 # ======================================================================

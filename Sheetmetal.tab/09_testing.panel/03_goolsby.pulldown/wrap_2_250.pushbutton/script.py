@@ -14,9 +14,8 @@ from config.parameters_registry import PYT_NOTE_0
 # Button info
 # ======================================================================
 __title__ = 'Wrap 2(2.50")'
-__doc__ = '''
-Set _UMI_PYT_Note0 to Liner 1.00" on selected elements.
-'''
+__doc__ = """
+Set _UMI_PYT_Note0 to Liner 1.00" on selected elements"""
 
 # Variables
 # ======================================================================

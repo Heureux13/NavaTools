@@ -101,9 +101,8 @@ def _com_index(obj, *indices):
 # Button info
 # ======================================================================
 __title__ = 'Populate Schedule'
-__doc__ = '''
-Import Excel or CSV data and populate an existing editable Revit schedule.
-'''
+__doc__ = """
+Import Excel or CSV data and populate an existing editable Revit schedule"""
 
 
 # Variables

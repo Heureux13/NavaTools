@@ -26,8 +26,7 @@ from config.parameters_registry import (
 # ===================================================
 __title__ = "View Order Numbers"
 __doc__ = """
-Selects all ducts by accending order number in current view.
-"""
+Selects all ducts by accending order number in current view."""
 
 # Variables
 # ==================================================

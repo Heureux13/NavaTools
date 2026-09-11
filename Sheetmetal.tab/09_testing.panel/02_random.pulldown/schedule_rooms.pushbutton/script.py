@@ -16,9 +16,8 @@ from pyrevit import revit, script
 # Button info
 # ======================================================================
 __title__ = 'Testing Populate Schedule Rooms'
-__doc__ = '''
-Import Excel or CSV data and populate an existing editable Revit schedule.
-'''
+__doc__ = """
+Import Excel or CSV data and populate an existing editable Revit schedule"""
 
 
 def _find_lib_path(start_dir):

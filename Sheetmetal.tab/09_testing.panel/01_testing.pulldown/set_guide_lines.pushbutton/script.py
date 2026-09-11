@@ -14,15 +14,14 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Select Ducts in Scope Box'
-__doc__ = '''
+__doc__ = """
 Select MEP ducts inside selected scope boxes.
 
 Usage:
-1. Select one or more Scope Boxes and run the tool
-2. If none are selected, pick Scope Boxes from a list
-3. If no Scope Box is chosen, tool uses active 3D view Section Box
-4. All intersecting ducts are selected
-'''
+1. Select one or more Scope Boxes and run the tool.
+2. If none are selected, pick Scope Boxes from a list.
+3. If no Scope Box is chosen, tool uses active 3D view Section Box.
+4. All intersecting ducts are selected."""
 
 # Variables
 # ======================================================================

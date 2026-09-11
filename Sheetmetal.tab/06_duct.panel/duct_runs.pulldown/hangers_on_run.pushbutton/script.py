@@ -21,8 +21,7 @@ from config.parameters_registry import *
 # ===================================================
 __title__ = "Hangers on Run"
 __doc__ = """
-Total weight of run / hanger amount.
-"""
+Total weight of run / hanger amount"""
 
 # Variables
 # ==================================================

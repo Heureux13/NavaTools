@@ -21,9 +21,8 @@ from System.Collections.Generic import List
 # Button info
 # ======================================================================
 __title__ = 'Copy Parameter Value'
-__doc__ = '''
-Copy legacy _offset values into PYT offset parameters.
-'''
+__doc__ = """
+Copy legacy _offset values into PYT offset parameters"""
 
 # Configuration
 # ======================================================================

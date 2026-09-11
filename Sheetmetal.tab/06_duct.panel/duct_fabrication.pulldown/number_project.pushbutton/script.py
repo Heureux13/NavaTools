@@ -15,9 +15,8 @@ from ducts.revit_numbering import RevitNumbers
 # Button info
 # ======================================================================
 __title__ = 'Number Project'
-__doc__ = '''
-Numbers order duct in entire project
-'''
+__doc__ = """
+Numbers order duct in entire project."""
 
 # Variables
 # ======================================================================

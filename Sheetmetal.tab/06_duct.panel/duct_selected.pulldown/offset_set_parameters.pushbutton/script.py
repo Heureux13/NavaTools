@@ -17,9 +17,9 @@ from config.parameters_registry import *
 # Button info
 # ======================================================================
 __title__ = 'Offset Data'
-__doc__ = '''
+__doc__ = """
 Writes offset data for all fittings
-'''
+"""
 
 # Variables
 # ======================================================================

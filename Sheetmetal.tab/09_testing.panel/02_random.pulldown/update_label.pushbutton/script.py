@@ -18,10 +18,10 @@ PYT_LABEL = "_UMI_PYT_Label"
 # Button info
 # ======================================================================
 __title__ = 'Update Label'
-__doc__ = '''
+__doc__ = """
 Update BBM Label from a hierarchy (highest priority first):
 Type Mark  ->  Mark  ->  PYT Label
-'''
+"""
 
 # Variables
 # ======================================================================

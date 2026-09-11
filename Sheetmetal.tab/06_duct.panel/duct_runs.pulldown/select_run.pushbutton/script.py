@@ -20,8 +20,7 @@ from Autodesk.Revit.DB import *
 # ===================================================
 __title__ = "Select Run"
 __doc__ = """
-Selects/creates a run bases on size of seleted duct.
-"""
+Selects/creates a run bases on size of seleted duct"""
 
 # Variables
 # ==================================================

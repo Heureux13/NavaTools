@@ -16,14 +16,8 @@ except Exception:
 # Button info
 # ======================================================================
 __title__ = 'Sleeve Testing'
-__doc__ = '''
-Align sleeve centerline to duct centerline.
-
-Modes:
-- Selected Pair: pick exactly 2 elements (sleeve + target), then align.
-- Batch by NumberSleeve: in active view, match elements by NumberSleeve and
-	align sleeve candidates to non-sleeve matches.
-'''
+__doc__ = """
+Something with sleeves, cannot remember exactly what."""
 
 # Variables
 # ======================================================================

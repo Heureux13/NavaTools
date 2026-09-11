@@ -28,11 +28,10 @@ from Autodesk.Revit.DB import (
 # Button info
 # ======================================================================
 __title__ = 'Section View LBS'
-__doc__ = '''
+__doc__ = """
 For every view symbol in the active view:
 1) Read _UMI_PYT_SetionWeight
-2) Create a centered text note at the symbol center
-'''
+2) Create a centered text note at the symbol center."""
 
 # Variables
 # ======================================================================

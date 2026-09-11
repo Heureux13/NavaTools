@@ -29,7 +29,7 @@ from Autodesk.Revit.DB import (
 # Button info
 # ======================================================================
 __title__ = 'Create Sheet'
-__doc__ = '''
+__doc__ = """
 0. Select views in project browser
 1. Select what sheet you want to use as a templet
 2. Select what view templet you want to use
@@ -37,7 +37,7 @@ __doc__ = '''
 the ending of your selected views ending.
 EX: View name is Area B1, your prefix is, SH-01-, it will
 create a new sheet and number it SH-01-B1
-'''
+"""
 
 # SheetCollection is a native Revit 2024+ feature
 try:

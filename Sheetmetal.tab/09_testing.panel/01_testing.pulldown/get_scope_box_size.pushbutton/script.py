@@ -12,7 +12,8 @@ from pyrevit import script, revit
 # Button info
 # ======================================================================
 __title__ = 'Get Scope Box Size'
-__doc__ = 'Prints the dimensions of selected scope boxes'
+__doc__ = """
+Prints the dimensions of selected scope boxes."""
 
 # Variables
 # ======================================================================

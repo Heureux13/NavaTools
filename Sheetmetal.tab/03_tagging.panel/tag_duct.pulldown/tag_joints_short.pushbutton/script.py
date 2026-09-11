@@ -22,8 +22,7 @@ from constants.print_outputs import print_disclaimer
 # ==================================================
 __title__ = "Tag Joints Short"
 __doc__ = """
-Tag all short straight duct with length.
-"""
+Tag all short straight duct with length"""
 
 # Variables
 # ==================================================

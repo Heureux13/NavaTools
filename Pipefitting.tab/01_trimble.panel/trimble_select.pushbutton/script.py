@@ -23,7 +23,7 @@ from Autodesk.Revit.DB import (
     XYZ,
 )
 from Autodesk.Revit.DB.Structure import StructuralType
-from pyrevit import script, revit
+from pyrevit import forms, script, revit
 import math
 import traceback
 from System.Collections.Generic import List
@@ -32,9 +32,8 @@ from pipefitting.sizes.pvc_sizes import SCHEDULE_40, SCHEDULE_80
 # Button info
 # ======================================================================
 __title__ = 'Select'
-__doc__ = '''
-Places markers on selected pipes.
-'''
+__doc__ = """
+Places markers on selected pipes"""
 
 # Variables
 # ======================================================================
@@ -306,6 +305,9 @@ selected_pipes = []
 
 debug_print('Collecting fabrication pipes from current selection...')
 selection_ids = revit.uidoc.Selection.GetElementIds()
+if selection_ids.Count == 0:
+    forms.alert('Doug, you gotta select at least one FabPipe.', exitscript=True)
+
 selected_elements = [revit.doc.GetElement(eid) for eid in selection_ids]
 selected_elements = [
     element for element in selected_elements
@@ -338,7 +340,7 @@ for element in selected_elements:
 
 debug_print('Selected pipes: {}'.format(len(selected_pipes)))
 if not selected_pipes:
-    raise ValueError('No matching MEP pipes found in the current selection.')
+    forms.alert('Select at least one FabPipe first.', exitscript=True)
 
 debug_print('Finding BIMrx_Point type...')
 created_count, created_ids = create_pipe_points(selected_pipes)
