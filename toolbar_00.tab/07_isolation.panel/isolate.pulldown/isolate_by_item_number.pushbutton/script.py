@@ -430,7 +430,7 @@ try:
         except Exception:
             pass
 
-    # Select only the ducts (deselect annotations)
+    # Select only the ducts (deselect 2025_annotations)
     uidoc.Selection.SetElementIds(duct_ids)
 
 except Exception as e:

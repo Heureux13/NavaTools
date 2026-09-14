@@ -385,7 +385,7 @@ def find_tags_by_type_id(tags, type_id_int):
 try:
     view_tags = collect_view_independent_tags(doc, view)
     if not view_tags:
-        TaskDialog.Show("No Annotations", "No IndependentTag annotations found in this view.")
+        TaskDialog.Show("No Annotations", "No IndependentTag 2025_annotations found in this view.")
         script.exit()
 
     all_tag_types = collect_all_independent_tag_types(doc)
@@ -473,7 +473,7 @@ try:
             selected_ids.Add(ann_id)
         uidoc.Selection.SetElementIds(selected_ids)
 
-    output.print_md("# Changed annotations in current view")
+    output.print_md("# Changed 2025_annotations in current view")
     output.print_md("- Source: {}".format(src_form.selected_label or source_type_id))
     output.print_md("- Target: {}".format(tgt_form.selected_label or target_type_id))
     output.print_md("- Changed: {}".format(changed))

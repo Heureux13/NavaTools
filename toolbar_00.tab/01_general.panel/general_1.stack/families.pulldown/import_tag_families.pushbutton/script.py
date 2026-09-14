@@ -31,10 +31,10 @@ output = script.get_output()
 
 
 def _find_families_dir(start_dir):
-    """Search upward from this script for the repo's annotations folder."""
+    """Search upward from this script for the repo's 2025_annotations folder."""
     search_dir = start_dir
     while True:
-        candidate = os.path.join(search_dir, 'annotations')
+        candidate = os.path.join(search_dir, '2025_annotations')
         if os.path.isdir(candidate):
             return candidate
 
@@ -83,7 +83,7 @@ def main():
     families_dir = _find_families_dir(os.path.dirname(__file__))
     if not families_dir:
         output.print_md(
-            'Could not auto-locate annotations. Pick a folder manually.')
+            'Could not auto-locate 2025_annotations. Pick a folder manually.')
         families_dir = _pick_families_dir()
 
     if not families_dir or not os.path.isdir(families_dir):

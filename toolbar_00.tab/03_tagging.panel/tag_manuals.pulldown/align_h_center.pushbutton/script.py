@@ -7,14 +7,16 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+import math
 from pyrevit import DB, forms, revit
 
 # Button info
 # ======================================================================
-__title__ = 'Vertical Center Align'
+__title__ = 'Horizontal Center Align'
 __doc__ = """
-Align selected annotations by vertical center line and
-space them with a fixed 1/32" vertical gap."""
+Align selected 2025_annotations by horizontal center line and
+space them with a fixed 1/32" horizontal gap.
+Sets Angle to 90 before alignment."""
 
 # Variables
 # ======================================================================
@@ -69,14 +71,15 @@ def get_bbox_data(element):
         "element": element,
         "center_x": center_x,
         "center_y": center_y,
+        "left": min_pt.X,
         "top": max_pt.Y,
         "height": height,
         "width": width,
     }
 
 
-def set_angle_zero_if_possible(element):
-    """Set instance Angle parameter to 0 when writable."""
+def set_angle_ninety_if_possible(element):
+    """Set instance Angle parameter to 90 degrees when writable."""
     try:
         angle_param = element.LookupParameter('Angle')
     except Exception:
@@ -87,73 +90,9 @@ def set_angle_zero_if_possible(element):
 
     try:
         if angle_param.StorageType == DB.StorageType.Double:
-            angle_param.Set(0.0)
+            angle_param.Set(math.pi / 2.0)
         elif angle_param.StorageType == DB.StorageType.Integer:
-            angle_param.Set(0)
-    except Exception:
-        pass
-
-
-def get_element_id_value(element_id):
-    """Return a stable integer id across Revit versions."""
-    if element_id is None:
-        return None
-    try:
-        return element_id.IntegerValue
-    except Exception:
-        try:
-            return element_id.Value
-        except Exception:
-            return None
-
-
-def read_leader_state(element):
-    """Read whether leader is enabled, using parameter first then API fallback."""
-    try:
-        leader_param = element.LookupParameter('Leader Line')
-    except Exception:
-        leader_param = None
-
-    if leader_param and not leader_param.IsReadOnly:
-        try:
-            if leader_param.StorageType == DB.StorageType.Integer:
-                return ('param_int', leader_param.AsInteger() != 0)
-            if leader_param.StorageType == DB.StorageType.String:
-                raw = leader_param.AsString() or leader_param.AsValueString() or ''
-                return ('param_str', raw.strip().lower() in ('yes', 'true', '1'))
-        except Exception:
-            pass
-
-    try:
-        if isinstance(element, DB.IndependentTag):
-            return ('has_leader', bool(element.HasLeader))
-    except Exception:
-        pass
-
-    return (None, None)
-
-
-def set_leader_state(element, mode, enabled):
-    """Set leader enabled/disabled for supported annotation elements."""
-    if mode is None:
-        return
-
-    try:
-        if mode == 'param_int':
-            leader_param = element.LookupParameter('Leader Line')
-            if leader_param and not leader_param.IsReadOnly:
-                leader_param.Set(1 if enabled else 0)
-            return
-
-        if mode == 'param_str':
-            leader_param = element.LookupParameter('Leader Line')
-            if leader_param and not leader_param.IsReadOnly:
-                leader_param.Set('Yes' if enabled else 'No')
-            return
-
-        if mode == 'has_leader' and isinstance(element, DB.IndependentTag):
-            element.HasLeader = bool(enabled)
-            return
+            angle_param.Set(90)
     except Exception:
         pass
 
@@ -161,7 +100,7 @@ def set_leader_state(element, mode, enabled):
 selected_ids = list(uidoc.Selection.GetElementIds())
 if len(selected_ids) < 2:
     forms.alert(
-        'Select at least 2 annotations, then run again.',
+        'Select at least 2 2025_annotations, then run again.',
         exitscript=True,
     )
 
@@ -180,17 +119,9 @@ if len(annotation_elements) < 2:
         exitscript=True,
     )
 
-with revit.Transaction('Set Annotation Angle To Zero'):
-    leader_states = {}
+with revit.Transaction('Set Annotation Angle To 90'):
     for element in annotation_elements:
-        set_angle_zero_if_possible(element)
-
-        elem_key = get_element_id_value(element.Id)
-        mode, enabled = read_leader_state(element)
-        if elem_key is not None and mode is not None:
-            leader_states[elem_key] = (mode, enabled)
-            set_leader_state(element, mode, False)
-
+        set_angle_ninety_if_possible(element)
     doc.Regenerate()
 
 annotation_data = []
@@ -202,30 +133,29 @@ for element in annotation_elements:
 
 if len(annotation_data) < 2:
     forms.alert(
-        'Need at least 2 selected annotations with valid view bounding boxes.',
+        'Need at least 2 selected 2025_annotations with valid view bounding boxes.',
         exitscript=True,
     )
 
-# Sort by current vertical position (top-to-bottom) to preserve on-screen order.
-sorted_data = sorted(
-    annotation_data, key=lambda d: d["center_y"], reverse=True)
+# Keep the left-most annotation fixed as the alignment/spatial anchor.
+sorted_data = sorted(annotation_data, key=lambda d: d["center_x"])
 anchor = sorted_data[0]
-target_center_x = anchor["center_x"]
+target_center_y = anchor["center_y"]
 
-cursor_top = anchor["top"]
+cursor_left = anchor["left"]
 for data in sorted_data:
-    new_center_y = cursor_top - data["height"] / 2.0
-    data["target_center_y"] = new_center_y
-    cursor_top = new_center_y - \
-        data["height"] / 2.0 - ONE_THIRTY_SECOND_INCH_FT
+    new_center_x = cursor_left + data["width"] / 2.0
+    data["target_center_x"] = new_center_x
+    cursor_left = new_center_x + \
+        data["width"] / 2.0 + ONE_THIRTY_SECOND_INCH_FT
 
 processed_count = 0
 move_failures = 0
 
 with revit.Transaction('Align + Space Selected Annotations'):
     for data in sorted_data:
-        dx = target_center_x - data["center_x"]
-        dy = data["target_center_y"] - data["center_y"]
+        dx = data["target_center_x"] - data["center_x"]
+        dy = target_center_y - data["center_y"]
 
         if abs(dx) < 1e-10 and abs(dy) < 1e-10:
             processed_count += 1
@@ -240,10 +170,3 @@ with revit.Transaction('Align + Space Selected Annotations'):
             processed_count += 1
         except Exception:
             move_failures += 1
-
-    for element in annotation_elements:
-        elem_key = get_element_id_value(element.Id)
-        if elem_key is None or elem_key not in leader_states:
-            continue
-        mode, enabled = leader_states[elem_key]
-        set_leader_state(element, mode, enabled)

@@ -11,13 +11,13 @@ the copyright holder."""
 # ==================================================
 from System.Collections.Generic import List
 from tagging.revit_tagging import RevitTagging
-from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_SIZE_LEFT, SLOT_BOD_RIGHT
+from config.tag_config import DEFAULT_TAG_SLOT_CANDIDATES, SLOT_SIZE_RIGHT, SLOT_BOD_LEFT
 from pyrevit import DB, forms, revit, script
 from Autodesk.Revit.DB import ElementId, Transaction
 
 # Button info
 # ==================================================
-__title__ = "Tag Sleeves 1"
+__title__ = "Tag Sleeves 0"
 __doc__ = """
 Tag all sleeve ducts in active view with BOD/Size tags."""
 
@@ -52,11 +52,11 @@ def get_element_id_value(element_id):
 # Define tags and their positions
 tag_configs = {
     'Length': {
-        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_SIZE_LEFT, [])),
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_SIZE_RIGHT, [])),
         'position': 'start'
     },
     'Size': {
-        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_BOD_RIGHT, [])),
+        'tags': list(DEFAULT_TAG_SLOT_CANDIDATES.get(SLOT_BOD_LEFT, [])),
         'position': 'end'
     }
 }
@@ -89,7 +89,7 @@ if not selected_elements:
 
 existing_tag_map = tagger.build_existing_tag_family_map(selected_elements)
 
-# Track elements that already had Size/BOD-like annotations before this command runs.
+# Track elements that already had Size/BOD-like 2025_annotations before this command runs.
 pretagged_size_bod_ids = set(
     elem_id for elem_id, fams in existing_tag_map.items()
     if any(("size" in fam) or ("bod" in fam) for fam in fams)

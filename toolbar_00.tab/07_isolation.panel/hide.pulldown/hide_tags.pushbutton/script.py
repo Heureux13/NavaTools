@@ -36,10 +36,10 @@ for element in FilteredElementCollector(doc, active_view.Id).WhereElementIsNotEl
         annotations_in_view.append(element)
 
 if not annotations_in_view:
-    output.print_md('**No annotations found in this view.**')
+    output.print_md('**No 2025_annotations found in this view.**')
     sys.exit(0)
 
-# Group annotations by family name
+# Group 2025_annotations by family name
 element_by_family = {}
 for elem in annotations_in_view:
     try:
@@ -91,7 +91,7 @@ if not selected_options:
 element_ids = []
 
 if hide_all_option in selected_options:
-    # Hide all annotations
+    # Hide all 2025_annotations
     element_ids = [elem.Id for elem in annotations_in_view]
 else:
     # Hide selected families

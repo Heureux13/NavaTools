@@ -15,7 +15,7 @@ from pyrevit import DB, revit, script
 # ==================================================
 __title__ = "Remove Annotations"
 __doc__ = """
-Removes annotations on selected items."""
+Removes 2025_annotations on selected items."""
 
 # Variables
 # ==================================================
@@ -70,6 +70,6 @@ for host in host_elements:
 if not annotation_ids:
     script.exit()
 
-with revit.Transaction("Remove annotations from selected elements"):
+with revit.Transaction("Remove 2025_annotations from selected elements"):
     for ann_id in annotation_ids:
         doc.Delete(ann_id)
