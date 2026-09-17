@@ -20,6 +20,8 @@ from config.parameters_registry import (
     BBM_FAN,
     PYT_CFM,
     PYT_ID,
+    PYT_SYSTEM,
+    PYT_AREA,
     PYT_LABEL,
     RVT_MARK,
     RVT_TYPE_MARK,
@@ -171,11 +173,11 @@ def _resolve_pyt_id_value(element):
     """Resolve PYT_ID by concatenating BBM_SYSTEM, Fabrication Service
     Abbreviation, and BBM_SECTION with no separator."""
     system_value = _get_param_text(
-        _get_param_case_insensitive(element, BBM_SYSTEM))
+        _get_param_case_insensitive(element, PYT_SYSTEM))
     abbreviation_value = _get_param_text(
         _get_param_case_insensitive(element, RVT_FABRICATION_SERVICE_ABBREVIATION))
     section_value = _get_param_text(
-        _get_param_case_insensitive(element, BBM_SECTION))
+        _get_param_case_insensitive(element, PYT_AREA))
 
     return '{} {} ({})'.format(system_value, abbreviation_value, section_value)
 
