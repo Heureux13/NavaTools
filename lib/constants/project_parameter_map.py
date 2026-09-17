@@ -12,6 +12,7 @@ DUCT_CATEGORIES = (
     'OST_DuctTerminal',
     'OST_FabricationDuctwork',
     'OST_MechanicalEquipment',
+    'OST_FlexDuctCurves',
 )
 
 DUCT_PIPE_CATEGORIES = (
@@ -22,7 +23,6 @@ DUCT_PIPE_CATEGORIES = (
 PIPE_CATEGORIES = (
     'OST_FabricationPipework'
 )
-
 
 
 ROOM_CATEGORIES = ('OST_Rooms',)
@@ -76,8 +76,10 @@ parameter_bindings = {
     '_UMI_BBM_VPH'               : {'group': 'Data',    'categories': DUCT_CATEGORIES},
     '_UMI_JDG_OffsetLeft'        : {'group': 'Data',    'categories': DUCT_CATEGORIES},
     '_UMI_JDG_OffsetRight'       : {'group': 'Data',    'categories': DUCT_CATEGORIES},
+    '_UMI_PYT_Area       '       : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_AspectRatio'       : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_CFM'               : {'group': 'General', 'categories': DUCT_CATEGORIES},
+    '_UMI_PYT_ID'                : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_HeightPad'         : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_Label'             : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_Note0'             : {'group': 'General', 'categories': DUCT_CATEGORIES},
@@ -102,6 +104,7 @@ parameter_bindings = {
     '_UMI_PYT_Sleeve'            : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_SleeveOpening'     : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_SleeveValue'       : {'group': 'General', 'categories': DUCT_CATEGORIES},
+    '_UMI_PYT_System     '       : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_WeightRun'         : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_WeightSupport'     : {'group': 'General', 'categories': DUCT_CATEGORIES},
     '_UMI_PYT_WeightPerFoot'     : {'group': 'General', 'categories': DUCT_CATEGORIES},

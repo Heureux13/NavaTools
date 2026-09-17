@@ -17,7 +17,7 @@ from config.parameters_registry import RVT_CLEARANCE_ZONE, RVT_FAMILY, RVT_TYPE
 
 # Button info
 # ===================================================
-__title__ = "Isolate by MEP"
+__title__ = "Isolate Selected"
 __doc__ = """
 Toggle isolation of walls, ducts, pipes, steel beams, and floors."""
 
@@ -26,6 +26,8 @@ Toggle isolation of walls, ducts, pipes, steel beams, and floors."""
 doc = revit.doc
 active_view = doc.ActiveView
 output = script.get_output()
+selected_ids = revit.uidoc.Selection.GetElementIds()
+ids = List[ElementId]()
 
 # Categories to isolate
 categories_to_isolate = [
@@ -66,7 +68,6 @@ categories_to_isolate = [
     BuiltInCategory.OST_Grids,
     BuiltInCategory.OST_MechanicalEquipment,
     BuiltInCategory.OST_MechanicalEquipmentTags,
-    BuiltInCategory.OST_Matchline,
     BuiltInCategory.OST_PipeAccessory,
     BuiltInCategory.OST_PipeCurves,
     BuiltInCategory.OST_PipeFitting,
@@ -218,18 +219,38 @@ with revit.Transaction('Toggle Isolation'):
         active_view.DisableTemporaryViewMode(
             TemporaryViewMode.TemporaryIsolate)
     else:
-        # Collect elements visible in current view only
-        ids = collect_elements_from_categories(
-            doc, active_view.Id, categories_to_isolate)
+        # Isolate only selected fabrication ducts.
+        selected_ids = revit.uidoc.Selection.GetElementIds()
+        ids = List[ElementId]()
+        for element_id in selected_ids:
+            element = doc.GetElement(element_id)
+            if element and element.Category:
+                if element.Category.Id.IntegerValue == int(
+                        BuiltInCategory.OST_FabricationDuctwork):
+                    ids.Add(element_id)
 
-        # Ensure clearance-like instances are included.
-        clearance_ids = collect_clearance_like_elements(doc, active_view.Id)
-        for clearance_id in clearance_ids:
-            ids.Add(clearance_id)
+        # Keep the view reference lines visible, as the original view-based
+        # behavior did: grids, matchlines, detail lines, and boundary lines.
+        line_categories = [
+            BuiltInCategory.OST_Grids,
+            BuiltInCategory.OST_Matchline,
+            BuiltInCategory.OST_Lines,
+            BuiltInCategory.OST_RoomSeparationLines,
+            BuiltInCategory.OST_AreaSchemeLines,
+        ]
+        existing_ids = set(
+            element_id.IntegerValue for element_id in ids)
+        for category in line_categories:
+            collector = (FilteredElementCollector(doc, active_view.Id)
+                         .OfCategory(category)
+                         .WhereElementIsNotElementType())
+            for element in collector:
+                if element.Id.IntegerValue not in existing_ids:
+                    ids.Add(element.Id)
+                    existing_ids.add(element.Id.IntegerValue)
 
-        # Apply isolation if we have elements
+        # Apply isolation if selected elements were found
         if ids.Count > 0:
             active_view.IsolateElementsTemporary(ids)
         else:
-            # Show message if no elements found
-            output.print_md('No elements found to isolate.')
+            output.print_md('No selected fabrication ducts or view lines found.')
