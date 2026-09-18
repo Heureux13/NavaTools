@@ -19,7 +19,8 @@ from Autodesk.Revit.DB import (
     UnitUtils,
     FabricationPart,
     UnitTypeId,
-    ConnectorType
+    ConnectorType,
+    StorageType,
 )
 import re
 import logging
@@ -149,15 +150,11 @@ class RevitDuct:
             return connectors[index]
         return None
 
-    def _get_param(self, name, unit=None, as_type="string", required=False):
+    def _get_param_old(self, name, unit=None, as_type="string", required=False):
         p = self.element.LookupParameter(name)
         if not p:
             if required:
-                raise KeyError(
-                    "Missing parameter '{}' on element {}".format(
-                        name,
-                        self.element.Id,
-                    ))
+                raise KeyError("Missing parameter '{}' on element {}".format( name, self.element.Id,))
             return None
 
         try:
@@ -181,6 +178,42 @@ class RevitDuct:
         except Exception:
             # convert any unexpected Revit exception into None to keep callers
             # deterministic
+            return None
+
+    def _get_param(self, name, unit=None, expected_type=None, required=False):
+        p = self.element.LookupParameter(name)
+
+        # if True, that parameter must exist on element or else it will throw KeyError
+        if p is None:
+            if required:
+                raise KeyError("Missing parameter '{}' on element {}".format(name, self.element.Id,))
+            return None
+
+        # Hard decide if we want a specific StorageType, will throw TypeError if not matched
+        if expected_type is not None and p.StorageType != expected_type:
+            raise TypeError(
+                "Parameter '{}' on element '{}' is '{}', expected '{}'".format(
+                    name, self.element.Id, p.StorageType, expected_type))
+
+        try:
+            if p.StorageType == StorageType.Double:
+                val = p.AsDouble()
+                # We can change the value returned from double to something else like inches, millimeters, feet, meters
+                if unit:
+                    val = UnitUtils.ConvertFromInternalUnits(val, unit)
+                return val
+            elif p.StorageType == StorageType.Integer:
+                # Convert integer to float
+                return float(p.AsInteger())
+            elif p.StorageType == StorageType.ElementId:
+                #
+                eid = p.AsElementId()
+                return eid if eid != ElementId.InvalidElementId else None
+            else:
+                s = p.AsString()
+                return s if s is not None else p.AsValueString()
+        except Exception as e:
+            logging.debug("Failed to read '%s' on %s: %s", name, self.element.Id, e)
             return None
 
     def _inlet_outlet_from_revit_xyz(self):
@@ -257,18 +290,15 @@ class RevitDuct:
 
     @property
     def centerline_length(self):
-        return self._get_param(
-            NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def length(self):
-        result_0 = self._get_param(
-            RVT_LENGTH, unit=UnitTypeId.Inches, as_type="double")
+        result_0 = self._get_param(RVT_LENGTH, unit=UnitTypeId.Inches, as_type="double")
         if result_0 is not None:
             return result_0
 
-        result_1 = self._get_param(
-            NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
+        result_1 = self._get_param(NDBS_CENTERLINE_LENGTH, unit=UnitTypeId.Inches, as_type="double")
         if result_1 is not None:
             return result_1
 
@@ -332,8 +362,7 @@ class RevitDuct:
             if size_obj.in_width is not None:
                 return size_obj.in_width
 
-        return self._get_param(
-            RVT_MAIN_PRIMARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(RVT_MAIN_PRIMARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def width_out(self):
@@ -343,8 +372,7 @@ class RevitDuct:
             if size_obj.out_width is not None:
                 return size_obj.out_width
 
-        return self._get_param(
-            RVT_MAIN_SECONDARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(RVT_MAIN_SECONDARY_WIDTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def height_out(self):
@@ -354,8 +382,7 @@ class RevitDuct:
             if size_obj.out_height is not None:
                 return size_obj.out_height
 
-        return self._get_param(
-            RVT_MAIN_SECONDARY_DEPTH, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(RVT_MAIN_SECONDARY_DEPTH, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     # Ex: TDF, S&D
@@ -394,23 +421,19 @@ class RevitDuct:
 
     @property
     def extension_top(self):
-        return self._get_param(
-            NDBS_D_TOP_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(NDBS_D_TOP_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_bottom(self):
-        return self._get_param(
-            NDBS_D_BOTTOM_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(NDBS_D_BOTTOM_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_right(self):
-        return self._get_param(
-            NDBS_D_RIGHT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(NDBS_D_RIGHT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def extension_left(self):
-        return self._get_param(
-            NDBS_D_LEFT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
+        return self._get_param(NDBS_D_LEFT_EXTENSION, unit=UnitTypeId.Inches, as_type="double")
 
     @property
     def duty(self):

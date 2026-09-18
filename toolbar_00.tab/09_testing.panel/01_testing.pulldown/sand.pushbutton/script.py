@@ -9,6 +9,7 @@ the copyright holder."""
 
 from Autodesk.Revit.DB import BuiltInCategory
 from pyrevit import script, revit
+from ducts.revit_duct import RevitDuct
 
 # Button info
 # ======================================================================
@@ -36,5 +37,9 @@ if not fab_ducts:
     script.exit()
 
 output.print_md("**Selected Fabrication Ductwork Element Ids:**")
+
 for el in fab_ducts:
-    output.print_md("- {}".format(el.Id))
+    d = RevitDuct(doc, revit.active_view, el)
+    for p in el.Parameters:
+        pname = p.Definition.Name
+        output.print_md('{}: {}'.format(pname, d._get_param_v2(pname)))
