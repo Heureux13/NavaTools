@@ -9,6 +9,7 @@ the copyright holder."""
 
 from Autodesk.Revit.DB import (
     BuiltInCategory,
+    BuiltInParameter,
     ElementId,
     ElementTransformUtils,
     FamilyInstance,
@@ -47,9 +48,9 @@ ACCEPTED_FAMILIES = {
     'Pipe - PVC DWV Schedule 40 (PE x PE) - 20ft': 'schedule_40',
     'Pipe - CPVC Schedule 80 (PE x PE) - 20ft': 'schedule_80',
     'Schedule 40 PVC DWV': 'schedule_40',
-    'Single Hub Pipe 10ft DuraPipe Epoxy': 'CAST_IRON_NO_HUB',
+    'Single Hub Pipe 10ft DuraPipe Epoxy': 'cast_iron_no_hub',
     'Pipe Types': 'schedule_40',
-    'Type K Hard Copper': 'TYPE_K_COPPER',
+    'Type K Hard Copper': 'type_k_copper',
 }
 
 schedule_lookup = {
@@ -61,17 +62,28 @@ schedule_lookup = {
 
 
 def get_od_radius_pipe(pipe, element_type):
-    schedule_key = ACCEPTED_FAMILIES[element_type.FamilyName]
-    schedule = schedule_lookup[schedule_key]
+    if isinstance(pipe, FabricationPart):
+        schedule_key = ACCEPTED_FAMILIES[element_type.FamilyName]
+        schedule = schedule_lookup[schedule_key]
 
-    nominal_diameter = round(get_fabrication_pipe_radius(pipe) * 2, 2)
-    size_data = schedule.get(nominal_diameter)
-    if size_data is None:
-        raise ValueError(
-            "No chat entry for nominal size {} in {}".format(nominal_diameter, schedule_key)
-        )
-    od_inches = size_data['od']
-    return ((od_inches) / 12.0) / 2.0
+        nominal_diameter = round(get_fabrication_pipe_radius(pipe) * 2, 2)
+        size_data = schedule.get(nominal_diameter)
+        if size_data is None:
+            raise ValueError(
+                "No size entry for nominal diameter {} in {}".format(
+                    nominal_diameter,
+                    schedule_key,
+                )
+            )
+        return size_data['od'] / 24.0
+
+    outside_diameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER)
+    if outside_diameter and outside_diameter.HasValue:
+        return outside_diameter.AsDouble() / 2.0
+
+    if pipe.Diameter > 0:
+        return pipe.Diameter / 2.0
+    raise ValueError('Could not determine the outside diameter for pipe {}.'.format(pipe.Id))
 
 
 def debug_print(message):
@@ -311,22 +323,26 @@ def create_pipe_points(pipes):
 
 selected_pipes = []
 
-debug_print('Collecting fabrication pipes from current selection...')
+debug_print('Collecting fabrication and standard pipes from current selection...')
 selection_ids = revit.uidoc.Selection.GetElementIds()
 if selection_ids.Count == 0:
-    forms.alert('Doug, you gotta select at least one FabPipe.', exitscript=True)
+    forms.alert('Select at least one fabrication pipe or standard pipe.', exitscript=True)
 
 selected_elements = [revit.doc.GetElement(eid) for eid in selection_ids]
 selected_elements = [
     element for element in selected_elements
-    if isinstance(element, FabricationPart)
+    if element.Category and element.Category.Id.IntegerValue in (
+        int(BuiltInCategory.OST_FabricationPipework),
+        int(BuiltInCategory.OST_PipeCurves),
+    )
 ]
-debug_print('Fabrication parts found in selection: {}'.format(len(selected_elements)))
+debug_print('Pipes found in selection: {}'.format(len(selected_elements)))
 
 for element in selected_elements:
     if isinstance(element.Location, LocationCurve):
         element_type = revit.doc.GetElement(element.GetTypeId())
-        if element_type.FamilyName in ACCEPTED_FAMILIES:
+        if (not isinstance(element, FabricationPart)
+                or element_type.FamilyName in ACCEPTED_FAMILIES):
             slope_degrees = get_pipe_slope_degrees(element)
             if slope_degrees is None:
                 debug_print(
@@ -348,7 +364,7 @@ for element in selected_elements:
 
 debug_print('Selected pipes: {}'.format(len(selected_pipes)))
 if not selected_pipes:
-    forms.alert('Select at least one FabPipe first.', exitscript=True)
+    forms.alert('Select at least one eligible pipe first.', exitscript=True)
 
 debug_print('Finding BIMrx_Point type...')
 created_count, created_ids = create_pipe_points(selected_pipes)
