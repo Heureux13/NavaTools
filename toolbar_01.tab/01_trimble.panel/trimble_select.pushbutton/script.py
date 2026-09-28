@@ -28,6 +28,8 @@ import math
 import traceback
 from System.Collections.Generic import List
 from pipefitting.sizes.pvc_sizes import SCHEDULE_40, SCHEDULE_80
+from pipefitting.sizes.copper_sizes import TYPE_K_COPPER
+from pipefitting.sizes.cast_iron_sizes import CAST_IRON_NO_HUB
 
 # Button info
 # ======================================================================
@@ -44,11 +46,17 @@ DEBUG = False
 ACCEPTED_FAMILIES = {
     'Pipe - PVC DWV Schedule 40 (PE x PE) - 20ft': 'schedule_40',
     'Pipe - CPVC Schedule 80 (PE x PE) - 20ft': 'schedule_80',
+    'Schedule 40 PVC DWV': 'schedule_40',
+    'Single Hub Pipe 10ft DuraPipe Epoxy': 'CAST_IRON_NO_HUB',
+    'Pipe Types': 'schedule_40',
+    'Type K Hard Copper': 'TYPE_K_COPPER',
 }
 
 schedule_lookup = {
     'schedule_40': SCHEDULE_40,
     'schedule_80': SCHEDULE_80,
+    'type_k_copper': TYPE_K_COPPER,
+    'cast_iron_no_hub': CAST_IRON_NO_HUB,
 }
 
 
