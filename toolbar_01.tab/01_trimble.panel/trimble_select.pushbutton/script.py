@@ -86,6 +86,13 @@ def get_od_radius_pipe(pipe, element_type):
     raise ValueError('Could not determine the outside diameter for pipe {}.'.format(pipe.Id))
 
 
+def element_id_value(element_id):
+    """Return the numeric value of an ElementId across Revit versions."""
+    if hasattr(element_id, "Value"):
+        return element_id.Value
+    return element_id.IntegerValue
+
+
 def debug_print(message):
     """Print a message only when DEBUG is enabled."""
     if DEBUG:
@@ -331,7 +338,7 @@ if selection_ids.Count == 0:
 selected_elements = [revit.doc.GetElement(eid) for eid in selection_ids]
 selected_elements = [
     element for element in selected_elements
-    if element.Category and element.Category.Id.IntegerValue in (
+    if element.Category and element_id_value(element.Category.Id) in (
         int(BuiltInCategory.OST_FabricationPipework),
         int(BuiltInCategory.OST_PipeCurves),
     )

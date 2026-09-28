@@ -202,7 +202,7 @@ try:
                     param_groups[pname] = {}
                 if pval not in param_groups[pname]:
                     param_groups[pname][pval] = []
-                param_groups[pname][pval].append(d)
+                param_groups[pname][pval].append(pipe)
         except Exception as e:
             output.print_md("Error reading parameters: {}".format(str(e)))
             continue
