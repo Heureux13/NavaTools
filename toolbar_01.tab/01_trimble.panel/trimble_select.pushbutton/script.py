@@ -51,6 +51,7 @@ ACCEPTED_FAMILIES = {
     'Single Hub Pipe 10ft DuraPipe Epoxy': 'cast_iron_no_hub',
     'Pipe Types': 'schedule_40',
     'Type K Hard Copper': 'type_k_copper',
+    'Schedule 40 PVC DWV - Perforated': 'schedule_40',
 }
 
 schedule_lookup = {
