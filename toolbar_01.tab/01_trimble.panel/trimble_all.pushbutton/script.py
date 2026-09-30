@@ -347,22 +347,22 @@ for element in view_fabrication_pipes + view_standard_pipes:
         element_type = revit.doc.GetElement(element.GetTypeId())
         if (not isinstance(element, FabricationPart)
                 or element_type.FamilyName in ACCEPTED_FAMILIES):
-            slope_degrees = get_pipe_slope_degrees(element)
-            if slope_degrees is None:
-                debug_print(
-                    'Excluding pipe {}: slope is not computed or missing.'.format(
-                        element.Id,
-                    )
-                )
-                continue
-            if slope_degrees >= 45:
-                debug_print(
-                    'Excluding pipe {}: slope {:.2f} degrees is not under 45.'.format(
-                        element.Id,
-                        slope_degrees,
-                    )
-                )
-                continue
+            # slope_degrees = get_pipe_slope_degrees(element)
+            # if slope_degrees is None:
+            #     debug_print(
+            #         'Excluding pipe {}: slope is not computed or missing.'.format(
+            #             element.Id,
+            #         )
+            #     )
+            #     continue
+            # if slope_degrees >= 45:
+            #     debug_print(
+            #         'Excluding pipe {}: slope {:.2f} degrees is not under 45.'.format(
+            #             element.Id,
+            #             slope_degrees,
+            #         )
+            #     )
+            #     continue
             selected_pipes.append(element)
 
 

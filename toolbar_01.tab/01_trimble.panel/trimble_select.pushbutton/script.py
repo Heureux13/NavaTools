@@ -182,6 +182,17 @@ def get_pipe_slope_degrees(pipe):
     return math.degrees(math.atan(abs(slope_ratio)))
 
 
+def is_vertical_pipe(pipe):
+    """Return True when the pipe runs parallel to the Revit Z axis."""
+    location = pipe.Location
+    if not isinstance(location, LocationCurve):
+        return False
+    curve = location.Curve
+    direction = (curve.GetEndPoint(1) - curve.GetEndPoint(0)).Normalize()
+    horizontal_direction = XYZ(direction.X, direction.Y, 0)
+    return horizontal_direction.IsZeroLength()
+
+
 def get_point(pipe):
     """Return the start, midpoint, and end XYZ locations at pipe bottom."""
     location = pipe.Location
@@ -195,7 +206,13 @@ def get_point(pipe):
     vertical = XYZ.BasisZ
     bottom_direction = -vertical + direction.Multiply(direction.DotProduct(vertical))
     if bottom_direction.IsZeroLength():
-        raise ValueError('Bottom points are undefined for a vertical pipe.')
+        # A vertical pipe has no unique bottom side; place markers on its
+        # centerline instead.
+        return (
+            curve.GetEndPoint(0),
+            curve.Evaluate(0.5, True),
+            curve.GetEndPoint(1),
+        )
 
     bottom_offset = bottom_direction.Normalize().Multiply(radius)
 
@@ -350,15 +367,16 @@ for element in selected_elements:
         element_type = revit.doc.GetElement(element.GetTypeId())
         if (not isinstance(element, FabricationPart)
                 or element_type.FamilyName in ACCEPTED_FAMILIES):
+            vertical = is_vertical_pipe(element)
             slope_degrees = get_pipe_slope_degrees(element)
-            if slope_degrees is None:
+            if slope_degrees is None and not vertical:
                 debug_print(
                     'Excluding pipe {}: slope is not computed or missing.'.format(
                         element.Id,
                     )
                 )
                 continue
-            if slope_degrees >= 45:
+            if not vertical and slope_degrees >= 45:
                 debug_print(
                     'Excluding pipe {}: slope {:.2f} degrees is not under 45.'.format(
                         element.Id,
