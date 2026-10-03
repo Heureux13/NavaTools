@@ -11,23 +11,23 @@ the copyright holder."""
 import os
 import subprocess
 from pyrevit import script
-
-logger = script.get_logger()
-EXT_DIR = os.path.dirname(__file__)
-
-try:
-    p = subprocess.Popen(
-        ['git', '-C', EXT_DIR, 'pull', '--ff-only'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    out, err = p.communicate()
-
-    if p.returncode != 0:
-        err_text = (err or b'').decode('utf-8', errors='ignore').strip()
-        if not err_text:
-            err_text = (out or b'').decode('utf-8', errors='ignore').strip()
-        logger.warning('NavaTools auto-update failed (code %s): %s', p.returncode, err_text)
-
-except Exception as ex:
-    logger.warning('NavaTools auto-update exception: %s', ex)
+#
+# logger = script.get_logger()
+# EXT_DIR = os.path.dirname(__file__)
+#
+# try:
+#     p = subprocess.Popen(
+#         ['git', '-C', EXT_DIR, 'pull', '--ff-only'],
+#         stdout=subprocess.PIPE,
+#         stderr=subprocess.PIPE
+#     )
+#     out, err = p.communicate()
+#
+#     if p.returncode != 0:
+#         err_text = (err or b'').decode('utf-8', errors='ignore').strip()
+#         if not err_text:
+#             err_text = (out or b'').decode('utf-8', errors='ignore').strip()
+#         logger.warning('NavaTools auto-update failed (code %s): %s', p.returncode, err_text)
+#
+# except Exception as ex:
+#     logger.warning('NavaTools auto-update exception: %s', ex)
