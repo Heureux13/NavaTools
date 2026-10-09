@@ -150,11 +150,11 @@ class RevitDuct:
             return connectors[index]
         return None
 
-    def _get_param_old(self, name, unit=None, as_type="string", required=False):
+    def _get_param(self, name, unit=None, as_type="string", required=False):
         p = self.element.LookupParameter(name)
         if not p:
             if required:
-                raise KeyError("Missing parameter '{}' on element {}".format( name, self.element.Id,))
+                raise KeyError("Missing parameter '{}' on element {}".format(name, self.element.Id,))
             return None
 
         try:
@@ -180,7 +180,7 @@ class RevitDuct:
             # deterministic
             return None
 
-    def _get_param(self, name, unit=None, expected_type=None, required=False):
+    def _get_param_old(self, name, unit=None, expected_type=None, required=False):
         p = self.element.LookupParameter(name)
 
         # if True, that parameter must exist on element or else it will throw KeyError
