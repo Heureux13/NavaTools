@@ -72,6 +72,7 @@ categories_to_isolate = [
     BuiltInCategory.OST_PipeFitting,
     BuiltInCategory.OST_PipeInsulations,
     BuiltInCategory.OST_PipeTags,
+    BuiltInCategory.OST_SectionBox,
     BuiltInCategory.OST_StructuralFraming,
     BuiltInCategory.OST_Viewers,
     BuiltInCategory.OST_Walls,

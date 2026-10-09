@@ -20,7 +20,7 @@ clr.AddReference("System.Windows.Forms")
 
 # Button info
 # ===================================================
-__title__ = "Select by Fab Pipe"
+__title__ = "Fab Pipe"
 __doc__ = """
 Selects visible fabrication pipework and filters it by parameter values."""
 

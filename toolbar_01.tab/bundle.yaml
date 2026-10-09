@@ -4,3 +4,4 @@ invisible: false
 layout:
   - 01_trimble
   - 02_testing
+  - 03_select.panel
