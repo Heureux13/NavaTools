@@ -1,2 +1,3 @@
 title: Duct Pressure
 tooltip: Calculate SMACNA allowable leakage and pass-fail values.
+max_revit_version: 2026

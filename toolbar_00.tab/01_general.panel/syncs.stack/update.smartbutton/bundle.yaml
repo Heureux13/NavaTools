@@ -9,3 +9,4 @@ tooltip:
   es_es: Descarga las actualizaciones desde los repositorios remotos de git (ej. github, bitbucket)
   de_de: Lädt die Updates von remote git repositories herunter (z.B. GitHub, Bitbucket)
 context: zero-doc
+max_revit_version: 2026

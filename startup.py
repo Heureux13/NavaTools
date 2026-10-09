@@ -11,23 +11,35 @@ the copyright holder."""
 import os
 import subprocess
 from pyrevit import script
-#
-# logger = script.get_logger()
-# EXT_DIR = os.path.dirname(__file__)
-#
-# try:
-#     p = subprocess.Popen(
-#         ['git', '-C', EXT_DIR, 'pull', '--ff-only'],
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE
-#     )
-#     out, err = p.communicate()
-#
-#     if p.returncode != 0:
-#         err_text = (err or b'').decode('utf-8', errors='ignore').strip()
-#         if not err_text:
-#             err_text = (out or b'').decode('utf-8', errors='ignore').strip()
-#         logger.warning('NavaTools auto-update failed (code %s): %s', p.returncode, err_text)
-#
-# except Exception as ex:
-#     logger.warning('NavaTools auto-update exception: %s', ex)
+
+
+def get_revit_year(app):
+    """Return the Revit application's year as an integer."""
+    return int(app.VersionNumber)
+
+AcceptableRevitYearVersionsAndBelow = 2026
+
+
+logger = script.get_logger()
+EXT_DIR = os.path.dirname(__file__)
+
+Autoupdate = False  # Set to True to enable updates at startup.
+
+if Autoupdate:
+    try:
+        p = subprocess.Popen(
+            ['git', '-C', EXT_DIR, 'pull', '--ff-only'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        out, err = p.communicate()
+
+        if p.returncode != 0:
+            err_text = (err or b'').decode('utf-8', errors='ignore').strip()
+            if not err_text:
+                err_text = (out or b'').decode('utf-8', errors='ignore').strip()
+            logger.warning('NavaTools auto-update failed (code %s): %s', p.returncode, err_text)
+
+    except Exception as ex:
+        logger.warning('NavaTools auto-update exception: %s', ex)
+
