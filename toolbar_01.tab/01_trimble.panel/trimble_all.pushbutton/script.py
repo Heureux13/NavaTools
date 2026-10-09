@@ -62,7 +62,8 @@ schedule_lookup = {
 }
 
 
-def get_od_radius_pipe(pipe, element_type):
+def get_od_radius_pipe(pipe,
+                       element_type):
     if isinstance(pipe, FabricationPart):
         schedule_key = ACCEPTED_FAMILIES[element_type.FamilyName]
         schedule = schedule_lookup[schedule_key]
@@ -93,7 +94,12 @@ def debug_print(message):
         output.print_md(message)
 
 
-def get_param(element, name, unit=None, as_type="string", required=False):
+def get_param(element,
+              name,
+              unit=None,
+              as_type="string",
+              required=False):
+
     """Look up a parameter value on an element by name."""
     p = element.LookupParameter(name)
     if not p:
