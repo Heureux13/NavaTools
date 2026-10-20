@@ -7,18 +7,32 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId, VisibleInViewFilter
-from pyrevit import revit, script
-from System.Collections.Generic import List
-from ducts.revit_duct import RevitDuct
 from config.parameters_registry import *
+from System.Windows.Forms import (
+    AnchorStyles, Button, Form, FormStartPosition, Label, MessageBox,
+    MessageBoxButtons, MessageBoxIcon, TextBox, TreeNode, TreeView,
+)
+from System.Drawing import Size, Color, Font, FontStyle
+from System.Collections.Generic import List
+from pyrevit import revit, script
+from Autodesk.Revit.UI import IExternalEventHandler, ExternalEvent, ExternalEventRequest
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementId
+import re
+import traceback
+
+import clr
+clr.AddReference("System.Windows.Forms")
+clr.AddReference("System.Drawing")
 
 
 # Button info
 # ===================================================
 __title__ = "Check Fabrication Numbers"
 __doc__ = """
-Gives a list of all duct with the same fabrication number."""
+Search duplicate fabrication-number groups in the active view and select checked ducts.
+Double-click a duct ID to select it and zoom to it without closing the menu."""
+__persistentengine__ = True
+__fullframeengine__ = True
 
 # Variables
 # ==================================================
@@ -64,6 +78,235 @@ def lookup_parameter_case_insensitive(element, param_name):
     return None
 
 
+def natural_sort_key(value):
+    return [int(part) if part.isdigit() else part.lower()
+            for part in re.split(r"(\d+)", value)]
+
+
+class SelectDuctsHandler(IExternalEventHandler):
+    def __init__(self, document):
+        self.document = document
+        self.element_ids = []
+        self.pending = False
+        self.zoom = False
+        self.id_list_type = List[ElementId]
+        self.message_box = MessageBox
+        self.message_buttons = MessageBoxButtons
+        self.message_icons = MessageBoxIcon
+        self.format_traceback = traceback.format_exc
+
+    def Execute(self, uiapp):
+        try:
+            active_uidoc = uiapp.ActiveUIDocument
+            if (active_uidoc is None or not self.document.IsValidObject
+                    or not active_uidoc.Document.Equals(self.document)):
+                raise RuntimeError("Activate the original document before selecting ducts.")
+            if not self.element_ids:
+                return
+            duct_ids = self.id_list_type()
+            for element_id in self.element_ids:
+                if self.document.GetElement(element_id) is None:
+                    raise RuntimeError(
+                        "A checked duct no longer exists. Close and reopen this menu.")
+                duct_ids.Add(element_id)
+            active_uidoc.Selection.SetElementIds(duct_ids)
+            if self.zoom:
+                active_uidoc.ShowElements(duct_ids)
+        except Exception as ex:
+            self.message_box.Show(
+                "Selection failed:\n{}".format(ex), "Check Fabrication Numbers",
+                self.message_buttons.OK, self.message_icons.Error)
+            print(self.format_traceback())
+        finally:
+            self.element_ids = []
+            self.pending = False
+            self.zoom = False
+
+    def GetName(self):
+        return "Select Duplicate Fabrication Number Ducts"
+
+
+class DuplicateFabricationForm(Form):
+    def __init__(self, groups, select_event, select_handler):
+        Form.__init__(self)
+        self.Text = "Select Ducts by Duplicate Fabrication Number"
+        self.ClientSize = Size(700, 550)
+        self.MinimumSize = Size(660, 400)
+        self.StartPosition = FormStartPosition.CenterScreen
+        self.groups = groups
+        self.select_event = select_event
+        self.select_handler = select_handler
+        self.checked_ids = set()
+        self.updating = False
+        self.message_box = MessageBox
+        self.message_buttons = MessageBoxButtons
+        self.message_icons = MessageBoxIcon
+        self.accepted_request = ExternalEventRequest.Accepted
+        self.format_traceback = traceback.format_exc
+        self.element_ids = {
+            element_id_value(eid): eid for ids in groups.values() for eid in ids
+        }
+        self.link_font = Font(self.Font, FontStyle.Underline)
+
+        search_label = Label()
+        search_label.Text = "Search fabrication number:"
+        search_label.SetBounds(12, 15, 165, 24)
+        self.Controls.Add(search_label)
+
+        self.search_box = TextBox()
+        self.search_box.SetBounds(177, 12, 511, 24)
+        self.search_box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+        self.search_box.TextChanged += self._filter_tree
+        self.Controls.Add(self.search_box)
+
+        self.tree_view = TreeView()
+        self.tree_view.SetBounds(12, 48, 676, 414)
+        self.tree_view.CheckBoxes = True
+        self.tree_view.Anchor = (
+            AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right)
+        self.tree_view.AfterCheck += self._on_node_checked
+        self.tree_view.NodeMouseDoubleClick += self._on_id_double_click
+        self.tree_view.ShowNodeToolTips = True
+        self.Controls.Add(self.tree_view)
+
+        self.summary = Label()
+        self.summary.SetBounds(12, 474, 676, 24)
+        self.summary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+        self.Controls.Add(self.summary)
+
+        for text, left, width, callback in (
+                ("Select All", 12, 120, self._on_select_all),
+                ("Select Checked", 140, 150, self._on_select_checked),
+                ("Deselect All", 298, 120, self._on_deselect_all),
+                ("Close", 426, 100, self._on_close)):
+            button = Button()
+            button.Text = text
+            button.SetBounds(left, 508, width, 30)
+            button.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            button.Click += callback
+            self.Controls.Add(button)
+
+        self.FormClosed += self._on_form_closed
+        self._build_tree()
+
+    def _build_tree(self):
+        search = self.search_box.Text.strip().lower()
+        self.updating = True
+        self.tree_view.BeginUpdate()
+        try:
+            self.tree_view.Nodes.Clear()
+            for fabrication_number in sorted(self.groups, key=natural_sort_key):
+                if search and search not in fabrication_number.lower():
+                    continue
+                elements = self.groups[fabrication_number]
+                parent = TreeNode(
+                    "Fabrication Number: {} ({} ducts)".format(fabrication_number, len(elements)))
+                parent.Tag = ("group", fabrication_number)
+                for element_id in sorted(elements, key=element_id_value):
+                    id_value = element_id_value(element_id)
+                    child = TreeNode("ID: {}".format(id_value))
+                    child.Tag = ("element", id_value)
+                    child.ForeColor = Color.Blue
+                    child.NodeFont = self.link_font
+                    child.ToolTipText = "Double-click to select and zoom to this duct"
+                    child.Checked = id_value in self.checked_ids
+                    parent.Nodes.Add(child)
+                parent.Checked = all(child.Checked for child in parent.Nodes)
+                self.tree_view.Nodes.Add(parent)
+        finally:
+            self.tree_view.EndUpdate()
+            self.updating = False
+        self._update_summary()
+
+    def _update_summary(self):
+        self.summary.Text = "{} duplicate groups | {} ducts | {} checked".format(
+            len(self.groups), sum(len(ids) for ids in self.groups.values()),
+            len(self.checked_ids))
+
+    def _filter_tree(self, sender, args):
+        self._build_tree()
+
+    def _on_node_checked(self, sender, args):
+        if self.updating:
+            return
+        self.updating = True
+        try:
+            node = args.Node
+            children = node.Nodes if node.Tag[0] == "group" else [node]
+            for child in children:
+                child.Checked = node.Checked
+                id_value = child.Tag[1]
+                if child.Checked:
+                    self.checked_ids.add(id_value)
+                else:
+                    self.checked_ids.discard(id_value)
+            if node.Parent is not None:
+                node.Parent.Checked = all(child.Checked for child in node.Parent.Nodes)
+        finally:
+            self.updating = False
+        self._update_summary()
+
+    def _on_select_all(self, sender, args):
+        # Select All applies to the groups visible under the current search.
+        for parent in self.tree_view.Nodes:
+            for child in parent.Nodes:
+                self.checked_ids.add(child.Tag[1])
+        self._build_tree()
+
+    def _on_deselect_all(self, sender, args):
+        self.checked_ids.clear()
+        self._build_tree()
+
+    def _on_select_checked(self, sender, args):
+        if not self.checked_ids:
+            self.message_box.Show(
+                "Check at least one group or duct first.", self.Text,
+                self.message_buttons.OK, self.message_icons.Information)
+            return
+        self._request_selection([
+            self.element_ids[id_value] for id_value in sorted(self.checked_ids)
+        ])
+
+    def _on_id_double_click(self, sender, args):
+        node = args.Node
+        if node.Tag is not None and node.Tag[0] == "element":
+            self._request_selection([self.element_ids[node.Tag[1]]], zoom=True)
+
+    def _request_selection(self, element_ids, zoom=False):
+        if self.select_handler.pending:
+            self.message_box.Show(
+                "A selection request is already pending. Please wait.", self.Text,
+                self.message_buttons.OK, self.message_icons.Information)
+            return
+        try:
+            self.select_handler.element_ids = element_ids
+            self.select_handler.zoom = zoom
+            self.select_handler.pending = True
+            result = self.select_event.Raise()
+            if result != self.accepted_request:
+                raise RuntimeError("Revit did not accept the selection request: {}".format(result))
+        except Exception as ex:
+            self.select_handler.element_ids = []
+            self.select_handler.pending = False
+            self.select_handler.zoom = False
+            self.message_box.Show(
+                "Selection request failed:\n{}".format(ex), self.Text,
+                self.message_buttons.OK, self.message_icons.Error)
+            print(self.format_traceback())
+
+    def _on_close(self, sender, args):
+        self.Close()
+
+    def _on_form_closed(self, sender, args):
+        self.select_handler.element_ids = []
+        self.select_event.Dispose()
+        for parent in self.tree_view.Nodes:
+            for child in parent.Nodes:
+                child.NodeFont = None
+        self.tree_view.Nodes.Clear()
+        self.link_font.Dispose()
+
+
 skip_values = {
     'skip',
     '0',
@@ -90,7 +333,6 @@ try:
     # Build parameter -> value -> elements map
     # Key is combination of all checked parameters
     param_groups = {}
-    param_values_map = {}  # Store param values for later display
 
     for d in all_duct:
         param_values = {}
@@ -127,80 +369,25 @@ try:
         if composite_key not in param_groups:
             param_groups[composite_key] = []
         param_groups[composite_key].append(d)
-        param_values_map[element_id_value(d.Id)] = param_values
 
     if not param_groups:
         output.print_md(
             "## No ducts found with parameters populated: {}".format(", ".join(check_parameters)))
         script.exit()
 
-    # Select ducts that have matching combinations (duplicates)
-    duct_run = []
-    for key, ducts in param_groups.items():
-        if len(ducts) > 1:
-            duct_run.extend(ducts)
-
-    if not duct_run:
+    duplicate_groups = {
+        key: [duct.Id for duct in ducts]
+        for key, ducts in param_groups.items() if len(ducts) > 1
+    }
+    if not duplicate_groups:
         output.print_md("## No matching ducts found")
         script.exit()
 
-    # Select ducts in Revit
-    duct_ids = List[ElementId]()
-    for d in duct_run:
-        duct_ids.Add(d.Id)
-    uidoc.Selection.SetElementIds(duct_ids)
-
-    output.print_md("## Selected {} ducts".format(len(duct_run)))
-    output.print_md("---")
-
-    fil_ducts = []
-    for d in duct_run:
-        try:
-            fil_ducts.append(RevitDuct(doc, view, d))
-        except Exception:
-            pass
-
-    # Sort by Item Number parameter value
-    def get_sort_key(duct):
-        values = param_values_map.get(element_id_value(duct.element.Id), {})
-        item_num = values.get("item number", "0")
-        try:
-            return int(item_num) if item_num else 0
-        except ValueError:
-            return 0
-
-    fil_ducts.sort(key=get_sort_key)
-
-    for i, fil in enumerate(fil_ducts, start=1):
-        try:
-            values = param_values_map.get(element_id_value(fil.element.Id), {})
-            param_str = " | ".join("{}: {}".format(p, values.get(p, ""))
-                                   for p in sorted(check_parameters))
-            fab_service_param = lookup_parameter_case_insensitive(
-                fil.element, "fabrication service")
-            fab_service = get_param_value(
-                fab_service_param) if fab_service_param else ""
-        except Exception:
-            param_str = ""
-            fab_service = ""
-        output.print_md(
-            '### No: {:03} | ID: {} | {} | Service: {} | Length: {:06.2f}" | Size: {}'.format(
-                i,
-                output.linkify(fil.element.Id),
-                param_str,
-                fab_service,
-                fil.length if fil.length is not None else 0.0,
-                fil.size,
-            )
-        )
-
-    element_ids = [d.element.Id for d in fil_ducts]
-    output.print_md(
-        "# Total elements {}, {}".format(
-            len(fil_ducts),
-            output.linkify(element_ids)
-        )
-    )
+    select_handler = SelectDuctsHandler(doc)
+    select_event = ExternalEvent.Create(select_handler)
+    duplicate_form = DuplicateFabricationForm(duplicate_groups, select_event, select_handler)
+    duplicate_form.Show()
 
 except Exception as e:
     output.print_md("## Error: {}".format(str(e)))
+    print(traceback.format_exc())

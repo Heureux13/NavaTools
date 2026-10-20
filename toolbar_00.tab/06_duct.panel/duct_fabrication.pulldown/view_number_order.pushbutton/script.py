@@ -96,31 +96,33 @@ def get_param_display_value(element, param_name):
 
 
 def get_number_order_sort_key(element):
+    element_id = element.Id
+    id_value = element_id.Value if hasattr(element_id, "Value") else element_id.IntegerValue
     raw_value = get_param_display_value(element, PYT_NUMBER_ORDER)
     if raw_value == "None":
-        return (1, float("inf"), element.Id.IntegerValue)
+        return (1, float("inf"), id_value)
 
     text = str(raw_value).strip()
 
     try:
-        return (0, int(text), element.Id.IntegerValue)
+        return (0, int(text), id_value)
     except Exception:
         pass
 
     # Handle values like "1.0" or formatted strings.
     try:
-        return (0, int(float(text)), element.Id.IntegerValue)
+        return (0, int(float(text)), id_value)
     except Exception:
         pass
 
     match = re.search(r"-?\d+", text)
     if match:
         try:
-            return (0, int(match.group(0)), element.Id.IntegerValue)
+            return (0, int(match.group(0)), id_value)
         except Exception:
             pass
 
-    return (1, float("inf"), element.Id.IntegerValue)
+    return (1, float("inf"), id_value)
 
 
 def get_order_number_display(element):

@@ -7,6 +7,22 @@ distributed, or used in any form without the prior written permission of
 the copyright holder."""
 # ======================================================================
 
+import datetime
+import os
+import re
+from config.parameters_registry import PYT_DATE_EXPORT
+from System.Collections.Generic import List, HashSet
+from System.Windows.Forms import (
+    SaveFileDialog,
+    FolderBrowserDialog,
+    DialogResult,
+    MessageBox,
+    MessageBoxButtons,
+    MessageBoxIcon,
+)
+from pyrevit import revit, script, forms
+from Autodesk.Revit.UI import IExternalEventHandler, ExternalEvent
+from Autodesk.Revit.DB.Fabrication import FabricationSaveJobOptions
 from Autodesk.Revit.DB import (
     FilteredElementCollector,
     BuiltInCategory,
@@ -15,39 +31,23 @@ from Autodesk.Revit.DB import (
     Transaction,
     FabricationPart,
 )
-from Autodesk.Revit.DB.Fabrication import FabricationSaveJobOptions
-from Autodesk.Revit.UI import IExternalEventHandler, ExternalEvent
-from pyrevit import revit, script, forms
-from System.Windows.Forms import (
-    Form,
-    Button,
-    Label,
-    TextBox,
-    TreeView,
-    TreeNode,
-    CheckBox,
-    FormStartPosition,
-    AnchorStyles,
-    SaveFileDialog,
-    FolderBrowserDialog,
-    DialogResult,
-    MessageBox,
-    MessageBoxButtons,
-    MessageBoxIcon,
-)
-from System.Collections.Generic import List, HashSet
-from System.Drawing import Size
-from config.parameters_registry import PYT_DATE_EXPORT
-import re
-import os
-import datetime
+from System.Windows.Controls import TreeViewItem, CheckBox
+from System.Windows.Markup import XamlReader
+import clr
+clr.AddReference("WindowsBase")
+clr.AddReference("PresentationCore")
+clr.AddReference("PresentationFramework")
+clr.AddReference("System.Windows.Forms")
 
 
 # Button info
 # ===================================================
 __title__ = "Select by Fab Note"
 __doc__ = """
-Select by Fab Notes with Item Number."""
+Select by Fab Notes with Item Number in a modeless WPF window.
+Search and check groups, select ducts, or export single and grouped MAJ files."""
+__persistentengine__ = True
+__fullframeengine__ = True
 
 # Variables
 # ==================================================
@@ -78,7 +78,7 @@ fab_notes_to_skip = {
 class SelectDuctsEventHandler(IExternalEventHandler):
     """Runs Selection.SetElementIds() inside a valid Revit API context.
 
-    WinForms button clicks execute outside Revit's API context once the
+    Modeless button clicks execute outside Revit's API context once the
     form is shown modelessly, so the actual Selection call must be raised
     through an ExternalEvent instead of being called directly.
     """
@@ -205,15 +205,58 @@ class ExportFabricationJobEventHandler(IExternalEventHandler):
         return "Export Fabrication Job Event Handler"
 
 
-class EnhancedParamForm(Form):
+FAB_NOTES_XAML = """
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Select Ducts by Fabrication Notes"
+        Width="740" Height="640" MinWidth="620" MinHeight="420"
+        WindowStartupLocation="CenterScreen">
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,10">
+      <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+      <TextBox x:Name="search_box" Padding="5"/>
+    </DockPanel>
+    <TreeView x:Name="tree_view" Grid.Row="1"/>
+    <TextBlock x:Name="summary_text" Grid.Row="2" Margin="0,8,0,8"/>
+    <DockPanel Grid.Row="3" Margin="0,0,0,10">
+      <TextBlock Text="First Selected:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+      <TextBox x:Name="first_selected_box" IsReadOnly="True" Padding="5"/>
+    </DockPanel>
+    <WrapPanel Grid.Row="4" Margin="0,0,0,6">
+      <Button x:Name="export_button" Content="Export to MAJ" Padding="12,6" Margin="0,0,8,4"/>
+      <Button x:Name="batch_export_button" Content="Batch Export by Group" Padding="12,6" Margin="0,0,8,4"/>
+    </WrapPanel>
+    <WrapPanel Grid.Row="5">
+      <Button x:Name="all_button" Content="Select All" Padding="12,6" Margin="0,0,8,4"/>
+      <Button x:Name="select_button" Content="Select Checked" Padding="12,6" Margin="0,0,8,4"/>
+      <Button x:Name="deselect_button" Content="Deselect All" Padding="12,6" Margin="0,0,8,4"/>
+      <Button x:Name="close_button" Content="Close" Padding="12,6" Margin="0,0,8,4"/>
+    </WrapPanel>
+  </Grid>
+</Window>
+"""
+
+
+class EnhancedParamForm(object):
     def __init__(self, param_groups, uidoc, select_event=None, select_handler=None,
                  export_event=None, export_handler=None):
-        Form.__init__(self)
-        self.Text = "Select Ducts by Fabrication Notes"
-        self.Width = 700
-        self.Height = 600
-        self.MinimumSize = Size(500, 400)
-        self.StartPosition = FormStartPosition.CenterScreen
+        self.window = XamlReader.Parse(FAB_NOTES_XAML)
+        for name in (
+                "search_box", "tree_view", "summary_text", "first_selected_box",
+                "export_button", "batch_export_button", "all_button",
+                "select_button", "deselect_button", "close_button"):
+            control = self.window.FindName(name)
+            if control is None:
+                raise RuntimeError("WPF layout is missing '{}'.".format(name))
+            setattr(self, name, control)
         self.param_groups = param_groups
         self.uidoc = uidoc
         self.select_event = select_event
@@ -221,130 +264,20 @@ class EnhancedParamForm(Form):
         self.export_event = export_event
         self.export_handler = export_handler
 
-        # Build hierarchical structure: base_name -> [variants]
         self.hierarchy = self._build_hierarchy(param_groups)
-
-        _MARGIN = 12
-        _BTN_H = 30
-        _NAME_H = 24
-        _BTN_TOP = self.ClientSize.Height - _MARGIN - _BTN_H
-        _EXPORT_BTN_TOP = _BTN_TOP - 6 - _BTN_H
-        _NAME_TOP = _EXPORT_BTN_TOP - _MARGIN - _NAME_H
-        _SEARCH_H = 24
-        _inner_w = self.ClientSize.Width - _MARGIN * 2
-
-        # Search box
-        self.search_box = TextBox()
-        self.search_box.Top = _MARGIN
-        self.search_box.Left = _MARGIN
-        self.search_box.Width = _inner_w
-        self.search_box.Height = _SEARCH_H
-        self.search_box.PlaceholderText = "Search..."
-        self.search_box.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+        self.checked_variants = set()
+        self.updating = False
         self.search_box.TextChanged += self._filter_tree
-        self.Controls.Add(self.search_box)
-
-        # TreeView with checkboxes for expandable hierarchy
-        _tree_top = _MARGIN + _SEARCH_H + _MARGIN
-        self.tree_view = TreeView()
-        self.tree_view.Top = _tree_top
-        self.tree_view.Left = _MARGIN
-        self.tree_view.Width = _inner_w
-        self.tree_view.Height = _NAME_TOP - _tree_top - _MARGIN
-        self.tree_view.CheckBoxes = True
-        self.tree_view.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-        self.tree_view.AfterCheck += self._on_node_checked
-        self.Controls.Add(self.tree_view)
-
-        # Build tree structure
+        self.all_button.Click += self._on_select_all
+        self.select_button.Click += self._on_select_checked
+        self.deselect_button.Click += self._on_deselect_all
+        self.close_button.Click += self._on_close
+        self.export_button.Click += self._on_export_checked
+        self.batch_export_button.Click += self._on_batch_export_checked
         self._build_tree()
 
-        # First Selected name box - shows the name of the first checked
-        # group so it can be easily copied to the clipboard.
-        _name_label_w = 100
-        self.first_selected_label = Label()
-        self.first_selected_label.Text = "First Selected:"
-        self.first_selected_label.Top = _NAME_TOP + 4
-        self.first_selected_label.Left = _MARGIN
-        self.first_selected_label.Width = _name_label_w
-        self.first_selected_label.Height = _NAME_H
-        self.first_selected_label.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        self.Controls.Add(self.first_selected_label)
-
-        self.first_selected_box = TextBox()
-        self.first_selected_box.Top = _NAME_TOP
-        self.first_selected_box.Left = _MARGIN + _name_label_w
-        self.first_selected_box.Width = _inner_w - _name_label_w
-        self.first_selected_box.Height = _NAME_H
-        self.first_selected_box.ReadOnly = True
-        self.first_selected_box.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-        self.Controls.Add(self.first_selected_box)
-
-        # Select All button
-        btn_all = Button()
-        btn_all.Text = "Select All"
-        btn_all.Top = _BTN_TOP
-        btn_all.Left = _MARGIN
-        btn_all.Width = 120
-        btn_all.Height = _BTN_H
-        btn_all.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_all.Click += self._on_select_all
-        self.Controls.Add(btn_all)
-
-        # Select Checked button
-        btn_itemize = Button()
-        btn_itemize.Text = "Select Checked"
-        btn_itemize.Top = _BTN_TOP
-        btn_itemize.Left = _MARGIN + 120 + 8
-        btn_itemize.Width = 150
-        btn_itemize.Height = _BTN_H
-        btn_itemize.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_itemize.Click += self._on_select_checked
-        self.Controls.Add(btn_itemize)
-
-        # Deselect All button
-        btn_deselect = Button()
-        btn_deselect.Text = "Deselect All"
-        btn_deselect.Top = _BTN_TOP
-        btn_deselect.Left = _MARGIN + 120 + 8 + 150 + 8
-        btn_deselect.Width = 120
-        btn_deselect.Height = _BTN_H
-        btn_deselect.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_deselect.Click += self._on_deselect_all
-        self.Controls.Add(btn_deselect)
-
-        # Close button
-        btn_close = Button()
-        btn_close.Text = "Close"
-        btn_close.Top = _BTN_TOP
-        btn_close.Left = _MARGIN + 120 + 8 + 150 + 8 + 120 + 8
-        btn_close.Width = 100
-        btn_close.Height = _BTN_H
-        btn_close.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_close.Click += self._on_close
-        self.Controls.Add(btn_close)
-
-        # Export to MAJ button (single file, everything checked)
-        btn_export = Button()
-        btn_export.Text = "Export to MAJ"
-        btn_export.Top = _EXPORT_BTN_TOP
-        btn_export.Left = _MARGIN
-        btn_export.Width = 150
-        btn_export.Height = _BTN_H
-        btn_export.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_export.Click += self._on_export_checked
-        self.Controls.Add(btn_export)
-
-        # Batch Export button (one .maj file per checked group)
-        btn_batch_export = Button()
-        btn_batch_export.Text = "Batch Export by Group"
-        btn_batch_export.Top = _EXPORT_BTN_TOP
-        btn_batch_export.Left = _MARGIN + 150 + 8
-        btn_batch_export.Width = 180
-        btn_batch_export.Height = _BTN_H
-        btn_batch_export.Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        btn_batch_export.Click += self._on_batch_export_checked
-        self.Controls.Add(btn_batch_export)
+    def Show(self):
+        self.window.Show()
 
     def _build_hierarchy(self, param_groups):
         """Build hierarchy by grouping variants under base names"""
@@ -359,37 +292,48 @@ class EnhancedParamForm(Form):
 
     def _build_tree(self, search_filter=None):
         """Build tree structure with parent-child relationships"""
-        self.tree_view.Nodes.Clear()
+        self.updating = True
+        try:
+            self.tree_view.Items.Clear()
+            for base_name in sorted(self.hierarchy, key=natural_sort_key):
+                variants = self.hierarchy[base_name]
+                base_matches = not search_filter or search_filter in base_name.lower()
+                visible = [
+                    v for v in sorted(variants, key=natural_sort_key)
+                    if base_matches or search_filter in v.lower()]
+                if not visible:
+                    continue
+                parent = TreeViewItem()
+                parent.Tag = visible
+                parent.IsExpanded = bool(search_filter)
+                checkbox = CheckBox()
+                checkbox.Content = "{} ({} parts)".format(
+                    base_name, sum(len(self.param_groups[v]) for v in visible))
+                checkbox.Tag = ("parent", parent)
+                parent.Header = checkbox
+                for variant in visible:
+                    child = TreeViewItem()
+                    child.Tag = variant
+                    child_box = CheckBox()
+                    child_box.Content = "{} ({} parts)".format(
+                        variant, len(self.param_groups[variant]))
+                    child_box.Tag = ("child", parent, variant)
+                    child_box.IsChecked = variant in self.checked_variants
+                    child_box.Checked += self._on_node_checked
+                    child_box.Unchecked += self._on_node_checked
+                    child.Header = child_box
+                    parent.Items.Add(child)
+                self._update_parent(parent)
+                checkbox.Checked += self._on_node_checked
+                checkbox.Unchecked += self._on_node_checked
+                self.tree_view.Items.Add(parent)
+        finally:
+            self.updating = False
+        self._update_first_selected_box()
 
-        for base_name in sorted(self.hierarchy.keys(), key=natural_sort_key):
-            variants = self.hierarchy[base_name]
-
-            # Check if base name or any variant matches search
-            base_matches = not search_filter or search_filter in base_name.lower()
-            variant_matches = [
-                v for v in variants if search_filter is None or search_filter in v.lower()]
-
-            if not base_matches and not variant_matches:
-                continue
-
-            # Create parent node
-            total_count = sum(len(self.param_groups.get(v, []))
-                              for v in variants)
-            parent_text = "{} ({} parts)".format(base_name, total_count)
-            parent_node = TreeNode(parent_text)
-            parent_node.Tag = ("parent", base_name)
-
-            # Add child nodes for each variant
-            for variant in sorted(variants, key=natural_sort_key):
-                if search_filter is None or search_filter in variant.lower():
-                    count = len(self.param_groups.get(variant, []))
-                    child_text = "{} ({} parts)".format(variant, count)
-                    child_node = TreeNode(child_text)
-                    child_node.Tag = ("child", variant)
-                    parent_node.Nodes.Add(child_node)
-
-            if parent_node.Nodes.Count > 0:
-                self.tree_view.Nodes.Add(parent_node)
+    def _update_parent(self, parent):
+        states = [variant in self.checked_variants for variant in parent.Tag]
+        parent.Header.IsChecked = True if all(states) else (None if any(states) else False)
 
     def _filter_tree(self, sender, args):
         """Filter tree based on search text"""
@@ -397,17 +341,10 @@ class EnhancedParamForm(Form):
         self._build_tree(search if search else None)
 
     def _on_select_all(self, sender, args):
-        """Check all parent nodes to select all ducts"""
-        self.tree_view.AfterCheck -= self._on_node_checked
-
-        for parent_node in self.tree_view.Nodes:
-            if parent_node.Tag and parent_node.Tag[0] == "parent":
-                parent_node.Checked = True
-                for child_node in parent_node.Nodes:
-                    child_node.Checked = True
-
-        self.tree_view.AfterCheck += self._on_node_checked
-        self._update_first_selected_box()
+        """Check all groups visible under the current search."""
+        for parent in self.tree_view.Items:
+            self.checked_variants.update(parent.Tag)
+        self._filter_tree(self.search_box, None)
 
     def _on_select_checked(self, sender, args):
         """Select checked ducts in Revit without closing the form."""
@@ -530,17 +467,8 @@ class EnhancedParamForm(Form):
 
     def _on_deselect_all(self, sender, args):
         """Uncheck all nodes and clear the current Revit selection."""
-        self.tree_view.AfterCheck -= self._on_node_checked
-        self.tree_view.AfterCheck -= self._on_node_checked
-
-        for parent_node in self.tree_view.Nodes:
-            if parent_node.Tag and parent_node.Tag[0] == "parent":
-                parent_node.Checked = False
-                for child_node in parent_node.Nodes:
-                    child_node.Checked = False
-
-        self.tree_view.AfterCheck += self._on_node_checked
-        self._update_first_selected_box()
+        self.checked_variants.clear()
+        self._filter_tree(self.search_box, None)
 
         empty_ids = List[ElementId]()
         if self.select_handler is not None and self.select_event is not None:
@@ -553,20 +481,26 @@ class EnhancedParamForm(Form):
 
     def _on_close(self, sender, args):
         """Close the modeless form."""
-        self.Close()
+        self.window.Close()
 
     def _on_node_checked(self, sender, args):
-        """When a parent is checked/unchecked, check/uncheck all children"""
-        self.tree_view.AfterCheck -= self._on_node_checked
-
-        node = args.Node
-
-        # If parent node is checked/unchecked, apply to all children
-        if node.Tag and node.Tag[0] == "parent":
-            for child_node in node.Nodes:
-                child_node.Checked = node.Checked
-
-        self.tree_view.AfterCheck += self._on_node_checked
+        args.Handled = True
+        if self.updating:
+            return
+        self.updating = True
+        try:
+            parent = sender.Tag[1]
+            variants = parent.Tag if sender.Tag[0] == "parent" else [sender.Tag[2]]
+            for variant in variants:
+                if sender.IsChecked:
+                    self.checked_variants.add(variant)
+                else:
+                    self.checked_variants.discard(variant)
+            for child in parent.Items:
+                child.Header.IsChecked = child.Tag in self.checked_variants
+            self._update_parent(parent)
+        finally:
+            self.updating = False
         self._update_first_selected_box()
 
     def _update_first_selected_box(self):
@@ -576,51 +510,29 @@ class EnhancedParamForm(Form):
             self.first_selected_box.Text = checked_values[0]
         else:
             self.first_selected_box.Text = ""
+        self.summary_text.Text = "{} groups checked | {} parts".format(
+            len(checked_values), len(self.get_checked_ducts()))
 
     def get_checked_ducts(self):
         """Returns list of duct elements from all checked nodes"""
         ducts = set()
 
-        for parent_node in self.tree_view.Nodes:
-            if parent_node.Tag and parent_node.Tag[0] == "parent":
-                # Check child nodes individually
-                for child_node in parent_node.Nodes:
-                    if child_node.Checked and child_node.Tag and child_node.Tag[0] == "child":
-                        variant = child_node.Tag[1]
-                        if variant in self.param_groups:
-                            for duct in self.param_groups[variant]:
-                                ducts.add(duct)
+        for variant in self.checked_variants:
+            for duct in self.param_groups[variant]:
+                ducts.add(duct)
 
         return list(ducts)
 
     def get_checked_values(self):
         """Returns selected Fabrication Notes values from checked child nodes"""
-        checked_values = []
-
-        for parent_node in self.tree_view.Nodes:
-            if parent_node.Tag and parent_node.Tag[0] == "parent":
-                for child_node in parent_node.Nodes:
-                    if child_node.Checked and child_node.Tag and child_node.Tag[0] == "child":
-                        checked_values.append(child_node.Tag[1])
-
-        return checked_values
+        return sorted(self.checked_variants, key=natural_sort_key)
 
     def get_checked_groups(self):
         """Returns [(variant_name, [ducts]), ...] for each checked child
         node, keeping each variant's ducts as its own separate group
         (used for batch export, one file per group)."""
-        groups = []
-
-        for parent_node in self.tree_view.Nodes:
-            if parent_node.Tag and parent_node.Tag[0] == "parent":
-                for child_node in parent_node.Nodes:
-                    if child_node.Checked and child_node.Tag and child_node.Tag[0] == "child":
-                        variant = child_node.Tag[1]
-                        ducts = self.param_groups.get(variant, [])
-                        if ducts:
-                            groups.append((variant, ducts))
-
-        return groups
+        return [(variant, self.param_groups[variant])
+                for variant in self.get_checked_values() if self.param_groups[variant]]
 
 # Helpers
 # ========================================================================
