@@ -71,7 +71,7 @@ number_families = {
     "transition",
     "radius elbow",
     "elbow - 90 degree",
-    "90° Elbow",
+    "90° elbow",
     "elbow",
     "drop cheek",
     "ogee",
@@ -297,13 +297,17 @@ def get_connected_fittings(duct, doc, view):
     return connected
 
 
+def _clean(text):
+    return " ".join(text.split()).lower()
+
+
 def is_numberable(duct):
     """Check if a duct can be numbered based on family."""
     family = duct.family
     if not family:
         return False
-    family_lower = family.lower()
-    return family_lower in number_families
+    clean_family = _clean(family)
+    return clean_family in number_families
 
 
 def is_traversable(duct):
