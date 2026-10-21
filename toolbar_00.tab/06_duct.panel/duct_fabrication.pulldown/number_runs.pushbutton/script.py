@@ -71,6 +71,7 @@ number_families = {
     "transition",
     "radius elbow",
     "elbow - 90 degree",
+    "90° Elbow"
     "elbow",
     "drop cheek",
     "ogee",
